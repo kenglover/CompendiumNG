@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting.remote;
 
 import java.rmi.Remote;
@@ -36,9 +35,9 @@ public interface RemoteRecord extends Remote {
 
 
  	/**
-	 * Start a meeting replay recording. Extract the setup data first, and the Jabber data.
+	 * Start a meeting replay recording. Extract the setup data first.
 	 * @param sSetupData the memetic setup data required to communicate with Area/Triplestore.
-	 * @param sReplayData the meeting replay Jabber account details required.
+	 * @param sReplayData the meeting.
 	 * @return true if the recording was started successfully, else false;
 	 */
     public boolean startRecording(String sSetupData,String sReplayData) throws RemoteException;

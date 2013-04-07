@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.util.*;
 import java.awt.*;
@@ -96,9 +97,9 @@ public class UIArrangeTopDown implements IUIArrange {
 
 	/** The number of children above the pointer position */
 	private int 				childSizeAbove 				= 0;
-	
-	/** max number a node can recurse */ 
-	private int 				recursionCount  			= 3; 
+
+	/** max number a node can recurse */
+	private int 				recursionCount  			= 3;
 
 	/**
 	 * Constructor. Does nothing.
@@ -127,7 +128,7 @@ public class UIArrangeTopDown implements IUIArrange {
 	public boolean processView(View view) {
 
 		clearData();
-		
+
 		IModel model = ProjectCompendium.APP.getModel();
 		session = model.getSession();
 		vs = model.getViewService();
@@ -226,7 +227,7 @@ public class UIArrangeTopDown implements IUIArrange {
 				if (level > 0) {
 					int sepLevel = verticalSep[level-1];
 					if(height > sepLevel)
-						verticalSep[level-1] = height + FormatProperties.arrangeTopVerticalGap;
+						verticalSep[level-1] = height + APP_PROPERTIES.getArrangeTopVerticalGap();
 				}
 			}
 
@@ -637,7 +638,7 @@ public class UIArrangeTopDown implements IUIArrange {
 		}
 		return true;
 	}//end startLevelCalculation
-	
+
 	private Hashtable nodesRecursed = new Hashtable(51);
 
 	/**
@@ -1018,21 +1019,21 @@ public class UIArrangeTopDown implements IUIArrange {
 					break;
 				}
 			}
-			
+
 			if(isSingleParentNodes){
 				((Vector)nodeLevelList.get(i-1)).remove(sParent);
 				if((nIndex == 0) && (!isSet)){
 
 					((Vector)nodeLevelList.get(i-1)).insertElementAt(sParent, indexFP - abovePointerPos);
 					abovePointerPos ++;
-					
+
 					for(int k = 0; k < vtNodesBelow.size(); k++) {
 						if(! sNodeId.equals(vtNodesBelow.get(k))) {
 							((Vector)nodeLevelList.get(i)).remove(vtNodesBelow.get(k));
 							((Vector)nodeLevelList.get(i)).insertElementAt(vtNodesBelow.get(k), index - childSizeAbove);
 						}
 					}
-					
+
 					childSizeAbove += vtNodesBelow.size() - 1;
 					if(nIndex == (vtNodesBelowFP.size() - 1)) {
 						isSet = true;
@@ -1082,7 +1083,7 @@ public class UIArrangeTopDown implements IUIArrange {
 	 * This method is to sort child nodes below based on nodes sorted parent wise.
 	 */
 	private void sortNodesBelow(){
-		
+
 		for (int i = 0; i < nodeLevelList.size() ; i++){
 			Vector vtLevelNodes = (Vector) nodeLevelList.get(i);
 			for(int j = 0; j < vtLevelNodes.size(); j++) {
@@ -1104,7 +1105,7 @@ public class UIArrangeTopDown implements IUIArrange {
 			}
 		}
 	}
-	
+
 //	end edit - Lakshmi
 
 	/**
@@ -1126,7 +1127,7 @@ public class UIArrangeTopDown implements IUIArrange {
 	}
 
 	private Hashtable nodesXed = new Hashtable(51);
-	
+
 	/**
 	 * Helper Method. This method is added to enable the child nodes to be positioned at the center relative to the parent.
 	 * @param viewFrame com.compendium.ui.UIViewFrame, the frame of the node to calculate the y positions for.
@@ -1148,12 +1149,12 @@ public class UIArrangeTopDown implements IUIArrange {
 		} else {
 			nodesXed.put(nodeId, count);
 		}
-		
+
 		UIViewPane viewPane = ((UIMapViewFrame)viewFrame).getViewPane();
 		Vector childNodeList = (Vector) htNodesBelow.get(nodeId);
 		UINode parentNode = ((UINode)viewPane.get(nodeId));
 		double scale = viewPane.getScale();
-		
+
 		if (childNodeList != null) {
 
 			for (int i = 0; i < childNodeList.size(); i++) {
@@ -1183,8 +1184,8 @@ public class UIArrangeTopDown implements IUIArrange {
 				Point p1 = UIUtilities.scalePoint(nodeWidth, nodeWidth, scale);
 				nodeWidth = p1.y;
 
-				if ((previousNodeXPosition + nodeWidth + FormatProperties.arrangeTopHorizontalGap) > newXPosition) {
-					newXPosition = previousNodeXPosition + nodeWidth + (FormatProperties.arrangeTopHorizontalGap);
+				if ((previousNodeXPosition + nodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap()) > newXPosition) {
+					newXPosition = previousNodeXPosition + nodeWidth + (APP_PROPERTIES.getArrangeTopHorizontalGap());
 				}
 			}
 
@@ -1209,7 +1210,7 @@ public class UIArrangeTopDown implements IUIArrange {
 					String  sPreviousNodeID = (String)((Vector)nodeLevelList.elementAt(nodeLevel-1)).elementAt(indexOfPreviousNode);
 					UINode previousNode = ((UINode)viewPane.get(sPreviousNodeID));
 					//BUG FIX - Lakshmi 9/15/06 for NullPointerException
-					 
+
 					NodeSummary previousNodeSum = (NodeSummary)htNodes.get(sPreviousNodeID);
 					previousNodeXPosition = previousNode.getNodePosition().getXPos();
 
@@ -1233,13 +1234,13 @@ public class UIArrangeTopDown implements IUIArrange {
 							String sPreviousNodeParentId =  previousNodeSum.getParentNode().getId();
 
 							if (!((Vector)htNodesAbove.get(nodeId)).contains(sPreviousNodeParentId)){
-								xPosition = parentPreviousNodePos + parentPreviousNodeWth + FormatProperties.arrangeTopHorizontalGap ;
+								xPosition = parentPreviousNodePos + parentPreviousNodeWth + APP_PROPERTIES.getArrangeTopHorizontalGap() ;
 							}
 						}
 					}
 
 					if ((previousNodeXPosition + nodeWidth) > xPosition) {
-						xPosition = previousNodeXPosition + nodeWidth + (FormatProperties.arrangeTopHorizontalGap );
+						xPosition = previousNodeXPosition + nodeWidth + (APP_PROPERTIES.getArrangeTopHorizontalGap() );
 					}
 					node.getNodePosition().setPos(new Point( xPosition, pos.y));
 				} else {
@@ -1255,7 +1256,7 @@ public class UIArrangeTopDown implements IUIArrange {
 					Point p1 = UIUtilities.scalePoint(nodeWidth, nodeWidth, scale);
 					nodeWidth = p1.y;
 
-					xPosition += (FormatProperties.arrangeTopHorizontalGap + nodeWidth);
+					xPosition += (APP_PROPERTIES.getArrangeTopHorizontalGap() + nodeWidth);
 
 				}
 		    }
@@ -1263,9 +1264,9 @@ public class UIArrangeTopDown implements IUIArrange {
 		htNodeXPositionSet.put(nodeId, new Boolean(true));
 		return xPosition;
 	}
-	
+
 	private Hashtable nodesXFinalized = new Hashtable();
-	
+
 	/**
 	 * This method is to enable the child nodes to be positioned at the center relative to the parent after compact.
 	 * @param viewFrame com.compendium.ui.UIViewFrame, the frame of the node to finalize the y positions for.
@@ -1290,7 +1291,7 @@ public class UIArrangeTopDown implements IUIArrange {
 		UINode oNode = ((UINode)viewPane.get(sNodeID));
 		Point pos = oNode.getNodePosition().getPos();
 		double scale = viewPane.getScale();
-		
+
 		if(vtChildNodes != null){
 			for (int i =0; i< vtChildNodes.size(); i++){
 				finalizeXPos(viewFrame, (String)vtChildNodes.get(i));
@@ -1324,8 +1325,8 @@ public class UIArrangeTopDown implements IUIArrange {
 					Point p2 = UIUtilities.scalePoint(nodeWidth, nodeWidth, scale);
 					nodeWidth = p2.y;
 
-					if ((previousNodeXPosition + nodeWidth + FormatProperties.arrangeTopHorizontalGap ) > nodePosition) {
-						nodePosition = previousNodeXPosition + nodeWidth + FormatProperties.arrangeTopHorizontalGap ;
+					if ((previousNodeXPosition + nodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() ) > nodePosition) {
+						nodePosition = previousNodeXPosition + nodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() ;
 						oNode.getNodePosition().setPos(new Point (nodePosition , pos.y));
 					}
 				}
@@ -1351,8 +1352,8 @@ public class UIArrangeTopDown implements IUIArrange {
 			int nodeWidth = previousNode.getWidth();
 			Point p2 = UIUtilities.scalePoint(nodeWidth, nodeWidth, scale);
 			nodeWidth = p2.y;
-			if ((previousNodeXPosition + nodeWidth + FormatProperties.arrangeTopHorizontalGap) > nodePosition) {
-				nodePosition = previousNodeXPosition + nodeWidth + FormatProperties.arrangeTopHorizontalGap ;
+			if ((previousNodeXPosition + nodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap()) > nodePosition) {
+				nodePosition = previousNodeXPosition + nodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() ;
 				oNode.getNodePosition().setPos(new Point (nodePosition , pos.y));
 			}
 		}
@@ -1371,11 +1372,11 @@ public class UIArrangeTopDown implements IUIArrange {
 		Point pos = oNode.getNodePosition().getPos();
 		Vector vtChildNodes = (Vector) htNodesBelow.get(sNodeID);
 		if (vtChildNodes != null){
-			
+
 			for(int i = 0; i < vtChildNodes.size(); i++){
 				getChildNodesDown(viewPane, (String)vtChildNodes.get(i), amount);
 			}
-			
+
 			Vector vtChildren = (Vector)htNodesBelow.get(sNodeID);
 
 			int nodePosition = oNode.getNodePosition().getXPos();
@@ -1399,8 +1400,8 @@ public class UIArrangeTopDown implements IUIArrange {
 				Point p2 = UIUtilities.scalePoint(nodeWidth, nodeWidth, viewPane.getScale());
 				nodeWidth = p2.y;
 
-				if ((previousNodeXPosition + nodeWidth + FormatProperties.arrangeTopHorizontalGap) > nodePosition) {
-					nodePosition = previousNodeXPosition + nodeWidth + FormatProperties.arrangeTopHorizontalGap ;
+				if ((previousNodeXPosition + nodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap()) > nodePosition) {
+					nodePosition = previousNodeXPosition + nodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() ;
 					oNode.getNodePosition().setPos(new Point (nodePosition , pos.y));
 				}
 			}
@@ -1432,7 +1433,7 @@ public class UIArrangeTopDown implements IUIArrange {
 				String sPreviousNodeID = (String)((Vector)nodeLevelList.get(((Integer)htNodesLevel.get(sParentId)).intValue() -1)).get(index - 1);
 				UINode previousNode = (UINode) viewPane.get(sPreviousNodeID);
 				NodePosition nodePosition = previousNode.getNodePosition();
-				xPos = nodePosition.getXPos() + previousNode.getWidth() + FormatProperties.arrangeTopHorizontalGap ;
+				xPos = nodePosition.getXPos() + previousNode.getWidth() + APP_PROPERTIES.getArrangeTopHorizontalGap() ;
 			} else {
 				xPos = findPreviousNodeXPos(viewPane, sParentId);
 			}
@@ -1445,7 +1446,7 @@ public class UIArrangeTopDown implements IUIArrange {
 	private Hashtable nodesCompacted = new Hashtable(51);
 	private Hashtable nodesCheckedForCompact = new Hashtable(51);
 	private Hashtable nodesCompact = new Hashtable(51);
-	
+
 	/**
 	 * Helper Method. This method compacts the nodes in the given list.
 	 * @param viewFrame com.compendium.ui.UIViewFrame, the frame of the node to compact.
@@ -1483,7 +1484,7 @@ public class UIArrangeTopDown implements IUIArrange {
 		int compactAmount = 0;
 
 		double scale = viewPane.getScale();
-		
+
 //		This is to center the 1st node (if its a parent)at any level .
 		if ((nodeList  != null) &&(nodeList.size() >= 1)) {
 			UINode node = ((UINode)viewPane.get((String)nodeList.elementAt(0)));
@@ -1509,15 +1510,15 @@ public class UIArrangeTopDown implements IUIArrange {
 					UINode previousNode = (UINode)viewPane.get((String)((Vector)nodeLevelList.get(level)).get(index - 1));
 					int previousNodeXPos = previousNode.getNodePosition().getXPos();
 					int previousNodeWidth = previousNode.getWidth();
-					if(centerPosition > previousNodeXPos + previousNodeWidth + FormatProperties.arrangeTopHorizontalGap ){
+					if(centerPosition > previousNodeXPos + previousNodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() ){
 						node.getNodePosition().setPos(new Point(centerPosition , pos.y));
 					} else {
-						node.getNodePosition().setPos(new Point( previousNodeXPos + previousNodeWidth + FormatProperties.arrangeTopHorizontalGap, pos.y ));
+						node.getNodePosition().setPos(new Point( previousNodeXPos + previousNodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap(), pos.y ));
 					}
 				}
 			}
 		}
-		
+
 		// this will arrange other nodes based on the above arrangement of 1st node.
 		for (int i = 1; i < nodeList.size(); i++) {
 			UINode currentNode = ((UINode)viewPane.get((String)nodeList.elementAt(i)));
@@ -1531,12 +1532,12 @@ public class UIArrangeTopDown implements IUIArrange {
 			Point p1 = UIUtilities.scalePoint(nodeWidth, nodeWidth, scale);
 			nodeWidth = p1.y;
 
-			if ((currentNodeXPosition - previousNodeXPosition - nodeWidth) > FormatProperties.arrangeTopHorizontalGap) {
+			if ((currentNodeXPosition - previousNodeXPosition - nodeWidth) > APP_PROPERTIES.getArrangeTopHorizontalGap()) {
 				compactDoneForNodes.clear();
 
 				compactAmount = checkCompact(viewFrame,
 											 (String)nodeList.elementAt(i),
-											 currentNodeXPosition - previousNodeXPosition - FormatProperties.arrangeTopHorizontalGap  - nodeWidth,
+											 currentNodeXPosition - previousNodeXPosition - APP_PROPERTIES.getArrangeTopHorizontalGap()  - nodeWidth,
 											 compactDoneForNodes, vtLevelChecked);
 				if (compactAmount > 0) {
 					compact(viewFrame, (String)nodeList.elementAt(i), compactAmount, compactDoneForNodes);
@@ -1567,11 +1568,11 @@ public class UIArrangeTopDown implements IUIArrange {
 					int centerPosition = firstNodeXPosition + (lastNodeXPosition + lastNode.getWidth() - firstNodeXPosition)/2;
 					centerPosition = centerPosition - node.getWidth()/2;
 
-					if ((previousNodeXPosition + previousNodeWidth + FormatProperties.arrangeTopHorizontalGap ) < centerPosition) {
+					if ((previousNodeXPosition + previousNodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() ) < centerPosition) {
 						node.getNodePosition().setPos(new Point( centerPosition , pos.y));
 					}
 					else {
-						node.getNodePosition().setPos(new Point(previousNodeXPosition + previousNodeWidth + FormatProperties.arrangeTopHorizontalGap , pos.y));
+						node.getNodePosition().setPos(new Point(previousNodeXPosition + previousNodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() , pos.y));
 					}
 				}
 			}
@@ -1589,7 +1590,7 @@ public class UIArrangeTopDown implements IUIArrange {
 
 		UIViewPane viewPane = ((UIMapViewFrame)viewFrame).getViewPane();
 		double scale = viewPane.getScale();
-		
+
 		compactDoneForNodes.put(nodeId, new Boolean(false));
 
 		Integer count = new Integer(1);
@@ -1632,9 +1633,9 @@ public class UIArrangeTopDown implements IUIArrange {
 			Point p2 = UIUtilities.scalePoint(previousNodeWidth, previousNodeWidth, scale);
 			previousNodeWidth = p2.y;
 			if (!vtLevelChecked.contains(htNodesLevel.get(nodeId))) {
-				if ( (currentNodeXPosition - previousNodeXPosition - FormatProperties.arrangeTopHorizontalGap  - previousNodeWidth) <
+				if ( (currentNodeXPosition - previousNodeXPosition - APP_PROPERTIES.getArrangeTopHorizontalGap()  - previousNodeWidth) <
 						compactAmount) {
-					compactAmount = currentNodeXPosition - previousNodeXPosition - FormatProperties.arrangeTopHorizontalGap  - previousNodeWidth;
+					compactAmount = currentNodeXPosition - previousNodeXPosition - APP_PROPERTIES.getArrangeTopHorizontalGap()  - previousNodeWidth;
 				}
 			}
 		}
@@ -1678,7 +1679,7 @@ public class UIArrangeTopDown implements IUIArrange {
 		} else {
 			nodesCompact.put(nodeId, count);
 		}
-		
+
 		UINode node = ((UINode)viewPane.get(nodeId));
 		Point pos = node.getNodePosition().getPos();
 		int level = ((Integer)htNodesLevel.get(nodeId)).intValue();
@@ -1695,8 +1696,8 @@ public class UIArrangeTopDown implements IUIArrange {
 			Point p = UIUtilities.scalePoint(previousNodeWidth, previousNodeWidth, viewPane.getScale());
 			previousNodeWidth = p.y;
 
-			if ((pos.x - compactAmount) < (previousNodeXPosition + previousNodeWidth + FormatProperties.arrangeTopHorizontalGap )) {
-				xPosition = previousNodeXPosition + previousNodeWidth + FormatProperties.arrangeTopHorizontalGap ;
+			if ((pos.x - compactAmount) < (previousNodeXPosition + previousNodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() )) {
+				xPosition = previousNodeXPosition + previousNodeWidth + APP_PROPERTIES.getArrangeTopHorizontalGap() ;
 			}
 			else {
 				xPosition = pos.x - compactAmount;
@@ -1722,7 +1723,7 @@ public class UIArrangeTopDown implements IUIArrange {
 			}
 		}
 	}
-	
+
 //	******** UNDO / REDO **************//
 
 	/**

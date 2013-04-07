@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting.io;
 
 import java.util.Enumeration;
@@ -235,7 +234,7 @@ public class ArenaConnection {
 					System.out.println("Error with ZIP file due to:"+ioe.getMessage());
 				}
 			}
-            
+
             try {
                 JInternalFrame frame = ProjectCompendium.APP.getViewFrame(ProjectCompendium.APP.getHomeView(), "");
                 try {

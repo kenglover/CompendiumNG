@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
 import java.util.Vector;
@@ -45,7 +44,7 @@ public interface IFavoriteService extends IService {
 	 * @param PCSession session, the PCSession object for the database to use.
 	 * @param String sUserID, the user id of the person who created this favorite.
 	 * @param String sNodeID, the node id of the favorite node.
-	 * @param String sViewID, the node id of the favorite node. 
+	 * @param String sViewID, the node id of the favorite node.
 	 * @param String sLabel, the label of the node.
 	 * @param int nType, the node type.
 	 * @return the new Favorite object or null if something went wrong.

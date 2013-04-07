@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.util.*;
 import java.io.*;
@@ -47,6 +48,7 @@ import com.compendium.ProjectCompendium;
 
 import com.compendium.core.ICoreConstants;
 import com.compendium.core.datamodel.*;
+import com.compendium.core.datamodel.services.INodeService;
 
 import com.compendium.meeting.*;
 
@@ -123,9 +125,19 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 	/** This panel holds additional data for shortcut nodes.*/
 	private JPanel			shortspanel			= null;
 
+	/** This panel holds the locking option*/
+	private JPanel			lockingpanel		= null;
+	
+	private JRadioButton	rbLocked			= null;
+	
+	private JRadioButton	rbUnlocked			= null;
+	
+	/** This is a boolean that holds the locking state for the node.*/
+	private Boolean			bLocked				= false;
+	
 	/** This panel holds the other panel.*/
 	private JPanel			centerpanel			= null;
-	
+
 	/** Holds the list of the actual node types insiode this node if it is a list or a map.*/
 	private JTextArea		taReaders			= null;
 
@@ -139,7 +151,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 	private JLabel			lblStateInfo2			= null;
 
 	/** This label holds the node modification date information.*/
-	private JLabel			lblModifiedBy2		= null;	
+	private JLabel			lblModifiedBy2		= null;
 
 	/** Button to cancel the dialog this panel is in.*/
 	private UIButton		pbCancel			= null;
@@ -160,7 +172,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 	private UITimeSecondPanel		datePanel	= null;
 
 	private MediaIndex		oMediaIndex			= null;
-	
+
 	/**
 	 * Constructor.
 	 *
@@ -186,10 +198,32 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 	 * @param tabbedpane com.compendium.ui.dialogs.UINodeContentDialog, the dialog this panel is displayed in.
 	 */
 	public UINodePropertiesPanel(JFrame parent, NodePosition nodePos, UINodeContentDialog tabbedPane) {
+		
 		super();
 		oParentDialog = tabbedPane;
 		oNode = nodePos.getNode();
 		oNodePosition = nodePos;
+		
+		//TODO: Work on locking functions has been frozen. Finish or delete.
+//		try {
+//		
+//			if (0 == APP.getModel().getNodeService().
+//			    iCheckNodeLock(APP.getModel().getSession(), oNode.getId())) {
+//				
+//				bLocked = false;
+//				
+//			} else {
+//				
+//				bLocked = true;
+//				
+//			}
+//		
+//		} catch (SQLException e) {
+//			
+//			e.printStackTrace();
+//			
+//		}
+		
 		drawPanel();
 	}
 
@@ -234,9 +268,25 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 
 		JPanel oBottomPanel = new JPanel(new BorderLayout());
 		oBottomPanel.add(showReadersPanel(), BorderLayout.WEST);
-		
+
 		JPanel oInnerBottomPanel = new JPanel(new BorderLayout());
 		
+		String sAuthor = oNode.getAuthor();
+		
+		String sUserName = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
+		
+		boolean bIsAdmin = ProjectCompendium.APP.getModel().getUserProfile().isAdministrator();
+
+        //TODO: Work on locking functions has been frozen. Finish or delete.
+//		if ((sAuthor.equals(sUserName) || bIsAdmin) &&
+//		        oNode.getType() == ICoreConstants.MAPVIEW) {
+//		
+//			showLockingPanel();
+//		
+//			centerpanel.add(lockingpanel, BorderLayout.SOUTH);
+//			
+//		}
+
 		if(oNode instanceof ShortCutNodeSummary) {
 			showShortCutNodeEditPanel();
 			//gc.gridy = 1;
@@ -265,10 +315,10 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 
 		oBottomPanel.add(oInnerBottomPanel, BorderLayout.EAST);
 		centerpanel.add(oBottomPanel, BorderLayout.CENTER);
-		
+
 		add(centerpanel, BorderLayout.CENTER);
 		add(createButtonPanel(), BorderLayout.SOUTH);
-		
+
 		if(oNode.getState() == ICoreConstants.READSTATE){
 			lblStateInfo2.setText("Read");
 		} else if(oNode.getState() == ICoreConstants.UNREADSTATE){
@@ -276,8 +326,8 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		} else if(oNode.getState() == ICoreConstants.MODIFIEDSTATE){
 			lblStateInfo2.setText("Modified");
 		}
-		
-		lblModifiedBy2.setText(oNode.getLastModificationAuthor());		
+
+		lblModifiedBy2.setText(oNode.getLastModificationAuthor());
 	}
 
 	/**
@@ -347,8 +397,8 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		else {
 			lblIcon = new JLabel(oUINode.getIcon());
 		}
-		
-		gc.gridy = y;		
+
+		gc.gridy = y;
 		gc.gridx = 3;
 		gc.gridheight=2;
 		gc.weightx=1;
@@ -357,10 +407,10 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		mainpanel.add(lblIcon);
 
 		lblStateInfo = new JLabel("Node State :");
-		gc.gridy = y;		
+		gc.gridy = y;
 		gc.gridx = 0;
 		gc.gridheight=1;
-		gc.weightx=0;	
+		gc.weightx=0;
 		gc.anchor = GridBagConstraints.WEST;
 		gb.setConstraints(lblStateInfo, gc);
 		mainpanel.add(lblStateInfo);
@@ -372,7 +422,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		mainpanel.add(lblStateInfo2);
 		y++;
 		//y++;
-				
+
 		lblCreated = new JLabel("Created By:");
 		gc.gridwidth=1;
 		gc.gridy = y;
@@ -384,7 +434,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		gc.gridx = 1;
 		gb.setConstraints(lblAuthor2, gc);
 		mainpanel.add(lblAuthor2);
-		
+
 		lblAuthor = new JLabel("On:");
 		gc.gridx = 2;
 		gb.setConstraints(lblAuthor, gc);
@@ -395,7 +445,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		gb.setConstraints(lblCreated2, gc);
 		mainpanel.add(lblCreated2);
 		y++;
-		
+
 		lblModifiedBy = new JLabel("Last Modified By:");
 		gc.gridy = y;
 		gc.gridx = 0;
@@ -406,7 +456,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		gc.gridx = 1;
 		gb.setConstraints(lblModifiedBy2, gc);
 		mainpanel.add(lblModifiedBy2);
-		
+
 		lblModified = new JLabel("On:");
 		gc.gridx = 2;
 		gb.setConstraints(lblModified, gc);
@@ -432,7 +482,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		gb.setConstraints(lblShortCuts2, gc);
 		mainpanel.add(lblShortCuts2);
 		y++;
-		
+
 		lblId = new JLabel("Node Id:");
 		gc.gridy = y;
 		gc.gridx = 0;
@@ -503,7 +553,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 				}
 			}
 		}
-		
+
 		//set the values
 		lblId2.setText(oNode.getId());
 		lblAuthor2.setText(oNode.getAuthor());
@@ -535,6 +585,13 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		else if ((source == pbOK)) {
 			oParentDialog.onUpdate();
 			oParentDialog.onCancel();
+		} else if (source == rbLocked) {
+			
+			bLocked = true;
+		
+		} else if (source == rbUnlocked) {
+			
+			bLocked = false;
 		}
 	}
 
@@ -542,14 +599,14 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 	 * Draw the panel of readers.
 	 */
 	private JPanel showReadersPanel() {
-		
+
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(new TitledBorder(new EtchedBorder(),
                 "Node has been read by",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
 				new Font("Dialog", Font.BOLD, 12) ));
-		
+
 		taReaders = new JTextArea("");
 		taReaders.setFont(new Font("Monospaced", Font.PLAIN, 12));
 		updateReadersInformation();
@@ -558,10 +615,34 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		JScrollPane scrollpane = new JScrollPane(taReaders);
 		scrollpane.setPreferredSize(new Dimension(200,100));
 		panel.add(scrollpane, BorderLayout.CENTER);
-		
+
 		return panel;
 	}
 	
+	/**
+	 * Draw the node locking panel.
+	 * @author jamesl
+	 */
+	private void showLockingPanel () {
+		
+		lockingpanel = new JPanel();
+		lockingpanel.setBorder(new TitledBorder(new EtchedBorder(), "Lock Node", TitledBorder.LEFT, TitledBorder.TOP, new Font("Dialog", Font.BOLD, 12)));
+		
+		rbLocked = new JRadioButton("Locked", bLocked);
+		rbUnlocked = new JRadioButton("Unlocked", ! bLocked);
+		
+		rbLocked.addActionListener(this);
+		rbUnlocked.addActionListener(this);
+		
+		ButtonGroup bgOpts  = new ButtonGroup();
+		bgOpts.add(rbLocked);
+		bgOpts.add(rbUnlocked);
+		
+		lockingpanel.add(rbLocked);
+		lockingpanel.add(rbUnlocked);
+		
+	}
+
 	/**
 	 * Draw the panel of additional property data for shortcuts.
 	 */
@@ -684,7 +765,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 		gc.gridy = 2;
 		gc.gridx = 0;
 		gc.gridheight=4;
-		gc.weighty=500;		
+		gc.weighty=500;
 		gc.anchor = GridBagConstraints.NORTH;
 		gb.setConstraints(scrollpane, gc);
 
@@ -701,7 +782,7 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 			lblModified.setText(newDate);
 		if (lblModifiedBy!= null)
 			lblModifiedBy.setText(sAuthor);
-	}	
+	}
 
 	/**
 	 * Update the list of node contents information diaplayed for this node if it is a view (list or map).
@@ -785,9 +866,32 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 
 	/**
 	 * Process the saving of any node contents/properties changes, the media Index date.
+	 * @throws SQLException 
 	 */
-	public void onUpdate() {
-		if (oNodePosition != null && ProjectCompendium.APP.oMeetingManager != null && oMediaIndex != null) {
+	public void onUpdate() throws SQLException {
+	    //TODO: Work on locking functions has been frozen. Finish or delete.
+		
+//		INodeService nodeService = ProjectCompendium.APP.getModel().getNodeService();
+//        int lockID = nodeService.iCheckNodeLock(APP.getModel().getSession(), oNode.getId());
+//        if (bLocked) {
+//			
+//			String sUser = APP.getModel().getUserProfile().getId();
+//			
+//			try {
+//                if (lockID == 0) {
+//                    nodeService.bLockNode(APP.getModel().getSession(), sUser, oNode.getId());
+//                }
+//			} catch (SQLException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		} else {
+//            if (lockID != 0) {
+//                nodeService.bUnLockNode(APP.getModel().getSession(), lockID);
+//            }
+//		}
+		
+		if (oNodePosition != null && APP.oMeetingManager != null && oMediaIndex != null) {
 
 			if (datePanel.dateChanged()) {
 
@@ -799,29 +903,50 @@ public class UINodePropertiesPanel extends JPanel implements IUIConstants, Actio
 					oMediaIndex.setMediaIndex(cal);
 				}
 				catch( Exception ex ) {
-					ProjectCompendium.APP.displayError("Unable to set Video Index due to:\n\n"+ex.getMessage());
+					APP.displayError("Unable to set Video Index due to:\n\n"+ex.getMessage());
 				}
 			}
 		}
 	}
-	
+
 	/**
-	 * Update the list of node contents information diaplayed for this node if it is a view (list or map).
-	 * @param view comp.compendium.core.datamodel.View, the view node to update the contents information displayed for.
+	 * This method returns the list names of the readers of the current object.
+	 * The current algorithm is new as of v1.6 in that it uses the already-in-memory
+	 * user name from the UserProfile list instead of hitting the database for this info.
 	 */
 	private void updateReadersInformation() {
 
 		String readers = "";
-		Vector users = new Vector();
+		Vector readerIDs = new Vector();
+		UserProfile up = null;
+
+		// Get the list of readers (ID's) from the database
 		try {
-			users = ProjectCompendium.APP.getModel().getNodeService().getReaders(ProjectCompendium.APP.getModel().getSession(), oNode.getId());
+			readerIDs = ProjectCompendium.APP.getModel().getNodeService().getReaderIDs(ProjectCompendium.APP.getModel().getSession(), oNode.getId());
 		} catch (SQLException e1) {
 			e1.printStackTrace();
 		}
-		for(Enumeration e = users.elements();e.hasMoreElements();) {
-			readers = readers + (String) e.nextElement() +"\n";
+
+		// Get the existing list of UserProfile objects
+		Vector userProfiles = ProjectCompendium.APP.getModel().getUsers();
+		Vector readernames = new Vector();
+
+		// For each ID, find its corresponding UserProfile, and extract the User Name
+		for(Enumeration id = readerIDs.elements();id.hasMoreElements();) {
+			String sReaderID = (String) id.nextElement();
+			for(Enumeration id2 = userProfiles.elements();id2.hasMoreElements();) {
+				up = (UserProfile)id2.nextElement();
+				if (sReaderID.compareTo(up.getUserID())== 0) {
+					readernames.addElement(up.getUserName());
+//					readers = readers + up.getUserName() + "\n";
+				}
+			}
+		}
+		Collections.sort(readernames);  // Sort the readers list, then stuff it in the display
+		for(Enumeration id = readernames.elements(); id.hasMoreElements();) {
+			readers = readers + id.nextElement() + "\n";
 		}
 
 		taReaders.setText(readers);
-	}	
+	}
 }

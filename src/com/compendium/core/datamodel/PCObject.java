@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.util.*;
@@ -116,7 +115,7 @@ public class PCObject implements IPCObject, java.io.Serializable {
 	public Vector getListenerList() {
 		return listenerList;
 	}
-	
+
 	/**
 	 * Defines the model of which this object is part of
 	 *

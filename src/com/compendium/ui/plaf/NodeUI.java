@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.plaf;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -93,7 +94,7 @@ public	class NodeUI
 	private static SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 
  	protected	UINode								oNode;
- 	
+
 	protected	UIViewPane							oViewPane;
 
   	/** The MouseListener registered for this list.*/
@@ -407,8 +408,9 @@ public	class NodeUI
 	 */
  	protected ComponentListener createComponentListener(JComponent c) {
 		ComponentListener comp = new ComponentAdapter() {
-			public void componentMoved(ComponentEvent evt) {
-				if (FormatProperties.autoSearchLabel) {
+			@Override
+            public void componentMoved(ComponentEvent evt) {
+				if (APP_PROPERTIES.isAutoSearchLabel()) {
 					if (oViewPane == null)
 						oViewPane = oNode.getViewPane();
 
@@ -647,7 +649,7 @@ public	class NodeUI
 		ImageIcon icon = node.getIcon();
 		NodePosition position = node.getNodePosition();
 		boolean bSmallIcon = position.getShowSmallIcon();
-		
+
 		if (position.getHideIcon() || icon == null) {
 			if (text == null)
 				return;
@@ -818,9 +820,9 @@ public	class NodeUI
 				//g.fillRect(iconR.x-(w+2), iconR.y+(iconR.height-back), w, h);
 				g.drawString(sCount, iconR.x-(w+1), iconR.y+(iconR.height)+extra);
 			}
-			
+
 			//if (node.getNode().getId().equals(ProjectCompendium.APP.getTrashBinID())) {
-			//	
+			//
 			//}
 
 			// DRAW 'T', if has Tags
@@ -853,7 +855,7 @@ public	class NodeUI
 		// DRAW TEXT
 		//int textWidth = fm.stringWidth( text );
 		int textWidth = text.length();
-		
+
 		labelRectangle = viewR;
 		labelRectangle.y = textR.y-fm.getAscent();
 		labelRectangle.height = viewR.height-textR.y+fm.getAscent();
@@ -861,7 +863,7 @@ public	class NodeUI
 		textR.width = fm.stringWidth( text );
 		textR.height = fm.getAscent()+fm.getDescent();
 		textR.x = viewR.x;
-		
+
 		int startPos = 0;
 		int stopPos = 0;
 
@@ -873,8 +875,8 @@ public	class NodeUI
 		if (wrapWidth <= 0) {
 			wrapWidth = ((Model)ProjectCompendium.APP.getModel()).labelWrapWidth;
 		}
-		wrapWidth = wrapWidth+1; // Needs this for some reason.		
-		
+		wrapWidth = wrapWidth+1; // Needs this for some reason.
+
 		if (textWidth > wrapWidth) {
 
 			int row = -1;
@@ -893,7 +895,7 @@ public	class NodeUI
 				if (textLen < wrapWidth ) {
 					curLen = textLen;
 				}
-				
+
 				//int nextLen = 0;
 				/*if (textLen > wrapWidth) {
 					while(curLen <= textLen) {
@@ -910,7 +912,7 @@ public	class NodeUI
 							break;
 						}
 					}
-				}				
+				}
 				else {
 					curLen = textLen;
 				}*/
@@ -1103,7 +1105,7 @@ public	class NodeUI
 						if (stopPos == text.length() && currentRow == row) {
 							currentCaretPosition = text.length();
 
-							if (FormatProperties.autoSearchLabel) {
+							if (APP_PROPERTIES.isAutoSearchLabel()) {
 								UIHintNodeLabelPanel panel = oViewPane.getLabelPanel(oNode.getNode().getId());
 								if (panel != null)
 									panel.focusList();
@@ -1138,7 +1140,7 @@ public	class NodeUI
 				if (currentRow < textRowElements.size()-1) {
 					recalculateCaretRectangle(g, fm, iconR, maxWidth, false);
 
-					if (FormatProperties.autoSearchLabel) {
+					if (APP_PROPERTIES.isAutoSearchLabel()) {
 						UIHintNodeLabelPanel panel = oViewPane.getLabelPanel(oNode.getNode().getId());
 						if (panel != null)
 							panel.focusList();
@@ -1238,8 +1240,8 @@ public	class NodeUI
 					}
 					doubleClicked = false;
 				}
-			}			
-			
+			}
+
 			drawText(g, fm, node, text, textR, iconR, maxWidth, 0);
 
 			// If mouse just clicked
@@ -1292,7 +1294,7 @@ public	class NodeUI
 				if (caretDown) {
 					currentCaretPosition = text.length();
 
-					if (FormatProperties.autoSearchLabel) {
+					if (APP_PROPERTIES.isAutoSearchLabel()) {
 						UIHintNodeLabelPanel panel = oViewPane.getLabelPanel(oNode.getNode().getId());
 						if (panel != null)
 							panel.focusList();
@@ -1506,20 +1508,20 @@ public	class NodeUI
 
 					if (node.isEnabled()) {
 					/*	if (state == ICoreConstants.UNREADSTATE) {
-							g.setColor(UNREAD_TEXT_COLOR);						
+							g.setColor(UNREAD_TEXT_COLOR);
 						} else if (state == ICoreConstants.MODIFIEDSTATE) {
 							g.setColor(MODIFIED_TEXT_COLOR);
 						} else {
 							g.setColor(SELECTED_TEXT_COLOR);
 						}
-					*/	
+					*/
 						g.setColor(SELECTED_TEXT_COLOR);
 						paintEnabledText(node, g, beginText, textX, textY);
 						g.setColor(TSELECTED_TEXT_COLOR);
 						paintEnabledText(node, g, selText, textX+beginWidth, textY);
-					/*	
+					/*
 						if (state == ICoreConstants.UNREADSTATE) {
-							g.setColor(UNREAD_TEXT_COLOR);						
+							g.setColor(UNREAD_TEXT_COLOR);
 						} else if (state == ICoreConstants.MODIFIEDSTATE) {
 							g.setColor(MODIFIED_TEXT_COLOR);
 						} else {
@@ -1542,10 +1544,10 @@ public	class NodeUI
 				else {
 					if (editing) {
 						g.setColor(EDITING_COLOR);
-					} else {						
+					} else {
 						g.setColor(SELECTED_COLOR);
 					}
-					
+
 					if (iconR.x < textR.x) {
 						g.fillRect(iconR.x, textY-fm.getAscent(), iconR.width, textR.height);
 					}
@@ -1554,7 +1556,7 @@ public	class NodeUI
 					}
 
 				/*	if (state == ICoreConstants.UNREADSTATE) {
-						g.setColor(UNREAD_TEXT_COLOR);						
+						g.setColor(UNREAD_TEXT_COLOR);
 					} else if (state == ICoreConstants.MODIFIEDSTATE) {
 						g.setColor(MODIFIED_TEXT_COLOR);
 					} else {
@@ -1573,12 +1575,12 @@ public	class NodeUI
 			else {
 				g.setColor(new Color(node.getNodePosition().getBackground()));
 				g.fillRect(textX, textY-fm.getAscent(), textR.width, textR.height);
-				
+
 				g.setColor(oldColor);
-			
+
 				if (node.isEnabled()) {
 				/*	if (state == ICoreConstants.UNREADSTATE) {
-						g.setColor(UNREAD_TEXT_COLOR);						
+						g.setColor(UNREAD_TEXT_COLOR);
 					} else if (state == ICoreConstants.MODIFIEDSTATE) {
 						g.setColor(MODIFIED_TEXT_COLOR);
 					} else {
@@ -1626,8 +1628,8 @@ public	class NodeUI
 		viewR.x = insets.left;
 		viewR.y = insets.top;
 
-		NodePosition pos = node.getNodePosition();		
-		
+		NodePosition pos = node.getNodePosition();
+
 		Icon icon = node.getIcon();
 		if (pos.getHideIcon() || icon == null) {
 			iconR.width=0;
@@ -1652,15 +1654,15 @@ public	class NodeUI
 					ProjectCompendium.APP.oMeetingManager.getMeetingType() == MeetingManager.REPLAY ) {
 				hasMovie = true;
 			}
-			
+
 			if (pos.getShowTrans()
 					&&  (nodeSumm.isInMultipleViews()) && (nodeSumm.getViewCount() > 1)) {
 				hasTrans = true;
 			}
 			if (pos.getShowText()
-					&& (type != ICoreConstants.TRASHBIN 
-							&& !detail.equals("") 
-							&& !detail.equals(ICoreConstants.NODETAIL_STRING) 
+					&& (type != ICoreConstants.TRASHBIN
+							&& !detail.equals("")
+							&& !detail.equals(ICoreConstants.NODETAIL_STRING)
 							&& !id.equals(ProjectCompendium.APP.getInBoxID()))) {
 				hasText = true;
 			}
@@ -1703,8 +1705,8 @@ public	class NodeUI
 			wrapWidth = ((Model)ProjectCompendium.APP.getModel()).labelWrapWidth;
 		}
 		wrapWidth = wrapWidth+1; // Needs this for some reason.
-		int textWidth = text.length();		
-		
+		int textWidth = text.length();
+
 		textR.width = textWidth;
 		int widestLine = 0;
 
@@ -1761,7 +1763,7 @@ public	class NodeUI
 		if (iconR.width > textR.width) {
 			textR.width = iconR.width;
 		}
-		
+
 		Dimension rv = iconR.union(textR).getSize();
 		rv.width += dx+1;
 		nodeWidth = rv.width;
@@ -1901,7 +1903,7 @@ public	class NodeUI
 					int modifiers = evt.getModifiers();
 					if ((modifiers & MouseEvent.SHIFT_MASK) != 0) {
 						oNode.setSelected(true);
-						oNode.setRollover(false);						
+						oNode.setRollover(false);
 				  	}
 					else {
 						oNode.getViewPane().setSelectedNode(oNode,ICoreConstants.SINGLESELECT);
@@ -1973,33 +1975,32 @@ public	class NodeUI
 	 */
   	public void mouseClicked(MouseEvent evt) {
 
-		if (timer != null) {
+   		if (timer != null) {
 			timer.cancel();
 		}
-  		
 		int clickCount = evt.getClickCount();
 		int modifiers = evt.getModifiers();
-		
+
 		boolean isRightMouse = SwingUtilities.isRightMouseButton(evt);
-		boolean isLeftMouse = SwingUtilities.isLeftMouseButton(evt);		
+		boolean isLeftMouse = SwingUtilities.isLeftMouseButton(evt);
 		if (ProjectCompendium.isMac &&
 			(evt.getButton() == 3 && evt.isShiftDown())) {
 			isRightMouse = true;
 			isLeftMouse = false;
 		}
-		
+
 	  	oUIConnectingLine = null;
 		oUIConnectingLines.removeAllElements();
 
 		UIViewPane oViewPane = oNode.getViewPane();
 
-		if (isRightMouse || (ProjectCompendium.isMac && (modifiers & MouseEvent.CTRL_MASK) != 0)) {
+		if ((isRightMouse || (ProjectCompendium.isMac && (modifiers & MouseEvent.CTRL_MASK) != 0)) && (!(oNode.getViewPane() instanceof UIAerialViewPane))) {
 			if(clickCount == 1) {
 				oNode.requestFocus();
 				if ((modifiers & MouseEvent.SHIFT_MASK) != 0) {
-					oViewPane.setSelectedNode(oNode,ICoreConstants.MULTISELECT);					
+					oViewPane.setSelectedNode(oNode,ICoreConstants.MULTISELECT);
 					oNode.setSelected(true);
-					oNode.setRollover(false);					
+					oNode.setRollover(false);
 					oNode.showPopupMenu(this, evt.getX(),evt.getY());
 			  	}
 				else {
@@ -2087,7 +2088,7 @@ public	class NodeUI
 			// CHECK IF NODE HAS A M AND IF IT HAS BEEN CLICKED
 			if (hasMovie) {
 				if (movieRectangle != null && movieRectangle.contains(nX, nY)) {
-					ProjectCompendium.APP.oMeetingManager.sendMeetingReplay(this);
+					//ProjectCompendium.APP.oMeetingManager.sendMeetingReplay(this);
 					return;
 				}
 			}
@@ -2142,22 +2143,21 @@ public	class NodeUI
 					if (oViewPane.getNumberOfSelectedNodes() > 0) {
 						ProjectCompendium.APP.setNodeSelected(true);
 					} else {
-						ProjectCompendium.APP.setNodeSelected(false);						
+						ProjectCompendium.APP.setNodeSelected(false);
 					}
 				}
 				else {
 					oNode.setSelected(true);
-					oViewPane.setSelectedNode(oNode, ICoreConstants.MULTISELECT);					
+					oViewPane.setSelectedNode(oNode, ICoreConstants.MULTISELECT);
 				}
 				oNode.requestFocus();
 		  	}
 	      	else {
-				if ((clickCount > 1) || (FormatProperties.singleClick)) {
+				if ((clickCount > 1) || (APP_PROPERTIES.isSingleClick())) {
 	      			openNode();
-	      		} else {	      		
+	      		} else {
 					if (clickCount == 1) {
 						oNode.moveToFront();
-
 						oViewPane.setSelectedNode(null, ICoreConstants.DESELECTALL);
 						oViewPane.setSelectedLink(null, ICoreConstants.DESELECTALL);
 						oNode.setRollover(false);
@@ -2207,6 +2207,11 @@ public	class NodeUI
 			dlgTrash.setVisible(true);
 		}
 		else if (type == ICoreConstants.REFERENCE || type == ICoreConstants.REFERENCE_SHORTCUT) {
+			try {
+				oNode.getNode().setState(ICoreConstants.READSTATE);		// Mark the node read (doesn't happen elsewhere)
+			}
+			catch (SQLException ex) {}
+			catch (ModelSessionException ex) {};
 			String path = oNode.getNode().getSource();
 
 			if (path == null || path.equals("")) {
@@ -2216,12 +2221,12 @@ public	class NodeUI
 				int ind = path.indexOf("/");
 				if (ind != -1) {
 					String sGoToViewID = path.substring(0, ind);
-					String sGoToNodeID = path.substring(ind+1);		
-					UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID, 
+					String sGoToNodeID = path.substring(ind+1);
+					UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID,
 							oNode.getViewPane().getViewFrame().getChildNavigationHistory());
 				}
 			} else if (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("www.") ||
-					ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") || path.startsWith("ftp:") || path.startsWith("smb:"))) {				
+					ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") || path.startsWith("ftp:") || path.startsWith("smb:"))) {
 				if (!ExecuteControl.launch( path )) {
 					openEditDialog(false);
 				}
@@ -2284,7 +2289,7 @@ public	class NodeUI
 
 		boolean isRightMouse = SwingUtilities.isRightMouseButton(evt);
 		boolean isLeftMouse = SwingUtilities.isLeftMouseButton(evt);
-		
+
 		if (ProjectCompendium.isMac && bIsMacRightMouse) {
 			isRightMouse = true;
 			isLeftMouse = false;
@@ -2318,7 +2323,7 @@ public	class NodeUI
 								transPoint = UIUtilities.scalePoint(r.x, r.y, scale);
 	 				     	//}
 							try {
-								// This also set the value in the NodePosition object								
+								// This also set the value in the NodePosition object
 								uinode.getViewPane().getView().setNodePosition(uinode.getNode().getId(), transPoint);
 							}
 							catch(Exception ex) {
@@ -2343,6 +2348,8 @@ public	class NodeUI
 							try {
 								// This also set the value in the NodePosition object
 								oNode.getViewPane().getView().setNodePosition(oNode.getNode().getId(), transPoint);
+//								System.out.println("NodeUI: setNodePosition to ("+transPoint.x+", "+transPoint.y+") - INodeSummary ("+r.x+", "+r.y+")");
+//								System.out.flush();
 							}
 							catch(Exception ex) {
 								System.out.println(ex.getMessage());
@@ -2376,6 +2383,30 @@ public	class NodeUI
 		bDragging = false;
 	}
 
+  	/**
+  	 * Flushed updated view coordinates to the database.  This is basically a bug fix that keeps label editing
+  	 * from scooting the node's apparent X coordinate to the right or left.
+  	 */
+  	public void flushPosition() {
+
+  		UIViewPane viewPane = oNode.getViewPane();
+  		INodeSummary node = oNode.getNode();
+		if (node != null) {
+			Rectangle r = oNode.getBounds();
+
+			//rescale the position to actual position
+			Point transPoint = UIUtilities.scalePoint(r.x, r.y, viewPane.getScale());
+
+			//confirm move in the view
+			try {
+				// This also set the value in the NodePosition object
+				oNode.getViewPane().getView().setNodePosition(oNode.getNode().getId(), transPoint);
+			}
+			catch(Exception ex) {
+				System.out.println(ex.getMessage());
+			}
+		}
+  	}
 
 	/**
 	 * Visualizes when a mouse enters the node.
@@ -2398,12 +2429,13 @@ public	class NodeUI
 
 		oNode.setRollover(true);
 
-		//Lakshmi (6/7/06) - updated status info to include author and date of creation 
+		//Lakshmi (6/7/06) - updated status info to include author and date of creation
 		String sStatus = "";
 		String author = oNode.getNode().getAuthor();
-		String creationDate = (UIUtilities.getSimpleDateFormat("dd, MMMM, yyyy h:mm a").format(oNode.getNode().getCreationDate()).toString());				
-		
-		String showtext = author + " " + creationDate +", " +
+		String creationDate = (UIUtilities.getSimpleDateFormat("dd-MMM-yy").format(oNode.getNode().getCreationDate()).toString());
+
+		String showtext = creationDate +" (" + author + ") " +
+						 oNode.getNode().getLabel() + " [] " +
 						 oNode.getNode().getDetail();
 
 		if (showtext != null) {
@@ -2414,8 +2446,8 @@ public	class NodeUI
 		}
 
 		ProjectCompendium.APP.setStatus(sStatus);
-		
-		
+
+
 	}
 
 	/**
@@ -2450,7 +2482,7 @@ public	class NodeUI
 			nodeViewPane.hideDetail();
 			//nodeViewPane.hideLabels();
 
-			if (FormatProperties.imageRollover)
+			if (APP_PROPERTIES.isImageRollover())
 				nodeViewPane.hideImages();
 		}
 
@@ -2505,6 +2537,9 @@ public	class NodeUI
 		if(oNode.getViewPane().getView().getType() == ICoreConstants.MAPVIEW) {
 
 			oViewPane = oNode.getViewPane();
+			if (oViewPane instanceof UIAerialViewPane) {	// Ignore node drags in Aerial View
+				return;										// Someday do it right and apply scaling to everything that follows
+			}
 
 			if ( oStartingBounds == null ) {
 				return;
@@ -2821,9 +2856,9 @@ public	class NodeUI
 		oNode.setRollover(false);
 
 		String os = ProjectCompendium.platform.toLowerCase();
-		
+
 		oViewPane = oNode.getViewPane();
-		
+
 		String sAuthor = oViewPane.getCurrentAuthor();
 
 		///////////////MUTLIDRAG MOUSE RIGHT BUTTON (LINK)//////////////////////////
@@ -2840,7 +2875,7 @@ public	class NodeUI
 
 				//create a dummy UINode
 				Date date = new Date();
-				UINode dummyToNode = new UINode(new NodePosition(oNode.getViewPane().getView(), oNode.getNode(), 
+				UINode dummyToNode = new UINode(new NodePosition(oNode.getViewPane().getView(), oNode.getNode(),
 						ptFromCenter.x, ptFromCenter.y, date, date), sAuthor);
 
 				UILink link = new UILink(uinode, dummyToNode, UIUtilities.getLinkType(uinode));
@@ -2946,7 +2981,7 @@ public	class NodeUI
 
 			Point p2 = SwingUtilities.convertPoint((Component)evt.getSource(), evt.getX(), evt.getY(), oViewPane);
 
-			if (FormatProperties.imageRollover &&
+			if (APP_PROPERTIES.isImageRollover() &&
 							hasIcon && iconRectangle != null && iconRectangle.contains(nX, nY) ) {
 
 				NodeSummary node = oNode.getNode();
@@ -2989,6 +3024,8 @@ public	class NodeUI
 				oViewPane.hideDetail();
 			}
 
+			if (oNode.getViewPane() instanceof UIAerialViewPane) return;  	// Skip the node decoration popups if in Aerial View
+
 			if (hasText && textRectangle != null && textRectangle.contains(nX, nY) ) {
 				//oNode.setToolTipText("Click to open node details");
 				oViewPane.hideCodes();
@@ -3005,7 +3042,7 @@ public	class NodeUI
 				oViewPane.hideCodes();
 				oViewPane.hideDetail();
 				oViewPane.hideImages();
-				oViewPane.hideViews();
+//				oViewPane.hideViews();
 				oViewPane.showViews(oNode.getNode(), p2.x, p2.y);
 			}
 			else {
@@ -3121,13 +3158,13 @@ public	class NodeUI
 	    NodeSummary fromNode = from.getNode();
 	    NodeSummary toNode = to.getNode();
 	    String inbox = ProjectCompendium.APP.getInBoxID();
-	    	    
+
 	    if( (fromNode == null || fromNode.getType() == ICoreConstants.TRASHBIN)
 				|| (toNode ==null || toNode.getType() == ICoreConstants.TRASHBIN)
 				|| (fromNode.getId()).equals(toNode.getId())
 	    		|| (fromNode.getId().equals(inbox))
 	    		|| (toNode.getId().equals(inbox))) {
-	   
+
 			evt.getDropTargetContext().dropComplete(true);
 			return;
 	    }
@@ -3275,7 +3312,7 @@ public	class NodeUI
 	 */
 	private void addCharToLabel(String key) {
 
-		if (oNode.getNode().getType() != ICoreConstants.TRASHBIN && 
+		if (oNode.getNode().getType() != ICoreConstants.TRASHBIN &&
 				!oNode.getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 
 			String oldText = oNode.getText();
@@ -3304,8 +3341,8 @@ public	class NodeUI
 			currentCaretPosition ++;
 
 			Model oModel = (Model)ProjectCompendium.APP.getModel();
-			boolean bDetailPopup = oModel.detailPopup;					
-			int nLabelPopupLength = oModel.labelPopupLength;					
+			boolean bDetailPopup = oModel.detailPopup;
+			int nLabelPopupLength = oModel.labelPopupLength;
 
 			if(bDetailPopup
 					&& newText.length() >= nLabelPopupLength) {
@@ -3328,10 +3365,10 @@ public	class NodeUI
 			}
 
 			previousString = oldText;
-			oNode.setText(newText);
+			oNode.setText(newText, true);		// mlb: Database deferred update
 			ProjectCompendium.APP.setStatus(newText);
-			
-			if (FormatProperties.autoSearchLabel && (!bDetailPopup ||
+
+			if (APP_PROPERTIES.isAutoSearchLabel() && (!bDetailPopup ||
 					bDetailPopup && newText.length() < nLabelPopupLength)) {
 
 				if (oViewPane != null && oNode != null)
@@ -3344,12 +3381,12 @@ public	class NodeUI
 	 * If editing, do a paste from the clipboard into the node label.
 	 */
 	public void paste() {
-		
+
 		if (oNode.getNode().getType() == ICoreConstants.TRASHBIN ||
 				oNode.getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 			return;
 		}
-		
+
 		if (editing) {
 			String oldText = oNode.getText();
 			previousString = oNode.getText();
@@ -3380,10 +3417,10 @@ public	class NodeUI
 
 			String text = oldText.substring(0, currentCaretPosition) + s + oldText.substring(currentCaretPosition);
     		currentCaretPosition+=s.length();
-			oNode.setText(text);
+			oNode.setText(text, true);		// mlb: Database deferred update
 			ProjectCompendium.APP.setStatus(text);
 
-			if (FormatProperties.autoSearchLabel)
+			if (APP_PROPERTIES.isAutoSearchLabel())
 				oViewPane.showLabels(oNode, text);
 		}
 	}
@@ -3392,12 +3429,12 @@ public	class NodeUI
 	 * If editing, do a cut to the clipboard from the node label.
 	 */
 	public void cut() {
-		
+
 		if (oNode.getNode().getType() == ICoreConstants.TRASHBIN ||
 				oNode.getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 			return;
 		}
-		
+
 		if (editing) {
 			String text = oNode.getText();
 
@@ -3414,7 +3451,7 @@ public	class NodeUI
 
 			previousString = text;
 			text = text.substring(0, startSelection) + text.substring(stopSelection);
-         	oNode.setText(text);
+         	oNode.setText(text, true);		// mlb: Database deferred update
 
 			currentCaretPosition = startSelection;
 			startSelection = -1;
@@ -3422,7 +3459,7 @@ public	class NodeUI
 
 			oNode.repaint();
 
-			if (FormatProperties.autoSearchLabel)
+			if (APP_PROPERTIES.isAutoSearchLabel())
 				oViewPane.showLabels(oNode, text);
 		}
 	}
@@ -3431,11 +3468,18 @@ public	class NodeUI
 	 * If editing, delete selected text from the node label.
 	 */
 	public void delete() {
+
+	    //TODO: Work on locking functions has been frozen. Finish or delete.
+//		if (0 != oNode.getNode().getLockID()) {
+//			ProjectCompendium.APP.displayError("Sorry, that node is locked. Please unlock it before continuing.");
+//			return;
+//		}
+
 		if (oNode.getNode().getType() == ICoreConstants.TRASHBIN ||
 				oNode.getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 			return;
 		}
-		
+
 		if (editing) {
 			if (startSelection > -1 && stopSelection > -1 && stopSelection > startSelection) {
 				String text = oNode.getText();
@@ -3446,11 +3490,11 @@ public	class NodeUI
 				startSelection = -1;
 				stopSelection = -1;
 
-				oNode.setText(text);
+				oNode.setText(text, true);		// mlb: Database deferred update
 				oNode.repaint();
 				ProjectCompendium.APP.setStatus(text);
 
-				if (FormatProperties.autoSearchLabel)
+				if (APP_PROPERTIES.isAutoSearchLabel())
 					oViewPane.showLabels(oNode, text);
 			}
 			else {
@@ -3465,11 +3509,11 @@ public	class NodeUI
 					text = text.substring(0, currentCaretPosition) + text.substring(currentCaretPosition+1);
 				}
 
-				oNode.setText(text);
+				oNode.setText(text, true);		// mlb: Database deferred update
 				oNode.repaint();
 				ProjectCompendium.APP.setStatus(text);
 
-				if (FormatProperties.autoSearchLabel)
+				if (APP_PROPERTIES.isAutoSearchLabel())
 					oViewPane.showLabels(oNode, text);
 			}
 		}
@@ -3513,11 +3557,17 @@ public	class NodeUI
 	 */
 	// MOVED ALL REGISTERED KEYBOARD ACTIONS DOWN HERE DUE TO INHERANT MEMORY LEAKS
 	public void keyPressed(KeyEvent evt) {
-		
+
+		if (oNode.getViewPane() instanceof UIAerialViewPane) {	// Ignore key presses over nodes in Aerial View
+			return;												// Someday do it right and apply scaling to everything that follows
+		}
+
 		if (oNode != null && !oNode.hasFocus()) {
 			oNode.getViewPane().getUI().keyPressed(evt);
 			return;
 		}
+		if (oViewPane == null)
+			oViewPane = oNode.getViewPane();
 
 		char keyChar = evt.getKeyChar();
 		char[] key = {keyChar};
@@ -3649,14 +3699,14 @@ public	class NodeUI
 					}
 					case KeyEvent.VK_Z: { // UNDO LABEL PASTE
 						String temp = oNode.getText();
-						oNode.setText(previousString);
+						oNode.setText(previousString, true);		// mlb: Database deferred update
 						currentCaretPosition = previousString.length();
 
-						if (FormatProperties.autoSearchLabel)
+						if (APP_PROPERTIES.isAutoSearchLabel())
 							oViewPane.showLabels(oNode, previousString);
 
 						previousString = temp;
-						evt.consume();						
+						evt.consume();
 						break;
 					}
 					case KeyEvent.VK_A: { // SELECT ALL
@@ -3668,25 +3718,10 @@ public	class NodeUI
 						if (!ProjectCompendium.isMac) { // ONLY ON WINDOWS/LINUX
 							if (currentCaretPosition > 0) {
 								String text = oNode.getText();
-								String section = text.substring(0, currentCaretPosition);
-								int index = section.lastIndexOf(" ");
-
-								if (index == section.length()-1) {
-									section = section.substring(0, section.length()-2);
-									index = section.lastIndexOf(" ") - 1;
-									if (index == -1) {
-										currentCaretPosition = 0;
-									}
-									else {
-										currentCaretPosition = currentCaretPosition - ( section.length() - index);
-									}
-								}
-								else if (index == -1) {
-									currentCaretPosition = 0;
-								}
-								else {
-									currentCaretPosition = index - 1;
-								}
+								int i = currentCaretPosition;
+								while ((i > 0) && (text.charAt(i-1) == ' ')) i--;	// Move backwards over whitespace if any
+								while ((i > 0) && (text.charAt(i-1) != ' ')) i--;	// Then move back until next whitespace found
+								currentCaretPosition = i;
 							}
 
 							oNode.repaint();
@@ -3830,29 +3865,20 @@ public	class NodeUI
 			}
 			else if (keyCode == KeyEvent.VK_LEFT && modifiers == Event.SHIFT_MASK+Event.CTRL_MASK
 						&& !ProjectCompendium.isMac) {  // ON WINDOWS AND LINUX ONLY
+				String text = oNode.getText();
 				if (currentCaretPosition > 0) {
 					if (stopSelection == -1)
 						stopSelection = currentCaretPosition;
 
-					String text = oNode.getText();
-					String section = text.substring(0, currentCaretPosition);
-					int index = section.lastIndexOf(" ");
-
-					if (index == section.length()-1) {
-						section = section.substring(0, section.length()-2);
-						index = section.lastIndexOf(" ") - 1;
-						if (index == -1)
-							currentCaretPosition = 0;
-						else
-							currentCaretPosition = currentCaretPosition - ( section.length() - index);
+					int i = currentCaretPosition;
+					while ((i > 0) && (text.charAt(i-1) == ' ')) i--;	// Move backwards over whitespace if any
+					while ((i > 0) && (text.charAt(i-1) != ' ')) i--;	// Then move back until next whitespace found
+					currentCaretPosition = i;
+					if ((i < startSelection) || (startSelection == -1)) {
+						startSelection = i;
+					} else {
+						stopSelection = i;  // Moving backwards over an existing selection, so this is an undo
 					}
-					else if (index == -1)
-						currentCaretPosition = 0;
-					else
-						currentCaretPosition = index+1;
-
-					if (startSelection == -1 || startSelection > currentCaretPosition)
-						startSelection = currentCaretPosition;
 				}
 
 				oNode.repaint();
@@ -3865,20 +3891,16 @@ public	class NodeUI
 					if (startSelection == -1)
 						startSelection = currentCaretPosition;
 
-					String section = text.substring(currentCaretPosition);
-					int index = section.indexOf(" ");
-
-					if (index == currentCaretPosition+1) {
-						section = section.substring(1);
-						index = section.indexOf(" ")+1;
+					int i = currentCaretPosition;
+					while ((i < text.length()) && (text.charAt(i) != ' ')) i++;	// Move forward over printing chars
+					while ((i < text.length()) && (text.charAt(i) == ' ')) i++;	// Then move fwd over any whitespace
+					currentCaretPosition = i;
+					if ((i > stopSelection) || (stopSelection == -1)) {
+						stopSelection = i;
+					} else {
+						startSelection = i;	// Moving forwards over an existing selection, so this is an undo
 					}
 
-					if (index == -1)
-						currentCaretPosition = text.length();
-					else
-						currentCaretPosition += index;
-
-					stopSelection = currentCaretPosition;
 				}
 
 				oNode.repaint();
@@ -3905,7 +3927,7 @@ public	class NodeUI
 					else if (index == -1)
 						currentCaretPosition = 0;
 					else
-						currentCaretPosition = index+1;
+						currentCaretPosition = index - 1;
 
 					if (startSelection == -1 || startSelection > currentCaretPosition)
 						startSelection = currentCaretPosition;
@@ -3915,7 +3937,7 @@ public	class NodeUI
 				evt.consume();
 			}
 			else if (keyCode == KeyEvent.VK_RIGHT && modifiers == Event.SHIFT_MASK+Event.ALT_MASK
-						&& ProjectCompendium.isMac) {  // ON MAC ONLY
+						&& !ProjectCompendium.isMac) {  // ON MAC ONLY
 				String text = oNode.getText();
 				if (currentCaretPosition < text.length()) {
 					if (startSelection == -1)
@@ -3932,7 +3954,7 @@ public	class NodeUI
 					if (index == -1)
 						currentCaretPosition = text.length();
 					else
-						currentCaretPosition += index;
+						currentCaretPosition += index+1;
 
 					stopSelection = currentCaretPosition;
 				}
@@ -3946,7 +3968,7 @@ public	class NodeUI
 
 				if (oNode.getNode().getType() != ICoreConstants.TRASHBIN &&
 						!oNode.getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
-					
+
 					if (startSelection > -1 && stopSelection > -1 && stopSelection > startSelection) {
 						String text = oNode.getText();
 						previousString = text;
@@ -3956,11 +3978,11 @@ public	class NodeUI
 						startSelection = -1;
 						stopSelection = -1;
 
-						oNode.setText(text);
+						oNode.setText(text, true);		// mlb: Database deferred update
 						oNode.repaint();
 						ProjectCompendium.APP.setStatus(text);
 
-						if (FormatProperties.autoSearchLabel)
+						if (APP_PROPERTIES.isAutoSearchLabel())
 							oViewPane.showLabels(oNode, text);
 					}
 					else {
@@ -3979,15 +4001,12 @@ public	class NodeUI
 						if (stopSelection > -1)
 							stopSelection = currentCaretPosition;
 
-						oNode.setText(text);
+						oNode.setText(text, true);		// mlb: Database deferred update
 						oNode.repaint();
 						ProjectCompendium.APP.setStatus(text);
 
-						if (FormatProperties.autoSearchLabel) {
-							if (oViewPane == null)
-								oViewPane = oNode.getViewPane();
+						if (APP_PROPERTIES.isAutoSearchLabel())
 							oViewPane.showLabels(oNode, text);
-						}
 					}
 				}
 				evt.consume();
@@ -4006,13 +4025,13 @@ public	class NodeUI
 				currentCaretPosition += 8;
 				evt.consume();
 			}
-			else if (keyCode == KeyEvent.VK_ESCAPE && modifiers == 0) {				
+			else if (keyCode == KeyEvent.VK_ESCAPE && modifiers == 0) {
 				resetEditing();
 				oViewPane.hideLabels();
 				oNode.requestFocus();
-				evt.consume();	
+				evt.consume();
 			}
-			
+
 			// MOVED TO KEYTYPED TO PICK UP ACCENTED CHARACTER ETC WHICH ARE DOUBLE KEYSTOKES
 			/*else if ( /*modifiers != java.awt.Event.ALT_MASK + java.awt.Event.SHIFT_MASK &&
 					 modifiers != java.awt.Event.ALT_MASK &&*/
@@ -4112,16 +4131,16 @@ public	class NodeUI
 				}
 				// notify the listeners
 				oViewPane.getViewFrame().getUndoListener().postEdit(edit);
-				
+
 				//Thread thread = new Thread() {
 				//	public void run() {
 						ProjectCompendium.APP.setTrashBinIcon();
 				//	}
 				//};
 				//thread.start();
-				
+
 				oNode.setCursor(Cursor.getDefaultCursor());
-				evt.consume();				
+				evt.consume();
 			}
 			else if (keyCode == KeyEvent.VK_HOME && modifiers == 0) {
 				oViewPane.getViewFrame().scrollHome(true);
@@ -4172,15 +4191,15 @@ public	class NodeUI
 				oViewPane.requestFocus();
 
 				evt.consume();
-			}			
+			}
 			else if (modifiers == java.awt.Event.ALT_MASK) {
 
 				int nType = -1;
 
-				if(keyCode == KeyEvent.VK_P || keyCode == KeyEvent.VK_I || keyCode == KeyEvent.VK_A || sKeyPressed.equals("!") || sKeyPressed.equals("1")) {
+				if(keyCode == KeyEvent.VK_P || keyCode == KeyEvent.VK_I || keyCode == KeyEvent.VK_A) {
 					nType = ICoreConstants.POSITION;
 				}
-				else if (keyCode == KeyEvent.VK_Q || sKeyPressed.equals("?") || sKeyPressed.equals("/")) {
+				else if (keyCode == KeyEvent.VK_Q) {
 					nType = ICoreConstants.ISSUE;
 				}
 				else if(keyCode == KeyEvent.VK_U) {
@@ -4209,15 +4228,14 @@ public	class NodeUI
 				}
 
 				if (nType > -1) {
-					evt.consume();	
-					
+					evt.consume();
+
 					// Fix for Mac Tiger bug
 					final int fnType = nType;
 					Thread thread = new Thread("") {
 						public void run() {
 							UINode node = UIUtilities.createNodeAndLinkRight(oNode, fnType, 100, "", ProjectCompendium.APP.getModel().getUserProfile().getUserName());
-							oViewPane.setSelectedNode(node, ICoreConstants.SINGLESELECT);
-							node.getUI().setEditing();	
+							node.getUI().setEditing();
 							node.setText("");
 						}
 					};
@@ -4231,7 +4249,7 @@ public	class NodeUI
 				if(keyCode == KeyEvent.VK_P || keyCode == KeyEvent.VK_I || keyCode == KeyEvent.VK_A) {
 					nType = ICoreConstants.POSITION;
 				}
-				else if (keyCode == KeyEvent.VK_Q || sKeyPressed.equals("?") || sKeyPressed.equals("/")) {
+				else if (keyCode == KeyEvent.VK_Q) {
 					nType = ICoreConstants.ISSUE;
 				}
 				else if(keyCode == KeyEvent.VK_U) {
@@ -4263,7 +4281,7 @@ public	class NodeUI
 					oNode.setType(nType, true, currentCaretPosition);
 					evt.consume();
 				}
-			}				
+			}
 			else if (keyCode == KeyEvent.VK_ESCAPE && modifiers == 0) {
 
 				oViewPane = oNode.getViewPane();
@@ -4272,8 +4290,8 @@ public	class NodeUI
 
 				oViewPane.getParent().requestFocus();
 				oViewPane.requestFocus();
-				evt.consume();				
-			}			
+				evt.consume();
+			}
 		}
 
 		//******** GENERIC KEY PRESSES ***********//
@@ -4298,6 +4316,13 @@ public	class NodeUI
 			oNode.showViewsDialog();
 			evt.consume();
 		}
+//		else if (modifiers == java.awt.Event.ALT_MASK && keyCode == KeyEvent.VK_W) {
+//			String nodeId = oNode.getNode().getId();
+//			UIReadersDialog readers = new UIReadersDialog(ProjectCompendium.APP, nodeId);
+//			UIUtilities.centerComponent(readers, ProjectCompendium.APP);
+//			readers.setVisible(true);
+//			evt.consume();
+//		}
 		else if (modifiers == java.awt.Event.ALT_MASK && keyCode == KeyEvent.VK_X) {
 			releaseFocusAndRollover();
 			ProjectCompendium.APP.onCodes();
@@ -4322,12 +4347,12 @@ public	class NodeUI
 				case KeyEvent.VK_B: { // BOLD / UNBOLD THE TEXT OF ALL SELECTED NODES IN THE CURRENT MAP
 					ProjectCompendium.APP.getToolBarManager().addFontStyle(Font.BOLD);
 					evt.consume();
-					break;					
+					break;
 				}
 				case KeyEvent.VK_I: { // ITALIC / UNITALIC THE TEXT OF ALL SELECTED NODES IN THE CURRENT MAP
-					ProjectCompendium.APP.getToolBarManager().addFontStyle(Font.ITALIC);					
+					ProjectCompendium.APP.getToolBarManager().addFontStyle(Font.ITALIC);
 					evt.consume();
-					break;									}				
+					break;									}
 				case KeyEvent.VK_ENTER: {
 					try {
 						if (oNode.getViewPane().getView() != ProjectCompendium.APP.getHomeView() )
@@ -4345,15 +4370,7 @@ public	class NodeUI
 		}
 		else if (keyCode == KeyEvent.VK_INSERT && modifiers == 0) {
 			releaseFocusAndRollover();
-
-			if (((oNode.getNode()).getType() == ICoreConstants.MAPVIEW) ||
-				((oNode.getNode()).getType() == ICoreConstants.LISTVIEW) ||
-				((oNode.getNode()).getType() == ICoreConstants.MAP_SHORTCUT) ||
-				((oNode.getNode()).getType() == ICoreConstants.LIST_SHORTCUT)
-				)
-			{
-				openEditDialog(false);
-			}
+			openEditDialog(false);
 			evt.consume();
 		}
 		else if (keyCode == KeyEvent.VK_F2 && modifiers == 0) {
@@ -4367,28 +4384,12 @@ public	class NodeUI
 		else if (keyCode == KeyEvent.VK_F4 && modifiers == 0) {
 			ProjectCompendium.APP.zoomFocused();
 			evt.consume();
-		}		
+		}
 		else if (keyCode == KeyEvent.VK_F12 && modifiers == 0) {
-			NodeSummary node = oNode.getNode();
-			if(node.getState() != ICoreConstants.READSTATE)
-				try {
-					node.setState(ICoreConstants.READSTATE);
-				} catch (SQLException e) {
-					e.printStackTrace();
-				} catch (ModelSessionException e) {
-					e.printStackTrace();
-				}
+			oViewPane.markSelectionSeen();		// Might have a selection but gethere from user Shift-clicking nodes
 			evt.consume();
 		} else if (keyCode == KeyEvent.VK_F12 && modifiers == Event.SHIFT_MASK) {
-			NodeSummary node = oNode.getNode();
-			if(node.getState() != ICoreConstants.UNREADSTATE)
-				try {
-					node.setState(ICoreConstants.UNREADSTATE);
-				} catch (SQLException e) {
-					e.printStackTrace();
-				} catch (ModelSessionException e) {
-					e.printStackTrace();
-				}
+			oViewPane.markSelectionUnseen();	// Might have a selection but gethere from user Shift-clicking nodes
 			evt.consume();
 		}
 	}
@@ -4408,7 +4409,7 @@ public	class NodeUI
 
 		if (oNode != null && !oNode.hasFocus()) {
 			return;
-		} 
+		}
 
 		// IF EDITING THE TEXT AREA
 		if (editing) {
@@ -4428,7 +4429,7 @@ public	class NodeUI
 			}
 		}
 	}
-	
+
 	/**
 	 * Find the viewframe for this node. If the node does not know it get the current frame.
 	 * This should not be necessary but fixes an occassional bug.
@@ -4497,7 +4498,7 @@ public	class NodeUI
 		if (oNode == null) {
 			return;
 		}
-		
+
 		Rectangle r = oNode.getBounds();
 
 		int prefX = r.x;
@@ -4527,21 +4528,33 @@ public	class NodeUI
 	 */
 	private class NodeBorder extends AbstractBorder {
 
-		public void paintBorder (Component c, Graphics g, int x, int y, int width, int height) {
+		public void paintBorder (Component c, Graphics g, int x, int y, int width, int height)
+		{
+			//System.out.println("4533 NodeUI entered paint Border");
 
 			boolean	isHot = false;
 			UINode node = null;
 
-			if (c instanceof UINode) {
+			if (c instanceof UINode)
+			{
 				node = (UINode)c;
 				isHot = node.isRollover();
 			}
 			int type = node.getNode().getType();
-			Model oModel = (Model)ProjectCompendium.APP.getModel();			
-			boolean bMapBorder = oModel.mapBorder;			
-			
-			
-			if (node.hasFocus() && !editing) {
+			Model oModel = (Model)ProjectCompendium.APP.getModel();
+			boolean bMapBorder = oModel.mapBorder;
+
+			//if (node.getNode().getId().equals(ProjectCompendium.APP.getInBoxID()))
+			//{
+			//	System.out.println("4546 NodeUI found Inbox");
+			//}
+
+			//System.out.println("4544 NodeUI node.getNode().getId() is " + node.getNode().getId());
+			//System.out.println("4545 NodeUI ProjectCompendium.APP.getInBoxID() is " + ProjectCompendium.APP.getInBoxID());
+
+			if (node.hasFocus() && !editing)
+			{
+				//System.out.println("4557 NodeUI");
 				if ((type == ICoreConstants.MAPVIEW ||
 					type == ICoreConstants.LISTVIEW ||
 					type == ICoreConstants.MAP_SHORTCUT ||
@@ -4565,7 +4578,9 @@ public	class NodeUI
 					g.setColor(oldColor);
 				}
 			}
-			else if (isHot && !editing) {
+			else if (isHot && !editing)
+			{
+				//System.out.println("4583 NodeUI");
 				if ((type == ICoreConstants.MAPVIEW ||
 					type == ICoreConstants.LISTVIEW ||
 					type == ICoreConstants.MAP_SHORTCUT ||
@@ -4589,7 +4604,9 @@ public	class NodeUI
 					g.setColor(oldColor);
 				}
 			}
-			else if (node != null) {
+			else if (node != null)
+			{
+				//System.out.println("4609 NodeUI");
 				boolean bShowMapBorder = false;
 				if ((type == ICoreConstants.MAPVIEW ||
 						type == ICoreConstants.LISTVIEW ||
@@ -4614,30 +4631,54 @@ public	class NodeUI
 						g.setColor(oldColor);
 					}
 				}
-				else if (state == ICoreConstants.MODIFIEDSTATE) {
+				else if (state == ICoreConstants.MODIFIEDSTATE)
+				{
+					//System.out.println("4636 NodeUI");
+
+					//System.out.println("4638 NodeUI bShowMapBorder is " + bShowMapBorder);
+					//System.out.println("4638 NodeUI bMapBorder is " + bMapBorder);
+
 					if (bShowMapBorder) {
-						if (bMapBorder) {
+						//if (bMapBorder) {
+							//This is the initial paint green border on project open
+							//System.out.println("4622 NodeUI paint raised bevel Modified Border Color green");
 							paintRaisedBevel(c, g, x, y, width, height, IUIConstants.MODIFIED_BORDER_COLOR);
-						}
+						//}
 					}
-					else {
+					else
+					{
+						//System.out.println("4647 NodeUI");
+
 						Color oldColor = g.getColor();
+						//System.out.println("4628 NodeUI setColor Modified Border Color green");
 						g.setColor(IUIConstants.MODIFIED_BORDER_COLOR);
 						g.draw3DRect(x, y, width-1, height-1, true);
 						g.setColor(oldColor);
 					}
 				}
-				else {
-					if (node.getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
+				else
+				{
+					//System.out.println("4658 NodeUI");
+
+					if (node.getNode().getId().equals(ProjectCompendium.APP.getInBoxID()))
+					{
+						//System.out.println("4662 NodeUI");
 						bMapBorder = false;
 					}
-					if (bShowMapBorder) {
-						if (bMapBorder) {
+					if (bShowMapBorder)
+					{
+						//System.out.println("4667 NodeUI");
+						if (bMapBorder)
+						{
+							//System.out.println("4670 NodeUI");
 							paintRaisedBevel(c, g, x, y, width, height, IMAGEMAP_COLOR);
 						}
 					}
 				}
 			}
+
+			//System.out.println("4564 NodeUI exiting paint Border");
+
 		}
 
 	   	protected void paintRaisedBevel(Component c, Graphics g, int x, int y,
@@ -4706,7 +4747,7 @@ public	class NodeUI
 				type == ICoreConstants.MAP_SHORTCUT ||
 				type == ICoreConstants.LIST_SHORTCUT) ) {
 
-				Model oModel = (Model)ProjectCompendium.APP.getModel();			
+				Model oModel = (Model)ProjectCompendium.APP.getModel();
 				boolean bMapBorder = oModel.mapBorder;
 				if (bMapBorder)
 					return new Insets(2,2,2,2);
@@ -4760,6 +4801,12 @@ public	class NodeUI
 
 		boolean bDeleted = false;
 
+        //TODO: Work on locking functions has been frozen. Finish or delete.
+//		if (0 != node.getNode().getLockID()) {
+//			ProjectCompendium.APP.displayError("Sorry, that node is locked. Please unlock it before continuing.");
+//			return false;
+//		}
+
 		deleteLinksforNode(node, edit);
 		bDeleted = deleteNode(node);
 
@@ -4775,6 +4822,11 @@ public	class NodeUI
      */
   	private boolean deleteNode(UINode node) {
 
+//  	if (0 != node.getNode().getLockID()) {
+//			ProjectCompendium.APP.displayError("Sorry, that node is locked. Please unlock it before continuing.");
+//			return false;
+//		}
+
 		ProjectCompendium.APP.setStatus("Deleting " + node.getNode().getLabel());
 
 		boolean nodeDeletedFromDB = removeFromDatamodel(node);
@@ -4784,25 +4836,31 @@ public	class NodeUI
 
 		removeFromUI(node);
 		ProjectCompendium.APP.setStatus("");
-		
+
 		return nodeDeletedFromDB;
   	}
 
   	/**
      * Marks the given node as deleted in the database.
 	 * @param node the node to delete.
-	 * @return true if the node was the last instance and has been totally deleted, else false.
+	 * @return true if the node was the last instance nad has been totally deleted, else false.
      */
 	public boolean removeFromDatamodel(UINode node) {
 
-	    //don't delete the trashbin
+	    //dont delete the trashbin
 	    NodeSummary oNode = node.getNode();
-	    
+
+	    //TODO: Work on locking functions has been frozen. Finish or delete.
+//	    if (0 != node.getNode().getLockID()) {
+//			ProjectCompendium.APP.displayError("Sorry, that node is locked. Please unlock it before continuing.");
+//			return false;
+//		}
+
 		if((oNode.getType() == ICoreConstants.TRASHBIN) ||
 				oNode.getId().equals(ProjectCompendium.APP.getInBoxID())) {
 			return 	false;
 		}
-		
+
 		boolean nodeDeletedFromDB = false;
 
 		oViewPane = node.getViewPane();
@@ -4811,7 +4869,7 @@ public	class NodeUI
 		}
 		catch(Exception ex) {
 			ex.printStackTrace();
-			System.out.println("Error "+ex.getMessage());			
+			System.out.println("Error "+ex.getMessage());
 			return false;
 		}
 
@@ -4822,11 +4880,11 @@ public	class NodeUI
 				ProjectCompendium.APP.removeViewFromHistory(view);
 			}
 		}
-		
+
 		if(oNode.getViewCount() > 0 ) {
             return false;
         } else {
-            return true; 
+            return true;
         }
 	}
 
@@ -4835,11 +4893,16 @@ public	class NodeUI
 	 * @param node com.compendium.ui.UINode, the node to delete.
      */
 	public void removeFromUI(UINode node) {
+	    //TODO: Work on locking functions has been frozen. Finish or delete.
+//		if (0 != node.getNode().getLockID()) {
+//			ProjectCompendium.APP.displayError("Sorry, that node is locked. Please unlock it before continuing.");
+//			return;
+//		}
 
 		// Lakshmi - 5/25/06
 		if(oViewPane == null)
 			 oViewPane = node.getViewPane();
-		
+
 		//remove node from the UIviewpane layer
 		oViewPane.remove(node);
 
@@ -4853,10 +4916,10 @@ public	class NodeUI
 		if (oViewPane != null) {
 			oViewPane.hideCodes();
 			oViewPane.hideDetail();
-			if (FormatProperties.imageRollover)
+			if (APP_PROPERTIES.isImageRollover())
 				oViewPane.hideImages();
-		}				
-		
+		}
+
 		//IF NODE IS A VIEW, REMOVE IT FROM DESKTOP IF OPEN
 		if(node.getNode() instanceof View) {
 			ProjectCompendium.APP.removeView((View)node.getNode());

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import java.util.*;
@@ -88,10 +87,10 @@ public class UITagUsageDialog extends UIDialog implements ActionListener, IUICon
 
 	/** The code for whihc this dialog is displaying the usage.*/
 	private Code				code				= null;
-	
+
 	/** The parent Panel for this dialog.*/
 	private UITagTreePanel		oParent				= null;
-		
+
 	/**
 	 * Constructor. Initializes and draws this dialog.
 	 *
@@ -270,10 +269,10 @@ public class UITagUsageDialog extends UIDialog implements ActionListener, IUICon
 			NodeSummary node = (NodeSummary)oNodes.elementAt(selection);
 			node.removeCode(code);
 			updateListView();
-			
+
 			if (oParent != null) {
 				oParent.updateTreeData();
-			} 
+			}
 		}
 		catch(Exception ex) {
 			ProjectCompendium.APP.displayError("Error: (UICodeNodeDialog.removeCode) \n\n"+ex.getMessage());

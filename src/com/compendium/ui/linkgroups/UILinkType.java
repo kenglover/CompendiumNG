@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.linkgroups;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -37,7 +38,6 @@ import javax.swing.*;
 
 import com.compendium.*;
 import com.compendium.core.CoreUtilities;
-import com.compendium.ui.FormatProperties;
 
 /**
  * This class holds the information for a link type.
@@ -153,9 +153,9 @@ public class UILinkType extends Component { // ONLY EXTENDS COMPONENT FOR SORTIN
 		StringBuffer data = new StringBuffer(200);
 
 		data.append("\t\t<linktype id=\""+sID+"\" ");
-		data.append("name=\""+CoreUtilities.cleanSQLText(sName, FormatProperties.nDatabaseType)+"\" ");
+		data.append("name=\""+CoreUtilities.cleanSQLText(sName, APP_PROPERTIES.getDatabaseType())+"\" ");
 		data.append("colour=\""+oColour.getRGB()+"\" ");
-		data.append("label=\""+CoreUtilities.cleanSQLText(sLabel, FormatProperties.nDatabaseType)+"\"/>\n");
+		data.append("label=\""+CoreUtilities.cleanSQLText(sLabel, APP_PROPERTIES.getDatabaseType())+"\"/>\n");
 
 		return data.toString();
 	}

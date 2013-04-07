@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -32,6 +33,8 @@ import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.sql.SQLException;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -54,7 +57,7 @@ import com.compendium.meeting.*;
  *
  * @author	Mohammed Sajid Ali / Michelle Bachler
  */
-public class UITagTreePanel extends JPanel implements ActionListener, ListSelectionListener, DragSourceListener, 
+public class UITagTreePanel extends JPanel implements ActionListener, ListSelectionListener, DragSourceListener,
 											DragGestureListener, DropTargetListener, Transferable{
 
 	/** The scrollpane for the code tree.*/
@@ -86,10 +89,10 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 
 	/** The working list of nodes to tag.*/
 	private UIWorkingList		oWorkingList		= null;
-	
+
 	/** The scrollpane that the list is in.*/
 	private JScrollPane 		oWorkingScroll		= null;
-	
+
 	/** The label for the list.*/
 	private JLabel 				lblViews			= null;
 
@@ -97,17 +100,17 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	private JLabel 				lblNodes			= null;
 
 	/** The button to deselect all nodes in the lists.*/
-	private UIButton			pbDeselectAll			= null;	
+	private UIButton			pbDeselectAll			= null;
 
 	/** The button to insert the selected nodes into the current view.*/
-	private UIButton			pbInsert			= null;	
+	private UIButton			pbInsert			= null;
 
 	/** The main panel holding the list and tree.*/
 	private JPanel			centerpanel			= null;
 
 	/** The textfield to enter new code / group names.*/
-	private JTextField		tfNewCode		= null;	
-	
+	private JTextField		tfNewCode		= null;
+
 	/** the JTree holding the code and code grouping information to assign codes from.*/
 	private JTree				tree			= null;
 
@@ -116,47 +119,47 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 
 	/** The top node of the tree contents.*/
 	private DefaultMutableTreeNode top			= null;
-	
+
 	/** The current Model.*/
-	private IModel 				model			= null;		
-	
+	private IModel 				model			= null;
+
 	private UITagTreePanel		me				= null;
-		
+
 	/** The DragSource object associated with this draggable item.*/
 	private DragSource 			dragSource;
-	
+
 	private boolean 	isFilter = false;
-	
-    private int hotspot = new JCheckBox().getPreferredSize().width; 
-    
+
+    private int hotspot = new JCheckBox().getPreferredSize().width;
+
     /** The main split pain.*/
     private JSplitPane oSplitter = null;
-    
+
 	/** The data flavors supported by this class.*/
     public static final 		DataFlavor[] supportedFlavors = { null };
 	static    {
 		try { supportedFlavors[0] = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+"; class=com.compendium.ui.tags.UITagTreePanel", null); }
 		catch (Exception ex) { ex.printStackTrace(); }
 	}
-	
+
 	private int nOrientation = JSplitPane.VERTICAL_SPLIT;
 
 	/** Holds a list of all the currently displayed tree renderers.*/
 	private Hashtable htAllRenderers = new Hashtable(51);
-	
-	
+
+
 	/** The row to have a yellow border*/
 	private int highlightRow = -2;
-	
+
 	/**
 	 * Constructor.
 	 */
 	public UITagTreePanel() {
 		super();
-		model = ProjectCompendium.APP.getModel();		
-		showCodePanel();	
+		model = ProjectCompendium.APP.getModel();
+		showCodePanel();
 		me = this;
-		updateSelectionListView();	
+		updateSelectionListView();
 		tfNewCode.requestFocus();
 	}
 
@@ -164,21 +167,21 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	 * Draw the panel contents.
 	 */
 	private void showCodePanel() {
-		
+
 		setLayout(new BorderLayout());
 		setFont(ProjectCompendium.APP.labelFont);
-		
+
 		JPanel leftpanel = new JPanel(new BorderLayout());
-		
+
 		// TOP PANEL
 		JPanel toppanel = createTopPanel();
 		leftpanel.add(toppanel, BorderLayout.NORTH);
-		
-		String sOrientation = FormatProperties.getFormatProp("tagsViewOrientation");
+
+		String sOrientation = APP_PROPERTIES.getTagsViewOrientation();
 		if (sOrientation != null && sOrientation.equals("horizontal")) {
 			nOrientation = JSplitPane.HORIZONTAL_SPLIT;
 		}
-		
+
 		// MAIN PANEL
 		centerpanel = new JPanel(new BorderLayout());
 		sp = createTree();
@@ -187,19 +190,19 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			public void mouseEntered(MouseEvent e) {
 				oWorkingList.mouseClicked(e);
 			}
-		});		
+		});
 		centerpanel.add(sp, BorderLayout.CENTER);
 
 		JPanel buttonpanel = new JPanel();
 		pbExpand = new UIButton("Expand All Folders");
-		pbExpand.setMnemonic(KeyEvent.VK_E);		
+		pbExpand.setMnemonic(KeyEvent.VK_E);
 		pbExpand.addActionListener(this);
 		pbExpand.setEnabled(true);
 		buttonpanel.add(pbExpand);
 		centerpanel.add(buttonpanel, BorderLayout.SOUTH);
 
 		leftpanel.add(centerpanel, BorderLayout.CENTER);
-		
+
 		JPanel rightpanel = createUsagePanel();
 
 		oSplitter = new JSplitPane(nOrientation, true, leftpanel, rightpanel) {
@@ -222,7 +225,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			        isPainted = true;
 			    }
 			    super.paint(g);
-			}			
+			}
 		};
 		oSplitter.setOneTouchExpandable(true);
 		oSplitter.setDividerSize(8);
@@ -242,77 +245,77 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			}
 		});
 
-		validate();		
+		validate();
 	}
-	
+
 	private JPanel createUsagePanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		// Add labels
 		JPanel labelpanel = new JPanel(new BorderLayout());
-		
+
 		JPanel panel1 = new JPanel(new BorderLayout());
-		panel1.setBorder(new EmptyBorder(5,5,0,5));		
+		panel1.setBorder(new EmptyBorder(5,5,0,5));
 		lblViews = new JLabel("Working Tags Area");
 		lblViews.setAlignmentX(JLabel.LEFT_ALIGNMENT);
 		panel1.add(lblViews, BorderLayout.CENTER);
-		
+
 		JPanel panel2 = new JPanel(new BorderLayout());
-		panel2.setBorder(new EmptyBorder(5,5,5,5));		
+		panel2.setBorder(new EmptyBorder(5,5,5,5));
 		lblNodes = new JLabel("Nodes:");
-		lblNodes.setAlignmentX(JLabel.LEFT_ALIGNMENT);		
+		lblNodes.setAlignmentX(JLabel.LEFT_ALIGNMENT);
 		panel2.add(lblNodes, BorderLayout.CENTER);
-		
+
 		labelpanel.add(panel1, BorderLayout.NORTH);
 		labelpanel.add(panel2, BorderLayout.CENTER);
-		
+
 		oWorkingList = new UIWorkingList();
 		oWorkingList.getList().getSelectionModel().addListSelectionListener(this);
-		
+
 		oWorkingScroll = new JScrollPane(oWorkingList.getList());
 		oWorkingScroll.addMouseListener(oWorkingList);
-		
+
 		//if (this.nOrientation == JSplitPane.HORIZONTAL_SPLIT) {
 			Dimension size = tree.getPreferredSize();
 			oWorkingScroll.setPreferredSize(new Dimension(250, size.height));
 		//} else {
-		//	oWorkingScroll.setPreferredSize(new Dimension(250, 250));			
+		//	oWorkingScroll.setPreferredSize(new Dimension(250, 250));
 		//}
-				
+
 		JPanel buttonpanel = new JPanel();
-		
+
 		pbInsert = new UIButton("Insert into View");
 		pbInsert.setMnemonic(KeyEvent.VK_I);
 		pbInsert.addActionListener(this);
 		buttonpanel.add(pbInsert);
-		
+
 		pbDeselectAll = new UIButton("Deselect All");
-		pbDeselectAll.setMnemonic(KeyEvent.VK_D);		
+		pbDeselectAll.setMnemonic(KeyEvent.VK_D);
 		pbDeselectAll.addActionListener(this);
 		buttonpanel.add(pbDeselectAll);
 
 		//buttonpanel.add(pbSelectAll);
 		buttonpanel.add(pbDeselectAll);
-		
-		panel.add(labelpanel, BorderLayout.NORTH);		
-		panel.add(oWorkingScroll, BorderLayout.CENTER);		
+
+		panel.add(labelpanel, BorderLayout.NORTH);
+		panel.add(oWorkingScroll, BorderLayout.CENTER);
 		panel.add(buttonpanel, BorderLayout.SOUTH);
-		
+
 		return panel;
 	}
-	
+
 	private JPanel createTopPanel() {
 		JPanel toppanel = new JPanel(new BorderLayout());
-		
+
 		JPanel newpanel = new JPanel(new BorderLayout());
 		newpanel.setBorder(new EmptyBorder(5,5,0,5));
-		
+
 		tfNewCode = new JTextField("");
 		tfNewCode.setColumns(20);
 		tfNewCode.setMargin(new Insets(2,2,2,2));
 		newpanel.add(tfNewCode, BorderLayout.CENTER);
 		tfNewCode.addKeyListener(new KeyAdapter() {
-			public void keyPressed(KeyEvent e) {	
+			public void keyPressed(KeyEvent e) {
 				int keyCode = e.getKeyCode();
 				int modifiers = e.getModifiers();
 				if (keyCode == KeyEvent.VK_ENTER && modifiers == 0) {
@@ -320,25 +323,25 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 				}
 			}
 		});
-		
+
 		JPanel buttonpanel = new JPanel();
-	
+
 		pbNewTag = new UIButton("Make Tag(s)"){ public boolean hasFocus(){ return true; }};
-		pbNewTag.setToolTipText("Create one or more (comma separated) new tags. <=50 characters per name");		
-		pbNewTag.setMnemonic(KeyEvent.VK_T);		
+		pbNewTag.setToolTipText("Create one or more (comma separated) new tags. <=50 characters per name");
+		pbNewTag.setMnemonic(KeyEvent.VK_T);
 		pbNewTag.addActionListener(this);
 		pbNewTag.setFocusPainted(true);
 		buttonpanel.add(pbNewTag);
 
 		pbNewGroup = new UIButton("Make Group(s)");
-		pbNewGroup.setToolTipText("Create one or more new tag groups");				
+		pbNewGroup.setToolTipText("Create one or more new tag groups");
 		pbNewGroup.setMnemonic(KeyEvent.VK_G);
 		pbNewGroup.addActionListener(this);
 		buttonpanel.add(pbNewGroup);
 
-		toppanel.add(newpanel, BorderLayout.CENTER);		
+		toppanel.add(newpanel, BorderLayout.CENTER);
 		toppanel.add(buttonpanel, BorderLayout.SOUTH);
-						
+
 		return toppanel;
 	}
 
@@ -354,25 +357,25 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		pbCancel.addActionListener(this);
 		oButtonPanel.add(pbCancel);
 
-		String sOrientation = FormatProperties.getFormatProp("tagsViewOrientation");
+		String sOrientation = APP_PROPERTIES.getTagsViewOrientation();
 		if (sOrientation == null || (!sOrientation.equals("vertical") && !sOrientation.equals("horizontal"))) {
 			sOrientation = "vertical";
-		} 
-		
+		}
+
 		if (nOrientation == JSplitPane.HORIZONTAL_SPLIT)	{
 			pbMove = new UIButton("Vertical Split");
-			pbMove.setToolTipText("Put the Tags Working area below the tags tree");		
+			pbMove.setToolTipText("Put the Tags Working area below the tags tree");
 			pbMove.setMnemonic(KeyEvent.VK_V);
 			pbMove.addActionListener(this);
 		} else  {
 			pbMove = new UIButton("Horizontal Split");
-			pbMove.setToolTipText("Put the Tags Working area to the right of the tags tree");		
+			pbMove.setToolTipText("Put the Tags Working area to the right of the tags tree");
 			pbMove.setMnemonic(KeyEvent.VK_H);
 			pbMove.addActionListener(this);
-		}			
+		}
 
 		oButtonPanel.add(pbMove);
-		
+
 		pbHelp = new UIButton("Help");
 		pbHelp.setMnemonic(KeyEvent.VK_H);
 		ProjectCompendium.APP.mainHB.enableHelpOnButton(pbHelp, "tag.assignment", ProjectCompendium.APP.mainHS);
@@ -384,17 +387,23 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	public void valueChanged(ListSelectionEvent e) {
 		checkTagsForSelectedNodes();
     }
-	
+
+	public void hideHint() {
+		if (oWorkingList != null) {
+			oWorkingList.hideHint();
+		}
+	}
+
 	/**
-	 * Check the tags that correspond to the currently selected nodes in the working area. 
+	 * Check the tags that correspond to the currently selected nodes in the working area.
 	 */
 	private void checkTagsForSelectedNodes() {
 		Hashtable selectedCodes = new Hashtable(51);
 		Hashtable universalCodes = new Hashtable(51);
-		
+
  		JTable table = oWorkingList.getList();
         int[] rows = table.getSelectedRows();
-        
+
         int row = 0;
         NodeSummary node = null;
         Enumeration codes = null;
@@ -403,7 +412,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
         Integer num = null;
         for (int i=0; i<rows.length; i++) {
         	row = rows[i];
-        	node = oWorkingList.getNodeAt(row); 
+        	node = oWorkingList.getNodeAt(row);
         	// If something has changed that drastically, abort.
         	if (node == null) {
         		return;
@@ -413,14 +422,14 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
         		sCodeID = code.getId();
         		if (!selectedCodes.containsKey(sCodeID)) {
         			selectedCodes.put(sCodeID, code);
-        		} 
+        		}
         		if (!universalCodes.containsKey(code.getId())) {
         			universalCodes.put(sCodeID, new Integer(1));
         		} else {
         			num = (Integer)universalCodes.get(sCodeID);
         			int inum = num.intValue();
         			inum = inum+1;
-        			universalCodes.put(sCodeID, new Integer(inum)); 
+        			universalCodes.put(sCodeID, new Integer(inum));
         		}
 
         	}
@@ -430,7 +439,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
         CheckNode check = null;
         int inum = 0;
         for (Enumeration e = top.preorderEnumeration(); e.hasMoreElements();) {
-        	treenode = (DefaultMutableTreeNode)e.nextElement();        	
+        	treenode = (DefaultMutableTreeNode)e.nextElement();
         	check = (CheckNode)treenode.getUserObject();
         	if (check.getData() instanceof Code) {
         		code = (Code)check.getData();
@@ -439,14 +448,14 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
                		if (universalCodes.containsKey(code.getId())) {
             			num = (Integer)universalCodes.get(sCodeID);
             			inum = num.intValue();
-            		}        			
-        			check.setChecked(true);  
+            		}
+        			check.setChecked(true);
         			if (inum == rows.length) {
         				check.setUniversal(true);
         			} else {
         				check.setUniversal(false);
         			}
-        			DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treenode.getParent();							  	    				
+        			DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treenode.getParent();
         			if (!tree.isExpanded(new TreePath(parent.getPath()))) {
         				tree.expandPath(new TreePath(parent.getPath()));
         			}
@@ -457,36 +466,36 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
         		}
         	}
         }
-	
+
         tree.validate();
         tree.repaint();
  	}
-	
+
 	/**
 	 * Updates the list of nodes for the currently selected tags based on the selected group.
 	 */
 	private void updateFilterListGroupView() {
-		
+
 		pbDeselectAll.setText("Select All");
-		pbDeselectAll.setMnemonic(KeyEvent.VK_S);		
-		
-		isFilter = true;		
+		pbDeselectAll.setMnemonic(KeyEvent.VK_S);
+
+		isFilter = true;
 		deselectInView();
-		
-		removeAllNodes();		
-		
+
+		removeAllNodes();
+
 		Hashtable htNodesCheck = new Hashtable();
-	
-		Vector filterNodes = new Vector(51);								
+
+		Vector filterNodes = new Vector(51);
 		String userID = model.getUserProfile().getId();
 		try {
-			filterNodes = new Vector(51);						
+			filterNodes = new Vector(51);
 			TreePath path = tree.getSelectionPath();
 			if (path != null) {
 				Code code = null;
 				Vector nodes = null;
 				NodeSummary node = null;
-				DefaultMutableTreeNode treenode = null;	
+				DefaultMutableTreeNode treenode = null;
 				int countj = 0;
 				String sNodeID = "";
 	     		treenode = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -500,18 +509,18 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 						for (Enumeration e=children.elements(); e.hasMoreElements();) {
 							code = (Code)e.nextElement();
 			     			nodes = model.getCodeService().getNodes(model.getSession(), code.getId(), userID);
-			     			countj = nodes.size();	     				     			
+			     			countj = nodes.size();
 			     			for (int j=0; j< countj; j++) {
 			     				node = (NodeSummary)nodes.elementAt(j);
 			     				if (node != null) {
 				     				node.initialize(model.getSession(), model);
 				     				sNodeID = node.getId();
 				     				if (!htNodesCheck.containsKey(sNodeID)) {
-				     					htNodesCheck.put(sNodeID, node);	 
+				     					htNodesCheck.put(sNodeID, node);
 				     					filterNodes.addElement(node);
 				     				}
 			     				}
-				     		}	
+				     		}
 						}
 	     			}
 				}
@@ -521,49 +530,49 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			ex.printStackTrace();
 			ProjectCompendium.APP.displayError("Unable to calculate usage for selected tags due to:\n\n"+ex.getMessage());
 		}
-		
+
 		if (filterNodes.size() == 0) {
-			oNodes = filterNodes;		
+			oNodes = filterNodes;
 			updateViewCount();
-			oWorkingList.refreshTable(oNodes);				
+			oWorkingList.refreshTable(oNodes);
 		} else {
 			filterNodes = CoreUtilities.sortList(filterNodes);
-			oNodes = filterNodes;		
+			oNodes = filterNodes;
 			updateViewCount();
 			oWorkingList.refreshTable(oNodes);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Updates the list of nodes for the currently selected tags.
 	 */
 	private void updateFilterListView() {
-		
+
 		pbDeselectAll.setText("Select All");
-		pbDeselectAll.setMnemonic(KeyEvent.VK_S);		
-		
-		isFilter = true;		
+		pbDeselectAll.setMnemonic(KeyEvent.VK_S);
+
+		isFilter = true;
 		deselectInView();
-		
-		removeAllNodes();		
-		
+
+		removeAllNodes();
+
 		Hashtable htNodesCheck = new Hashtable();
-	
-		Vector filterNodes = new Vector(51);								
+
+		Vector filterNodes = new Vector(51);
 		String userID = model.getUserProfile().getId();
 		try {
-			Vector allNodes = new Vector(51);		
-			filterNodes = new Vector(51);						
+			Vector allNodes = new Vector(51);
+			filterNodes = new Vector(51);
 			TreePath[] paths = tree.getSelectionPaths();
 			if (paths != null) {
 				Vector allVectors = new Vector(paths.length);
-							
+
 				TreePath path = null;
 				Code code = null;
 				Vector nodes = null;
 				NodeSummary node = null;
-				DefaultMutableTreeNode treenode = null;	
+				DefaultMutableTreeNode treenode = null;
 				int countj = 0;
 				String sNodeID = "";
 				for (int i=0; i<paths.length; i++) {
@@ -574,19 +583,19 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		     			if (check.getData() instanceof Code) {
 			     			code = (Code)check.getData();
 			     			nodes = model.getCodeService().getNodes(model.getSession(), code.getId(), userID);
-			     			countj = nodes.size();	     				     			
+			     			countj = nodes.size();
 			     			for (int j=0; j< countj; j++) {
 			     				node = (NodeSummary)nodes.elementAt(j);
 			     				if (node != null) {
 				     				node.initialize(model.getSession(), model);
 				     				sNodeID = node.getId();
 				     				if (i==0) {
-				     					htNodesCheck.put(sNodeID, new Integer(1));	     					
+				     					htNodesCheck.put(sNodeID, new Integer(1));
 				     				} else if (htNodesCheck.containsKey(sNodeID)) {
-				     					Integer num = (Integer)htNodesCheck.get(sNodeID);	
+				     					Integer num = (Integer)htNodesCheck.get(sNodeID);
 				     					int iNum = num.intValue();
 				     					iNum = iNum+1;
-				     					htNodesCheck.put(sNodeID, new Integer(iNum));	  
+				     					htNodesCheck.put(sNodeID, new Integer(iNum));
 				     				}
 				     				if (!allNodes.contains(node)) {
 				     					allNodes.addElement(node);
@@ -594,33 +603,33 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			     				}
 			     			}
 		     			}
-		     		}			
+		     		}
 				}
-				
+
 				if (allNodes.size() == 0) {
-					oNodes = filterNodes;		
+					oNodes = filterNodes;
 					updateViewCount();
-					oWorkingList.refreshTable(oNodes);				
-					return;			
+					oWorkingList.refreshTable(oNodes);
+					return;
 				}
-				
+
 				if (paths.length == 1) {
 					filterNodes = allNodes;
-				} else {			
+				} else {
 					int count = allNodes.size();
 					for (int i=0; i<count; i++) {
 						node = (NodeSummary)allNodes.elementAt(i);
-						sNodeID = node.getId();				
+						sNodeID = node.getId();
 						if (htNodesCheck.containsKey(sNodeID)) {
-							Integer num = (Integer)htNodesCheck.get(sNodeID);	
-							int iNum = num.intValue();			
+							Integer num = (Integer)htNodesCheck.get(sNodeID);
+							int iNum = num.intValue();
 							if (iNum == paths.length) {
 								filterNodes.addElement(node);
 							}
 						}
 					}
 				}
-				
+
 				filterNodes = CoreUtilities.sortList(filterNodes);
 			}
 		}
@@ -629,13 +638,13 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			ProjectCompendium.APP.displayError("Unable to calculate usage for selected tags due to:\n\n"+ex.getMessage());
 		}
 
-		oNodes = filterNodes;		
+		oNodes = filterNodes;
 		updateViewCount();
 		oWorkingList.refreshTable(oNodes);
 	}
 
 	private void deselectInView() {
-		UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();		
+		UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();
 		if (frame != null) {
 			if (frame instanceof UIMapViewFrame) {
 				UIMapViewFrame mapFrame = (UIMapViewFrame)frame;
@@ -649,20 +658,20 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 				UIList list = listFrame.getUIList();
 				if (list != null) {
 					list.deselectAll();
-				}				
+				}
 			}
-		}		
+		}
 	}
-	
+
 	/**
 	 * Updates the list of nodes for the currently selected nodes in the current view.
 	 */
 	private void updateSelectionListView() {
-		isFilter = false;		
-		removeAllNodes();				
-		Vector allNodes = new Vector(51);				
-		Hashtable htNodesCheck = new Hashtable();		
-		UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();		
+		isFilter = false;
+		removeAllNodes();
+		Vector allNodes = new Vector(51);
+		Hashtable htNodesCheck = new Hashtable();
+		UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();
 		if (frame != null) {
 			if (frame instanceof UIMapViewFrame) {
 				UIMapViewFrame mapFrame = (UIMapViewFrame)frame;
@@ -674,38 +683,38 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 					for (Enumeration en=e; en.hasMoreElements();) {
 						node = (UINode)en.nextElement();
 						sNodeID = node.getNode().getId();
-						if (!sNodeID.equals(ProjectCompendium.APP.getTrashBinID()) 
+						if (!sNodeID.equals(ProjectCompendium.APP.getTrashBinID())
 								&& !sNodeID.equals(ProjectCompendium.APP.getInBoxID())) {
 							allNodes.addElement(node.getNode());
 						}
 					}
 				}
-				
+
 			} else if (frame instanceof UIListViewFrame) {
 				UIListViewFrame listFrame = (UIListViewFrame)frame;
 				UIList list = listFrame.getUIList();
 				if (list != null) {
 					Enumeration e = list.getSelectedNodes();
-					NodePosition nodePos = null; 
+					NodePosition nodePos = null;
 					for (Enumeration en=e; en.hasMoreElements();) {
 						nodePos = (NodePosition)en.nextElement();
 						allNodes.addElement(nodePos.getNode());
 					}
-				}				
+				}
 			}
 		}
-				
+
 		/*if (allNodes.size() == 0) {
-			return;			
+			return;
 		}*/
-					
+
 		allNodes = CoreUtilities.sortList(allNodes);
 
-		oNodes = allNodes;		
+		oNodes = allNodes;
 		updateViewCount();
 		oWorkingList.refreshTable(oNodes);
 	}
-	
+
 	/**
 	 * Updates the number of occurences for the given node.
 	 */
@@ -728,7 +737,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		oWorkingList.getList().repaint();
 		oWorkingScroll.repaint();
 	}
-	
+
 	/**
 	 * Repaint the tree in reflection to a visual change liske setting the default group.
 	 */
@@ -736,16 +745,21 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		tree.validate();
 		tree.repaint();
 	}
-	
-	
+
+
 	/**
 	 * Update the codes and code groups displayed in the tree.
 	 */
 	public void updateTreeData() {
-		
-		model = ProjectCompendium.APP.getModel();		
+
+		model = ProjectCompendium.APP.getModel();
+		if (model == null)
+			showTrace("Model is null");
+
 		Enumeration e = tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()));
-		
+		if (e == null)
+			showTrace("Enumeration is null");
+
 		top = getTreeData();
     	treemodel = new DefaultTreeModel(top);
 
@@ -755,7 +769,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
      	tree.setModel(treemodel);
 		tree.repaint();
 		sp.repaint();
-     	     	
+
      	TreePath path = null;
      	String sGroupID = "";
      	DefaultMutableTreeNode node = null;
@@ -795,6 +809,29 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
     	return node;
 	}
 
+    /**
+	 * Expand the group for the given code group id.
+	 * This is used when the panel opens, to expand the Active group (if any)
+	 * @param sID the id of the codeGroup to expand
+	 */
+    private void expandCodeGroup(String sID) {
+
+		int iRow = 0;
+		DefaultMutableTreeNode node = null;
+        for (Enumeration e = top.preorderEnumeration(); e.hasMoreElements();) {
+            node = (DefaultMutableTreeNode)e.nextElement();
+            CheckNode check = (CheckNode)node.getUserObject();
+            if (check.getData() instanceof Vector) {			// This is a tag Group object
+            	Vector data = (Vector)check.getData();
+            	String sGroupID = (String)data.elementAt(0);
+            	if (sGroupID.equals(sID)) {
+            		tree.expandRow(iRow-1);						// since Row 0 is a hidden root
+            		break;
+            	}
+            	iRow++;
+            }
+		}
+	}
 	/**
 	 * Create the JTree of codes and code groupings.
 	 */
@@ -810,17 +847,17 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			tree.setRootVisible(false);
    	     	tree.setModel(treemodel);
    	     	tree.setFont(ProjectCompendiumFrame.labelFont);
-   	     	   	     	   	     	
+
    		    CheckBoxNodeRenderer renderer = new CheckBoxNodeRenderer();
    		    tree.setCellRenderer(renderer);
 
    		    tree.setCellEditor(new CheckBoxNodeEditor(tree));
    		    tree.setEditable(true);
- 
-   		    //UIDraggableTreeCellRenderer renderer = new UIDraggableTreeCellRenderer();   	     	
+
+   		    //UIDraggableTreeCellRenderer renderer = new UIDraggableTreeCellRenderer();
    	     	tree.setCellRenderer(renderer);
-   			tree.setShowsRootHandles(true);   			
-   	        tree.setToggleClickCount(4);   	          
+   			tree.setShowsRootHandles(true);
+   	        tree.setToggleClickCount(4);
    			tree.getSelectionModel().setSelectionMode
    	        	(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
@@ -829,26 +866,27 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
    	     	for( int i=0; i<mice.length; i++){
    	     		mouse = mice[i];
        			tree.removeMouseListener(mouse);
-   	     	}   	        			
-   			
+   	     	}
+
    			dragSource = new DragSource();
-   			dragSource.createDefaultDragGestureRecognizer((JComponent)tree, DnDConstants.ACTION_COPY_OR_MOVE, this);   	
-  		    DropTarget dropTarget = new DropTarget((JComponent)tree, this);   
-  	     	
+   			dragSource.createDefaultDragGestureRecognizer((JComponent)tree, DnDConstants.ACTION_COPY_OR_MOVE, this);
+  		    DropTarget dropTarget = new DropTarget((JComponent)tree, this);
+
     	    // Enable tool tips.
    			ToolTipManager.sharedInstance().registerComponent(tree);
-   			
-			tree.expandRow(0);
-			
+
+   			// Open (expand) the Active tag group, if any
+   			expandCodeGroup(ProjectCompendium.APP.getActiveCodeGroup());
+
 			/*tree.addFocusListener(new FocusListener() {
 				public void focusGained(FocusEvent e) {
 					tree.setSelectionRow(0);
-				}				
+				}
 				public void focusLost(FocusEvent e) {
 					tree.clearSelection();
 				}
 			});*/
-			
+
 			MouseListener ml = new MouseAdapter() {
      			public void mouseReleased(MouseEvent e) {
 					boolean isRightMouse = SwingUtilities.isRightMouseButton(e);
@@ -858,23 +896,23 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 						isRightMouse = true;
 						isLeftMouse = false;
 					}
-					     									
+
 					if (tree.isEditing()) {
 						tree.stopEditing();
-					}				
-					
+					}
+
 					/*if (!tree.hasFocus()) {
 						tree.requestFocus();
 					}*/
-					
+
 					int nClicks = e.getClickCount();
         			TreePath path = tree.getPathForLocation(e.getX(), e.getY());
         			//int row = tree.getRowForLocation(e.getX(), e.getY());
 					if (path != null) {
 	  					DefaultMutableTreeNode thenode = (DefaultMutableTreeNode)path.getLastPathComponent();
-						CheckNode check = (CheckNode)thenode.getUserObject();		
+						CheckNode check = (CheckNode)thenode.getUserObject();
 						if (check.getData() instanceof Code) {
-							Code code = (Code)check.getData();		
+							Code code = (Code)check.getData();
 							if (isRightMouse) {
 								if(nClicks == 1) {
 									tree.setSelectionPath(path);
@@ -882,15 +920,15 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 									String sCodeGroupID = "";
 									if (parent != null) {
 										CheckNode group = (CheckNode)parent.getUserObject();
-										if (group.isGroup()) {									
+										if (group.isGroup()) {
 											sCodeGroupID = (String)((Vector)group.getData()).elementAt(0);
 										}
 									}
 									UITagTreeLeafPopupMenu pop = new UITagTreeLeafPopupMenu(me, code, sCodeGroupID);
-									pop.show(tree, e.getX(), e.getY());																				
-								}																
+									pop.show(tree, e.getX(), e.getY());
+								}
 							} else if (isLeftMouse) {
-								if (nClicks == 1) {		
+								if (nClicks == 1) {
 									if(e.getX() < tree.getPathBounds(path).x + hotspot) {
 										if (oWorkingList.getList().getSelectedRowCount() > 0) {
 											check.setChecked(!check.isChecked());
@@ -901,22 +939,22 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 												onRemoveCodeFromNodes(code);
 												if (isFilter) {
 													updateFilterListView();
-												}												
+												}
 												checkTagsForSelectedNodes();
 											}
-											tree.repaint();											
+											tree.repaint();
 										} else {
 											ProjectCompendium.APP.displayMessage("Please select some nodes to assign tags to first.", "Tags");
 										}
 									} else {
-										boolean isSelected = tree.isPathSelected(path);										
+										boolean isSelected = tree.isPathSelected(path);
 										if (isSelected && !e.isShiftDown()) {
 											tree.startEditingAtPath(path);
 										} else {
 											if (!e.isShiftDown()) {
-												tree.clearSelection();	
-											}							
-										
+												tree.clearSelection();
+											}
+
 											if (isSelected && e.isShiftDown()) {
 												tree.removeSelectionPath(path);
 											} else if (!isSelected) {
@@ -924,14 +962,14 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 											}
 											clearChecks();
 											tree.validate();
-											tree.repaint();											
+											tree.repaint();
 											updateFilterListView();
 										}
-									} 									
+									}
 								}
 	   		          		}
 						} else {
-							if (isRightMouse) {						
+							if (isRightMouse) {
 								UITagTreeGroupPopupMenu pop = new UITagTreeGroupPopupMenu(me, (Vector)check.getData());
 								pop.show(tree, e.getX(), e.getY());
 							} else if (isLeftMouse) {
@@ -939,9 +977,9 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 								if (isSelected) {
 									tree.startEditingAtPath(path);
 								} else {
-									tree.clearSelection();	
+									tree.clearSelection();
 									tree.addSelectionPath(path);
-									updateFilterListGroupView();									
+									updateFilterListGroupView();
 									checkTagsForSelectedNodes();
 									tree.repaint();
 								}
@@ -971,7 +1009,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 								else if(!tree.getShowsRootHandles())
 								    depthOffset = -1;
 								else
-								    depthOffset = 0;							    
+								    depthOffset = 0;
 							    int nRowX = (ui.getLeftChildIndent()+ui.getRightChildIndent()) * ((path.getPathCount() - 1) + depthOffset);
 							    int boxLeftX = nRowX - ui.getRightChildIndent() - boxWidth / 2;
 
@@ -983,14 +1021,14 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 										tree.collapsePath(path);
 									} else {
 										tree.expandPath(path);
-									}							    	
+									}
 							    }
-							}														
+							}
 						}*/
 					}
      			}
-				
-     			public void mousePressed(MouseEvent e) {     				     		
+
+     			public void mousePressed(MouseEvent e) {
 					boolean isRightMouse = SwingUtilities.isRightMouseButton(e);
 					boolean isLeftMouse = SwingUtilities.isLeftMouseButton(e);
 					if (ProjectCompendium.isMac &&
@@ -998,9 +1036,9 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 						isRightMouse = true;
 						isLeftMouse = false;
 					}
-					
+
 	       			TreePath path = tree.getPathForLocation(e.getX(), e.getY());
-					
+
 					if (!isRightMouse && path == null) {
 						// have they clicked the folder expand/collpase icon?
 						int mouseX = e.getX();
@@ -1024,7 +1062,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 							else if(!tree.getShowsRootHandles())
 							    depthOffset = -1;
 							else
-							    depthOffset = 0;							    
+							    depthOffset = 0;
 						    int nRowX = (ui.getLeftChildIndent()+ui.getRightChildIndent()) * ((path.getPathCount() - 1) + depthOffset);
 						    int boxLeftX = nRowX - ui.getRightChildIndent() - boxWidth / 2;
 
@@ -1036,30 +1074,30 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 									tree.collapsePath(path);
 								} else {
 									tree.expandPath(path);
-								}							    	
+								}
 						    }
-						}														
+						}
 					}
      			}
  			};
  			tree.addMouseListener(ml);
 
- 			tree.addKeyListener(new KeyAdapter() { 				
- 				
-				public void keyPressed(KeyEvent e) {						
+ 			tree.addKeyListener(new KeyAdapter() {
+
+				public void keyPressed(KeyEvent e) {
 					int keyCode = e.getKeyCode();
 					int modifiers = e.getModifiers();
 					if(keyCode == KeyEvent.VK_DELETE) {
 						TreePath path = tree.getSelectionPath();
 	     				if (path != null) {
-							DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();		
+							DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
 							CheckNode check = (CheckNode)node.getUserObject();
-							if(check.getData() instanceof Code) {	
-								Code code = (Code)check.getData();									
+							if(check.getData() instanceof Code) {
+								Code code = (Code)check.getData();
 								onDeleteCode(code);
 							}
 						}
-						e.consume();	     				
+						e.consume();
 			 		}
 					else if (keyCode == KeyEvent.VK_ENTER ) {
 	             		TreePath path = tree.getSelectionPath();
@@ -1070,24 +1108,24 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 								tree.startEditingAtPath(path);
 							} else {
 								if (modifiers != KeyEvent.VK_CONTROL) {
-									tree.clearSelection();	
-								}										
+									tree.clearSelection();
+								}
 								if (tree.isRowSelected(row)) {
 									tree.removeSelectionRow(row);
 								} else {
-									tree.addSelectionRow(row);											
+									tree.addSelectionRow(row);
 								}
 								tree.repaint();
 							}
-						}					
+						}
 					} else if (keyCode == KeyEvent.VK_SPACE && modifiers == 0) {
 						TreePath path = tree.getSelectionPath();
 	     				if (path != null) {
 							clearChecks();
 							tree.validate();
-							tree.repaint();											
+							tree.repaint();
 							updateFilterListView();
-						}					
+						}
 	     			} else if (keyCode == KeyEvent.VK_SPACE && modifiers != KeyEvent.VK_SHIFT) {
 						TreePath path = null;
 						DefaultMutableTreeNode thenode = null;
@@ -1100,9 +1138,9 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	     					for (int i=0; i<count; i++) {
 	     						path = paths[i];
 			  					thenode = (DefaultMutableTreeNode)path.getLastPathComponent();
-								check = (CheckNode)thenode.getUserObject();								
+								check = (CheckNode)thenode.getUserObject();
 								if (check.getData() instanceof Code) {
-									code = (Code)check.getData();			     					
+									code = (Code)check.getData();
 									check.setChecked(!check.isChecked());
 									if (check.isChecked()) {
 										onAddCodeToNodes(code);
@@ -1110,28 +1148,28 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 										onRemoveCodeFromNodes(code);
 										updateFilterList = true;
 									}
-									tree.repaint();		
+									tree.repaint();
 								}
 	     					}
-	     					
+
 							checkTagsForSelectedNodes();
 							if (isFilter && updateFilterList) {
 								updateFilterListView();
-							}												
+							}
 						} else {
 							ProjectCompendium.APP.displayMessage("Please select some nodes to assign tags to first.", "Tags");
-						}					
+						}
 	     			}
 				}
-            });            
+            });
 		}
 
-		sp = new JScrollPane(tree);		
-		Dimension size = tree.getPreferredSize();		
+		sp = new JScrollPane(tree);
+		Dimension size = tree.getPreferredSize();
 		sp.setPreferredSize(new Dimension(250, size.height));
 		return sp;
     }
-	
+
 	/**
 	 * Clear the checked state for all CheckNode objects.
 	 */
@@ -1143,8 +1181,8 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			check = (CheckNode)node.getUserObject();
 			check.setChecked(false);
 		}
-	}	
-	
+	}
+
 	/**
 	 * Process a button push event.
 	 * @param evt the associated ActionEvent for the button push.
@@ -1157,55 +1195,53 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			if (button.getText().equals("Expand All Folders"))	{
 				expandAllTree();
 				button.setText("Collapse All Folders");
-				button.setMnemonic(KeyEvent.VK_F);		
+				button.setMnemonic(KeyEvent.VK_F);
 			}
 			else {
 				collapseAllTree();
 				button.setText("Expand All Folders");
-				button.setMnemonic(KeyEvent.VK_E);						
+				button.setMnemonic(KeyEvent.VK_E);
 			}
 		} else if (source == pbMove) {
 			JButton button = (JButton)source;
 			if (button.getText().equals("Vertical Split"))	{
 				oSplitter.setOrientation(JSplitPane.VERTICAL_SPLIT);
-				oSplitter.setDividerLocation(0.5);				
-				FormatProperties.setFormatProp("tagsViewOrientation", "vertical");
-				FormatProperties.saveFormatProps();
-				ProjectCompendium.APP.oSplitter.resetToPreferredSizes();							
+				oSplitter.setDividerLocation(0.5);
+				APP_PROPERTIES.setTagsViewOrientation("vertical");
+				ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 				button.setText("Horizontal Split");
-				button.setToolTipText("Put the Tags Working area to the right of the tags tree");				
-				button.setMnemonic(KeyEvent.VK_H);		
+				button.setToolTipText("Put the Tags Working area to the right of the tags tree");
+				button.setMnemonic(KeyEvent.VK_H);
 			}
 			else  {
 				oSplitter.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
 				oSplitter.setDividerLocation(0.5);
-				FormatProperties.setFormatProp("tagsViewOrientation", "horizontal");
-				FormatProperties.saveFormatProps();				
+				APP_PROPERTIES.setTagsViewOrientation("horizontal");
 				button.setText("Vertical Split");
-				ProjectCompendium.APP.oSplitter.resetToPreferredSizes();							
-				button.setToolTipText("Put the Tags Working area below the tags tree");				
-				button.setMnemonic(KeyEvent.VK_V);						
-			}			
+				ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
+				button.setToolTipText("Put the Tags Working area below the tags tree");
+				button.setMnemonic(KeyEvent.VK_V);
+			}
 		} else if (source == pbCancel) {
-			this.oWorkingList.clearPopup();
-			ProjectCompendium.APP.getMenuManager().removeTagsView(true);			
+			hideHint();
+			ProjectCompendium.APP.getMenuManager().removeTagsView(true);
 		} else if (source == pbNewTag) {
 			onAddTags(tfNewCode.getText());
 		} else if (source == pbNewGroup) {
-			onAddGroups(tfNewCode.getText());		
+			onAddGroups(tfNewCode.getText());
 		} else if (source == pbDeselectAll) {
 			JButton button = (JButton)source;
 			if (button.getText().equals("Deselect All"))	{
 				oWorkingList.deselectAll();
 				clearChecks();
 				button.setText("Select All");
-				button.setMnemonic(KeyEvent.VK_S);		
+				button.setMnemonic(KeyEvent.VK_S);
 			}
 			else {
 				oWorkingList.getList().selectAll();
 				button.setText("Deselect All");
-				button.setMnemonic(KeyEvent.VK_D);						
-			}			
+				button.setMnemonic(KeyEvent.VK_D);
+			}
 		} else if (source == pbInsert) {
 			try {
 				onInsert();
@@ -1215,19 +1251,19 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 				System.out.println("Error: (UISearchResultDialog.actionPerformed) \n\n"+ex.getMessage());
 			}
 		}
-	}	
-	
+	}
+
 	/**
 	 * Insert the selected nodes in the current view.
 	 */
 	private void onInsert() throws Exception {
-		
+
 		int [] selection = oWorkingList.getList().getSelectedRows();
 		if (selection.length <=0) {
 			ProjectCompendium.APP.displayError("Please select the nodes to insert.");
 			return;
 		}
-		
+
 		UIViewFrame activeFrame = ProjectCompendium.APP.getCurrentFrame();
 		ProjectCompendium.APP.setWaitCursor();
 		activeFrame.setCursor(new Cursor(java.awt.Cursor.WAIT_CURSOR));
@@ -1235,10 +1271,10 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 
 		int i=0;
 		String sNodeID = "";
-		NodeSummary node = null;	
-		
+		NodeSummary node = null;
+
 		Vector addedNodes = new Vector(51);
-		
+
 		if (activeFrame instanceof UIListViewFrame) {
 
 			// deselect nodes and links so pasted ones are only ones seleted - bz
@@ -1255,13 +1291,13 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 				if (node != null) {
 					sNodeID = node.getId();
 					nodePos = list.getNode(sNodeID);
-					if (nodePos == null) { 				
+					if (nodePos == null) {
 						int xpos = 100;
 						int ypos = ( nodeCount + 1) * 10;
 						nodeCount++;
 						Date date = new Date();
 						NodePosition np = new NodePosition(listview, node, xpos, ypos, date, date);
-						nps[i]=np;						
+						nps[i]=np;
 						try {
 							nodePos = listview.addNodeToView(node, xpos, ypos);
 						}
@@ -1279,26 +1315,26 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			int len = listview.getNumberOfNodes();
 			// FORCE SORTER UPDATE
 			((ListTableModel)((TableSorter)list.getList().getModel()).getModel()).refreshTable();
-			
+
 			int count = addedNodes.size();
 			for (int j=0;j<count; j++) {
 				list.selectNode(((Integer)addedNodes.elementAt(j)).intValue(), ICoreConstants.MULTISELECT);
-			}				
+			}
 			list.insertNodes(nps, len);
 			for (int k=0; k<nps.length; k++) {
-				list.selectNode(k+len, ICoreConstants.MULTISELECT);				
-			}			
+				list.selectNode(k+len, ICoreConstants.MULTISELECT);
+			}
 		}
-		else {	
+		else {
 			UIViewPane uiviewpane = ((UIMapViewFrame)activeFrame).getViewPane();
 			ViewPaneUI viewpaneui = uiviewpane.getViewPaneUI();
 			for(i=0;i<selection.length;i++) {
 				node = (NodeSummary)oWorkingList.getNodeAt(selection[i]);
 				if (node != null) {
-					sNodeID = node.getId();				
-					if (uiviewpane.get(sNodeID) == null) {				
+					sNodeID = node.getId();
+					if (uiviewpane.get(sNodeID) == null) {
 						int hPos = activeFrame.getHorizontalScrollBarPosition();
-						int vPos = activeFrame.getVerticalScrollBarPosition();		
+						int vPos = activeFrame.getVerticalScrollBarPosition();
 						int xpos = hPos + ViewPaneUI.LEFTOFFSET;
 						int ypos = vPos + ((i+1)*ViewPaneUI.INTERNODE_DISTANCE);
 						try {
@@ -1309,36 +1345,36 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 							e.printStackTrace();
 							ProjectCompendium.APP.displayError("Exception: (UITagTreePanel.onInsert2) \n" + e.getMessage());
 							System.out.flush();
-						}												
+						}
 					} else {
 						UINode uinode = (UINode)uiviewpane.get(sNodeID);
 						addedNodes.addElement(uinode);
 					}
 				}
 			}
-			
+
 			int count = addedNodes.size();
 			UINode uinode = null;
 			for (int j=0;j<count; j++) {
 				uinode = (UINode)addedNodes.elementAt(j);
 				uinode.setRollover(false);
 				uinode.setSelected(true);
-				uiviewpane.setSelectedNode(uinode, ICoreConstants.MULTISELECT);				
+				uiviewpane.setSelectedNode(uinode, ICoreConstants.MULTISELECT);
 			}
 		}
-		
+
 		this.setCursor(Cursor.getDefaultCursor());
 		activeFrame.setCursor(Cursor.getDefaultCursor());
 		ProjectCompendium.APP.setDefaultCursor();
-	}	
-	
+	}
+
 	private void onAddTags(String tags) {
-		
+
 		if (tags.equals("")) {
 			ProjectCompendium.APP.displayError("Please enter the name of the new tag(s) to create.");
 			tfNewCode.requestFocus();
 		}
-		
+
 		Vector vtNewCodes = new Vector();
 		int num = 0;
 		StringTokenizer st = new StringTokenizer(tags,",");
@@ -1346,7 +1382,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			String c = st.nextToken();
 			if (c.length() > 50) {
 				ProjectCompendium.APP.displayError("Tag names cannot be more than 50 characters long.\n\nPlease adjust you tag name(s) and try again.");
-				tfNewCode.requestFocus();				
+				tfNewCode.requestFocus();
 				return;
 			}
 			vtNewCodes.addElement(c.trim());
@@ -1375,7 +1411,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 					// UPDATE MODEL
 					model.addCode(code);
 					onAddCodeToNodes(code);
-					updateTreeData();						
+					updateTreeData();
 				}
 			}
 			catch(SQLException ex) {
@@ -1384,11 +1420,11 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		}
 
 		checkTagsForSelectedNodes();
-		tfNewCode.setText("");	
+		tfNewCode.setText("");
 	}
-	
+
 	private void onAddGroups(String groups) {
-		
+
 		Vector vtNewCodes = new Vector();
 		int num = 0;
 		StringTokenizer st = new StringTokenizer(groups,",");
@@ -1396,9 +1432,9 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			String c = st.nextToken();
 			if (c.length() > 100) {
 				ProjectCompendium.APP.displayError("Tag group names cannot be more than 100 characters long.\n\nPlease adjust you group name(s) and try again.");
-				tfNewCode.requestFocus();				
+				tfNewCode.requestFocus();
 				return;
-			}			
+			}
 			vtNewCodes.addElement(c.trim());
 		}
 
@@ -1408,7 +1444,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		Date date = new Date();
 
 		for(int i=0;i<vtNewCodes.size();i++) {
-			String name = (String)vtNewCodes.elementAt(i);			
+			String name = (String)vtNewCodes.elementAt(i);
 			try {
 				String sCodeGroupID = model.getUniqueID();
 
@@ -1420,17 +1456,17 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 				group.addElement(sCodeGroupID);
 				group.addElement(name);
 				model.addCodeGroup(sCodeGroupID, group);
-				
-				updateTreeData();			
+
+				updateTreeData();
 			}
 			catch(SQLException ex) {
 				ProjectCompendium.APP.displayError("Exception: (UICodeMaintPanel.onAdd) " + ex.getMessage());
 			}
 		}
 
-		tfNewCode.setText("");	
-	}	
-	
+		tfNewCode.setText("");
+	}
+
 	/**
 	 * Handle a request to delete the selected codes.
 	 */
@@ -1446,30 +1482,28 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 				ProjectCompendium.APP.displayMessage("There are still nodes associated with this tag, so it cannot be deleted", "Delete Tag");
 				return;
 			}
-			else {				
+			else {
 				int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "Are you sure you want to delete the code: "+code.getName()+"?",
 						"Delete Tag", JOptionPane.YES_NO_OPTION);
 				if (response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) {
 					return;
 				} else {
 					String sCodeID = code.getId();
-					
+
 					// UPDATE DATABASE
 					model.getCodeService().delete(session, sCodeID);
-					
+
 					// UPDATE MODEL
 					model.removeCode(code);
-					
+
 					updateTreeData();
-					
-					ProjectCompendium.APP.updateCodeChoiceBoxData();					
 				}
 			}
 		}
 		catch(Exception ex) {
 			ProjectCompendium.APP.displayError("Exception: (UICodeCodeMaintPanel.onDeleteCode) " + ex.getMessage());
 		}
-	}		
+	}
 
 	/**
 	 * Handle a request to delete the selected codes.
@@ -1485,25 +1519,25 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 
 			// UPDATE MODEL
 			model.removeCodeGroupCode(sCodeGroupID, code.getId());
-			
+
 			if (sCodeGroupID.equals(ProjectCompendium.APP.getActiveCodeGroup())) {
 				ProjectCompendium.APP.updateCodeChoiceBoxData();
 			}
-			
+
 			updateTreeData();
 		}
 		catch(Exception ex) {
 			ProjectCompendium.APP.displayError("Exception: (UICodeCodeMaintPanel.onRemoveCodeFromGroup) " + ex.getMessage());
 		}
-	}			
-	
+	}
+
 	/**
 	 * Create tree of nodes for the tree on the code assinment panel.
 	 *
 	 * @return DefaultMutableTreeNode, the top tree node for the tree.
 	 */
 	public DefaultMutableTreeNode getTreeData() {
-		
+
 		// TOP NEEDS TO MATCH THE STRUCTURE OF THE REST OF THE TREE DATA
 		Vector topdata = new Vector(2);
 		topdata.addElement(new String(""));
@@ -1519,7 +1553,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			DefaultMutableTreeNode group = null;
 			DefaultMutableTreeNode code = null;
 			check = null;
-			
+
 			// ADD CODE GROUPS
 			for(Enumeration e = groups.elements();e.hasMoreElements();) {
 				Hashtable nextGroup = (Hashtable)e.nextElement();
@@ -1601,7 +1635,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		this.top = top;
 		return top;
 	}
-	
+
 	/**
  	 * Indicates when nodes and link are selected and deselected
   	 * @param selected true for selected false for deselected.
@@ -1615,16 +1649,16 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
   	 * @param selected true for selected false for deselected.
 	 */
 	public void setNodeSelected(boolean selected) {
-		if (selected) {			
+		if (selected) {
 			tree.clearSelection();
-			updateSelectionListView();			
+			updateSelectionListView();
 			oWorkingList.getList().selectAll();
 			pbDeselectAll.setText("Deselect All");
-			pbDeselectAll.setMnemonic(KeyEvent.VK_D);									
+			pbDeselectAll.setMnemonic(KeyEvent.VK_D);
 		} else {
 			if (!isFilter) {
 				tree.clearSelection();
-				updateSelectionListView();								
+				updateSelectionListView();
 				clearChecks();
 				refresh();
 			}
@@ -1633,7 +1667,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 
 	/**
 	 * Add the given code to the code list.
-	 * 
+	 *
 	 * @param vCodeList the list of codes to add the code to.
 	 * @param newCodem the code to add, if not already there.
 	 */
@@ -1697,52 +1731,52 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	 */
 	public void onReturnTextAndZoom(int zoom) {
 		Font font = ProjectCompendium.APP.labelFont;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());				
-		
+		tree.setRowHeight(metrics.getHeight());
+
 		this.oWorkingList.onReturnTextAndZoom(zoom);
 	}
-	
+
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextToActual() {
 		tree.setFont(ProjectCompendium.APP.labelFont);
 		FontMetrics metrics = tree.getFontMetrics(ProjectCompendiumFrame.labelFont);
-		tree.setRowHeight(metrics.getHeight());				
-		
+		tree.setRowHeight(metrics.getHeight());
+
 		this.oWorkingList.onReturnTextToActual();
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 */
 	public void onIncreaseTextSize() {
 		Font font = tree.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());						
-		
+		tree.setRowHeight(metrics.getHeight());
+
 		this.oWorkingList.onIncreaseTextSize();
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 */
 	public void onReduceTextSize() {
 		Font font = tree.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());								
-		
+		tree.setRowHeight(metrics.getHeight());
+
 		this.oWorkingList.onReduceTextSize();
 	}
-	
+
     /**
      * Add the given code to the currently selected nodes
      * @param oCode the code to add
@@ -1750,7 +1784,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
     public void onAddCodeToNodes(Code oCode) {
 
 		UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();
-		
+
 		if (oWorkingList.getNumberOfSelectedNodes() > 0) {
             int[] rows = oWorkingList.getList().getSelectedRows();
             int row = 0;
@@ -1760,8 +1794,8 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
             	node = oWorkingList.getNodeAt(row);
             	if (node != null ){
 					try {
-						if (node.addCode(oCode)) {	
-	
+						if (node.addCode(oCode)) {
+
 							// IF WE ARE RECORDING or REPLAYING A MEETING, RECORD A TAG ADDED EVENT.
 							if (ProjectCompendium.APP.oMeetingManager != null && ProjectCompendium.APP.oMeetingManager.captureEvents()) {
 								ProjectCompendium.APP.oMeetingManager.addEvent(
@@ -1770,7 +1804,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 														 MeetingEvent.TAG_ADDED_EVENT,
 														 frame.getView(),
 														 node,
-														 oCode));							
+														 oCode));
 							}
 						}
 					}
@@ -1781,7 +1815,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
             	}
             }
  		}
-		
+
 		// INCASE NEED TO UPDATE 'T' INDICATORS
 		ProjectCompendium.APP.refreshIconIndicators();
 	}
@@ -1793,7 +1827,7 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	public void onRemoveCodeFromNodes(Code oCode) {
 
 		UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();
-		
+
 		if (oWorkingList.getNumberOfSelectedNodes() > 0) {
             int[] rows = oWorkingList.getList().getSelectedRows();
             int row = 0;
@@ -1804,8 +1838,8 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
             	if (node != null) {
 					try {
 						if (node.hasCode(oCode.getName())) {
-							if (node.removeCode(oCode)) {	
-			
+							if (node.removeCode(oCode)) {
+
 								// IF WE ARE RECORDING or REPLAYING A MEETING, RECORD A TAG REMOVED EVENT.
 								if (ProjectCompendium.APP.oMeetingManager != null && ProjectCompendium.APP.oMeetingManager.captureEvents()) {
 									ProjectCompendium.APP.oMeetingManager.addEvent(
@@ -1814,13 +1848,13 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 															 MeetingEvent.TAG_REMOVED_EVENT,
 															 frame.getView(),
 															 node,
-															 oCode));							
+															 oCode));
 								}
 							}
 						}
 					}
 					catch (NoSuchElementException e) {
-						e.printStackTrace();					
+						e.printStackTrace();
 					}
 					catch(Exception ex) {
 						ex.printStackTrace();
@@ -1829,11 +1863,11 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
             	}
             }
  		}
-				
+
 		// INCASE NEED TO UPDATE 'T' INDICATORS
 		ProjectCompendium.APP.refreshIconIndicators();
 	}
-		
+
 	/**
 	 * Can be used to clean up variables used ot help with garbage collection.
 	 */
@@ -1846,35 +1880,35 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		tree				= null;
 		treemodel			= null;
 		top = null;
-	}		
-      
+	}
+
 //	 INNER CLASSES
-		
+
 	/**
-	 * Inner class to render a tree item. 
+	 * Inner class to render a tree item.
 	 * @author Michelle Bachler
 	 */
 	private class CheckBoxNodeRenderer extends JPanel implements TreeCellRenderer {
-		
+
 		private CheckNode box = null;
 		private JCheckBox cbCheckBox = null;
-		private JLabel label = new JLabel();		
+		private JLabel label = new JLabel();
 		private JTextField field = new JTextField();
-		
+
 		private Border border = null;
-		
+
 		private Icon leafIcon = null;
 		private Icon openIcon = null;
 		private Icon closedIcon = null;
-		
+
 		private Color oHighlight = Color.yellow;
 		private Border oMainBorder = null;
-		
+
 		protected BorderLayout layout = null;
 
 		Color selectionBorderColor, selectionForeground, selectionBackground,
 		textForeground, textBackground;
-		
+
 		protected JCheckBox getCheckBox() {
 			return cbCheckBox;
 		}
@@ -1886,65 +1920,65 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		protected CheckNode getNode() {
 			return box;
 		}
-		
+
 		protected Border getFieldBorder() {
 			return border;
-		}		
-		
+		}
+
 		protected void setDefaultColors() {
 			field.setForeground(textForeground);
 			field.setBackground(textBackground);
 			label.setForeground(selectionForeground);
-			label.setBackground(selectionBackground);				
-			setBackground(textBackground);							
+			label.setBackground(selectionBackground);
+			setBackground(textBackground);
 		}
-		
+
 		public CheckBoxNodeRenderer() {
         	setFont(ProjectCompendiumFrame.labelFont);
 			oMainBorder = getBorder();
 			layout = new BorderLayout();
 			layout.setHgap(5);
 			setLayout(layout);
-			add(field, BorderLayout.CENTER);
+			add(field, BorderLayout.EAST);
 			field.setEditable(false);
 			border = field.getBorder();
 			field.setBorder(null);
-			
+
  			DefaultTreeCellRenderer rend = new DefaultTreeCellRenderer();
 			leafIcon = rend.getLeafIcon();
 			openIcon = rend.getOpenIcon();
 			closedIcon = rend.getClosedIcon();
-			
+
 			selectionForeground = UIManager.getColor("List.selectionForeground");
 			selectionBackground = UIManager.getColor("List.selectionBackground");
 			textForeground = UIManager.getColor("List.textForeground");
 			textBackground = UIManager.getColor("List.textBackground");
 		}
-		
+
 		public Component getTreeCellRendererComponent(JTree tree, Object value,
 				boolean selected, boolean expanded, boolean leaf, int row,
 				boolean hasFocus) {
-						
+
 			if (cbCheckBox != null) {
 				remove(cbCheckBox);
 				cbCheckBox = null;
 			}
 			remove(label);
 			setBorder(oMainBorder);
-			
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;			
+
+			DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
 			Object userObject = node.getUserObject();
-			box = (CheckNode)userObject;			
-			if (!box.isGroup()) {	
+			box = (CheckNode)userObject;
+			if (!box.isGroup()) {
 			    Code code = (Code)box.getData();
 
 				cbCheckBox = new JCheckBox();
-		    	cbCheckBox.setSelected(box.isChecked());	
+		    	cbCheckBox.setSelected(box.isChecked());
 		    	cbCheckBox.setFont(tree.getFont());
 
 		    	if (box.isChecked()) {
 		    		if (box.isUniversal()) {
-		    			cbCheckBox.setBackground(Color.orange);		    			
+		    			cbCheckBox.setBackground(Color.orange);
 		    		} else {
 		    			cbCheckBox.setBackground(IUIConstants.DEFAULT_COLOR);
 		    		}
@@ -1960,11 +1994,8 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 				}
 				catch(Exception ex) {
 					ex.printStackTrace();
-				}	
-				
-				// HACK: for window/Mac bug. Leave space at end else when number grows it disappears off right edge
-				// Something wrong as layout manager should adjust really
-				field.setText(text+"  ("+count+")       ");	
+				}
+				field.setText(text+"  ("+count+")");
 	        	field.setFont(tree.getFont());
 
 				if (selected) {
@@ -1975,26 +2006,23 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 					field.setBackground(textBackground);
 				}
 				setToolTipText("Click to show nodes with this tag (AND any other selected tags)");
-				
+
 				layout.setHgap(2);
-				
-				layout.invalidateLayout(this);
-				layout.layoutContainer(this);
 			} else {
-				add(label, BorderLayout.WEST);
+				add(label, BorderLayout.CENTER);
 				Icon icon = null;
 				if (box.isGroup()) {
 					if (expanded)
 						icon = openIcon;
 					else
-						icon = closedIcon;	
+						icon = closedIcon;
 				}/* else if (leaf) {
 					//icon = leafIcon;
 					icon = null;
 				}	*/
 				label.setIcon(icon);
 				label.setForeground(textForeground);
-				label.setBackground(textBackground);				
+				label.setBackground(textBackground);
 
 				Vector group = (Vector)box.getData();
 				field.setText((String)group.elementAt(1));
@@ -2002,71 +2030,71 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 
 				if ( (ProjectCompendium.APP.getActiveCodeGroup()).equals((String)group.elementAt(0)) && !selected ) {
 					field.setForeground(IUIConstants.DEFAULT_COLOR);
-					field.setBackground(textBackground);				
-				} else {												
+					field.setBackground(textBackground);
+				} else {
 					if (selected) {
 						field.setForeground(selectionForeground);
 						field.setBackground(selectionBackground);
 					} else {
 						field.setForeground(textForeground);
 						field.setBackground(textBackground);
-					}					
-				}		
-				
+					}
+				}
+
 				setToolTipText("Click to show all nodes with one Or more tags in the group");
 				if (row == highlightRow) {
 					setBorder(new LineBorder(oHighlight, 2));
-				}				
+				}
 			}
-			
-			setBackground(textBackground);				
-			
+
+			setBackground(textBackground);
+
 			htAllRenderers.put(new Integer(row), this);
 
 			return this;
 		}
-	}	
-	
+	}
+
 	private class CheckBoxNodeEditor extends AbstractCellEditor implements TreeCellEditor {
-		
+
 		CheckBoxNodeRenderer renderer = new CheckBoxNodeRenderer();
 		CheckNode check = null;
-		
+
 		JTree tree;
-		
+
 		public CheckBoxNodeEditor(JTree tree) {
 			this.tree = tree;
 		}
-		
+
 		public Object getCellEditorValue() {
 			return check;
 		}
-		
+
 		public boolean shouldSelectCell(EventObject anEvent) {
 			return false;
 		}
-		
+
 		public boolean stopCellEditing() {
 			check.setText(renderer.getField().getText());
 			updateTreeData();
 			if (isFilter) {
-				updateFilterListView();				
+				updateFilterListView();
 			} else {
-				updateSelectionListView();	
+				updateSelectionListView();
 			}
 			return true;
 		}
-		
+
 		public boolean isCellEditable(EventObject event) {
 			return true;
 		}
-		
+
 		public Component getTreeCellEditorComponent(JTree tree, Object value,
 				boolean selected, boolean expanded, boolean leaf, int row) {
-			
+
 			Component editor = renderer.getTreeCellRendererComponent(tree, value,
 					selected, expanded, leaf, row, true);
-			
+
 			if (renderer.getCheckBox() != null) {
 				renderer.getCheckBox().setEnabled(false);
 			}
@@ -2074,25 +2102,25 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 			JTextField field = renderer.getField();
 			field.setText(check.getText());
 			field.setBorder(renderer.getFieldBorder());
-			field.setEditable(true);			
+			field.setEditable(true);
 			int cols = field.getColumns();
 			if (cols < 30) {
 				field.setColumns(30);
 			}
-			
+
 			final JTree ftree = tree;
 			final JTextField ffield = field;
 			field.addKeyListener(new KeyAdapter() {
-				public void keyPressed(KeyEvent e) {															
+				public void keyPressed(KeyEvent e) {
 					int keyCode = e.getKeyCode();
 					int modifiers = e.getModifiers();
 					if (keyCode == KeyEvent.VK_ENTER && modifiers == 0) {
 						if (ftree.isEditing()) {
 							ftree.stopEditing();
-						}				
-					}										
+						}
+					}
 				}
-				
+
 				public void keyTyped(KeyEvent e) {
 					char keyChar = e.getKeyChar();
 					char[] key = {keyChar};
@@ -2101,9 +2129,9 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 
 					//JViewport viewport = sp.getViewport();
 					//Rectangle nodeBounds = ffield.getBounds();
-					//Point parentPos = SwingUtilities.convertPoint(ftree, nodeBounds.x, nodeBounds.y, viewport);					
+					//Point parentPos = SwingUtilities.convertPoint(ftree, nodeBounds.x, nodeBounds.y, viewport);
 					//sp.scrollRectToVisible(new Rectangle(parentPos.x+nodeBounds.width-5, parentPos.y, 5, 5));
-					
+
 					if (ProjectCompendium.isMac && modifiers == ProjectCompendium.APP.shortcutKey) {
 						return;
 					} else {
@@ -2118,28 +2146,28 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 								 e.consume();
 							 }
 						}
-					}					
+					}
 				}
 			});
-			
+
 			field.addFocusListener(new FocusListener(){
-				public void focusGained(FocusEvent e){}				
+				public void focusGained(FocusEvent e){}
 				public void focusLost(FocusEvent e){
 					ftree.stopEditing();
 				}
 			});
-			
+
         	field.setFont(tree.getFont());
 
-			renderer.setDefaultColors();				
+			renderer.setDefaultColors();
 
 			return editor;
-		}	
-	}		 
-	
+		}
+	}
+
 // DRAG AND DROP METHODS
-  	
-  	//  TRANSFERABLE  	
+
+  	//  TRANSFERABLE
    /**
      * Returns an array of DataFlavor objects indicating the flavors the data
      * can be provided in.
@@ -2174,9 +2202,9 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		else return null;
 	}
 
-	
+
 	private TreePath[] sourcepaths = null;
-	
+
 	//	SOURCE
     /**
      * A <code>DragGestureRecognizer</code> has detected
@@ -2190,13 +2218,13 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	public void dragGestureRecognized(DragGestureEvent e) {
 	    InputEvent in = e.getTriggerEvent();
 	    sourcepaths = null;
-	    int action = e.getDragAction();	    
+	    int action = e.getDragAction();
 	    if (in instanceof MouseEvent) {
     		sourcepaths = tree.getSelectionPaths();
  	    	if (action == DnDConstants.ACTION_COPY) {
 				e.startDrag(DragSource.DefaultCopyDrop, this, this);
 			} else {
-				e.startDrag(DragSource.DefaultMoveDrop, this, this);								
+				e.startDrag(DragSource.DefaultMoveDrop, this, this);
 	    	}
 		}
 	}
@@ -2274,26 +2302,26 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 		SwingUtilities.convertPointFromScreen(loc, tree);
 
 		tree.scrollRectToVisible(new Rectangle(loc.x-20, loc.y-20, 40, 40));
-		TreePath path = tree.getPathForLocation(loc.x, loc.y);			
+		TreePath path = tree.getPathForLocation(loc.x, loc.y);
 	    int row = tree.getRowForPath(path);
-	       		
+
 		if (ProjectCompendium.isMac) {
 			if (action == DnDConstants.ACTION_COPY) {
-				context.setCursor(DragSource.DefaultCopyDrop);			
+				context.setCursor(DragSource.DefaultCopyDrop);
 			} else if (action == DnDConstants.ACTION_MOVE) {
-				context.setCursor(DragSource.DefaultMoveDrop);			
-			}										
+				context.setCursor(DragSource.DefaultMoveDrop);
+			}
 		} else {
 			if (path != null) {
 				DefaultMutableTreeNode thenode = (DefaultMutableTreeNode)path.getLastPathComponent();
-				CheckNode check = (CheckNode)thenode.getUserObject();		
-				if (check.isGroup()) {	
+				CheckNode check = (CheckNode)thenode.getUserObject();
+				if (check.isGroup()) {
 					if (action == DnDConstants.ACTION_COPY) {
-						context.setCursor(DragSource.DefaultCopyDrop);			
+						context.setCursor(DragSource.DefaultCopyDrop);
 					} else if (action == DnDConstants.ACTION_MOVE) {
-						context.setCursor(DragSource.DefaultMoveDrop);			
+						context.setCursor(DragSource.DefaultMoveDrop);
 					}
-					if (highlightRow != row) { 
+					if (highlightRow != row) {
 						highlightRow = row;
 						Thread thread = new Thread() {
 							public void run() {
@@ -2301,10 +2329,10 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 							}
 						};
 						thread.start();
-					} 	
+					}
 				} else {
-					if (highlightRow != -2) { 
-						highlightRow = -2;							
+					if (highlightRow != -2) {
+						highlightRow = -2;
 						Thread thread = new Thread() {
 							public void run() {
 								tree.repaint();
@@ -2312,16 +2340,16 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 						};
 						thread.start();
 					}
-					
+
 					if (action == DnDConstants.ACTION_COPY) {
-						context.setCursor(DragSource.DefaultCopyNoDrop);			
+						context.setCursor(DragSource.DefaultCopyNoDrop);
 					} else if (action == DnDConstants.ACTION_MOVE) {
-						context.setCursor(DragSource.DefaultMoveNoDrop);			
-					}				
+						context.setCursor(DragSource.DefaultMoveNoDrop);
+					}
 				}
 			} else {
-				if (highlightRow != -2) { 
-					highlightRow = -2;							
+				if (highlightRow != -2) {
+					highlightRow = -2;
 					Thread thread = new Thread() {
 						public void run() {
 							tree.repaint();
@@ -2329,12 +2357,12 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 					};
 					thread.start();
 				}
-				
+
 				if (action == DnDConstants.ACTION_COPY) {
-					context.setCursor(DragSource.DefaultCopyNoDrop);			
+					context.setCursor(DragSource.DefaultCopyNoDrop);
 				} else if (action == DnDConstants.ACTION_MOVE) {
-					context.setCursor(DragSource.DefaultMoveNoDrop);			
-				}							
+					context.setCursor(DragSource.DefaultMoveNoDrop);
+				}
 			}
 		}
 	}
@@ -2349,8 +2377,8 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
      * @param e the <code>DragSourceDragEvent</code>
      */
 	public void dropActionChanged(DragSourceDragEvent e) {}
-	
-	
+
+
 	//TARGET
 	/**
      * Called if the user has modified
@@ -2397,105 +2425,115 @@ public class UITagTreePanel extends JPanel implements ActionListener, ListSelect
 	public void drop(DropTargetDropEvent e) {
   		//if (highlightRow != -2) {
         	//tree.repaint(tree.getRowBounds(highlightRow));
-        //	highlightRow = -2;	
+        //	highlightRow = -2;
         //	tree.repaint();
-        //}		
-		
+        //}
+
 		DropTarget drop = (DropTarget)e.getSource();
 
-		DropTargetContext context = e.getDropTargetContext();		
+		DropTargetContext context = e.getDropTargetContext();
 		context.getComponent().setCursor(new Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-		
+
 		try {
 		    Transferable transferable = e.getTransferable();
 		    if (!transferable.isDataFlavorSupported(new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+"; class=com.compendium.ui.tags.UITagTreePanel", null))) {
 		    	e.rejectDrop();
 		    	return;
-		    }		
+		    }
 		} catch(Exception ec) {
- 			ec.printStackTrace(); 			 		
+ 			ec.printStackTrace();
 		}
-		
-		Point droploc = e.getLocation();		
-	    if (drop.getComponent() instanceof JTree) {	    		    
-	    	JTree tree = (JTree)drop.getComponent();   	
-   			TreePath targetpath = tree.getPathForLocation(droploc.x, droploc.y);			   			
+
+		Point droploc = e.getLocation();
+	    if (drop.getComponent() instanceof JTree) {
+	    	JTree tree = (JTree)drop.getComponent();
+   			TreePath targetpath = tree.getPathForLocation(droploc.x, droploc.y);
  			if (sourcepaths != null && targetpath != null) {
  				DefaultMutableTreeNode targetnode = (DefaultMutableTreeNode)targetpath.getLastPathComponent();
-				CheckNode check = (CheckNode)targetnode.getUserObject();					
+				CheckNode check = (CheckNode)targetnode.getUserObject();
 				if (check.getData() instanceof Code) {
-			    	e.rejectDrop();					
+			    	e.rejectDrop();
 					return;
-				} else {		
+				} else {
 					e.acceptDrop(e.getDropAction());
-					
+
 					DefaultMutableTreeNode parent = null;
 					CheckNode group = null;
 					Vector codegroup = null;
-					String sCodeGroupID = "";					
+					String sCodeGroupID = "";
 					Code code = null;
 					String sAuthor = "";
 					Hashtable htCodeGroup = null;
 					Date date = new Date();
-	 									
-					DefaultMutableTreeNode sourcenode = null;				
-					CheckNode sourcecheck = null;				
-					
+
+					DefaultMutableTreeNode sourcenode = null;
+					CheckNode sourcecheck = null;
+
 	 				for (int i=0; i<sourcepaths.length; i++ ) {
 		 				sourcenode = (DefaultMutableTreeNode)sourcepaths[i].getLastPathComponent();
-						sourcecheck = (CheckNode)sourcenode.getUserObject();	
+						sourcecheck = (CheckNode)sourcenode.getUserObject();
 						if (sourcecheck.getData() instanceof Code) {
 							try {
 								codegroup = (Vector)check.getData();
-								sCodeGroupID = (String)codegroup.elementAt(0);								
+								sCodeGroupID = (String)codegroup.elementAt(0);
 								code = (Code)sourcecheck.getData();
 								sAuthor = model.getUserProfile().getUserName();
-				
+
 								htCodeGroup = model.getCodeGroup(sCodeGroupID);
 								if (htCodeGroup.containsKey("children")) {
 									Hashtable children = (Hashtable)htCodeGroup.get("children");
 									if (!children.containsKey(code.getId())) {
-										
+
 										model.getGroupCodeService().createGroupCode(model.getSession(), code.getId(), sCodeGroupID, sAuthor, date, date);
 										model.addCodeGroupCode(sCodeGroupID, code.getId(), code);
-				
+
 										if (e.getDropAction() == DnDConstants.ACTION_MOVE) {
 											parent = (DefaultMutableTreeNode)sourcenode.getParent();
 											String sParentCodeGroupID = "";
 											if (parent != null) {
 												group = (CheckNode)parent.getUserObject();
-												if (group.isGroup()) {									
+												if (group.isGroup()) {
 													sParentCodeGroupID = (String)((Vector)group.getData()).elementAt(0);
 													model.getGroupCodeService().delete(model.getSession(), code.getId(), sParentCodeGroupID);
 													model.removeCodeGroupCode(sParentCodeGroupID, code.getId());
 												}
 											}
 										}
-														
+
 										// YOU YOU ARE ADDING OR REMOVING FROM THE ACTIVEGROUP,
 										// REFRESH THE CHOICE BOX ON THE MAIN TOOLBAR
 										if (sCodeGroupID.equals(ProjectCompendium.APP.getActiveCodeGroup())) {
 											ProjectCompendium.APP.updateCodeChoiceBoxData();
 										}
-										
+
 										this.updateTreeData();
-											
+
 							     		DefaultMutableTreeNode node = findCodeGroup(sCodeGroupID);
 							     		if (node != null) {
 							     			tree.expandPath(new TreePath(node.getPath()));
-							     		}									
+							     		}
 									} else {
 										//ProjectCompendium.APP.displayError("That tag is already in that group");
 									}
-								}							
+								}
 							} catch (SQLException se) {
 								ProjectCompendium.APP.displayError("UITagTreePanel.drop\n\n"+se.getMessage());
 							}
-						}						
+						}
 					}
 				}
  			}
-	    }			
-		e.dropComplete(true);							 				
-	}		
+	    }
+		e.dropComplete(true);
+	}
+
+	public static void showTrace(String msg)
+	{
+	  //if (msg.length() > 0) System.out.println(msg);
+	  System.out.println(
+			   new Throwable().getStackTrace()[1].getLineNumber() +
+			   " " + new Throwable().getStackTrace()[1].getFileName() +
+				   " " + new Throwable().getStackTrace()[1].getMethodName() +
+					   " " + msg);
+	}
 }

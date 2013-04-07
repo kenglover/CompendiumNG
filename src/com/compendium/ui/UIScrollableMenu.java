@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.util.*;
@@ -53,7 +52,7 @@ public class UIScrollableMenu extends JMenu {
 
 	/** The menu item in the scrollabel part of the menu.*/
 	private Vector	listitems		= null;
-	
+
 	/** A count of the separators adding to this menu.*/
 	private Vector	vtSeparators		= null;
 
@@ -95,7 +94,7 @@ public class UIScrollableMenu extends JMenu {
 
 	/** Used for autoscrolling when dragged nodes hit the viewport edge.*/
 	private 	java.util.Timer 					timer = null;
-	
+
 
 	/**
 	 * Constructor. Initializes the menu.
@@ -185,14 +184,14 @@ public class UIScrollableMenu extends JMenu {
 		menuitems = new Vector(20);
 		listitems = new Vector(20);
 		vtSeparators = new Vector();
-		
+
 		this.setDoubleBuffered(true);
-		
+
 		JMenuItem test = new JMenuItem();
 
 		upArrow = new JPanel(new BorderLayout());
 		upArrow.setBorder(new EmptyBorder(4,4,4,4));
-		upArrow.setBackground(test.getBackground());		
+		upArrow.setBackground(test.getBackground());
 		up = new JLabel(UIImages.get(IUIConstants.UP_ARROW_ICON));
 		up.addMouseListener(createMouseAdapter());
 		up.setHorizontalAlignment(SwingConstants.CENTER);
@@ -200,7 +199,7 @@ public class UIScrollableMenu extends JMenu {
 		upArrow.add(up, BorderLayout.CENTER);
 
 		downArrow = new JPanel(new BorderLayout());
-		downArrow.setBorder(new EmptyBorder(4,4,4,4));		
+		downArrow.setBorder(new EmptyBorder(4,4,4,4));
 		downArrow.setBackground(test.getBackground());
 		down = new JLabel(UIImages.get(IUIConstants.DOWN_ARROW_ICON));
 		down.addMouseListener(createMouseAdapter());
@@ -296,21 +295,21 @@ public class UIScrollableMenu extends JMenu {
 	private class ScrollMenu extends TimerTask {
 
 		boolean scrollUp = false;
-		
-		public ScrollMenu(boolean scroll) {			
+
+		public ScrollMenu(boolean scroll) {
 			scrollUp = scroll;
 		}
 
 		public void run() {
 			if (scrollUp) {
 				scrollUp();
-			} else { 
+			} else {
 				scrollDown();
-			}			
+			}
 		}
 	}
-	
-	
+
+
 	private void scrollDown() {
 		try {
 			int	top = list.getFirstVisibleIndex();
@@ -330,14 +329,14 @@ public class UIScrollableMenu extends JMenu {
 				try {
 					list.ensureIndexIsVisible(bottom+1);
 					list.repaint();
-				} catch(Exception e) {}										
+				} catch(Exception e) {}
 			}
 		}
 		catch(Exception io) {
 			io.printStackTrace();
-		}			
+		}
 	}
-	
+
 	private void scrollUp() {
 		try {
 			int	top = list.getFirstVisibleIndex();
@@ -366,9 +365,9 @@ public class UIScrollableMenu extends JMenu {
 		}
 		catch(Exception io) {
 			io.printStackTrace();
-		}			
+		}
 	}
-	
+
 	/*
 	 * Set the time delay by which the scroll action waits before scrolling to the next menu item
 	 * int delay, the delay between scrolling between menu items, in milliseconds
@@ -384,7 +383,7 @@ public class UIScrollableMenu extends JMenu {
      * Appends a new separator to the end of the menu.
      */
 	public void addSeparator() {
-		
+
 		JSeparator sep = new JSeparator();
 
 		if (menuitems.size() < scrollStart) {
@@ -813,7 +812,7 @@ public class UIScrollableMenu extends JMenu {
 			down.setEnabled(true);
 			if (timer != null) {
 				timer.cancel();
-			}			
+			}
 		}
 		else {
 			// DON'T NEED THE SCROLL ARROWS IF MENU NOT LONG ENOUGH
@@ -882,7 +881,7 @@ public class UIScrollableMenu extends JMenu {
 			}
 
 			panel.setBorder(null);
-		    //ToolTipManager.sharedInstance().registerComponent(panel);			
+		    //ToolTipManager.sharedInstance().registerComponent(panel);
 
 			return panel;
 		}

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.io.http;
 
 import java.io.BufferedReader;

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
@@ -37,14 +36,11 @@ import com.compendium.core.ICoreConstants;
  */
 public class DBConnection {
 
-	/** 
-	 * The default timeut used by MySQL.
-	 * It won't hurt using this on Derby as well.
-	 */
-	private final static int MYSQL_SESSION_TIMEOUT 	= 28800; //8 hour MySQL default timeout.
+	/** The default timeut used by MySQL.  It won't hurt using this on Derby as well. */
+	private static long MYSQL_SESSION_TIMEOUT 	= 120000; 	// 2 minutes, as this is in milliseconds
 
-	/** A predefined integer to indicate a maximum likely active period for a connection statement run*/
-	private final static int BUSY_TIMEOUT		= 2000;
+	/** Maximum likely active period for a connection statement run*/
+	private static long BUSY_TIMEOUT		= 120000;  		// 2 minutes, as this is in milliseconds
 
 	/** A reference to the actual Connection object which this class wraps*/
 	private Connection		oConnection 		= null;
@@ -54,14 +50,14 @@ public class DBConnection {
 
 	/** Used to monitor how long a connection has been busy for */
 	private Calendar 		beginTime			= null;
-	
+
 	/** Used to monitor how long a connection has been open for */
 	private Calendar		sessionStartTime 	= null;
-	
+
 	/** The type of database this is a connection for.*/
 	private int				nDatabaseType		= -1;
-	
-	
+
+
 	/**
 	 * Constructor
 	 *
@@ -80,6 +76,9 @@ public class DBConnection {
 	 * @return Connection, the curernt database connection object.
 	 */
 	public Connection getConnection() {
+		if (oConnection  == null)
+			System.out.println("80 DBConnection oConnection is null");
+
 		return oConnection;
 	}
 
@@ -100,6 +99,16 @@ public class DBConnection {
 	}
 
 	/**
+	 * Sets the MYSQL_SESSION_TIMEOUT and BUSY_TIMEOUT params based on data gathered from the MySQL Server
+	 *
+	 * @param lTimeout - the Timeout value to set
+	 */
+	public static void setTimeouts(Long lTimeout) {
+		MYSQL_SESSION_TIMEOUT = lTimeout;
+		BUSY_TIMEOUT = lTimeout;
+	}
+
+	/**
 	 * Check to see if this Connection has been apparently active for a long time.
 	 * but may infact now be inactive.
 	 *
@@ -116,7 +125,7 @@ public class DBConnection {
 
 		return false;
 	}
-	
+
 	/**
 	 * Check to see if this Connection has timeded out.
 	 * For MySQL only - (has it been active for more than 8 hours?)
@@ -126,9 +135,9 @@ public class DBConnection {
 	public boolean sessionTimedOut() {
 
 		if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-			return false;			
+			return false;
 		}
-		
+
 		Calendar endTime = Calendar.getInstance();
 		long timeTaken = (endTime.getTime().getTime() - sessionStartTime.getTime().getTime());
 		if (timeTaken > MYSQL_SESSION_TIMEOUT) {
@@ -148,7 +157,7 @@ public class DBConnection {
 			//if (e.getSQLState().equalsIgnoreCase("08S01")) {
 			//	return true;
 			//}
-		}	*/		
+		}	*/
 
 		return false;
 	}
@@ -158,5 +167,19 @@ public class DBConnection {
 	 */
 	public boolean getIsBusy() {
 		return bIsBusy;
+	}
+
+	/**
+	 * Returns if the database is MySQL.
+	 */
+	public boolean isMySql() {
+		return nDatabaseType == ICoreConstants.MYSQL_DATABASE;
+	}
+
+	/**
+	 * Returns if the database is Derby.
+	 */
+	public boolean isDerby() {
+		return nDatabaseType == ICoreConstants.DERBY_DATABASE;
 	}
 }

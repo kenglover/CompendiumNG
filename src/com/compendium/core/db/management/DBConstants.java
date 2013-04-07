@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 /*
@@ -74,13 +73,13 @@ public interface DBConstants extends java.io.Serializable {
 
 	/** The SQL statement to select all the data from the ViewNode table */
 	public final static String GET_VIEWNODE_QUERY 		= "SELECT * FROM ViewNode";
-	
+
 	/** Due to a beta release bug, some users had this table's columns in a different order.
 	 *  So this specifes the exact columns
 	 */
 	public final static String GET_SPECIFIC_VIEWNODE_QUERY = "SELECT ViewID, NodeID, XPos, YPos, CreationDate, ModificationDate, CurrentStatus, " +
 		"ShowTags, ShowText, ShowTrans, ShowWeight, SmallIcon, HideIcon, LabelWrapWidth, " +
-		"FontSize, FontFace, FontStyle, Foreground, Background FROM ViewNode";		
+		"FontSize, FontFace, FontStyle, Foreground, Background FROM ViewNode";
 
 	/** The SQL statement to select all the data from the ShortCutNode table */
 	public final static String GET_SHORTCUT_QUERY 		= "SELECT * FROM ShortCutNode";
@@ -439,7 +438,7 @@ public interface DBConstants extends java.io.Serializable {
 	/**
 	 * An SQL statement to put a record into the User table.
 	 * For use with PreparedStatement objects. Values need to be added to a PreparedStatement instance for:
-	 * (UserID, Author, CreationDate, ModificationDate, Login, Name, Password, Description, HomeView, 
+	 * (UserID, Author, CreationDate, ModificationDate, Login, Name, Password, Description, HomeView,
 	 * IsAdministrator, CurrentStatus, LinkView)
 	 */
 	public final static String INSERT_USER_QUERY = INSERT_USER_QUERY_BASE +
@@ -448,7 +447,7 @@ public interface DBConstants extends java.io.Serializable {
 	/**
 	 * An SQL statement to put a record into the Node table.
 	 * For use with PreparedStatement objects. Values need to be added to a PreparedStatement instance for:
-	 * (NodeID, Author, CreationDate, ModificationDate, NodeType, OriginalID, ExtendedNodeType, Label, Detail, 
+	 * (NodeID, Author, CreationDate, ModificationDate, NodeType, OriginalID, ExtendedNodeType, Label, Detail,
 	 * CurrentStatus, LastModUserID)
 	 */
 	public final static String INSERT_NODE_QUERY = INSERT_NODE_QUERY_BASE +
@@ -506,7 +505,7 @@ public interface DBConstants extends java.io.Serializable {
 	 * An SQL statement to put a record into the ViewNode table.
 	 * For use with PreparedStatement objects. Values need to be added to a PreparedStatement instance for:
 	 * (ViewID, NodeID, XPos, YPos, CreationDate, ModificationDate, CurrentStatus,
-	 *  ShowTags, ShowText, ShowTrans, ShowWeight, SmallIcons, HideIcons, LabelLength, 
+	 *  ShowTags, ShowText, ShowTrans, ShowWeight, SmallIcons, HideIcons, LabelLength,
 	 *  LabelWidth, FontSize, FontFace, FontStyle, Foreground, Background)
 	 */
 	public final static String INSERT_VIEWNODE_QUERY = INSERT_VIEWNODE_QUERY_BASE +

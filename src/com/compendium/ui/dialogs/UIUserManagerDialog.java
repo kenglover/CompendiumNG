@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -64,7 +63,7 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 	private UINavList		lstUsers			= null;
 
 	/** The data for the list of current users.*/
-	private Vector			vtUsers				= new Vector();
+	private Vector<UserProfile>			vtUsers				= new Vector<UserProfile>();
 
 	/** The button to edit the selected user's details.*/
 	private UIButton			pbUpdate			= null;
@@ -101,7 +100,7 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 
 	/** Holds the panels for this dialog.*/
 	private JTabbedPane		oTabbedPane			= null;
-	
+
 	/** The currently logged in user.*/
 	private UserProfile		oCurrentUser		= null;
 
@@ -125,7 +124,7 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 
 		oContentPane.add(oTabbedPane, BorderLayout.CENTER);
 		oContentPane.add(createButtonPanel(), BorderLayout.SOUTH);
-		
+
 		oCurrentUser = ProjectCompendium.APP.getModel().getUserProfile();
 
 		// update the users lists..
@@ -143,7 +142,7 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(new EmptyBorder(10,10,10,10));
 
-		JLabel lblUsername = new JLabel("Login Name  (Author Name)");
+		JLabel lblUsername = new JLabel("Login Name  (User Name)");
 		mouseClick = new MouseAdapter() {
 		  	public void mouseClicked(MouseEvent e) {
 
@@ -359,8 +358,8 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 			}
 		}
 	}
-	
-	/** 
+
+	/**
 	 * Listens for changes to the user list selection.
 	 */
 	public void valueChanged(ListSelectionEvent e) {
@@ -383,19 +382,10 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 		((DefaultListModel)lstUsers.getModel()).removeAllElements();
 		vtUsers.removeAllElements();
 
-		IModel model = ProjectCompendium.APP.getModel();
-		String modelName = model.getModelName();
-		String userID = model.getUserProfile().getId() ;
-
-		try {
-			for(Enumeration e = (model.getUserService().getUsers(modelName, userID)).elements();e.hasMoreElements();) {
-				UserProfile up = (UserProfile)e.nextElement();
-				((DefaultListModel)lstUsers.getModel()).addElement(up);
-				vtUsers.addElement(up);
-			}
-		}
-		catch(SQLException ex) {
-			ProjectCompendium.APP.displayError("Exception: " + ex.getMessage());
+		for(Enumeration<?> e = (ProjectCompendium.APP.getModel().getUsers()).elements();e.hasMoreElements();) {
+			UserProfile up = (UserProfile)e.nextElement();
+			((DefaultListModel)lstUsers.getModel()).addElement(up);
+			vtUsers.addElement(up);
 		}
 
 		lstUsers.setSelectedIndex(0);
@@ -406,12 +396,19 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 	 */
 	public void onSave() {
 
-		if (defaultUser.isSelected()) {
+		if (defaultUser.isSelected())
+		{
 			IModel model = ProjectCompendium.APP.getModel();
 			ProjectCompendium.APP.setDefaultUser( model.getUserProfile().getId() );
 		}
+		else
+		{
+			IModel model = ProjectCompendium.APP.getModel();
+			ProjectCompendium.APP.setDefaultUser( "0" );
+		}
 
-		if (defaultDatabase != null) {
+		if (defaultDatabase != null)
+		{
 			if (defaultDatabase.isSelected() && defaultUser.isSelected())
 				ProjectCompendium.APP.setDefaultDatabase(ProjectCompendium.APP.sFriendlyName);
 			else
@@ -433,12 +430,7 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 
 		//update the list
 		updateUsersList();
-		
-		try {
-			ProjectCompendium.APP.getModel().loadUsers();
-		} catch (Exception e) {
-			System.out.println("Unable to reload User List");
-		}		
+
 	}
 
 	/**
@@ -462,9 +454,9 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 				JDialog oDialog = oOptionPane.createDialog(oContentPane,"User Manager Error..");
 				oDialog.setModal(true);
 				oDialog.setVisible(true);
-				return;				
+				return;
 			}
-			
+
 			// THIS CHECK IS NOW REDUNDANT?
 			// is this the last administrator account?
 			boolean isLast = true;
@@ -496,12 +488,15 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 			PCSession session = ProjectCompendium.APP.getModel().getSession();
 
 			try {
-				// DELETE THE USER ENTRY
+				// DELETE THE USER ENTRY FROM THE DATABASE
 				deleted = ProjectCompendium.APP.getModel().getUserService().deleteUserProfile(session, userId);
 
 				if (deleted) {
 					// REMOVE THEIR HOME VIEW AND THE ASSOCIATED VIEWPROPERTIES, NODEVIEW, LINK ENTRIES ETC
 					ProjectCompendium.APP.getModel().getNodeService().purgeHomeView(session, homeviewID);
+					// Remove them from the local UserProfile cache
+					ProjectCompendium.APP.getModel().removeUserProfile(userId);
+					updateUsersList();
 				}
 
 			}
@@ -546,18 +541,32 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 	public void onNewUser() {
 		UINewUserDialog dialog = new UINewUserDialog(oParent);
 		UIUtilities.centerComponent(dialog, this);
+		dialog.setUserList(getUserNames());
+		dialog.setLoginList(getLogins());
 		dialog.setVisible(true);
-
-		//update the list since a new user added to the list
+		//update the list since a new user has been added to the list
 		updateUsersList();
-		
-		try {
-			ProjectCompendium.APP.getModel().loadUsers();
-		} catch (Exception e) {
-			System.out.println("Unable to reload User List");
-		}
+
 	}
-	
+
+    public ArrayList<String> getLogins(){
+      ArrayList<String> logins = new ArrayList<String>();
+      for ( UserProfile u : vtUsers){
+         logins.add(u.getLoginName());
+      }
+
+      return logins;
+    }
+
+     public ArrayList<String> getUserNames(){
+       ArrayList<String> logins = new ArrayList<String>();
+       for ( UserProfile u : vtUsers){
+          logins.add(u.getUserName());
+       }
+
+       return logins;
+    }
+
 	/**
 	 * Helper class to render the elements of the list.
 	 */
@@ -601,9 +610,13 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 					setForeground(list.getForeground());
 
 			}
-			
+
 			ImageIcon img = null;
-			img = UIImages.get(IUIConstants.NEW_ICON);
+			if (up.isActive()) {
+				img = UIImages.get(IUIConstants.NEW_ICON);
+			} else {
+				img = UIImages.get(IUIConstants.INACTIVE_USER);
+			}
 
 			String loginName = up.getLoginName();
 			String authorName = up.getUserName();
@@ -611,7 +624,7 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 				authorName = authorName.substring(0,19);
 				authorName += "....";
 			}
-	
+
 			String displayText = loginName + "  (" + authorName + ")";
 			setText(displayText);
 			setIcon(img);
@@ -619,5 +632,5 @@ public class UIUserManagerDialog extends UIDialog implements ActionListener, Ite
 			setBorder((cellHasFocus) ? UIManager.getBorder("List.focusCellHighlightBorder") : noFocusBorder);
 			return this;
 		}
-	}	
+	}
 }

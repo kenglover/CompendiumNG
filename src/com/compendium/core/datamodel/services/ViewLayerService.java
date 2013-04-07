@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -21,7 +21,6 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 
 package com.compendium.core.datamodel.services;
 
@@ -73,14 +72,89 @@ public class ViewLayerService extends ClientService implements IViewLayerService
 	 * @param PCSession session, the PCSession object for the database to use.
 	 * @param String sUserID, the user id of the user creating ths view property.
 	 * @param ViewLayer view, the ViewLayer object to create a record for.
-	 * @return boolean, true if the creation was successful, else false.
+	 * @return boolean, true if the *lastd* creation was successful, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean createViewLayer( PCSession session, String sUserID, ViewLayer view) throws SQLException {
+	public boolean createViewLayer( PCSession session, String sUserID, ViewLayer view) throws SQLException
+	{
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName());
 
-		boolean isSuccessful = DBViewLayer.insert(dbcon, sUserID, view);
+		Connection con = dbcon.getConnection();
+
+		boolean isSuccessful = false;
+
+		try
+		{
+			Statement stmt = con.createStatement();
+
+			//derby doesn't support the trim() function
+			ResultSet tmp = stmt.executeQuery("Select distinct Background from ViewLayer " +
+				"where ViewID ='" + view.getViewID() + "' and Background is not null and rtrim(ltrim(Background)) <> '' " +
+				"order by Background desc");
+
+			if (tmp.next())
+			{
+				showTrace("96 ViewLayerService bg was " + view.getBackground() + " bg is now " + tmp.getString("Background"));
+				view.setBackground(tmp.getString("Background"));
+				showTrace("99 ViewLayerService bg is now " + view.getBackground() );
+			}
+
+			// in derby scribble is apparently a LONG VARCHAR type and cannot be part of a comparison statement.
+			// Q: should this return only one row?
+			tmp = stmt.executeQuery("Select Scribble from ViewLayer " +
+				"where ViewID ='" + view.getViewID() + "'"  //and Scribble is not null " + //and rtrim(ltrim(Scribble)) <> '' " +
+				//"order by Scribble desc"
+				);
+
+			if (tmp.next())  //if there's more than one take the first one, i guess.
+			{
+				showTrace("scribble was " + view.getScribble() + " scribble is now " + tmp.getString("Scribble"));
+				view.setScribble(tmp.getString("Scribble"));
+			}
+/*
+			tmp = stmt.executeQuery("Select distinct Grid from ViewLayer " +
+				"where ViewID ='" + view.getViewID() + "' " +
+				"order by Grid desc limit 1");
+			while (tmp.next())
+				view.setGrid(tmp.getString("Grid"));
+
+			tmp = stmt.executeQuery("Select distinct Shapes from ViewLayer " +
+				"where ViewID ='" + view.getViewID() + "' " +
+				"order by Shapes desc limit 1");
+			while (tmp.next())
+				view.setShapes(tmp.getString("Shapes"));
+*/
+			stmt.executeUpdate("update ViewLayer set ModificationDate = " +
+				new Long((new java.util.Date()).getTime()).doubleValue() +
+				" where ModificationDate is null");
+
+			//get the users who don't already exist in the ViewLayer table with the view in question.
+			//this should handle existing views created by another when the bg image changes
+
+			String sql = "SELECT distinct UserID FROM Users where UserID not in " +
+				"(select distinct UserID from ViewLayer where " +
+				//"UserID='" + sUserID + "' and " +
+				"ViewID='" + view.getViewID() + "'" +
+					" group by UserID)";
+
+			showTrace("sql is " + sql);
+
+			ResultSet rs = stmt.executeQuery(sql);
+
+			while (rs.next())
+			{
+				showTrace("userID is " + rs.getString("UserID"));
+				isSuccessful = DBViewLayer.insert(dbcon, rs.getString("UserID"), view);
+			}
+		}
+		catch(SQLException ex)
+		{
+			ex.printStackTrace();
+			System.out.println("Exception ViewLayerService 150: "+ex.getErrorCode());
+			System.out.println("Exception ViewLayerService 150: "+ex.getSQLState());
+			System.out.println("Exception ViewLayerService 150: "+ex.getMessage());
+		}
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
@@ -96,13 +170,22 @@ public class ViewLayerService extends ClientService implements IViewLayerService
 	 * @return boolean, true if the update was successful, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean updateViewLayer( PCSession session, String sUserID, ViewLayer view) throws SQLException {
+	public boolean updateViewLayer( PCSession session, String sUserID, ViewLayer view) throws SQLException
+	{
+		showTrace("entered updateViewLayer");
+
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
 
 		boolean isSuccessful = DBViewLayer.update(dbcon, sUserID, view);
 
+		//the view might not exist for all users.
+		createViewLayer(session, sUserID, view);
+
+
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		showTrace("exiting updateViewLayer with isSuccessful of " + isSuccessful);
 
 		return isSuccessful;
 	}
@@ -145,5 +228,15 @@ public class ViewLayerService extends ClientService implements IViewLayerService
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return viewLayer;
+	}
+
+	public static void showTrace(String msg)
+	{
+		  //if (msg.length() > 0) showTrace(msg);
+		  System.out.println(
+		  	       new Throwable().getStackTrace()[1].getLineNumber() +
+		           " " + new Throwable().getStackTrace()[1].getFileName() +
+		           " " + new Throwable().getStackTrace()[1].getMethodName() +
+		           " " + msg);
 	}
 }

@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -21,7 +21,6 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 
 package com.compendium.core.datamodel.services;
 
@@ -99,7 +98,7 @@ public class LinkService extends ClientService implements ILinkService, java.io.
 	{
 		// get connection object with db manager
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
-		
+
 		Link link = DBLink.insert(dbcon,
 								sLinkID,
 								dCreationDate,

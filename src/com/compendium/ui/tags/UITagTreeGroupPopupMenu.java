@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import java.awt.event.*;
@@ -63,7 +62,7 @@ public class UITagTreeGroupPopupMenu extends JPopupMenu implements ActionListene
 
 	/** The vector holding the group data.*/
 	private Vector			vtGroup				= null;
-	
+
 
 	/**
 	 * Constructor. Draws the popupmenu.
@@ -71,28 +70,28 @@ public class UITagTreeGroupPopupMenu extends JPopupMenu implements ActionListene
 	 */
 	public UITagTreeGroupPopupMenu(UITagTreePanel panel, Vector vtGroup) {
 		super("Tag Group Options");
-		
-		this.vtGroup = vtGroup;		
+
+		this.vtGroup = vtGroup;
 		this.oParent = panel;
-				
+
 		miMenuItemDefault = new JMenuItem("Set Group As Active");
 		miMenuItemDefault.setToolTipText("Set this group as the active group");
 		miMenuItemDefault.setMnemonic('A');
 		miMenuItemDefault.addActionListener(this);
 		add(miMenuItemDefault);
-		
+
 		miMenuItemEdit = new JMenuItem("Edit Group Name");
 		miMenuItemEdit.setToolTipText("Edit the group name");
 		miMenuItemEdit.setMnemonic('E');
 		miMenuItemEdit.addActionListener(this);
 		add(miMenuItemEdit);
-	
+
 		miMenuItemDelete = new JMenuItem("Delete Group");
 		miMenuItemDelete.setToolTipText("Delete this tag group from the project");
 		miMenuItemDelete.setMnemonic('D');
 		miMenuItemDelete.addActionListener(this);
 		add(miMenuItemDelete);
-		
+
 		pack();
 		setSize(nWidth,nHeight);
 	}
@@ -111,36 +110,36 @@ public class UITagTreeGroupPopupMenu extends JPopupMenu implements ActionListene
 			String sOldName = (String)vtGroup.elementAt(1);
 	   		String sNewName = JOptionPane.showInputDialog("Edit tag group name", sOldName);
 			sNewName = sNewName.trim();
-			if (!sNewName.equals("")) {				
-				try {				
+			if (!sNewName.equals("")) {
+				try {
 					vtGroup.setElementAt(sNewName, 1);
 
 					String sUserID = model.getUserProfile().getId();
-	
+
 					// UPDATE DATABASE
 					(model.getCodeGroupService()).setName(model.getSession(), sCodeGroupID, sNewName, new Date(), sUserID);
-	
+
 					// UPDATE MODEL
 					model.replaceCodeGroupName(sCodeGroupID, sNewName);
 					oParent.updateTreeData();
-					
+
 				} catch( SQLException ex) {
 					ProjectCompendium.APP.displayError("UITagTreeGroupPopupMenu.editGroupName\n\n"+ex.getMessage());
-				}	
+				}
 			}
 		} else if(source.equals(miMenuItemDelete)) {
 			try {
 				// UPDATE DATABASE
 				(model.getCodeGroupService()).deleteCodeGroup(model.getSession(), sCodeGroupID);
-	
+
 				// UPDATE MODEL
 				model.removeCodeGroup(sCodeGroupID);
-	
+
 				//update toolbar codes box
 				if (ProjectCompendium.APP.getActiveCodeGroup().equals(sCodeGroupID)) {
 					ProjectCompendium.APP.setActiveCodeGroup("");
 				}
-	
+
 				oParent.updateTreeData();
 			} catch( SQLException ex) {
 				ProjectCompendium.APP.displayError("UITagTreeGroupPopupMenu.deleteGroup\n\n"+ex.getMessage());
@@ -149,7 +148,7 @@ public class UITagTreeGroupPopupMenu extends JPopupMenu implements ActionListene
 			onActive();
 		}
 	}
-		
+
 	/**
 	 * Set the current code group as the active group.
 	 */
@@ -168,7 +167,7 @@ public class UITagTreeGroupPopupMenu extends JPopupMenu implements ActionListene
 			//oParent.updateTreeData();
 		}
 	}
-	
+
 	/**
 	 * Handle the cancelleing of this popup. Set is to invisible.
 	 */

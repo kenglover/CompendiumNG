@@ -22,8 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
-
 package com.compendium.ui;
 
 import java.beans.*;
@@ -84,7 +82,7 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 
 	/** The user author name of the current user */
 	protected String sAuthor = "";
-	
+
 	/**
 	 * Constructor. Create a new instance of this class.
 	 * @param view com.compendium.core.datamodel.View, the view associated with this frame.
@@ -101,10 +99,10 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 	public UIViewFrame (View view, String title) {
 
 		super(title, true, true, true, true);
-		
-		this.oView = view;		
+
+		this.oView = view;
 		this.sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
-		
+
 		view.addPropertyChangeListener(this);
 		vtViewNavigationHistory = new Vector(10);
 
@@ -127,7 +125,7 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 
    		if(oView.getId().equals(ProjectCompendium.APP.getInBoxID())) {
    			setFrameIcon(UIImages.get(IUIConstants.INBOX_SM));
-    	}  	
+    	}
    		else if (getView().getType() == ICoreConstants.LISTVIEW) {
   			setFrameIcon(UIImages.getNodeIcon(IUIConstants.LIST_SM_ICON));
 		}
@@ -266,6 +264,22 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 		if (repaint)
 			verticalBar.repaint();
 	}
+	
+	/**
+	 * Return the horizontal scrollbar.
+	 * @return int, the horizontal scrollbar position.
+	 */
+	public JScrollBar getHorizontalScrollBar() {
+		return horizontalBar;
+	}
+	
+	/**
+	 * Return the vertical scrollbar.
+	 * @return int, the horizontal scrollbar position.
+	 */
+	public JScrollBar getVerticalScrollBar() {
+		return verticalBar;
+	}
 
 	/**
 	 * Return the scrollbar viewport.
@@ -309,7 +323,7 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 	public Point getViewPosition() {
 		return oViewport.getViewPosition();
 	}
-	
+
 	/**
 	 * Return the current user's author name.
 	 * @return the current user's author name.
@@ -317,7 +331,7 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 	public String getCurrentAuthor() {
 		return sAuthor;
 	}
-	
+
 // UNDO/REDO METHODS
 
 	/**
@@ -428,7 +442,7 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 
 			// Should not be necessary but, BUG_FIX
 			ProjectCompendium.APP.removeView(getView());
-			
+
 			// To set the viewnode state.
 			boolean read = false;
 			boolean unread = false;
@@ -453,7 +467,7 @@ public class UIViewFrame extends JInternalFrame implements InternalFrameListener
 				} else {
 					getView().setState(ICoreConstants.MODIFIEDSTATE);
 				}
-				
+
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			} catch (ModelSessionException e1) {

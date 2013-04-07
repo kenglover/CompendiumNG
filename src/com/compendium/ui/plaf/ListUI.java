@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.plaf;
 
 import java.beans.*;
@@ -42,7 +41,7 @@ import javax.swing.plaf.*;
 import javax.swing.plaf.basic.*;
 
 import com.compendium.io.xml.*;
-import com.compendium.io.questmap.*;
+//import com.compendium.io.questmap.*;
 import com.compendium.meeting.MeetingEvent;
 import com.compendium.meeting.MeetingManager;
 
@@ -340,9 +339,10 @@ public	class ListUI
 	  	Point p = SwingUtilities.convertPoint((Component)e.getSource(), e.getX(), e.getY(), (Component)list);
 	  	ptLocationMouseClicked.x = p.x;
 	 	ptLocationMouseClicked.y = p.y;
+	 	uiList.hideHint();
 
 		boolean isLeftMouse = SwingUtilities.isLeftMouseButton(e);
-		boolean isRightMouse = SwingUtilities.isRightMouseButton(e);		
+		boolean isRightMouse = SwingUtilities.isRightMouseButton(e);
 		int clickCount = e.getClickCount();
 		if(isRightMouse || (isLeftMouse && ProjectCompendium.isMac && (e.getModifiers() & MouseEvent.CTRL_MASK) != 0)) {
 			if(clickCount == 1) {
@@ -358,17 +358,26 @@ public	class ListUI
 			}
 		} else if (isLeftMouse) {
 			int rowIndex = list.rowAtPoint(ptLocationMouseClicked);
+			int colIndex = list.columnAtPoint(ptLocationMouseClicked);
 			if (clickCount == 1) {
 				if (rowIndex != -1) {
-					uiList.selectNode(rowIndex, ICoreConstants.MULTISELECT);
-				} else {
-					uiList.hideHint();
+					NodePosition pos =uiList.getNodePosition(rowIndex);
+					NodeSummary node = pos.getNode();
+					if ((node.getDetail().length() > 0) && (colIndex == ListTableModel.DETAIL_COLUMN)) {		// Single click over node detail indicator
+						uiList.showEditDialog(pos);
+					} else {
+						uiList.selectNode(rowIndex, ICoreConstants.MULTISELECT);
+					}
 				}
 			} else if(clickCount == 2) {
 				if (rowIndex != -1) {
 					NodePosition pos =uiList.getNodePosition(rowIndex);
 					NodeSummary node = pos.getNode();
-					openNode(node);						
+					if ((node.getDetail().length() > 0) && (colIndex == ListTableModel.DETAIL_COLUMN)) {
+						return;																					// Eat it since the single click handled this
+					} else {
+						openNode(node);
+					}
 				}
 				else {
 					uiList.getViewFrame().showEditDialog();
@@ -376,7 +385,7 @@ public	class ListUI
 			}
 		}
   	}
-  	
+
 	/**
 	 * Open this node depending on type.
 	 * If a map/list node, open the view.
@@ -387,7 +396,7 @@ public	class ListUI
 	private void openNode(NodeSummary oNode) {
 
 		int type = oNode.getType();
-		String sNodeID = oNode.getId();		
+		String sNodeID = oNode.getId();
 		if ((type == ICoreConstants.MAPVIEW) ||
 			(type == ICoreConstants.LISTVIEW) ||
 			(type == ICoreConstants.MAP_SHORTCUT) ||
@@ -403,10 +412,15 @@ public	class ListUI
 				view = (View)oNode;
 			}
 
-			UIViewFrame frame = ProjectCompendium.APP.addViewToDesktop(view, oNode.getLabel());			
+			UIViewFrame frame = ProjectCompendium.APP.addViewToDesktop(view, oNode.getLabel());
 			frame.setNavigationHistory(uiList.getViewFrame().getChildNavigationHistory());
 		}
 		else if (type == ICoreConstants.REFERENCE || type == ICoreConstants.REFERENCE_SHORTCUT) {
+			try {
+				oNode.setState(ICoreConstants.READSTATE);		// Mark the node read (doesn't happen elsewhere)
+			}
+			catch (SQLException ex) {}
+			catch (ModelSessionException ex) {};
 			String path = oNode.getSource();
 			if (path == null || path.equals("")) {
 				uiList.showEditDialog(uiList.getNode(sNodeID));
@@ -415,8 +429,8 @@ public	class ListUI
 				int ind = path.indexOf("/");
 				if (ind != -1) {
 					String sGoToViewID = path.substring(0, ind);
-					String sGoToNodeID = path.substring(ind+1);			
-					UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID, 
+					String sGoToNodeID = path.substring(ind+1);
+					UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID,
 							uiList.getViewFrame().getChildNavigationHistory());
 				}
 			} else if (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("www.")) {
@@ -494,17 +508,17 @@ public	class ListUI
 			//int sortColumn = ((TableSorter)(list.getModel())).getSelectedColumn();
 			//if (sortColumn == -1) {
 				bDragging = true;
-	
+
 				uiList.getList().setCursor(new Cursor(Cursor.MOVE_CURSOR));
 				uiList.deselectAll();
-	
+
 				for (int i= 0; i < selectedRowsWhileDragging.length; i++) {
 					list.addRowSelectionInterval(selectedRowsWhileDragging[i], selectedRowsWhileDragging[i]);
 			//	}
 			//}
 		}*/
 	}
-		
+
   	/**
    	 * Invoked when a mouse button has been released on a component.
 	 * @param e, the associated MouseEvent.
@@ -515,7 +529,7 @@ public	class ListUI
 		if(bDragging && isLeftMouse) {
 
 			uiList.getList().setCursor(Cursor.getDefaultCursor());
-			
+
 			int index = list.rowAtPoint(e.getPoint());
 
 			if (index != -1) {
@@ -691,7 +705,7 @@ public	class ListUI
 					try {
 						if (uiList.getView() != ProjectCompendium.APP.getHomeView() ) {
 							uiList.getViewFrame().setClosed(true);
-						
+
 							JDesktopPane pane = ProjectCompendium.APP.getDesktop();
 							JInternalFrame frame = pane.getSelectedFrame();
 							if (frame instanceof UIMapViewFrame) {
@@ -707,9 +721,9 @@ public	class ListUI
 
 					evt.consume();
 					break;
-				}				
+				}
 			}
-		}		
+		}
 		if (modifiers == java.awt.Event.CTRL_MASK) {
 			switch(keyCode) {
 				case KeyEvent.VK_T: { // OPEN TAG WINDOW
@@ -722,7 +736,7 @@ public	class ListUI
 					try {
 						if (uiList.getView() != ProjectCompendium.APP.getHomeView() ) {
 							uiList.getViewFrame().setClosed(true);
-						
+
 							JDesktopPane pane = ProjectCompendium.APP.getDesktop();
 							JInternalFrame frame = pane.getSelectedFrame();
 							if (frame instanceof UIMapViewFrame) {
@@ -766,19 +780,36 @@ public	class ListUI
 				uiList.getList().editCellAt(rowIndex, ListTableModel.LABEL_COLUMN);
 			}
 			evt.consume();
-		}		
+		}
 		else if (keyCode == KeyEvent.VK_ENTER && modifiers == 0) {
 			int rowIndex = uiList.getList().getSelectedRow();
 			if (rowIndex != -1) {
 				NodePosition pos =uiList.getNodePosition(rowIndex);
 				NodeSummary node = pos.getNode();
-				openNode(node);						
+				openNode(node);
 			}
 			else {
 				uiList.getViewFrame().showEditDialog();
 			}
 			evt.consume();
-		}		
+		}
+		else if (keyCode == KeyEvent.VK_INSERT && modifiers == 0) {
+			int rowIndex = uiList.getList().getSelectedRow();
+			if (rowIndex != -1) {
+				NodePosition pos =uiList.getNodePosition(rowIndex);
+				uiList.hideHint();
+				uiList.showEditDialog(pos);
+			}
+			evt.consume();
+		}
+		else if (keyCode == KeyEvent.VK_F12 && modifiers == 0) {
+			onMarkSelectionSeen();				// Mark all selected nodes Seen - mlb
+			evt.consume();
+		}
+		else if ((keyCode == KeyEvent.VK_F12) && (modifiers == java.awt.Event.SHIFT_MASK)) {
+			onMarkSelectionUnseen();			// Mark all selected nodes Unseen - mlb
+			evt.consume();
+		}
 		else if (modifiers == 0) {
 			int nType = -1;
 
@@ -862,6 +893,9 @@ public	class ListUI
 	public void onDelete() {
 		// record the effect of the deletion
 		// need to pass to this method the info you need to recreate the nodes/links
+
+		System.out.println("ListUI 897 entered onDelete " + System.currentTimeMillis());
+
 		DeleteEdit edit = new DeleteEdit(uiList.getViewFrame());
 		uiList.deleteSelectedNodes(edit);
 
@@ -869,6 +903,44 @@ public	class ListUI
 		uiList.getViewFrame().getUndoListener().postEdit(edit);
 
 		ProjectCompendium.APP.setTrashBinIcon();
+
+		System.out.println("ListUI 907 exiting onDelete " + System.currentTimeMillis());
+	}
+
+	/**
+	 * Mark all nodes in the selection as read/seen (F12 handler)		MLB: Feb. '08
+	 */
+	public void onMarkSelectionSeen() {
+		try {
+			Enumeration e = getUIList().getSelectedNodes();
+			for(;e.hasMoreElements();){
+				NodePosition np = (NodePosition) e.nextElement();
+				NodeSummary oNode = np.getNode();
+				oNode.setState(ICoreConstants.READSTATE);
+			}
+			uiList.updateTable();
+		}
+		catch(Exception io) {
+			System.out.println("Unable to mark as read");
+		}
+	}
+
+	/**
+	 * Mark all nodes in the selection as unread/unseen (Shift-F12 handler)		MLB: Feb. '08
+	 */
+	public void onMarkSelectionUnseen() {
+		try {
+			Enumeration e = getUIList().getSelectedNodes();
+			for(;e.hasMoreElements();){
+				NodePosition np = (NodePosition) e.nextElement();
+				NodeSummary oNode = np.getNode();
+				oNode.setState(ICoreConstants.UNREADSTATE);
+			}
+			uiList.updateTable();
+		}
+		catch(Exception io) {
+			System.out.println("Unable to mark as un-read");
+		}
 	}
 
 	/**
@@ -960,14 +1032,14 @@ public	class ListUI
 		ProjectCompendium.APP.getClipboard().setContents(clips,this);
 		ProjectCompendium.APP.setPasteEnabled(true);
 
-		// update node inidicators		
+		// update node inidicators
 		Thread thread = new Thread() {
 			public void run() {
 				ProjectCompendium.APP.setTrashBinIcon();
-				ProjectCompendium.APP.refreshIconIndicators();		
+				ProjectCompendium.APP.refreshIconIndicators();
 			}
 		};
-		thread.start();		
+		thread.start();
 	}
 
 	/**
@@ -1065,7 +1137,7 @@ public	class ListUI
 
 		bCopyToClipboard = false;
 		bCutToClipboard = false;
-		
+
 		ProjectCompendium.APP.refreshIconIndicators();
 	}
 
@@ -1191,7 +1263,7 @@ public	class ListUI
 
 		bCopyToClipboard = false;
 		bCutToClipboard = false;
-		ProjectCompendium.APP.refreshIconIndicators();		
+		ProjectCompendium.APP.refreshIconIndicators();
 	}
 
 
@@ -1208,7 +1280,7 @@ public	class ListUI
 	/**
 	 * For Importing files from Questmap. Instantiates and starts the parser.
 	 * @param filename, the name of the file to import.
-	 */
+	 *
 	public void onImportFile(String filename) {
 
 		// parse the file
@@ -1219,14 +1291,14 @@ public	class ListUI
 		//since the parser is on a new thread ...
 		parser.start();
 	}
-
+*/
 	/**
 	 * For Importing XML files.
 	 * @param filename, the name of the file to import.
 	 * @param includeInDetail, whether to include the original author and dates in the node detail.
 	 */
 	public void onImportXMLFile(String filename, boolean includeInDetail) {
-		
+
 		XMLImport xmlImport = new XMLImport(false, filename, ProjectCompendium.APP.getModel(), uiList.getView(), isSmartImport, includeInDetail);
 		xmlImport.setUIList(uiList);
 		xmlImport.start();
@@ -1250,7 +1322,7 @@ public	class ListUI
 			String author = node.getAuthor();
 			String label = node.getLabel();
 			String detail = node.getDetail();
-			
+
 			if(detail == null)
 					detail = "";
 			int nodeType = node.getType();
@@ -1361,7 +1433,7 @@ public	class ListUI
 
 		return nodePos;
   	}
-	
+
   	/**
      * Creates a new node from the passed parameters.
 	 * @param nodeType, the type of the new node.
@@ -1439,7 +1511,7 @@ public	class ListUI
 
 		java.util.Date date = new java.util.Date();
 
-		return createNode(nodeType, importedId, sOriginalID, author, date, date, 
+		return createNode(nodeType, importedId, sOriginalID, author, date, date,
 				label, detail, x, y, date, date);
   	}
 
@@ -1484,7 +1556,7 @@ public	class ListUI
 													x,						//int x
 													y,						//int y
 													transCreationDate,		//Node in View creation date
-													transModDate			//Node inView last modification date													
+													transModDate			//Node inView last modification date
 													);
 				//System.out.println("NodeType in if:" + nodeType);
 				node = nodePos.getNode();
@@ -1510,7 +1582,7 @@ public	class ListUI
 													x,						//int x
 													y,						//int y
 													transCreationDate,		//Node in View creation date
-													transModDate			//Node inView last modification date													
+													transModDate			//Node inView last modification date
 													);
 				view = (View) nodePos.getNode();
 				view.initialize(ProjectCompendium.APP.getModel().getSession(), ProjectCompendium.APP.getModel());
@@ -1553,16 +1625,16 @@ public	class ListUI
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 * 
+	 *
 	 * @return com.compendium.core.datamodel.NodePosition, the newly create node.
      */
   	public NodePosition createNode(int nodeType, String importedId, String sOriginalID,
 							String author, java.util.Date creationDate, java.util.Date modDate, String label,
 							String detail, int x, int y, java.util.Date transCreationDate,
-							java.util.Date transModDate, String sLastModAuthor,	
-							boolean bShowTags, boolean bShowText, boolean bShowTrans, 
-							boolean bShowWeight, boolean bSmallIcon, boolean bHideIcon, 
-							int nWrapWidth, int nFontSize, String sFontFace, 
+							java.util.Date transModDate, String sLastModAuthor,
+							boolean bShowTags, boolean bShowText, boolean bShowTrans,
+							boolean bShowWeight, boolean bSmallIcon, boolean bHideIcon,
+							int nWrapWidth, int nFontSize, String sFontFace,
 							int nFontStyle, int nForeground, int nBackground) {
 
 		NodeSummary node = null;
@@ -1601,7 +1673,7 @@ public	class ListUI
 			try {
 				nodePos = uiList.getView().addMemberNode(nodeType,	"",	importedId,	sOriginalID,
 													author,	creationDate, modDate,
-													label, detail,	x, y,	
+													label, detail,	x, y,
 													transCreationDate, transModDate,
 													sLastModAuthor, bShowTags, bShowText,
 													bShowTrans,	bShowWeight, bSmallIcon,	bHideIcon, nWrapWidth,
@@ -1620,7 +1692,7 @@ public	class ListUI
 	  	}
 	  	return nodePos;
   	}
-  	
+
 	/**
 	 * Used by view paste operations to restore child nodes.
 	 * @param deletedView com.compendium.core.datamodel.View
@@ -1629,9 +1701,9 @@ public	class ListUI
 
 		try {
 			IModel model = ProjectCompendium.APP.getModel();
-			
+
 			PCSession session = model.getSession();
-			
+
 			INodeService nodeService = model.getNodeService();
 
 			String sViewID = deletedView.getId();
@@ -1697,7 +1769,7 @@ public	class ListUI
 			IModel model = ProjectCompendium.APP.getModel();
 			PCSession session = model.getSession();
 			INodeService nodeService = model.getNodeService();
-			
+
 			String sAuthor = getUIList().getViewFrame().getCurrentAuthor();
 
 			View thisView = getUIList().getView();
@@ -1705,7 +1777,7 @@ public	class ListUI
 				thisView.initialize( session, model );
 			}
 			thisView.initializeMembers();
-			
+
 			String sViewID = thisView.getId();
 
 			Vector deletedNodes = deletedView.getDeletedNodes();

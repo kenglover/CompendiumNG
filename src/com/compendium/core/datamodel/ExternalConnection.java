@@ -22,13 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.sql.SQLException;
 
 /**
- * The ExternalConnection object represents a connection to a MySQL database, or Jabber Server, or such.
+ * The ExternalConnection object represents a connection to a MySQL database, or such.
  * This object must have its 'initialize' method called before it can read/write to the database.
  * Otherwise it is just a container class.
  *
@@ -42,7 +41,7 @@ public class ExternalConnection extends PCObject implements java.io.Serializable
 	/** String holding the UserID who set up this connection */
 	protected String		sUserID				= "";
 
-	/** int holding the connection type as listed in ICoreConstants, e.g. mysql, jabber etc.*/
+	/** int holding the connection type as listed in ICoreConstants, e.g. mysql,  etc.*/
 	protected int			nType				= 0;
 
 	/** Stirng holding the host name or ip address for the server.*/
@@ -57,14 +56,13 @@ public class ExternalConnection extends PCObject implements java.io.Serializable
 	/**
 	 * String holding various things depending on connection type.
 	 * For MySQL, it holds the name of the default database.
-	 * For Jabber it holds the user desired friendly name when seding messages.
 	 */
 	protected String		sName				= "";
 
 	/** The port number to use.*/
 	protected int			nPort				= 3306;
 
-	/** The resource for a Jabber connection.*/
+	/** The resource for a connection.*/
 	protected String 		sResource			= "";
 
 	/**

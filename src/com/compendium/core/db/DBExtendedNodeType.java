@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.*;
@@ -82,7 +81,7 @@ public class DBExtendedNodeType{
  		pstmt.setString(1, id);
 		pstmt.setString(2, author) ;
 		pstmt.setDouble(3, new Long(creationDate.getTime()).doubleValue());
-		pstmt.setDouble(4, new Long(modificationDate.getTime()).doubleValue());
+		pstmt.setDouble(4, new Long((new java.util.Date()).getTime()).doubleValue());
 		pstmt.setString(5, name) ;
 		pstmt.setString(6, description);
 		pstmt.setInt(7, baseNodeType);
@@ -93,7 +92,7 @@ public class DBExtendedNodeType{
 
 		ExtendedNodeType xNodeType = null;
 		if (nRowCount > 0) {
-			xNodeType = new ExtendedNodeType(id, author, creationDate, modificationDate,
+			xNodeType = new ExtendedNodeType(id, author, creationDate, (new java.util.Date()),
 				name, description, baseNodeType, icon) ;
 			// cache the node
 			//dbcon.addNode(node);
@@ -177,7 +176,7 @@ public class DBExtendedNodeType{
  		pstmt.setString(1, id);
 		pstmt.setString(2, author) ;
 		pstmt.setDouble(3, new Long(creationDate.getTime()).doubleValue());
-		pstmt.setDouble(4, new Long(modificationDate.getTime()).doubleValue());
+		pstmt.setDouble(4, new Long((new java.util.Date()).getTime()).doubleValue());
 		pstmt.setString(5, name) ;
 		pstmt.setString(6, description);
 		pstmt.setInt(7, baseNodeType);

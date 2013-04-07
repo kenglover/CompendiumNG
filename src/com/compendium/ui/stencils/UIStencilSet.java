@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.stencils;
 
 import java.awt.*;
@@ -47,8 +46,8 @@ public class UIStencilSet extends JPanel {
 
 	// Need to implement this everywhere in an organized fashion.
 	//** The required field for serializable objects*/
-	//private final static long serialVersionUID = 1001; 
-	
+	//private final static long serialVersionUID = 1001;
+
 	/** The node image directory*/
 	public final static String	sNODEIMAGEDIR 	= "nodeimages";
 
@@ -81,7 +80,7 @@ public class UIStencilSet extends JPanel {
 
 	/** A list of the DraggableStencilIcon object that have been deleted.*/
 	private Vector 				vtDeletedItems 			= new Vector(10);
-	
+
 	/** The scrollpane for the stencil set.*/
 	private JScrollPane			oScrollPane 	= null;
 
@@ -188,7 +187,7 @@ public class UIStencilSet extends JPanel {
 	private void createIconPanel() {
 
 		int count = vtItems.size();
-		
+
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.insets = new Insets(2,2,2,2);
 		gc.anchor = GridBagConstraints.NORTH;
@@ -198,7 +197,7 @@ public class UIStencilSet extends JPanel {
 		oIconPanel = new JPanel(grid);
 		oIconPanel.setBackground(Color.white);
 		for (int i=0; i<count; i++) {
-			DraggableStencilIcon icon = (DraggableStencilIcon)vtItems.elementAt(i);			
+			DraggableStencilIcon icon = (DraggableStencilIcon)vtItems.elementAt(i);
 			icon.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
 					if (evt.getClickCount() == 2) {
@@ -375,50 +374,50 @@ public class UIStencilSet extends JPanel {
 			vtDeletedItems.addElement(item);
 		}
 	}
-	
+
 	/**
 	 * Remove any associated files not being used by another item for deleted items.
 	 */
 	private void processDeletedItems() {
-		
+
 		String sImagePath = "";
 		String sPaletteImagePath = "";
 		String sBackground = "";
 		String sTemplate = "";
-		
+
 		String sNextImagePath = "";
 		String sNextPaletteImagePath = "";
 		String sNextBackgroundImagePath = "";
 		String sNextTemplatePath = "";
 
 		boolean bKeep = false;
-		boolean bKeepPalette = false;			
+		boolean bKeepPalette = false;
 		boolean bKeepBackground = false;
-		boolean bKeepTemplate = false;	
-		
+		boolean bKeepTemplate = false;
+
 		int count = vtDeletedItems.size();
 		for (int i=0; i<count; i++) {
-		
+
 			DraggableStencilIcon item = (DraggableStencilIcon)vtDeletedItems.elementAt(i);
-			
+
 			// Delete associated files if no other item in this group is using them.
 			sImagePath = item.getImage();
 			sPaletteImagePath = item.getPaletteImage();
 			sBackground = item.getBackgroundImage();
 			sTemplate = item.getTemplate();
-			
+
 			sNextImagePath = "";
 			sNextPaletteImagePath = "";
 			sNextBackgroundImagePath = "";
 			sNextTemplatePath = "";
 
 			bKeep = false;
-			bKeepPalette = false;			
+			bKeepPalette = false;
 			bKeepBackground = false;
-			bKeepTemplate = false;			
-			
+			bKeepTemplate = false;
+
 			DraggableStencilIcon oNext = null;
-			
+
 			int countj = vtItems.size();
 			for (int j=0; j<countj; j++) {
 				oNext = (DraggableStencilIcon)vtItems.elementAt(j);
@@ -426,41 +425,41 @@ public class UIStencilSet extends JPanel {
 				sNextPaletteImagePath = oNext.getPaletteImage();
 				sNextBackgroundImagePath = oNext.getBackgroundImage();
 				sNextTemplatePath = oNext.getTemplate();
-				
+
 				if (sImagePath.equals(sNextImagePath)) {
 					bKeep = true;
 				}
 				if (sImagePath.equals(sNextPaletteImagePath)) {
 					bKeep = true;
-				}								
+				}
 				if (sPaletteImagePath.equals(sNextImagePath)) {
 					bKeepPalette = true;
-				}				
+				}
 				if (sPaletteImagePath.equals(sNextPaletteImagePath)) {
 					bKeepPalette = true;
-				}				
+				}
 				if (sTemplate.equals(sNextTemplatePath)) {
 					bKeepTemplate = true;
 				}
 				if (sBackground.equals(sNextBackgroundImagePath)) {
 					bKeepBackground = true;
-				}				
+				}
 			}
 			if (!bKeep) {
 				CoreUtilities.deleteFile(new File(sImagePath));
-			}	
+			}
 			if (!bKeepPalette) {
 				CoreUtilities.deleteFile(new File(sPaletteImagePath));
-			}	
+			}
 			if (!bKeepBackground) {
 				CoreUtilities.deleteFile(new File(sBackground));
 			}
 			if (!bKeepTemplate) {
 				CoreUtilities.deleteFile(new File(sTemplate));
-			}			
+			}
 		}
-		
-		vtDeletedItems.clear();		
+
+		vtDeletedItems.clear();
 	}
 
 	/**
@@ -489,7 +488,7 @@ public class UIStencilSet extends JPanel {
 		data.append("image CDATA #REQUIRED\n");
 		data.append("paletteimage CDATA #REQUIRED\n");
 		data.append("backgroundimage CDATA #IMPLIED\n");
-		data.append("template CDATA #IMPLIED\n");		
+		data.append("template CDATA #IMPLIED\n");
 		data.append(">\n");
 		data.append("<!ELEMENT tags (#PCDATA | tag)*>\n");
 		data.append("<!ELEMENT tag (#PCDATA)>\n");
@@ -547,7 +546,7 @@ public class UIStencilSet extends JPanel {
 			data.append("image=\""+sImage+"\" ");
 			data.append("paletteimage=\""+sPaletteImage+"\" ");
 			data.append("backgroundimage=\""+sBackgroundImage+"\" ");
-			data.append("template=\""+sTemplate+"\" ");			
+			data.append("template=\""+sTemplate+"\" ");
 			data.append("shortcut=\""+nShortcut+"\" ");
 			data.append("type=\""+nType+"\">\n");
 
@@ -650,7 +649,7 @@ public class UIStencilSet extends JPanel {
 					newPath3 = newPath3+imageFile3.getName();
 					item.setBackgroundImage(newPath3);
 				}
-				
+
 				String sTemplate = item.getTemplate();
 				String oldPath4 = UIStencilManager.sPATH+sFolderName+ProjectCompendium.sFS+sTEMPLATEDIR+ProjectCompendium.sFS;
 				String newPath4 = UIStencilManager.sPATH+newFolderName+ProjectCompendium.sFS+sTEMPLATEDIR+ProjectCompendium.sFS;
@@ -658,7 +657,7 @@ public class UIStencilSet extends JPanel {
 					File file4 = new File(sTemplate);
 					newPath4 = newPath4+file4.getName();
 					item.setTemplate(newPath4);
-				}				
+				}
 			}
 
 			sFolderName = newFolderName;
@@ -681,7 +680,7 @@ public class UIStencilSet extends JPanel {
 	 * Save this stencil to an xml file.
 	 */
 	public void saveStencilData() {
-		
+
 		// MAKE ANY REQUIRED DIRECTORIES
 		File directory = new File(UIStencilManager.sPATH+sFolderName);
 		if (!directory.isDirectory()) {
@@ -797,7 +796,7 @@ public class UIStencilSet extends JPanel {
 					}
 				}
 			}
-			
+
 			String sTemplate = item.getTemplate();
 			if (!sTemplate.equals("")) {
 
@@ -825,18 +824,18 @@ public class UIStencilSet extends JPanel {
 						System.out.println("Unable to move temlpate file as not found: "+file4.getName());
 					}
 				}
-			}			
+			}
 		}
-		
+
 		// SAVE THE XML FILE
 		String data = getStencilXML();
 		try {
 			FileWriter fileWriter = new FileWriter(UIStencilManager.sPATH+sFolderName+ProjectCompendium.sFS+sFileName);
 			fileWriter.write(data);
 			fileWriter.close();
-			
+
 			// REMOAVE ANY UNREQUIRED FILES FOR ITEMS THAT HAVE BEEN DELETED
-			processDeletedItems();			
+			processDeletedItems();
 		}
 		catch (IOException e) {
 			ProjectCompendium.APP.displayError("Exception: (UIStencil.saveStencilData) \n\n" + e.getMessage());

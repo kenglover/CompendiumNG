@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.io.*;
 import java.awt.*;
@@ -46,19 +47,19 @@ public class UIImages implements IUIConstants {
 	private final static String	sFS						= System.getProperty("file.separator");
 
 	/** A reference to the main image directory.*/
-	private final static String	sPATH 					= "System"+sFS+"resources"+sFS+"Images"+sFS;
+	private final static String	sPATH 					= ProjectCompendium.sSYSPATH+ProjectCompendium.sFS+"System"+sFS+"resources"+sFS+"Images"+sFS;
 
 	/** A reference to the main image directory*/
 	private final static String	sMACPATH 				= sPATH+"Mac"+sFS;
 
 	/** A reference to the skins default directory.*/
-	private final static String sDEFAULTNODEPATH		= "Skins"+sFS+"Default"+sFS;
+	private final static String sDEFAULTNODEPATH		= ProjectCompendium.sSYSPATH+ProjectCompendium.sFS+"Skins"+sFS+"Default"+sFS;
 
 	/** A reference to the main skins directory.*/
-	private final static String	sNODEPATH 				= "Skins"+sFS;
+	private final static String	sNODEPATH 				= ProjectCompendium.sSYSPATH+ProjectCompendium.sFS+"Skins"+sFS;
 
 	/** A reference to the reference node image directory.*/
-	private final static String sREFERENCEPATH			= "System"+sFS+"resources"+sFS+"ReferenceNodeIcons"+sFS;
+	private final static String sREFERENCEPATH			= ProjectCompendium.sSYSPATH+ProjectCompendium.sFS+"System"+sFS+"resources"+sFS+"ReferenceNodeIcons"+sFS;
 
 	/** A reference to the reference node image directory on the Mac.*/
 	private final static String sMACREFERENCEPATH		= sREFERENCEPATH+"Mac"+sFS;
@@ -81,7 +82,7 @@ public class UIImages implements IUIConstants {
 	public final static ImageIcon get(int idx) {
 	    ImageIcon image = null;
 
-	    if (ProjectCompendium.isMac && FormatProperties.currentLookAndFeel.equals("apple.laf.AquaLookAndFeel")) {
+	    if (ProjectCompendium.isMac && APP_PROPERTIES.getCurrentLookAndFeel().equals("apple.laf.AquaLookAndFeel")) {
 			image = macImg[idx];
 			if (image == null) {
 			    image = new ImageIcon(sMACPATH + IMG_NAMES[idx]);
@@ -139,7 +140,7 @@ public class UIImages implements IUIConstants {
 	 * @return a String representing relevant file path.
 	 * @see IUIConstants
 	 */
-	public final static String getReferencePath(String refString, String sDefault, boolean bSmallIcon) {				
+	public final static String getReferencePath(String refString, String sDefault, boolean bSmallIcon) {
 		if (bSmallIcon) {
 			return UIReferenceNodeManager.getSmallReferenceIconPath(refString, sDefault);
 		}
@@ -280,7 +281,7 @@ public class UIImages implements IUIConstants {
 	    }
 	    return img;
 	}
-	
+
 	/**
 	 * Return the ImageIcon associated with the given node type.
 	 * @param int idx, tand identifier for the node type.
@@ -290,7 +291,7 @@ public class UIImages implements IUIConstants {
 	public final static ImageIcon getNodeIcon(int idx) {
 
 		String sPath = "";
-		String skin = FormatProperties.skin;
+		String skin = APP_PROPERTIES.getSkin();
 
 		if (skin.equals("Default") || skin.equals("Default_Mini")) {
 			sPath = sNODEPATH+skin+sFS+DEFAULT_IMG_NAMES[idx];
@@ -305,7 +306,7 @@ public class UIImages implements IUIConstants {
 
 		fileCheck = new File(sPath);
 		if (!fileCheck.exists())
-			sPath = sPATH+DEFAULT_IMG_NAMES[idx];
+			sPath = sPATH+IMG_NAMES[idx];
 
 		ImageIcon image = new ImageIcon(sPath);
 
@@ -416,7 +417,7 @@ public class UIImages implements IUIConstants {
 		}
 
 		String sPath = "";
-		String skin = FormatProperties.skin;
+		String skin = APP_PROPERTIES.getSkin();
 		if (skin.equals("Default") || skin.equals("Default_Mini")) {
 			sPath = sNODEPATH+skin+sFS+DEFAULT_IMG_NAMES[type];
 		}
@@ -430,7 +431,7 @@ public class UIImages implements IUIConstants {
 
 		fileCheck = new File(sPath);
 		if (!fileCheck.exists())
-			sPath = sPATH+DEFAULT_IMG_NAMES[type];
+			sPath = sPATH+IMG_NAMES[type];
 
 		return sPath;
 	}
@@ -533,7 +534,7 @@ public class UIImages implements IUIConstants {
 		}
 
 		String sPath = "";
-		String skin = FormatProperties.skin;
+		String skin = APP_PROPERTIES.getSkin();
 		if (skin.equals("Default") || skin.equals("Default_Mini")) {
 			sPath = sNODEPATH+skin+sFS+DEFAULT_IMG_NAMES[type];
 		}
@@ -547,7 +548,7 @@ public class UIImages implements IUIConstants {
 
 		fileCheck = new File(sPath);
 		if (!fileCheck.exists())
-			sPath = sPATH+DEFAULT_IMG_NAMES[type];
+			sPath = sPATH+IMG_NAMES[type];
 
 		return sPath;
 	}
@@ -611,7 +612,7 @@ public class UIImages implements IUIConstants {
 			return new ImageIcon(icon);
 		}
 	}
-	
+
 	/**
 	 * If required scale the given icon and return the scaled version.
 	 * @param imageString, the image icon file name to create and scale the icon from.
@@ -629,8 +630,8 @@ public class UIImages implements IUIConstants {
 		JLabel comp = new JLabel();
 		icon = comp.createImage(filteredSource);
 
-		return new ImageIcon(icon);		
-	}	
+		return new ImageIcon(icon);
+	}
 
 	/**
 	 * If required scale the given image and return the scaled dimensions.
@@ -759,7 +760,7 @@ public class UIImages implements IUIConstants {
 				oIcon = new ImageIcon(sImagePath);
 				if (oIcon.getImageLoadStatus() == MediaTracker.ERRORED) {
 					oIcon = null;
-				}				
+				}
 			}
 			catch(Exception ex) {
 				ex.printStackTrace();

@@ -23,7 +23,6 @@
  ********************************************************************************/
 
 
-
 package com.compendium.ui.popups;
 
 import java.awt.event.ActionEvent;
@@ -52,37 +51,37 @@ public class UIViewUnreadPopupMenu extends JPopupMenu implements ActionListener 
 
 	/** The default width for this popup menu.*/
 	private static final int WIDTH						= 100;
-	
+
 	/** The default height for this popup menu.*/
 	private static final int HEIGHT						= 300;
-	
+
 	/** The  JMenuItem to mark the node as read*/
 	private JMenuItem		miMenuItemMarkSeen 			= null;
 
 	/**The  JMenuItem to mark the node as unread*/
 	private JMenuItem		miMenuItemMarkUnseen 		= null;
-	
+
 	/** The  JMenuItem to mark the whole view as read*/
 	private JMenuItem		miMenuItemMarkViewSeen 		= null;
 
 	/**The  JMenuItem to mark the whole view as unread*/
 	private JMenuItem		miMenuItemMarkViewUnseen 	= null;
-	
+
 	/** The NodeSummary object associated with this popup menu.*/
 	private NodeSummary			oNode					= null;
-	
+
 	/** The x value for the location of this popup menu.*/
 	private int					nX						= 0;
 
 	/** The y value for the location of this popup menu.*/
 	private int					nY						= 0;
-	
+
 	/** The UIViewUnread object associated with this popup menu.*/
 	private UIViewUnread		unreadView				= null;
-	
+
 	/** The platform specific shortcut key used to access menus and thier options.*/
 	private int 			shortcutKey                  = 0;
-	
+
 	/**
 	 * Constructor. Create the menus and items and draws the popup menu.
 	 * @param title, the title for this popup menu.
@@ -94,42 +93,42 @@ public class UIViewUnreadPopupMenu extends JPopupMenu implements ActionListener 
 		shortcutKey = ProjectCompendium.APP.shortcutKey;
 		setNode(node);
 		unreadView = unread;
-		
+
 		int nType = getNode().getType();
-		
+
 		miMenuItemMarkSeen = new JMenuItem("Mark Seen");
 		miMenuItemMarkSeen.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_F12, 0));
 		miMenuItemMarkSeen.addActionListener(this);
 		miMenuItemMarkSeen.setMnemonic(KeyEvent.VK_M);
-		add(miMenuItemMarkSeen);				
-		
+		add(miMenuItemMarkSeen);
+
 		miMenuItemMarkUnseen = new JMenuItem("Mark Unseen");
 		miMenuItemMarkUnseen.setAccelerator(KeyStroke.getKeyStroke(  KeyEvent.VK_F12, 1));
 		miMenuItemMarkUnseen.addActionListener(this);
 		miMenuItemMarkUnseen.setMnemonic(KeyEvent.VK_N);
-		add(miMenuItemMarkUnseen);		
-		
+		add(miMenuItemMarkUnseen);
+
 		if(node.equals(ProjectCompendium.APP.getHomeView())){
 			miMenuItemMarkUnseen.setEnabled(false);
 		}
 		// if node is in read state enable mark unseen and disable mark seen and vice versa
 		int state = getNode().getState();
-		
+
 		if(state == ICoreConstants.READSTATE){
 			miMenuItemMarkSeen.setEnabled(false);
 		} else if(state == ICoreConstants.UNREADSTATE) {
 			miMenuItemMarkUnseen.setEnabled(false);
 		}
-		
-		
+
+
 		if (nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT ||
 				nType == ICoreConstants.LISTVIEW || nType == ICoreConstants.LIST_SHORTCUT ) {
 			addSeparator();
 			miMenuItemMarkViewSeen = new JMenuItem("Mark Seen All");
 			miMenuItemMarkViewSeen.addActionListener(this);
 			miMenuItemMarkViewSeen.setMnemonic(KeyEvent.VK_S);
-			add(miMenuItemMarkViewSeen);				
-			
+			add(miMenuItemMarkViewSeen);
+
 			miMenuItemMarkViewUnseen = new JMenuItem("Mark Unseen All");
 			miMenuItemMarkViewUnseen.addActionListener(this);
 			miMenuItemMarkViewUnseen.setMnemonic(KeyEvent.VK_U);
@@ -137,7 +136,7 @@ public class UIViewUnreadPopupMenu extends JPopupMenu implements ActionListener 
 		}
 		pack();
 		setSize(WIDTH,HEIGHT);
-		
+
 	}
 
 	/**
@@ -152,7 +151,7 @@ public class UIViewUnreadPopupMenu extends JPopupMenu implements ActionListener 
 	public NodeSummary getNode() {
 		return oNode;
 	}
-	
+
 	/**
 	 * Set the location to draw this popup menu at.
 	 * @param x, the x position of this popup's location.
@@ -162,7 +161,7 @@ public class UIViewUnreadPopupMenu extends JPopupMenu implements ActionListener 
 		nX = x;
 		nY = y;
 	}
-	
+
 	/**
 	* Handles the event of an option being selected.
 	 * @param evt, the event associated with the option being selected.
@@ -171,9 +170,9 @@ public class UIViewUnreadPopupMenu extends JPopupMenu implements ActionListener 
 		Object source = evt.getSource();
 		String nodeID = oNode.getId();
 		String homeID = ProjectCompendium.APP.getHomeView().getId();
-		
+
 		ProjectCompendium.APP.setWaitCursor();
-		
+
 		if(source.equals(miMenuItemMarkSeen)) {
 			unreadView.onMarkSeenUnseen(oNode, ICoreConstants.READSTATE);
 		} else if(source.equals(miMenuItemMarkUnseen)) {
@@ -186,7 +185,7 @@ public class UIViewUnreadPopupMenu extends JPopupMenu implements ActionListener 
 		ProjectCompendium.APP.setDefaultCursor();
 		onCancel();
 	}
-	
+
 	/**
 	 * Handle the canceling of this popup. Set is to invisible.
 	 */

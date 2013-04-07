@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.plaf;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.geom.*;
@@ -40,7 +41,7 @@ import com.compendium.core.datamodel.*;
 import com.compendium.core.datamodel.services.*;
 
 import com.compendium.io.xml.*;
-import com.compendium.io.questmap.*;
+//import com.compendium.io.questmap.*;
 import com.compendium.ui.*;
 import com.compendium.ui.edits.*;
 import com.compendium.ProjectCompendium;
@@ -413,14 +414,14 @@ public	class ViewPaneUI extends ComponentUI
 	/**
 	 * For Importing files from Questmap. Instantiates and starts the parser.
 	 * @param filename, the name of the file to import.
-	 */
+	 *
 	public void onImportFile(String filename) {
 
 		Parser parser = new Parser(false, filename, ProjectCompendium.APP.getModel(), oViewPane.getView());
 		parser.setViewPaneUI(this);
 		parser.setSmartImport(isSmartImport);
 		parser.start();
-	}
+	}  */
 
 	/**
 	 * For Importing XML files.
@@ -428,7 +429,7 @@ public	class ViewPaneUI extends ComponentUI
 	 * @param includeInDetail, whether to include the original author and dates in the node detail.
 	 */
 	public void onImportXMLFile(String filename, boolean includeInDetail) {
-		
+
 		XMLImport xmlImport = new XMLImport(false, filename, ProjectCompendium.APP.getModel(), oViewPane.getView(), isSmartImport, includeInDetail);
 		xmlImport.setViewPaneUI(this);
 		xmlImport.start();
@@ -632,14 +633,16 @@ public	class ViewPaneUI extends ComponentUI
 	 * @param e, the associated MouseEvent.
 	 */
   	public void mouseClicked(MouseEvent e) {
+  		
+  		if (oViewPane instanceof UIAerialViewPane) return;		// ignore clicks in Aerial view
 
 		boolean isRightMouse = SwingUtilities.isRightMouseButton(e);
 
 		UILink link = isMouseOnALink(e);
-		if (link != null && !isRightMouse) {		
+		if (link != null && !isRightMouse) {
 			Rectangle labelRec = ((LinkUI)link.getUI()).getLabelRectangle();
-			Point ptConvert = SwingUtilities.convertPoint((Component)e.getSource(), e.getX(), e.getY(), oViewPane);	
-			Point ptNew = SwingUtilities.convertPoint(oViewPane, ptConvert.x, ptConvert.y, (Component)link);				
+			Point ptConvert = SwingUtilities.convertPoint((Component)e.getSource(), e.getX(), e.getY(), oViewPane);
+			Point ptNew = SwingUtilities.convertPoint(oViewPane, ptConvert.x, ptConvert.y, (Component)link);
 
 			if (labelRec != null && labelRec.contains(ptNew.x, ptNew.y)) {
 				MouseEvent newEvent = new MouseEvent(link,
@@ -652,12 +655,12 @@ public	class ViewPaneUI extends ComponentUI
 		                  e.isPopupTrigger(),
 		                  e.getButton()
 		                  );
-								
+
 				((LinkUI)link.getUI()).mouseClicked(newEvent);
 				return;
 			}
-		}  		
-  		
+		}
+
 		int mouseX = e.getX();
 		int mouseY = e.getY();
 
@@ -710,7 +713,7 @@ public	class ViewPaneUI extends ComponentUI
 	 * Invoked when a mouse button has been pressed on a component.
 	 * @param e, the associated MouseEvent.
 	 */
-	public void mousePressed(MouseEvent e) {		
+	public void mousePressed(MouseEvent e) {
 		int mouseX = e.getX();
 		int mouseY = e.getY();
 
@@ -754,10 +757,10 @@ public	class ViewPaneUI extends ComponentUI
 	 * @param e, the associated MouseEvent.
 	 */
 	public void mouseReleased(MouseEvent e) {
-		
+
 		boolean isLeftMouse = SwingUtilities.isLeftMouseButton(e);
 		boolean isRightMouse = SwingUtilities.isRightMouseButton(e);
-		
+
 		if (ProjectCompendium.isMac && bIsMacRightMouse) {
 			isRightMouse = true;
 			isLeftMouse = false;
@@ -788,8 +791,12 @@ public	class ViewPaneUI extends ComponentUI
 
 		//bz - ignore cases of a click on a point - these are handled by the mouseClick event
 		//		which is called right after this one.
-		if ((iWidth == 0) && (iHeight ==0))
+		if ((iWidth == 0) && (iHeight ==0)) {
+			bDragging = false;
+			bScrolling = false;
 			return;
+		}
+
 
 		oSelectedView.setBounds(iTopLeftX, iTopLeftY, iWidth,iHeight);
 
@@ -799,29 +806,36 @@ public	class ViewPaneUI extends ComponentUI
 		if(bScrolling && isRightMouse) {
 
 			//scroll the view pane .. get the x and y displacement
+			int newScrollX = 0;
+			int newScrollY = 0;
 			int xdisp = ptPrev.x-ptStart.x;
 			int ydisp = ptPrev.y-ptStart.y;
+				
+			
+			Point currentScrollPoint = oViewPane.getViewFrame().getViewPosition();
 
-			Point oldPoint = oViewPane.getViewFrame().getViewPosition();
-			int newX = oldPoint.x + xdisp;
-			int newY = oldPoint.y + ydisp;
+			// If the right-drag was in the Aerial view then we need to adjust the scroll distance
+			// by the ratio of the aerial view scale to the Frame's scale since the scrollbars operate
+			// in the Frame's coordinate space.  
+			// NOTE: This code is currently not used because aerial Scrolling is handled by the mouseDragged() handler below
+			
+			if (oViewPane instanceof UIAerialViewPane) {				// The drag was happening in the Aerial view, thus at a different scale
+				double dAerialScale = oViewPane.getScale();							// The Aerial pane's scale
+				UIAerialViewPane vp = (UIAerialViewPane)oViewPane;
+				double dFrameScale = vp.getMapFrame().getViewPane().getScale();		// The 'real' pane's scale
+				double dRatio = dFrameScale / dAerialScale;
+				Point scaledDisp = UIUtilities.transformPoint(xdisp, ydisp, dRatio);	
+				newScrollX = currentScrollPoint.x + scaledDisp.x;
+				newScrollY = currentScrollPoint.y + scaledDisp.y;
+			} else {
+				newScrollX = currentScrollPoint.x + xdisp;
+				newScrollY = currentScrollPoint.y + ydisp;
+			}
+			
+			if (newScrollX < 0) newScrollX = 0;
+			if (newScrollY < 0) newScrollY = 0;
 
-			//System.out.println("X= "+newX+" Y="+newY);
-
-			//oViewPane.getViewFrame().setViewPosition(new Point(oldPoint.x + xdisp, oldPoint.y + ydisp));
-
-			if((newX > 0) && (newY > 0)) {
-				oViewPane.getViewFrame().setViewPosition(new Point(newX, newY));
-			}
-			else if((newX < 0) && (newY > 0)) {
-				oViewPane.getViewFrame().setViewPosition(new Point(0, newY));
-			}
-			else if((newX > 0) && (newY < 0)) {
-				oViewPane.getViewFrame().setViewPosition(new Point(newX, 0));
-			}
-			else if((newX < 0) && (newY < 0)) {
-				oViewPane.getViewFrame().setViewPosition(new Point(0, 0));
-			}
+			oViewPane.getViewFrame().setViewPosition(new Point(newScrollX, newScrollY));
 		}
 
 		if(bDragging && isLeftMouse) {
@@ -842,21 +856,26 @@ public	class ViewPaneUI extends ComponentUI
 							try {
 								Point ptNew = new Point(r.x, r.y-iHeight);
 
+								//Write to Database new position at 100% scale
 								// If zoomed scale up bounds and height so stored in database correctly for 100% zoom.
 							    if (uinode.getScale() != 1.0) {
 							    	Point scaledPos = UIUtilities.scalePoint(r.x, r.y, uinode.getScale());
 							    	Point heightPos = UIUtilities.scalePoint(iHeight, iHeight, uinode.getScale());
 							    	scaledPos = new Point(scaledPos.x, scaledPos.y-heightPos.x);
 									uinode.getViewPane().getView().setNodePosition(uinode.getNode().getId(), scaledPos);
+									NodePosition nodepos = uinode.getNodePosition();
+									nodepos.setPos(scaledPos);
 								}
 								else {
 									uinode.getViewPane().getView().setNodePosition(uinode.getNode().getId(), ptNew);
+									NodePosition nodepos = uinode.getNodePosition();
+									nodepos.setPos(r.x, ptNew.y);
 								}
-								uinode.setBounds(r.x, ptNew.y, uinode.getWidth(), uinode.getHeight());
+							    
+								//Set the position of the visible object to scaled value
+							    uinode.setBounds(r.x, ptNew.y, uinode.getWidth(), uinode.getHeight());
 
-							    // need to update the NodePosition class here?
-								NodePosition nodepos = uinode.getNodePosition();
-								nodepos.setPos(r.x, ptNew.y);
+							    // Refresh the links 
 								uinode.updateLinks();
 							}
 							catch(Exception ex) {
@@ -889,17 +908,20 @@ public	class ViewPaneUI extends ComponentUI
 							    	Point scaledPos = UIUtilities.scalePoint(r.x, r.y, uinode.getScale());
 							    	Point heightPos = UIUtilities.scalePoint(iHeight, iHeight, uinode.getScale());
 							    	scaledPos = new Point(scaledPos.x, scaledPos.y+heightPos.x);
-									uinode.getViewPane().getView().setNodePosition(uinode.getNode().getId(), ptNew);
+									uinode.getViewPane().getView().setNodePosition(uinode.getNode().getId(), scaledPos);
+									NodePosition nodepos = uinode.getNodePosition();
+									nodepos.setPos(scaledPos);
 								}
 								else {
 									uinode.getViewPane().getView().setNodePosition(uinode.getNode().getId(), ptNew);
+									NodePosition nodepos = uinode.getNodePosition();
+									nodepos.setPos(r.x, ptNew.y);
 								}
 
+								//Set the position of the visible object to scaled value
 								uinode.setBounds(r.x, ptNew.y, uinode.getWidth(), uinode.getHeight());
 
-							    // need to update the NodePosition class here?
-								NodePosition nodepos = uinode.getNodePosition();
-								nodepos.setPos(r.x, ptNew.y);
+							    // Refresh the links 
 								uinode.updateLinks();
 							}
 							catch(Exception ex) {
@@ -909,7 +931,8 @@ public	class ViewPaneUI extends ComponentUI
 						}
 					}
 				}
-			}
+			} 
+			
 			else {
 				Component narray[] = oViewPane.getComponentsInLayer((UIViewPane.NODE_LAYER).intValue());
 
@@ -958,7 +981,7 @@ public	class ViewPaneUI extends ComponentUI
 						//if(SwingUtilities.isRectangleContainingRectangle(oSelectedView,rectLink) ||
 						// (rectLink.intersects(oSelectedView)))
 						UILink link = (UILink)object;
-						
+
 						pts = UILine.intersectionWithRectangle(oSelectedView, link.getFrom(), link.getTo());
 
 						if ((pts.length > 0) && pts[0] != null) {
@@ -1064,6 +1087,25 @@ public	class ViewPaneUI extends ComponentUI
 			Point ptNew = null;
 			ptNew = SwingUtilities.convertPoint((Component)e.getSource(), mouseX, mouseY, oViewPane);
 			ptPrev = ptNew;
+			
+			// If scrolling in the Aerial view, update the scroll location of the 'real' viewFrame in real time
+
+			if (oViewPane instanceof UIAerialViewPane) {
+				int xdisp = ptPrev.x-ptStart.x;
+				int ydisp = ptPrev.y-ptStart.y;
+				Point currentScrollPoint = oViewPane.getViewFrame().getViewPosition();
+				double dAerialScale = oViewPane.getScale();							// The Aerial pane's scale
+				UIAerialViewPane vp = (UIAerialViewPane)oViewPane;
+				double dFrameScale = vp.getMapFrame().getViewPane().getScale();		// The 'real' pane's scale
+				double dRatio = dFrameScale / dAerialScale;
+				Point scaledDisp = UIUtilities.transformPoint(xdisp, ydisp, dRatio);	
+				int newScrollX = currentScrollPoint.x + scaledDisp.x;
+				int newScrollY = currentScrollPoint.y + scaledDisp.y;
+				if (newScrollX < 0) newScrollX = 0;
+				if (newScrollY < 0) newScrollY = 0;
+				oViewPane.getViewFrame().setViewPosition(new Point(newScrollX, newScrollY));
+				ptStart = ptPrev;
+			}
 		}
 	}
 
@@ -1101,6 +1143,8 @@ public	class ViewPaneUI extends ComponentUI
 			ProjectCompendium.APP.keyPressed(evt);
 			return;
 		}
+		
+		if (oViewPane instanceof UIAerialViewPane)  return;		// ignore key presses in Aerial view
 
 		ptLocationKeyPress = new Point(_x, _y);
 
@@ -1175,7 +1219,7 @@ public	class ViewPaneUI extends ComponentUI
 					try {
 						if (oViewPane.getView() != ProjectCompendium.APP.getHomeView() ) {
 							oViewPane.getViewFrame().setClosed(true);
-						
+
 							JDesktopPane pane = ProjectCompendium.APP.getDesktop();
 							JInternalFrame frame = pane.getSelectedFrame();
 							if (frame instanceof UIMapViewFrame) {
@@ -1219,17 +1263,17 @@ public	class ViewPaneUI extends ComponentUI
 				case KeyEvent.VK_B: { // BOLD / UNBOLD THE TEXT OF ALL SELECTED NODES IN THE CURRENT MAP
 					ProjectCompendium.APP.getToolBarManager().addFontStyle(Font.BOLD);
 					evt.consume();
-					break;					
+					break;
 				}
 				case KeyEvent.VK_I: { // ITALIC / UNITALIC THE TEXT OF ALL SELECTED NODES IN THE CURRENT MAP
-					ProjectCompendium.APP.getToolBarManager().addFontStyle(Font.ITALIC);					
+					ProjectCompendium.APP.getToolBarManager().addFontStyle(Font.ITALIC);
 					evt.consume();
-					break;									}								
+					break;									}
 				case KeyEvent.VK_ENTER: {
 					try {
 						if (oViewPane.getView() != ProjectCompendium.APP.getHomeView() ) {
 							oViewPane.getViewFrame().setClosed(true);
-						
+
 							JDesktopPane pane = ProjectCompendium.APP.getDesktop();
 							JInternalFrame frame = pane.getSelectedFrame();
 							if (frame instanceof UIMapViewFrame) {
@@ -1366,6 +1410,18 @@ public	class ViewPaneUI extends ComponentUI
 			ProjectCompendium.APP.zoomFocused();
 			evt.consume();
 		}
+//		else if (keyCode == KeyEvent.VK_F11 && modifiers == 0) {
+//			ProjectCompendium.APP.toggleAerialView();
+//			evt.consume();
+//		}
+		else if (keyCode == KeyEvent.VK_F12 && modifiers == 0) {
+			onMarkSelectionSeen();		// Mark all selected nodes Seen - mlb
+			evt.consume();
+		}
+		else if ((keyCode == KeyEvent.VK_F12) && (modifiers == java.awt.Event.SHIFT_MASK)) {
+			onMarkSelectionUnseen();	// Mark all selected nodes Unseen - mlb
+			evt.consume();
+		}
 		else if (keyCode == KeyEvent.VK_SPACE && modifiers == 0) {
 			if (oNode != null) {
 				oNode.setSelected(true);
@@ -1374,7 +1430,7 @@ public	class ViewPaneUI extends ComponentUI
 			}
 			evt.consume();
 		}
-		
+
 		bClicked = false;
 
 		KeyStroke keyStroke = KeyStroke.getKeyStroke(keyCode, modifiers);
@@ -1388,7 +1444,7 @@ public	class ViewPaneUI extends ComponentUI
 			} else {
 				oRepeatKeyAction = null;
 			}
-		    
+
 		    if (bIsKeyDown && oRepeatKeyAction != null) {
 		    	oRepeatKeyAction.actionPerformed(null);
 		    	evt.consume();
@@ -1405,24 +1461,24 @@ public	class ViewPaneUI extends ComponentUI
 	public void moveCursorUp() {
 		try {
 			Point pos = new Point(ProjectCompendium.APP._x, ProjectCompendium.APP._y);
-			int newY = pos.y-FormatProperties.cursorMovementDistance;
+			int newY = pos.y - APP_PROPERTIES.getCursorMovementDistance();
 			int newX = pos.x;
 			SwingUtilities.convertPointFromScreen(pos, oViewPane);
 
-			if (pos.y-FormatProperties.cursorMovementDistance >= 0) {
+			if (pos.y-APP_PROPERTIES.getCursorMovementDistance() >= 0) {
 				JViewport viewport = oViewPane.getViewFrame().getViewport();
 				Rectangle rect = viewport.getViewRect();
 
-				if (!rect.contains(pos.x, pos.y-FormatProperties.cursorMovementDistance, 1, 1)) {
+				if (!rect.contains(pos.x, pos.y-APP_PROPERTIES.getCursorMovementDistance(), 1, 1)) {
 					Point point = viewport.getViewPosition();
-					viewport.setViewPosition(new Point(point.x, point.y-FormatProperties.cursorMovementDistance));
+					viewport.setViewPosition(new Point(point.x, point.y-APP_PROPERTIES.getCursorMovementDistance()));
 					_x = pos.x;
-					_y = pos.y-FormatProperties.cursorMovementDistance;
+					_y = pos.y-APP_PROPERTIES.getCursorMovementDistance();
 				}
 				else {
 					Robot rob = new Robot();
 					rob.mouseMove(newX, newY);
-					updateMousePosition(new Point(pos.x, pos.y-FormatProperties.cursorMovementDistance));
+					updateMousePosition(new Point(pos.x, pos.y-APP_PROPERTIES.getCursorMovementDistance()));
 				}
 			}
 		}
@@ -1435,22 +1491,22 @@ public	class ViewPaneUI extends ComponentUI
 	public void moveCursorDown() {
 		try {
 			Point pos = new Point(ProjectCompendium.APP._x, ProjectCompendium.APP._y);
-			int newY = pos.y+FormatProperties.cursorMovementDistance;
+			int newY = pos.y+APP_PROPERTIES.getCursorMovementDistance();
 			int newX = pos.x;
 			SwingUtilities.convertPointFromScreen(pos, oViewPane);
 			JViewport viewport = oViewPane.getViewFrame().getViewport();
 			Rectangle rect = viewport.getViewRect();
 
-			if (!rect.contains(pos.x, pos.y+FormatProperties.cursorMovementDistance, 1, 1)) {
+			if (!rect.contains(pos.x, pos.y+APP_PROPERTIES.getCursorMovementDistance(), 1, 1)) {
 				Point point = viewport.getViewPosition();
-				viewport.setViewPosition(new Point(point.x, point.y+FormatProperties.cursorMovementDistance));
+				viewport.setViewPosition(new Point(point.x, point.y+APP_PROPERTIES.getCursorMovementDistance()));
 				_x = pos.x;
-				_y = pos.y+FormatProperties.cursorMovementDistance;
+				_y = pos.y+APP_PROPERTIES.getCursorMovementDistance();
 			}
 			else {
 				Robot rob = new Robot();
-				rob.mouseMove(newX, newY);			
-				updateMousePosition(new Point(pos.x, pos.y+FormatProperties.cursorMovementDistance));				
+				rob.mouseMove(newX, newY);
+				updateMousePosition(new Point(pos.x, pos.y+APP_PROPERTIES.getCursorMovementDistance()));
 			}
 		}
 		catch(AWTException ex) {}
@@ -1464,22 +1520,22 @@ public	class ViewPaneUI extends ComponentUI
 			Point pos = new Point(ProjectCompendium.APP._x, ProjectCompendium.APP._y);
 			int oldX = pos.x;
 			int newY= pos.y;
-			int newX = pos.x+FormatProperties.cursorMovementDistance;
+			int newX = pos.x+APP_PROPERTIES.getCursorMovementDistance();
 
 			SwingUtilities.convertPointFromScreen(pos, oViewPane);
 
 			JViewport viewport = oViewPane.getViewFrame().getViewport();
 			Rectangle rect = viewport.getViewRect();
-			if (!rect.contains(pos.x+FormatProperties.cursorMovementDistance, pos.y, 1, 1)) {
+			if (!rect.contains(pos.x+APP_PROPERTIES.getCursorMovementDistance(), pos.y, 1, 1)) {
 				Point point = viewport.getViewPosition();
-				viewport.setViewPosition(new Point(point.x+FormatProperties.cursorMovementDistance, point.y));
-				_x = pos.x+FormatProperties.cursorMovementDistance;
+				viewport.setViewPosition(new Point(point.x+APP_PROPERTIES.getCursorMovementDistance(), point.y));
+				_x = pos.x+APP_PROPERTIES.getCursorMovementDistance();
 				_y = pos.y;
 			}
 			else {
 				Robot rob = new Robot();
-				rob.mouseMove(newX, newY);				
-				updateMousePosition(new Point(pos.x+FormatProperties.cursorMovementDistance, pos.y));								
+				rob.mouseMove(newX, newY);
+				updateMousePosition(new Point(pos.x+APP_PROPERTIES.getCursorMovementDistance(), pos.y));
 			}
 		}
 		catch(AWTException ex) {
@@ -1493,26 +1549,26 @@ public	class ViewPaneUI extends ComponentUI
 	public void moveCursorLeft() {
 		try {
 			Point pos = new Point(ProjectCompendium.APP._x, ProjectCompendium.APP._y);
-			int newX = pos.x-FormatProperties.cursorMovementDistance;
+			int newX = pos.x-APP_PROPERTIES.getCursorMovementDistance();
 			int newY = pos.y;
 
 			SwingUtilities.convertPointFromScreen(pos, oViewPane);
 
-			if (pos.x-FormatProperties.cursorMovementDistance >= 0) {
+			if (pos.x-APP_PROPERTIES.getCursorMovementDistance() >= 0) {
 
 				JViewport viewport = oViewPane.getViewFrame().getViewport();
 				Rectangle rect = viewport.getViewRect();
 
-				if (!rect.contains(pos.x-FormatProperties.cursorMovementDistance, pos.y, 1, 1)) {
+				if (!rect.contains(pos.x-APP_PROPERTIES.getCursorMovementDistance(), pos.y, 1, 1)) {
 					Point point = viewport.getViewPosition();
-					viewport.setViewPosition(new Point(point.x-FormatProperties.cursorMovementDistance, point.y));
-					_x = pos.x-FormatProperties.cursorMovementDistance;
+					viewport.setViewPosition(new Point(point.x-APP_PROPERTIES.getCursorMovementDistance(), point.y));
+					_x = pos.x-APP_PROPERTIES.getCursorMovementDistance();
 					_y = pos.y;
 				}
 				else {
 					Robot rob = new Robot();
 					rob.mouseMove(newX, newY);
-					updateMousePosition(new Point(pos.x-FormatProperties.cursorMovementDistance, pos.y));								
+					updateMousePosition(new Point(pos.x-APP_PROPERTIES.getCursorMovementDistance(), pos.y));
 				}
 			}
 		}
@@ -1580,14 +1636,14 @@ public	class ViewPaneUI extends ComponentUI
 
 		return node;
 	}
-	
+
 	/**
 	 * Invoked when a key is released in a component.
 	 * @param evt, the associated KeyEvent.
 	 */
 	public void keyReleased(KeyEvent e) {
 		bIsKeyDown = false;
-		e.consume();		
+		e.consume();
   	}
 
 
@@ -1596,29 +1652,29 @@ public	class ViewPaneUI extends ComponentUI
 	 * @param evt, the associated KeyEvent.
 	 */
 	public void keyTyped(KeyEvent e) {
-				
+
 		if (!e.isAltDown() && !e.isControlDown() && !e.isMetaDown()) {
-		
+
 			char keyChar = e.getKeyChar();
 			char[] key = {keyChar};
 			String sKeyPressed = new String(key);
-	
+
 			int nType = -1;
-	
+
 			// IF A SINGLE NODE IS SELECTED, ASSUME THEY ARE TRYING TO TYPE INTO THE LABEL
 			//if (oViewPane.getNumberOfSelectedNodes() == 1) {
 			//	UINode uinode = oViewPane.getSelectedNode();
 			//	uinode.getUI().keyPressed(evt);
 			//	return;
 			//}
-	
+
 			//if(sKeyPressed.equals("i") || sKeyPressed.equals("I") || sKeyPressed.equals("q") || sKeyPressed.equals("Q") || sKeyPressed.equals("?") || sKeyPressed.equals("/")) {
 			//	nType = ICoreConstants.ISSUE;
 			//}
 			//if(sKeyPressed.equals("p") || sKeyPressed.equals("P") || sKeyPressed.equals("a") || sKeyPressed.equals("A") || sKeyPressed.equals("!") || sKeyPressed.equals("1")) {
 			//	nType = ICoreConstants.POSITION;
 			//}
-	
+
 			if(sKeyPressed.equals("p") || sKeyPressed.equals("P")) {
 				nType = ICoreConstants.POSITION;
 			}
@@ -1652,26 +1708,26 @@ public	class ViewPaneUI extends ComponentUI
 			else if(sKeyPressed.equals("-")) {
 				nType = ICoreConstants.CON;
 			}
-	
+
 			if (nType > -1) {
-	
+
 				int nX = ptLocationKeyPress.x;
 				int nY = ptLocationKeyPress.y;
-	
+
 				// IF WE DON'T KNOW WHERE THE MOUSE IS, GET THE LAST KNOW GLOBAL POSITION AND CONVERT IT
 				if ( nX == 0 && nY == 0 ) {
 					Point p = new Point(ProjectCompendium.APP._x, ProjectCompendium.APP._y);
 					SwingUtilities.convertPointFromScreen(p, oViewPane);
-	
+
 					nX = p.x;
 					nY = p.y;
-					
+
 					// CHEK THIS POINT IS ACTUALLY VISIBLE, IF NOT CENTER TO SCREEN
 					Rectangle rect = oViewPane.getVisibleRect();
 					if (!rect.contains(new Point(nX, nY))) {
 						nX = rect.x+10;
 						nY = rect.y+10;
-						
+
 						// NEED TO DO THIS OR MOUSE EVENTS ARE NOT PASSED TO NEW NODE!
 						// ESPECIALLY NOTICABLE IF TRY TO CREATE LINK WITHOUT MOVING MOUSE
 						try {
@@ -1680,13 +1736,13 @@ public	class ViewPaneUI extends ComponentUI
 							Robot rob = new Robot();
 							rob.mouseMove(pos.x+1, pos.y+1);
 						}
-						catch(AWTException ex) {}	
+						catch(AWTException ex) {}
 					}
 				}
-	
+
 				// MOVE NEW NODE OUT A BIT SO MOUSEPOINTER NOT RIGHT ON EDGE
 				Model oModel = (Model)ProjectCompendium.APP.getModel();
-				boolean bSmallIcons = oModel.smallIcons;				
+				boolean bSmallIcons = oModel.smallIcons;
 				if (bSmallIcons) {
 					if (nX >= 10 && nY >= 3) {
 						nX -= 10;
@@ -1697,7 +1753,7 @@ public	class ViewPaneUI extends ComponentUI
 					nX -= 20;
 					nY -= 10;
 				}
-	
+
 				UINode node = addNewNode(nType, nX, nY);
 
 				JViewport viewport = oViewPane.getViewFrame().getViewport();
@@ -1708,9 +1764,9 @@ public	class ViewPaneUI extends ComponentUI
 				//if (!rect.contains(node.getBounds())) {
 				//	viewport.scrollRectToVisible(node.getBounds());
 				//}
-			}	
+			}
 		}
-			
+
 		e.consume();
 	}
 
@@ -1725,7 +1781,7 @@ public	class ViewPaneUI extends ComponentUI
 			this.oNode = oNode;
 		}
 	}
-	
+
 	/**
 	 * Required for the ClipboardOwner implementation.
    	 */
@@ -1979,7 +2035,7 @@ public	class ViewPaneUI extends ComponentUI
 
 		return uinode;
   	}
-	
+
   	/**
      * Creates a new node from the passed parameters for imported data.
 	 * @param nodeType, the type of the new node.
@@ -2007,21 +2063,21 @@ public	class ViewPaneUI extends ComponentUI
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 *  
+	 *
 	 * @return com.compendium.ui.UINode, the newly create node.
-     */	
+     */
 	public UINode createNode(int nodeType, String importedId, String sOriginalID,
 							String author, Date creationDate, Date modDate, String label,
 							String detail, int x, int y,
 							Date transCreationDate, Date transModDate, String sLastModAuthor,
-							boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight, 
-							boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace, 
+							boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight,
+							boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 							int nFontStyle, int nForeground, int nBackground) {
-		
+
 		return createNode(nodeType, importedId, sOriginalID, author, creationDate, modDate, label,
 							detail, x, y, "", "", transCreationDate, transModDate, sLastModAuthor,
-							bShowTags, bShowText, bShowTrans,bShowWeight, 
-							bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, 
+							bShowTags, bShowText, bShowTrans,bShowWeight,
+							bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace,
 							nFontStyle, nForeground, nBackground);
 
 	}
@@ -2055,15 +2111,15 @@ public	class ViewPaneUI extends ComponentUI
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 *  
+	 *
 	 * @return com.compendium.ui.UINode, the newly create node.
-     */	
+     */
 	public UINode createNode(int nodeType, String importedId, String sOriginalID,
 							String author, Date creationDate, Date modDate, String label,
-							String detail, int x, int y, String source, String image, 
+							String detail, int x, int y, String source, String image,
 							Date transCreationDate, Date transModDate, String sLastModAuthor,
-							boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight, 
-							boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace, 
+							boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight,
+							boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 							int nFontStyle, int nForeground, int nBackground) {
 
 		UINode uinode = null;
@@ -2076,7 +2132,7 @@ public	class ViewPaneUI extends ComponentUI
 
 	  	if((nodeType != ICoreConstants.MAPVIEW) && (nodeType != ICoreConstants.LISTVIEW)) {
 			try {
-				NodePosition nodePos = oViewPane.getView().addMemberNode(nodeType, "",	
+				NodePosition nodePos = oViewPane.getView().addMemberNode(nodeType, "",
 													importedId,	sOriginalID, author, creationDate,
 													modDate, label,	detail,	x, y, transCreationDate,
 													transModDate, sLastModAuthor, bShowTags, bShowText,
@@ -2086,12 +2142,12 @@ public	class ViewPaneUI extends ComponentUI
 				node.initialize(ProjectCompendium.APP.getModel().getSession(), ProjectCompendium.APP.getModel());
 
 				//add the node to UIviewpane now to reflect new node
-				uinode = (UINode)oViewPane.get(node.getId());	
-				
+				uinode = (UINode)oViewPane.get(node.getId());
+
 				if ((source != null && !source.equals("")) || (image != null && !image.equals(""))) {
 					node.setSource(source, image, author);
 				}
-				
+
 				if (uinode == null)
 					uinode = addNode(nodePos);
 			}
@@ -2102,7 +2158,7 @@ public	class ViewPaneUI extends ComponentUI
 	 	}
 	  	else {
 			try {
-				NodePosition nodePos = oViewPane.getView().addMemberNode(nodeType, "",	
+				NodePosition nodePos = oViewPane.getView().addMemberNode(nodeType, "",
 						importedId,	sOriginalID, author,	creationDate,
 						modDate, label,	detail,	x, y, transCreationDate,
 						transModDate, sLastModAuthor, bShowTags, bShowText,
@@ -2174,7 +2230,7 @@ public	class ViewPaneUI extends ComponentUI
 													y						//int y
 													);
 				NodeSummary node = nodePos.getNode();
-				
+
 				node.initialize(ProjectCompendium.APP.getModel().getSession(), ProjectCompendium.APP.getModel());
 
 				//add the node to UIviewpane now to reflect new node
@@ -2243,19 +2299,19 @@ public	class ViewPaneUI extends ComponentUI
 		String label = parent.getLabel();
 		String detail = parent.getDetail();
 		int nodeType = parent.getType();
-		
+
 		String sAuthor = getViewPane().getCurrentAuthor();
 
 		UINode uinode = null;
-		
+
 		Date date = new Date();
 
 		if(!(parent instanceof ShortCutNodeSummary)) {
 			String image = parent.getImage();
 			String source = parent.getSource();
 
-		  	uinode = createNode(nodeType, "", "", author, date, date, label, detail, loc.x, loc.y, 
-		  			source, image, date, date, author,	pos.getShowTags(), pos.getShowText(), pos.getShowTrans(), 
+		  	uinode = createNode(nodeType, "", "", author, date, date, label, detail, loc.x, loc.y,
+		  			source, image, date, date, author,	pos.getShowTags(), pos.getShowText(), pos.getShowTrans(),
 		  			pos.getShowWeight(),pos.getShowSmallIcon(), pos.getHideIcon(), pos.getLabelWrapWidth(),
 		  			pos.getFontSize(), pos.getFontFace(), pos.getFontStyle(), pos.getForeground(),
 		  			pos.getBackground());
@@ -2288,7 +2344,7 @@ public	class ViewPaneUI extends ComponentUI
 				}
 
 				//get the detailpages for the parent node. The cloned node has the same details
-			
+
 				Vector details = parent.getDetailPages(author);
 				Vector newDetails = new Vector();
 				int count = details.size();
@@ -2346,12 +2402,12 @@ public	class ViewPaneUI extends ComponentUI
 		String image = oNode.getNode().getImage();
 		String source = oNode.getNode().getSource();
 
-	  	uinode = createNode(nodeType, "", "", sAuthor, date, date, label, detail, loc.x, loc.y, 
-	  			source, image, date, date, sAuthor, pos.getShowTags(), pos.getShowText(), pos.getShowTrans(), 
+	  	uinode = createNode(nodeType, "", "", sAuthor, date, date, label, detail, loc.x, loc.y,
+	  			source, image, date, date, sAuthor, pos.getShowTags(), pos.getShowText(), pos.getShowTrans(),
 	  			pos.getShowWeight(),pos.getShowSmallIcon(), pos.getHideIcon(), pos.getLabelWrapWidth(),
 	  			pos.getFontSize(), pos.getFontFace(), pos.getFontStyle(), pos.getForeground(),
 	  			pos.getBackground());
-	  	
+
 		NodeSummary node = uinode.getNode();
 
 		try {
@@ -2383,21 +2439,21 @@ public	class ViewPaneUI extends ComponentUI
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 *  
+	 *
 	 * @return com.compendium.ui.UINode, the newly created node.
      */
-	public UINode addNodeToView(NodeSummary node, int x, int y, 
-							boolean bShowTags, 
-							boolean bShowText, 
-							boolean bShowTrans, 
-							boolean bShowWeight, 
-							boolean bSmallIcon, 
-							boolean bHideIcon, 
-							int 	nWrapWidth, 
-							int 	nFontSize, 
-							String 	sFontFace, 
-							int 	nFontStyle, 
-							int 	nForeground, 
+	public UINode addNodeToView(NodeSummary node, int x, int y,
+							boolean bShowTags,
+							boolean bShowText,
+							boolean bShowTrans,
+							boolean bShowWeight,
+							boolean bSmallIcon,
+							boolean bHideIcon,
+							int 	nWrapWidth,
+							int 	nFontSize,
+							String 	sFontFace,
+							int 	nFontStyle,
+							int 	nForeground,
 							int 	nBackground) {
 
 		NodePosition nodePos = null;
@@ -2407,8 +2463,8 @@ public	class ViewPaneUI extends ComponentUI
 		oViewPane = getViewPane();
 		try {
 			//add the node to this view
-			nodePos = oViewPane.getView().addNodeToView(node, x,y, bShowTags, bShowText, bShowTrans, bShowWeight, 
-					bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, nFontStyle, 
+			nodePos = oViewPane.getView().addNodeToView(node, x,y, bShowTags, bShowText, bShowTrans, bShowWeight,
+					bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, nFontStyle,
 					nForeground, nBackground);
 
 			if (nodePos != null) {
@@ -2568,7 +2624,7 @@ public	class ViewPaneUI extends ComponentUI
 	 * @return com.compendium.ui.UILink, the newly created link.
      */
 	public UILink addLinkToView(ILink link) {
-		
+
 		if (link == null) {
 			return null;
 		}
@@ -2589,6 +2645,24 @@ public	class ViewPaneUI extends ComponentUI
 
 		return oUILink;
   	}
+
+	/**
+	 * Mark all nodes in the selection as read/seen		MLB: Feb. '08
+	 */
+	public void onMarkSelectionSeen() {
+		if (oViewPane.getNumberOfSelectedNodes() > 0) {
+			oViewPane.markSelectionSeen();
+		}
+	}
+
+	/**
+	 * Mark all nodes in the selection as unread/unseen		MLB: Feb. '08
+	 */
+	public void onMarkSelectionUnseen() {
+		if (oViewPane.getNumberOfSelectedNodes() > 0) {
+			oViewPane.markSelectionUnseen();
+		}
+	}
 
 	/**
 	 * Deletes the selected objects.
@@ -2717,12 +2791,12 @@ public	class ViewPaneUI extends ComponentUI
 	  	ClipboardTransferables clips = new ClipboardTransferables();
 
 		String sInBox = ProjectCompendium.APP.getInBoxID();
-	  	
+
 	  	// copy the objects selected
 	  	if ((oViewPane.getNumberOfSelectedLinks() == 0) && (oViewPane.getNumberOfSelectedNodes() == 0)) {
 			if (nodeui != null) {
-				if (nodeui.oNode.getType() != ICoreConstants.TRASHBIN 
-						&& !nodeui.oNode.getNode().getId().equals(sInBox)) {				
+				if (nodeui.oNode.getType() != ICoreConstants.TRASHBIN
+						&& !nodeui.oNode.getNode().getId().equals(sInBox)) {
 					clips.addTransferables(nodeui);
 				}
 			}
@@ -2734,16 +2808,16 @@ public	class ViewPaneUI extends ComponentUI
 		 	}
 		 	for(Enumeration e = oViewPane.getSelectedNodes();e.hasMoreElements();) {
 				UINode uinode = (UINode)e.nextElement();
-				if (uinode.getType() != ICoreConstants.TRASHBIN 
+				if (uinode.getType() != ICoreConstants.TRASHBIN
 						&& !uinode.getNode().getId().equals(sInBox)) {
-				
+
 					clips.addTransferables(uinode.getUI());
 					uinode.setCut(true);
 				}
 			}
 	  	}
 
-		if (clips.getTransferables().hasMoreElements()) {	  	
+		if (clips.getTransferables().hasMoreElements()) {
 			ProjectCompendium.APP.getClipboard().setContents(clips,this);
 			ProjectCompendium.APP.setPasteEnabled(true);
 		}
@@ -2782,10 +2856,10 @@ public	class ViewPaneUI extends ComponentUI
 			if (nodeui != null) {
 				oViewPane.setSelectedNode(nodeui.getUINode(), ICoreConstants.SINGLESELECT);
 				oViewPane.deleteSelectedNodesAndLinks(edit);
-				
-				if (nodeui.oNode.getType() != ICoreConstants.TRASHBIN 
+
+				if (nodeui.oNode.getType() != ICoreConstants.TRASHBIN
 						&& !nodeui.oNode.getNode().getId().equals(sInBox)) {
-				
+
 					clips.addTransferables(nodeui);
 				}
 			}
@@ -2796,14 +2870,14 @@ public	class ViewPaneUI extends ComponentUI
 				UILink uilink = (UILink)e.nextElement();
 				clips.addTransferables(uilink.getUI());
 			}
-			
+
 			// STORE NODES TO CLIPBOARD
 			for(Enumeration e = oViewPane.getSelectedNodes();e.hasMoreElements();) {
 				UINode uinode = (UINode)e.nextElement();
-				
-				if (uinode.getType() != ICoreConstants.TRASHBIN 
+
+				if (uinode.getType() != ICoreConstants.TRASHBIN
 						&& !uinode.getNode().getId().equals(sInBox)) {
-				
+
 					clips.addTransferables(uinode.getUI());
 					uinode.setCut(true);
 				}
@@ -2813,18 +2887,18 @@ public	class ViewPaneUI extends ComponentUI
 			oViewPane.deleteSelectedNodesAndLinks(edit);
 	  	}
 
-		// notify the listeners		
+		// notify the listeners
 		if (edit.vtUndoNodes.size() > 0 || edit.vtUndoLinks.size()>0) {
 			oViewPane.getViewFrame().getUndoListener().postEdit(edit);
 			ProjectCompendium.APP.getClipboard().setContents(clips, this);
 			ProjectCompendium.APP.setPasteEnabled(true);
 		}
 
-		// update node inidicators		
+		// update node inidicators
 		//Thread thread = new Thread() {
 		//	public void run() {
 				ProjectCompendium.APP.setTrashBinIcon();
-				ProjectCompendium.APP.refreshIconIndicators();		
+				ProjectCompendium.APP.refreshIconIndicators();
 		//	}
 		//};
 		//thread.start();
@@ -2836,7 +2910,7 @@ public	class ViewPaneUI extends ComponentUI
 	public void pasteFromClipboard() {
 
 		String sAuthor = getViewPane().getCurrentAuthor();
-		
+
 	  	UINode node = oViewPane.getSelectedNode();
 		if (node != null) {
 			NodeUI ui = (NodeUI)node.getUI();
@@ -2856,7 +2930,7 @@ public	class ViewPaneUI extends ComponentUI
 
 		IModel model = oViewPane.getView().getModel();
 		PCSession session = model.getSession();
-		
+
 		if((clipui = (ClipboardTransferables)(ProjectCompendium.APP.getClipboard().getContents(this))) != null) {
 
 			try {
@@ -2930,10 +3004,10 @@ public	class ViewPaneUI extends ComponentUI
 
 						//NodeSummary newPasteNodeSummary = nodeService.getNodeSummary(session, sNodeID);
 						//UINode uiNodeInView = (UINode)getViewPane().get(pasteNodeSummary.getId());
-						
-						UINode newUINode = addNodeToView(pasteNodeSummary, xpos+xdisp, ypos+ydisp, np.getShowTags(), 
+
+						UINode newUINode = addNodeToView(pasteNodeSummary, xpos+xdisp, ypos+ydisp, np.getShowTags(),
 													np.getShowText(), np.getShowTrans(), np.getShowWeight(), np.getShowSmallIcon(),
-													np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(), 
+													np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(),
 													np.getFontStyle(), np.getForeground(), np.getBackground());
 						if (newUINode != null) {
 
@@ -3036,7 +3110,7 @@ public	class ViewPaneUI extends ComponentUI
 	public void externalPasteFromClipboard() {
 
 		ProjectCompendium.APP.setWaitCursor();
-		
+
 		ClipboardTransferables clipui = null;
 		PasteEdit.nodeList = new Hashtable();
 		boolean bViewportSet = false;
@@ -3045,7 +3119,7 @@ public	class ViewPaneUI extends ComponentUI
 		PCSession session = model.getSession();
 		oViewPane = getViewPane();
 		String sAuthor = oViewPane.getCurrentAuthor();
-		
+
 		if((clipui = (ClipboardTransferables)(ProjectCompendium.APP.getClipboard().getContents(this))) != null) {
 
 			try {
@@ -3082,7 +3156,7 @@ public	class ViewPaneUI extends ComponentUI
 						UINode uiNode = new UINode(np, sAuthor);
 						nodeui = uiNode.getUI();
 						xpos = np.getXPos();
-						ypos = np.getYPos();						
+						ypos = np.getYPos();
 
 						//check if node is already present(if paste is from another DB)
 						INodeService nodeService = model.getNodeService();
@@ -3112,9 +3186,9 @@ public	class ViewPaneUI extends ComponentUI
 							if (existingNode != null) {
 								newPasteNodeSummary = nodeService.getNodeSummary(session, existingNode);
 								if (newPasteNodeSummary != null) {
-									newUINode = addNodeToView(pasteNodeSummary,xpos+xdisp,ypos+ydisp, np.getShowTags(), 
+									newUINode = addNodeToView(pasteNodeSummary,xpos+xdisp,ypos+ydisp, np.getShowTags(),
 																	np.getShowText(), np.getShowTrans(), np.getShowWeight(), np.getShowSmallIcon(),
-																	np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(), 
+																	np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(),
 																	np.getFontStyle(), np.getForeground(), np.getBackground());
 								}
 							}
@@ -3159,9 +3233,9 @@ public	class ViewPaneUI extends ComponentUI
 							}
 						}
 						else if (uiNodeInView == null) {
-							newUINode = addNodeToView(pasteNodeSummary,xpos+xdisp,ypos+ydisp, np.getShowTags(), 
+							newUINode = addNodeToView(pasteNodeSummary,xpos+xdisp,ypos+ydisp, np.getShowTags(),
 															np.getShowText(), np.getShowTrans(), np.getShowWeight(), np.getShowSmallIcon(),
-															np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(), 
+															np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(),
 															np.getFontStyle(), np.getForeground(), np.getBackground());
 							edit.AddNodeToEdit (newUINode);
 							newUINode.setSelected(true);
@@ -3329,28 +3403,34 @@ public	class ViewPaneUI extends ComponentUI
 		//use minX and minY as the points to position the clipboard selection in.
 		//BUG FIX - Lakshmi (10/13/06)
 	  	//if mouse coordinates lies in UIViewPane then paste in that location and reset the bClicked flag
-	  	
+
 	  	UIViewFrame frame = ProjectCompendium.APP.getInternalFrame(oViewPane.getView());
-	  	
 	  	//Default Visible Area
 	  	Rectangle rect = new Rectangle(0,0,472,449);
 	  	if(frame != null){
 	  		rect = frame.getViewport().getVisibleRect();
 	  	}
-	  	
-	  	int width = rect.width;
-		int height = rect.height;
-		//if (!bMouseExited && _x > 0 && _y > 0) {
-	  	if((_x > 0 && _x < (rect.x +rect.width)) && (_y > 0 && _y < (rect.y +rect.height))) {
-			diffX = _x - minX;
-			diffY = _y - minY;
+	  	Point viewportP = UIUtilities.scalePoint(rect.width, rect.height, oViewPane.currentScale);
+
+		Point scaledXY = UIUtilities.scalePoint(_x, _y, oViewPane.currentScale);		// Scaled mouse position
+		int scaledMouseX = scaledXY.x;
+		int scaledMouseY = scaledXY.y;
+		
+		Point p = oViewPane.getViewFrame().getViewPosition();
+		p = UIUtilities.scalePoint(p.x, p.y, oViewPane.currentScale);					// Scaled view origin
+		
+	  	if((scaledMouseX > 0 && scaledMouseX < (p.x +viewportP.x)) && (scaledMouseY > 0 && scaledMouseY < (p.y +viewportP.y))) {
+			diffX = scaledMouseX - minX;
+			diffY = scaledMouseY - minY;
 			bClicked = false;
 		}
 
 		// if mouse not clicked and so the mouse co-ordinates lies outside the pane then place items on clipboard
 		// in the middle of the viewpane.
 	  	else {
-			Point p = oViewPane.getViewFrame().getViewPosition();
+	  		int width = rect.width;
+			int height = rect.height;
+			p = oViewPane.getViewFrame().getViewPosition();
 			diffX = (p.x+ width/2) - minX;
 			diffY = (p.y + height/2) - minY;
 	  	}
@@ -3378,8 +3458,8 @@ public	class ViewPaneUI extends ComponentUI
 			diffY = diffY - (newYPositionMax - pWidth);
 		}
 
-		Point p = new Point(diffX, diffY);
-		return (p);
+		Point p1 = new Point(diffX, diffY);
+		return (p1);
 	}
 
 	/**
@@ -3470,7 +3550,7 @@ public	class ViewPaneUI extends ComponentUI
 
 		try {
 			IModel model = ProjectCompendium.APP.getModel();
-			PCSession session = model.getSession();			
+			PCSession session = model.getSession();
 			String sAuthor = getViewPane().getCurrentAuthor();
 
 			INodeService nodeService = model.getNodeService();
@@ -3478,13 +3558,13 @@ public	class ViewPaneUI extends ComponentUI
 			Vector deletedNodes = deletedView.getDeletedNodes();
 			String sViewID = deletedView.getId();
 			String sNodeID = "";
-			
+
 			View thisView = oViewPane.getView();
 			if (thisView.getModel() == null) {
 				thisView.initialize( session, model );
 			}
 			thisView.initializeMembers();
-			
+
 			for (int i = 0; i < deletedNodes.size(); i++) {
 
 				NodePosition np = (NodePosition)deletedNodes.elementAt(i);
@@ -3517,9 +3597,9 @@ public	class ViewPaneUI extends ComponentUI
 						}
 					}
 					else {
-						newUINode = addNodeToView(pasteNodeSummary,np.getXPos(), np.getYPos(), np.getShowTags(), 
+						newUINode = addNodeToView(pasteNodeSummary,np.getXPos(), np.getYPos(), np.getShowTags(),
 													np.getShowText(), np.getShowTrans(), np.getShowWeight(), np.getShowSmallIcon(),
-													np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(), 
+													np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), np.getFontFace(),
 													np.getFontStyle(), np.getForeground(), np.getBackground());
 					}
 				}
@@ -3545,9 +3625,9 @@ public	class ViewPaneUI extends ComponentUI
 								}
 							}
 							else {
-								newUINode = addNodeToView(pasteNodeSummary, np.getXPos(), np.getYPos(), np.getShowTags(), 
-										np.getShowText(), np.getShowTrans(), np.getShowWeight(), np.getShowSmallIcon(),	
-										np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(), 
+								newUINode = addNodeToView(pasteNodeSummary, np.getXPos(), np.getYPos(), np.getShowTags(),
+										np.getShowText(), np.getShowTrans(), np.getShowWeight(), np.getShowSmallIcon(),
+										np.getHideIcon(), np.getLabelWrapWidth(), np.getFontSize(),
 										np.getFontFace(), np.getFontStyle(), np.getForeground(), np.getBackground()
 										);
 							}
@@ -3580,7 +3660,7 @@ public	class ViewPaneUI extends ComponentUI
 								if (image != null && !image.equals(""))
 									newUINode.setReferenceIcon(image);
 							}
-							
+
 							PasteEdit.nodeList.put(sNodeID, newPasteNodeSummary.getId());
 							newUINode.setRollover(false);
 						}
@@ -3589,8 +3669,8 @@ public	class ViewPaneUI extends ComponentUI
 
 				// IF NODE ALREADY RESTORED, DON'T TRY AND RESTORE IT AGAIN
 				if (!ProjectCompendium.APP.ht_pasteCheck.containsKey(sNodeID) && newUINode != null) {
-					ProjectCompendium.APP.ht_pasteCheck.put(sNodeID, newUINode.getNode().getId());					
-					if (newUINode.getNode() instanceof View 
+					ProjectCompendium.APP.ht_pasteCheck.put(sNodeID, newUINode.getNode().getId());
+					if (newUINode.getNode() instanceof View
 							&& pasteNodeSummary instanceof View) {
 
 						View deletedView2 = (View)pasteNodeSummary;

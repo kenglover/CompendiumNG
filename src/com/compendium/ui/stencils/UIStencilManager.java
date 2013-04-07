@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.stencils;
 
 import java.io.*;
@@ -52,11 +51,12 @@ import com.compendium.core.datamodel.*;
 public class UIStencilManager implements IUIConstants, ICoreConstants {
 
 	/**A reference to the system file path separator*/
-	public final static String	sFS					= System.getProperty("file.separator");
+	public final static String	sFS			= System.getProperty("file.separator");
+	public final static String 	sSYSPATH	= System.getenv("CompendiumSysPath");
 
 	/**A reference to the node image directory*/
-	public final static String	sPATH 				= "System"+sFS+"resources"+sFS+"Stencils"+sFS;
-	
+	public final static String	sPATH 				= sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"Stencils"+sFS;
+
 	/** A list of all stencils.*/
 	private Hashtable htStencils 					= new Hashtable(10);
 
@@ -77,7 +77,7 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 
 	/** The tabbedpane to hold the open stencil panels.*/
 	private JTabbedPane			oTabbedPane				= null;
-	
+
 	/**
 	 * Constructor. Create a new instance of UIStencilManager, with the given proerties.
 	 * @param parent com.compendium.ui.ProjectCompendiumFrame, the parent frame for the application.
@@ -92,7 +92,7 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 
 		oTabbedPane = new JTabbedPane();
 		oTabbedPane.setTabPlacement(JTabbedPane.TOP);
-		
+
 	}
 
 	/**
@@ -215,7 +215,7 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 	 */
 	public boolean openStencilSet(String sName) {
 		boolean opened = false;
-		
+
 		if (htStencils.containsKey(sName) && !htDisplayedStencils.containsKey(sName)) {
 			UIStencilSet oStencil = (UIStencilSet)htStencils.get(sName);
 
@@ -227,14 +227,14 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 			oTabbedPane.addTab(oStencil.getTabName(), null, oStencil, oStencil.getName());
 			oTabbedPane.setSelectedComponent(oStencil);
 			opened = true;
-		} 
-		
+		}
+
 		if (htDisplayedStencils.size() == 1) {
 			ProjectCompendium.APP.oTabbedPane.addTab("Stencils", oTabbedPane);
-			ProjectCompendium.APP.oTabbedPane.setSelectedComponent(oTabbedPane); 
-			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();						
+			ProjectCompendium.APP.oTabbedPane.setSelectedComponent(oTabbedPane);
+			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 		}
-		
+
 		return opened;
 	}
 
@@ -251,10 +251,10 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 			htDisplayedStencils.remove(sName);
 			closed = true;
 		}
-		
+
 		if (htDisplayedStencils.size() == 0) {
 			ProjectCompendium.APP.oTabbedPane.remove(oTabbedPane);
-			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();									
+			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 		}
 		return closed;
 	}
@@ -284,7 +284,8 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 		htStencils.clear();
 
 		try {
-			File main = new File("System"+sFS+"resources"+sFS+"Stencils");
+			String file_name = sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"Stencils";
+			File main = new File(file_name);
 			File oStencils[] = main.listFiles();
 
 			for (int i=0; i< oStencils.length; i++) {
@@ -408,7 +409,7 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 
 					if (!sTemplate.equals(""))
 						sTemplate = sPATH+sFolderName+sFS+UIStencilSet.sTEMPLATEDIR+sFS+sTemplate;
-					
+
 					Attr oType = (Attr)attrs.getNamedItem("type");
 					int nType = new Integer(oType.getValue()).intValue();
 
@@ -476,12 +477,12 @@ public class UIStencilManager implements IUIConstants, ICoreConstants {
 		}
 		return vtTags;
 	}
-	
+
 	/**
 	 * @return Returns the htDisplayedStencils.
 	 */
 	public Hashtable getHtDisplayedStencils() {
 		return htDisplayedStencils;
 	}
-	
+
 }

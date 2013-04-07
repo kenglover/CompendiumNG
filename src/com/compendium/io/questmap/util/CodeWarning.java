@@ -30,7 +30,7 @@ package com.compendium.io.questmap.util;
  * @author ?
  */
 public class CodeWarning extends CodeProblem {
-
+/*
     public String toString() {
         return "Warning: " + super.toString();
     }
@@ -45,5 +45,5 @@ public class CodeWarning extends CodeProblem {
 
     public CodeWarning(String w, int line, int pos, String file) {
         super(w, line, pos, file);
-    }
+    }  */
 }

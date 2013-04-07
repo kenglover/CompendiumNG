@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars.system;
 
 import java.awt.*;
@@ -41,7 +40,7 @@ import javax.swing.border.*;
  *
  * @author	Michelle Bachler
  */
-public class UIToolBarPanel extends JPanel implements Transferable, DropTargetListener, DragSourceListener, 
+public class UIToolBarPanel extends JPanel implements Transferable, DropTargetListener, DragSourceListener,
 																		DragGestureListener {
 
 	/** The toolbar held in this panel.*/
@@ -49,7 +48,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 
 	/** The type of the toolbar held in this panel.*/
 	private int			type				= -1;
-	
+
 	/** The alignment of the toolbar panel.*/
 	private int			nAlignment			= 0;
 
@@ -115,22 +114,22 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 
 	/** The row in the toolbar controller panel that this toolbar panel sits on.*/
 	private int					nRow			= 0;
-	
-	
+
+
 	/** Holds the variable showing the value when the x pos at which the drag entered this object.*/
 	private double	nDragEnterX		= 0;
-	
+
 	/** Holds the variable showing the value when the y pos at which the drag entered this object.*/
-	private double nDragEnterY		= 0;	
+	private double nDragEnterY		= 0;
 
 	/** Holds the variable showing the value when the x pos of the last drag move.*/
-	private double nDragExitX = 0;	
-	
+	private double nDragExitX = 0;
+
 	/** Holds the variable showing the value when the y pos of the last drag move.*/
 	private double nDragExitY = 0;
-	
+
 	private UIToolBarPanel		dragPanel = null;
-	
+
 	/** The data flavors supported by this panel.*/
     public static final 		DataFlavor[] supportedFlavors = { null };
 	static    {
@@ -165,15 +164,15 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 		button = new JButton();
 		setButtonIcon();
 		//button.setToolTipText(hint);
-		button.setToolTipText(bar.getName()+": Right-Click to float or reposition. Left-Click to minimize");		
+		button.setToolTipText(bar.getName()+": Right-Click to float or reposition. Left-Click to minimize");
 		button.setMargin(new Insets(0,0,0,0));
-		
+
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				toggleVisibility();
-			}			
+			}
 		});
-		
+
 		final UIToolBarPanel me = this;
 		button.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent evt) {
@@ -186,7 +185,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 								&& oController.getController().getRowCount() > 1 ) {
 							return;
 						}
-						
+
 						isFloated = true;
 						//incase turned off
 						me.bar.setVisible(true);
@@ -221,9 +220,9 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 						oController.removePanel(me);
 					}
 				}
-			}			
-		});		
-		
+			}
+		});
+
 		button.setFocusPainted(false);
 		//button.setBorder(null);
 
@@ -243,9 +242,9 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 				else {
 					oController.validateResize(me);
 				}
-			}			
+			}
 		});
-		
+
 		createLayoutManager();
 		addToLayout();
 
@@ -278,7 +277,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 			gc.anchor = GridBagConstraints.NORTHWEST;
 		}
 	}
-	
+
 	/**
 	 * Adds the toolbar and panel controller button to this panel.
 	 */
@@ -306,7 +305,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 		validate();
 		fullSize = getPreferredSize();
 	}
-	
+
 	/**
 	 * Set the icon used for the toolbat panel controller button
 	 * depending on the orientation and status of this panel.
@@ -324,8 +323,8 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 			else
 				button.setIcon(UIToolBarImages.get(UIToolBarImages.TOOLBAR_VERTICAL_ICON));
 		}
-	}		
-		
+	}
+
 // TRANSFERABLE METHODS
     /**
      * Returns an array of DataFlavor objects indicating the flavors the data
@@ -406,7 +405,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 	public void dragDropEnd(DragSourceDropEvent e) {}
 
 // DRAG SOURCE LISTENER METHODS
-	
+
     /**
      * Called as the cursor's hotspot enters a platform-dependent drop site.
      * This method is invoked when all the following conditions are true:
@@ -487,14 +486,14 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
      */
 	public void dragOver(DropTargetDragEvent e) {
 		/*nDragExitY = e.getLocation().getY();
-		nDragExitX = e.getLocation().getX();	
-		System.out.println("in drag exit x="+nDragExitX);		
-		System.out.println("in drag exit y="+nDragExitY);		
-		
+		nDragExitX = e.getLocation().getX();
+		System.out.println("in drag exit x="+nDragExitX);
+		System.out.println("in drag exit y="+nDragExitY);
+
 		if (dragPanel == null) {
-		 	try{ 
+		 	try{
 		 		Object source = e.getTransferable().getTransferData(UIToolBarPanel.supportedFlavors[0]);
-		 	
+
 		 		if (source instanceof UIToolBarPanel) {
 		 			dragPanel = (UIToolBarPanel)source;
 		 		}
@@ -514,23 +513,23 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 	public void dragExit(DropTargetEvent e) {
 		//lastDragOver = e.getLocation();
 		//System.out.println("source = "+e.getSource());
-		/*System.out.println("in mouse exit row="+nRow);		
-		
+		/*System.out.println("in mouse exit row="+nRow);
+
 		// Has just been created and has not had row added yet.
 		if (oController.getTotalCount() == 0) {
 			return;
 		}
-		
+
 		try {
-			if (dragPanel != null) {		
+			if (dragPanel != null) {
 				// Don't allow drag of last item in a row to create a new row with.
 				int sourceRow = dragPanel.getRow();
 				int items = dragPanel.getController().getVisibleCount();
 				if ((sourceRow == 0 && items <= 2) || (sourceRow > 0 && items <= 1)) {
 					return;
 				}
-				
-				int rowCount = oController.getController().getRowCount();								
+
+				int rowCount = oController.getController().getRowCount();
 				System.out.println("rowCount = "+rowCount);
 				// we are the last row
 				if (rowCount == nRow+1) {
@@ -540,46 +539,46 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 					System.out.println("drag enter y = "+nDragEnterY);
 					System.out.println("drag exit y = "+nDragExitY);
 					if (pos == UIToolBarController.TOP && nDragExitY > nDragEnterY) {
-						UIToolBarControllerRow row = oController.getController().createNewRow(nRow+1);						
+						UIToolBarControllerRow row = oController.getController().createNewRow(nRow+1);
 						row.movePanel(dragPanel, false);
 						row.setVisible(true);
 						dragPanel.setVisible(true);
 						validate();
 						repaint();
 						row.validate();
-						row.repaint();		
+						row.repaint();
 						row.getParent().validate();
-						row.getParent().repaint();																		
+						row.getParent().repaint();
 					} else if (pos == UIToolBarController.LEFT && nDragExitX > nDragEnterX){
 						UIToolBarControllerRow row = oController.getController().createNewRow(nRow+1);
 						row.movePanel(dragPanel, false);
 						validate();
 						repaint();
 						getParent().validate();
-						getParent().repaint();												
+						getParent().repaint();
 					} else if (pos == UIToolBarController.RIGHT && nDragExitX < nDragEnterX ){
 						UIToolBarControllerRow row = oController.getController().createNewRow(nRow+1);
 						row.movePanel(dragPanel, false);
 						validate();
 						repaint();
 						getParent().validate();
-						getParent().repaint();												
+						getParent().repaint();
 					} else if (pos == UIToolBarController.BOTTOM && nDragExitY < nDragEnterY ){
 						UIToolBarControllerRow row = oController.getController().createNewRow(nRow+1);
 						row.movePanel(dragPanel, false);
 						validate();
 						repaint();
 						getParent().validate();
-						getParent().repaint();												
-					}										
-				}			
-			}	
+						getParent().repaint();
+					}
+				}
+			}
 		} catch(Exception ex) {
-			ex.printStackTrace();		
-		}	
-		
+			ex.printStackTrace();
+		}
+
 		dragPanel = null;
-		*/		
+		*/
 	}
 
     /**
@@ -593,10 +592,10 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 		e.acceptDrag(DnDConstants.ACTION_MOVE);
 		/*nDragEnterX	 = e.getLocation().getX();
 		nDragEnterY	 = e.getLocation().getY();
-		System.out.println("in drag enter row="+nRow);		
-		System.out.println("in drag enter x="+nDragEnterX);		
-		System.out.println("in drag enter y="+nDragEnterY);	
-		*/				
+		System.out.println("in drag enter row="+nRow);
+		System.out.println("in drag enter x="+nDragEnterX);
+		System.out.println("in drag enter y="+nDragEnterY);
+		*/
 	}
 
     /**
@@ -627,7 +626,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 					if (panel.getRow() < nRow) {
 						oController.movePanel(panel, false);
 					} else if (panel.getRow() > nRow) {
-						oController.movePanel(panel, false);						
+						oController.movePanel(panel, false);
 					} else {
 						oController.swapPanels(this, panel);
 						e.dropComplete(true);
@@ -641,7 +640,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 	}
 
 /////////////////////////////////////////////
-		
+
 	/**
 	 * Collapse this toolbar panel is open.
 	 */
@@ -649,7 +648,7 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 		if (isVisible)
 			toggleVisibility();
 	}
-	
+
 	/**
 	 * if the toolbarpanel is currently collapsed, expand it, if there is enough space.
 	 * If the toolbar panel is currently expanded, collapse it.
@@ -702,8 +701,8 @@ public class UIToolBarPanel extends JPanel implements Transferable, DropTargetLi
 				bar.setVisible(true);
 			}
 		}
-	}	
-	
+	}
+
 // GETTER AND SETTER
 
 	/**

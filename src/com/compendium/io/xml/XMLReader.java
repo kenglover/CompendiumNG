@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.io.xml;
 
 import java.io.*;
@@ -64,7 +63,7 @@ public class XMLReader implements ErrorHandler {
 
 	   	Document document = null;
 		try {
-			parser.parse(input);			
+			parser.parse(input);
  	    	document = parser.getDocument();
 			file.close();
 		}

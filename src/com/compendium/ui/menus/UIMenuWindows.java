@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.menus;
 
 import java.awt.event.*;
@@ -69,7 +68,7 @@ public class UIMenuWindows implements IUIMenu, ActionListener {
 	 * @return JMenu the Windows menu.
 	 */
 	private JMenu createMenu() {
-		mnuMainMenu	= new JMenu("Window"); 
+		mnuMainMenu	= new JMenu(Messages.getString("UIMenuManager.123")); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuMainMenu,"menus.windows"); //$NON-NLS-1$
 		mnuMainMenu.setMnemonic(KeyEvent.VK_W);
 		refreshWindowsMenu();
@@ -86,7 +85,7 @@ public class UIMenuWindows implements IUIMenu, ActionListener {
 		ProjectCompendium.APP.setWaitCursor();
 
 		Object source = evt.getSource();
-		
+
 		if (source.equals(miWindowCascade)) {
 			ProjectCompendium.APP.onWindowCascade();
 		} else if (source.equals(miWindowExpand)) {
@@ -94,7 +93,7 @@ public class UIMenuWindows implements IUIMenu, ActionListener {
 		} else if (source.equals(miWindowCloseAll)) {
 			ProjectCompendium.APP.onWindowCloseAll();
 		}
-		
+
 		ProjectCompendium.APP.setDefaultCursor();
 	}
 
@@ -121,17 +120,17 @@ public class UIMenuWindows implements IUIMenu, ActionListener {
 
 		mnuMainMenu.removeAll();
 
-		miWindowCascade = new JMenuItem("Cascade"); 
+		miWindowCascade = new JMenuItem(Messages.getString("UIMenuManager.182")); //$NON-NLS-1$
 		miWindowCascade.setMnemonic('C');
 		miWindowCascade.addActionListener(this);
 		mnuMainMenu.add(miWindowCascade);
 
-		miWindowExpand = new JMenuItem("Expand All"); 
+		miWindowExpand = new JMenuItem(Messages.getString("UIMenuManager.183")); //$NON-NLS-1$
 		miWindowExpand.setMnemonic('E');
 		miWindowExpand.addActionListener(this);
 		mnuMainMenu.add(miWindowExpand);
 
-		miWindowCloseAll = new JMenuItem("Close All"); 
+		miWindowCloseAll = new JMenuItem(Messages.getString("UIMenuManager.184")); //$NON-NLS-1$
 		miWindowCloseAll.setMnemonic('A');
 		miWindowCloseAll.addActionListener(this);
 		mnuMainMenu.add(miWindowCloseAll);
@@ -165,12 +164,12 @@ public class UIMenuWindows implements IUIMenu, ActionListener {
 				} else if (i == 6) {
 					item.setMnemonic(KeyEvent.VK_6);
 				} else if (i == 7) {
-					item.setMnemonic(KeyEvent.VK_7);					
+					item.setMnemonic(KeyEvent.VK_7);
 				} else if (i == 8) {
-					item.setMnemonic(KeyEvent.VK_8);					
+					item.setMnemonic(KeyEvent.VK_8);
 				} else if (i == 9) {
-					item.setMnemonic(KeyEvent.VK_9);					
-				}					
+					item.setMnemonic(KeyEvent.VK_9);
+				}
 
 				final UIViewFrame frame = viewFrame;
 
@@ -178,7 +177,7 @@ public class UIMenuWindows implements IUIMenu, ActionListener {
 					public void actionPerformed(ActionEvent event) {
 						if (frame.isIcon()) {
 							try {frame.setIcon(false);}
-							catch(Exception ve) {ProjectCompendium.APP.displayError("Exception: (ProjectCompendiumFrame.actionPerformed) "+ve.getMessage());} 
+							catch(Exception ve) {ProjectCompendium.APP.displayError(Messages.getString("UIMenuManager.186")+ve.getMessage());} //$NON-NLS-1$
 						}
 						else  {
 							if (frame instanceof UIMapViewFrame)
@@ -207,20 +206,20 @@ public class UIMenuWindows implements IUIMenu, ActionListener {
   	 * @param selected true for selected false for deselected.
 	 */
 	public void setNodeSelected(boolean selected) {}
-	
+
 	/**
 	 * Update the look and feel of the menu.
 	 */
 	public void updateLAF() {
 		if (mnuMainMenu != null)
 			SwingUtilities.updateComponentTreeUI(mnuMainMenu);
-	}		
-	
+	}
+
 	/**
 	 * Return a reference to the main menu.
 	 * @return JMenu a reference to the main menu.
 	 */
 	public JMenu getMenu() {
 		return mnuMainMenu;
-	}	
+	}
 }

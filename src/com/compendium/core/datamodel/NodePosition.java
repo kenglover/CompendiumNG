@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.awt.Point;
@@ -102,36 +101,36 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 
 	/** Holds the MediaIndexes for all meetings this node has been in in this view.*/
 	protected Vector		vtMediaIndexes			= new Vector();
-	
+
 	//// FORMATTING PROPERTIES
-	
+
 	/** Whether to display the Tags node indicator.*/
 	protected boolean 			bShowTags						= false;
-	
+
 	/** Whether to display the detail text node indicator.*/
 	protected boolean 			bShowText						= false;
-		
+
 	/** Whether to show the parent view (transclusion history) node indicator.*/
 	protected boolean 			bShowTrans						= false;
-	
+
 	/** Whether to display the map weight node indicator.*/
 	protected boolean			bShowWeight						= false;
-	
+
 	/** Whether to show small node icons.*/
 	protected boolean			bShowSmallIcon					= false;
 
 	/** Whether to hide node icons.*/
 	protected boolean			bHideIcon						= false;
-	
+
 	/** Indicates the label wrap width for this map.*/
 	protected int				nLabelWrapWidth					= -1;
-	
+
 	/** Indicates the llabel fon size for this map.*/
 	protected int				nFontSize						=-1;
-	
+
 	/** Indicates the label font face for nodes.*/
 	protected String			sFontFace						="";
-	
+
 	/** Indicates the label font style for nodes.*/
 	protected int				nFontStyle						=-1;
 
@@ -152,7 +151,7 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	 * @param int y, The Y coordinate of the node's position
 	 * @param Date dCreated, the date this object was created.
 	 * @param Date dModified, the date this object was last modified.
-	 
+
 	 */
 	public NodePosition(View oView, NodeSummary oNode, int x, int y, Date dCreated, Date dModified) {
 		this.oView = oView;
@@ -173,11 +172,11 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	 * @param int y, The Y coordinate of the node's position
 	 * @param Date dCreated, the date this object was created.
 	 * @param Date dModified, the date this object was last modified.
-	 
+
 	 */
 	public NodePosition(View oView, NodeSummary oNode, int x, int y, Date dCreated, Date dModified,
-			boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight, 
-			boolean bShowSmallIcon, boolean bHideIcon, int nLabelWrapWidth, 
+			boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight,
+			boolean bShowSmallIcon, boolean bHideIcon, int nLabelWrapWidth,
 			int nFontSize, String sFontFace, int nFontStyle, int nForeground, int nBackground) {
 		this.oView = oView;
 		this.oNodeSummary = oNode;
@@ -188,7 +187,7 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 		this.bShowTags = bShowTags;
 		this.bShowText = bShowText;
 		this.bShowTrans = bShowTrans;
-		this.bShowWeight = bShowWeight;		
+		this.bShowWeight = bShowWeight;
 		this.bShowSmallIcon = bShowSmallIcon;
 		this.bHideIcon = bHideIcon;
 		this.nLabelWrapWidth = nLabelWrapWidth;
@@ -198,7 +197,7 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 		this.nForeground = nForeground;
 		this.nBackground = nBackground;
 	}
-	
+
 	/**
 	 * The initialize method is called by the Model before adding the object to the cache.
 	 *
@@ -218,16 +217,19 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 					index.initialize(session, model);
 				}
 			}
-			
+			//System.out.println("220 NodePosition.java");
 			if (sFontFace.equals("")) {
 				sFontFace = ((Model)model).fontface;
 			}
+			//System.out.println("223 NodePosition.java");
 			if (nFontStyle == -1) {
 				nFontStyle = ((Model)model).fontstyle;
 			}
+			//System.out.println("228 NodePosition.java");
 			if (nFontSize == -1) {
 				nFontSize = ((Model)model).fontsize;
 			}
+			//System.out.println("232 NodePosition.java");
 			if (nLabelWrapWidth == -1) {
 				nLabelWrapWidth = ((Model)model).labelWrapWidth;
 			}
@@ -327,9 +329,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	 * Return a new NodePosition object with the properties of this node.
 	 */
 	public NodePosition getClone() {
-		return new NodePosition(oView, oNodeSummary, nX, nY, oCreationDate, oModificationDate, 
+		return new NodePosition(oView, oNodeSummary, nX, nY, oCreationDate, oModificationDate,
 				bShowTags, bShowText, bShowWeight, bShowTrans,
-				bShowSmallIcon, bHideIcon, nLabelWrapWidth, 
+				bShowSmallIcon, bHideIcon, nLabelWrapWidth,
 				nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 	}
 
@@ -483,8 +485,8 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public Date getModificationDate() {
 		return oModificationDate;
 	}
-	
-	
+
+
 	/**
 	 * Returns whether this View should show the tags node indicators.
 	 *
@@ -502,9 +504,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setShowTags(boolean bShowTags) {
 		boolean bOldShowTags = this.bShowTags;
 		this.bShowTags = bShowTags;
-		firePropertyChange(TAGS_INDICATOR_PROPERTY, bOldShowTags, bShowTags);							
-	}	
-	
+		firePropertyChange(TAGS_INDICATOR_PROPERTY, bOldShowTags, bShowTags);
+	}
+
 	/**
 	 * Returns whether this View should show the detail text node indicators.
 	 *
@@ -522,8 +524,8 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setShowText(boolean bShowText) {
 		boolean bOldShowText = this.bShowText;
 		this.bShowText = bShowText;
-		firePropertyChange(TEXT_INDICATOR_PROPERTY, bOldShowText, bShowText);					
-	}	
+		firePropertyChange(TEXT_INDICATOR_PROPERTY, bOldShowText, bShowText);
+	}
 
 	/**
 	 * Returns whether this View should show the transclusion history node indicators.
@@ -542,9 +544,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setShowTrans(boolean bShowTrans) {
 		boolean bOldShowTrans = this.bShowTrans;
 		this.bShowTrans = bShowTrans;
-		firePropertyChange(TRANS_INDICATOR_PROPERTY, bOldShowTrans, bShowTrans);			
-	}	
-	
+		firePropertyChange(TRANS_INDICATOR_PROPERTY, bOldShowTrans, bShowTrans);
+	}
+
 	/**
 	 * Returns whether this View should show the map weight node indicators.
 	 *
@@ -562,9 +564,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setShowWeight(boolean bShowWeight) {
 		boolean bOldShowWeight = this.bShowWeight;
 		this.bShowWeight = bShowWeight;
-		firePropertyChange(WEIGHT_INDICATOR_PROPERTY, bOldShowWeight, bShowWeight);																		
-	}	
-	
+		firePropertyChange(WEIGHT_INDICATOR_PROPERTY, bOldShowWeight, bShowWeight);
+	}
+
 	/**
 	 * Returns whether this View should show the small node icon.
 	 *
@@ -582,8 +584,8 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setShowSmallIcon(boolean bShowSmallIcon) {
 		boolean bOldShowSmallIcon = this.bShowSmallIcon;
 		this.bShowSmallIcon = bShowSmallIcon;
-		firePropertyChange(SMALL_ICON_PROPERTY, bOldShowSmallIcon, bShowSmallIcon);																
-	}	
+		firePropertyChange(SMALL_ICON_PROPERTY, bOldShowSmallIcon, bShowSmallIcon);
+	}
 	/**
 	 * Returns whether this View should hide the node icon.
 	 *
@@ -601,9 +603,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setHideIcon(boolean bHideIcon) {
 		boolean bOldHideIcon = this.bHideIcon;
 		this.bHideIcon = bHideIcon;
-		firePropertyChange(HIDE_ICON_PROPERTY, bOldHideIcon, bHideIcon);														
-	}	
-	
+		firePropertyChange(HIDE_ICON_PROPERTY, bOldHideIcon, bHideIcon);
+	}
+
 	/**
 	 * Returns the label wrap width of this View
 	 *
@@ -621,7 +623,7 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setLabelWrapWidth(int nWidth) {
 		int oldWrapWidth = this.nLabelWrapWidth;
 		this.nLabelWrapWidth = nWidth;
-		firePropertyChange(WRAP_WIDTH_PROPERTY, oldWrapWidth, nWidth);												
+		firePropertyChange(WRAP_WIDTH_PROPERTY, oldWrapWidth, nWidth);
 	}
 	/**
 	 * Returns the font size for this View
@@ -637,12 +639,12 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	 *
 	 * @param nWidth the font size for this View
 	 */
-	public void setFontSize(int nFontSize) {			
+	public void setFontSize(int nFontSize) {
 		int oldFontSize = this.nFontSize;
 		this.nFontSize = nFontSize;
-		firePropertyChange(FONTSIZE_PROPERTY, oldFontSize, nFontSize);										
+		firePropertyChange(FONTSIZE_PROPERTY, oldFontSize, nFontSize);
 	}
-	
+
 	/**
 	 * Returns the the font face for node labels in this View
 	 *
@@ -660,9 +662,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setFontFace(String sFontFace) {
 		String oldFontFace = this.sFontFace;
 		this.sFontFace = sFontFace;
-		firePropertyChange(FONTFACE_PROPERTY, oldFontFace, sFontFace);								
-	}	
-	
+		firePropertyChange(FONTFACE_PROPERTY, oldFontFace, sFontFace);
+	}
+
 	/**
 	 * Returns the font style for this View
 	 *
@@ -680,9 +682,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	public void setFontStyle(int nStyle) {
 		int oldStyle = this.nFontStyle;
 		this.nFontStyle = nStyle;
-		firePropertyChange(FONTSTYLE_PROPERTY, oldStyle, nStyle);						
-	}	
-	
+		firePropertyChange(FONTSTYLE_PROPERTY, oldStyle, nStyle);
+	}
+
 	/**
 	 * Returns the text foreground for this Node in this View
 	 *
@@ -698,11 +700,12 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	 * @param nForeground the text foreground for this Node in this View
 	 */
 	public void setForeground(int nFore) {
+		System.out.println("NodePosition 703 entered setForeground in color is " + nFore);
 		int oldForeground = this.nForeground;
 		this.nForeground = nFore;
-		firePropertyChange(TEXT_FOREGROUND_PROPERTY, oldForeground, nFore);				
-	}	
-	
+		firePropertyChange(TEXT_FOREGROUND_PROPERTY, oldForeground, nFore);
+	}
+
 	/**
 	 * Returns the text background for this Node in this View
 	 *
@@ -717,9 +720,9 @@ public class NodePosition extends PCObject implements INodePosition, java.io.Ser
 	 *
 	 * @param nBackground the text background for this Node in this View
 	 */
-	public void setBackground(int nBackground) {	
+	public void setBackground(int nBackground) {
 		int oldBackground = this.nBackground;
 		this.nBackground = nBackground;
-		firePropertyChange(TEXT_BACKGROUND_PROPERTY, oldBackground, nBackground);		
-	}			
+		firePropertyChange(TEXT_BACKGROUND_PROPERTY, oldBackground, nBackground);
+	}
 }

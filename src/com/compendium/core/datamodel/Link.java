@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.sql.SQLException;
@@ -222,6 +221,22 @@ public class Link extends IdObject implements java.io.Serializable, ILink {
 	 */
 	public static void clearList() {
 		linkSummaryList.removeAllElements();
+	}
+
+	/**
+	 * Remove the given link from the link list.
+	 *
+	 * @param Link link, the link to remove from the link list.
+	 */
+	public static void removeLinkSummaryListItem(Link link) {
+		String id = link.getId();
+		int count = linkSummaryList.size();
+		for (int i = 0; i < count ; i++) {
+			if (id.equals(((Link)linkSummaryList.elementAt(i)).getId())) {
+				linkSummaryList.removeElementAt(i);
+				return;
+			}
+		}
 	}
 
 

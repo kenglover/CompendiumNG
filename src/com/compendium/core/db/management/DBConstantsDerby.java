@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 /*
@@ -126,8 +125,8 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	public final static String DROP_MEETING_TABLE		= "DROP TABLE Meeting";
 
 	/** The SQL statement to drop a MediaIndex table if it exists */
-	public final static String DROP_MEDIAINDEX_TABLE	= "DROP TABLE MediaIndex";	
-	
+	public final static String DROP_MEDIAINDEX_TABLE	= "DROP TABLE MediaIndex";
+
 // STATEMENTS TO CREATE NEW TABLES
 
 // FOR THE LOCAL DERBY ADMINISTRATION DATABASE
@@ -155,6 +154,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	public static final String CREATE_PROPERTIES_TABLE = "CREATE TABLE Properties ("+
 															"Property VARCHAR(100) NOT NULL, "+
 															"Contents LONG VARCHAR NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Properties PRIMARY KEY (Property))";
 
 //"ConnectionID VARCHAR(50) NOT NULL, " +
@@ -168,6 +168,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"Password VARCHAR(255) NOT NULL, "+
 															"Port INTEGER, "+
 															"DefaultDatabase VARCHAR(255), "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Connection PRIMARY KEY (Profile, Type))";
 
 // FOR A COMPENDIUM DATABASE
@@ -185,7 +186,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"HomeView VARCHAR(50) NOT NULL, "+
 															"IsAdministrator VARCHAR(1) NOT NULL, "+
 															"CurrentStatus INTEGER NOT NULL DEFAULT 0, "+
-															"LinkView VARCHAR(50), "+															
+															"LinkView VARCHAR(50), "+
 															"CONSTRAINT PK_User PRIMARY KEY(UserID))";
 
 	/** The SQL statement to create a new Audit table */
@@ -197,6 +198,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"Category VARCHAR(50) NOT NULL, "+
 															"Action INTEGER NOT NULL, "+
 															"Data LONG VARCHAR, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Audit PRIMARY KEY (AuditID))";
 
 	/** The SQL statement to create a new Code table */
@@ -231,6 +233,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"Name VARCHAR(255), "+
 															"Port INTEGER, "+
 															"Resource VARCHAR(255), "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Connection PRIMARY KEY (UserID, Profile, Type), "+
 															"CONSTRAINT FK_Connection_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE)";
 
@@ -250,6 +253,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	public static final String CREATE_EXTENDEDCODE_TABLE = "CREATE TABLE ExtendedTypeCode ("+
 															"ExtendedNodeTypeID VARCHAR(50) NOT NULL, " +
 															"CodeID VARCHAR(50) NOT NULL, " +
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_ExtendedCode PRIMARY KEY (ExtendedNodeTypeID, CodeID), "+
 															"CONSTRAINT FK_ExtendedCode_1 FOREIGN KEY (ExtendedNodeTypeID) REFERENCES ExtendedNodeType (ExtendedNodeTypeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_ExtendedCode_2 FOREIGN KEY (CodeID) REFERENCES Code (CodeID) ON DELETE CASCADE)";
@@ -262,7 +266,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"NodeType INTEGER NOT NULL, " +
 															"CreationDate DOUBLE NOT NULL, " +
 															"ModificationDate DOUBLE NOT NULL, "+
-															"ViewID VARCHAR(50), " +															
+															"ViewID VARCHAR(50), " +
 															"CONSTRAINT PK_Favorite PRIMARY KEY (UserID, NodeID), "+
 															"CONSTRAINT FK_Favorite_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_Favorite_2 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
@@ -309,7 +313,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"Label LONG VARCHAR, "+
 															"Detail LONG VARCHAR, "+
 															"CurrentStatus INTEGER NOT NULL DEFAULT 0, "+
-															"LastModAuthor VARCHAR(50), " +															
+															"LastModAuthor VARCHAR(50), " +
 															"CONSTRAINT PK_Node PRIMARY KEY (NodeID))";
 
 	/** The SQL statement to create a new NodeDetail table */
@@ -328,6 +332,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"NodeID VARCHAR(50) NOT NULL, " +
 															"UserID VARCHAR(50) NOT NULL, " +
 															"State INTEGER NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_NodeUserState PRIMARY KEY (NodeID, UserID), "+
 															"CONSTRAINT FK_NodeUserState_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_NodeUaerState_2 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE)";
@@ -335,6 +340,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	/** The SQL statement to create a new System table */
 	public static final String CREATE_SYSTEM_TABLE = "CREATE TABLE System (Property VARCHAR(100) NOT NULL, "+
 															"Contents VARCHAR(255) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_System PRIMARY KEY (Property))";
 
 	/** The SQL statement to create a new ReferenceNode table */
@@ -344,6 +350,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"ImageSource VARCHAR(255), "+
 															"ImageWidth INTEGER, "+
 															"ImageHeight INTEGER, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_ReferenceNode PRIMARY KEY (NodeID), "+
 															"CONSTRAINT FK_ReferenceNode_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
 
@@ -351,6 +358,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	public static final String CREATE_NODECODE_TABLE = "CREATE TABLE NodeCode ("+
 															"NodeID VARCHAR(50) NOT NULL, " +
 															"CodeID VARCHAR(50) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_NodeCode PRIMARY KEY (NodeID, CodeID), "+
 															"CONSTRAINT FK_NodeCode_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_NodeCode_2 FOREIGN KEY (CodeID) REFERENCES Code (CodeID) ON DELETE CASCADE)";
@@ -370,6 +378,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	public static final String CREATE_SHORTCUT_TABLE = "CREATE TABLE ShortCutNode ("+
 															"NodeID VARCHAR(50) NOT NULL, " +
 															"ReferenceID VARCHAR(50) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_ShortcutNode PRIMARY KEY (NodeID, ReferenceID), "+
 															"CONSTRAINT FK_ShortcutNode_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
 
@@ -387,13 +396,13 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"ShowTrans VARCHAR(1) NOT NULL DEFAULT 'Y', "+
 															"ShowWeight VARCHAR(1) NOT NULL DEFAULT 'Y', "+
 															"SmallIcon VARCHAR(1) NOT NULL DEFAULT 'N', "+
-															"HideIcon VARCHAR(1) NOT NULL DEFAULT 'N', "+															
+															"HideIcon VARCHAR(1) NOT NULL DEFAULT 'N', "+
 															"LabelWrapWidth INTEGER NOT NULL DEFAULT 25, "+
 															"FontSize INTEGER NOT NULL DEFAULT 12, "+
 															"FontFace VARCHAR(100) NOT NULL DEFAULT 'Arial', "+
 															"FontStyle INTEGER NOT NULL DEFAULT 0, " +
 															"Foreground INTEGER NOT NULL DEFAULT 0, "+
-															"Background INTEGER NOT NULL DEFAULT -1, "+																														
+															"Background INTEGER NOT NULL DEFAULT -1, "+
 															"CONSTRAINT PK_ViewNode PRIMARY KEY (ViewID, NodeID), "+
 															"CONSTRAINT FK_ViewNode_1 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_ViewNode_2 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
@@ -412,6 +421,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	public static final String CREATE_GROUPUSER_TABLE = "CREATE TABLE GroupUser ("+
 															"UserID VARCHAR(50) NOT NULL, " +
 															"GroupID VARCHAR(50) NOT NULL, " +
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_GroupUser PRIMARY KEY (UserID, GroupID), "+
 															"CONSTRAINT FK_GroupUser_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_GroupUser_2 FOREIGN KEY (GroupID) REFERENCES UserGroup (GroupID) ON DELETE CASCADE)";
@@ -421,6 +431,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"ItemID VARCHAR(50) NOT NULL, " +
 															"GroupID VARCHAR(50) NOT NULL, " +
 															"Permission INTEGER NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Permission PRIMARY KEY (ItemID, GroupID), "+
 															"CONSTRAINT FK_Permission_1 FOREIGN KEY (GroupID) REFERENCES UserGroup (GroupID) ON DELETE CASCADE)";
 
@@ -428,6 +439,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 	public static final String CREATE_CLONE_TABLE = "CREATE TABLE Clone ("+
 															"ParentNodeID VARCHAR(50) NOT NULL, "+
 															"ChildNodeID VARCHAR(50) NOT NULL, " +
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Clone PRIMARY KEY (ParentNodeID, ChildNodeID), "+
 															"CONSTRAINT FK_Clone_1 FOREIGN KEY (ChildNodeID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
 
@@ -436,6 +448,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"UserID VARCHAR(50) NOT NULL, " +
 															"Property VARCHAR(100) NOT NULL, "+
 															"Contents VARCHAR(255) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Preference PRIMARY KEY (UserID, Property), "+
 															"CONSTRAINT FK_Preference_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE)";
 
@@ -447,6 +460,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"Background VARCHAR(255), "+
 															"Grid VARCHAR(255), "+
 															"Shapes LONG VARCHAR, " +
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_ViewLayer PRIMARY KEY (UserID, ViewID), "+
 															"CONSTRAINT FK_ViewLayer_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_ViewLayer_2 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
@@ -474,6 +488,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"FontSize INTEGER NOT NULL DEFAULT 12, "+
 															"FontFace VARCHAR(100) NOT NULL DEFAULT 'Arial', "+
 															"FontStyle INTEGER NOT NULL DEFAULT 0, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_ViewProperty PRIMARY KEY (UserID, ViewID), "+
 															"CONSTRAINT FK_ViewProperty_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_ViewProperty_2 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
@@ -500,6 +515,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"YPosition INTEGER NOT NULL, " +
 															"IsIcon VARCHAR(1) NOT NULL, " +
 															"IsMaximum VARCHAR(1) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_WorkspaceView PRIMARY KEY (WorkspaceID, ViewID), "+
 															"CONSTRAINT FK_WorkspaceView_1 FOREIGN KEY (WorkspaceID) REFERENCES Workspace (WorkspaceID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_WorkspaceView_2 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
@@ -511,6 +527,7 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"MeetingName VARCHAR (255), "+
 															"MeetingDate DOUBLE, "+
 															"CurrentStatus INTEGER NOT NULL DEFAULT 0, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Meeting PRIMARY KEY (MeetingID), "+
 															"CONSTRAINT FK_Meeting_1 FOREIGN KEY (MeetingMapID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
 
@@ -526,6 +543,17 @@ public interface DBConstantsDerby extends java.io.Serializable {
 															"CONSTRAINT FK_MediaIndex_1 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_MediaIndex_2 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_MediaIndex_3 FOREIGN KEY (MeetingID) REFERENCES Meeting (MeetingID) ON DELETE CASCADE)";
+
+	/** The SQL statement to create a new MediaIndex table */
+    //TODO: Work on locking functions has been frozen. Finish or delete.
+	public static final String CREATE_NODELOCK_TABLE = "CREATE TABLE NodeLock ( " +
+                                                       "LockID INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " +
+                                                       "OwnerID varchar(50) NOT NULL, " +
+                                                       "NodeID varchar(50) NOT NULL UNIQUE, " +
+                                                       "created timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+													   "ModificationDate DOUBLE, "+
+                                                       "CONSTRAINT FK_NodeLock_1 FOREIGN KEY (OwnerID) REFERENCES Users (UserID) ON DELETE CASCADE, " +
+                                                       "CONSTRAINT FK_NodeLock_2 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE)";
 
 
 }

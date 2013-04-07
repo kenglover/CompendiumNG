@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -80,7 +81,7 @@ public class UIHintNodeLabelPanel extends JPanel {
 
 		oPane = uiviewpane;
 		oNode = node;
-		
+
 		model = oNode.getNode().getModel();
 		session = oNode.getNode().getSession();
 		if (model != null) {
@@ -168,7 +169,7 @@ public class UIHintNodeLabelPanel extends JPanel {
 	 */
 	public boolean searchLabel(String text, String nodeid) {
 		try {
-			String cleantext = CoreUtilities.cleanSQLText(text, FormatProperties.nDatabaseType);
+			String cleantext = CoreUtilities.cleanSQLText(text, APP_PROPERTIES.getDatabaseType());
 			IModel model = ProjectCompendium.APP.getModel();
 			Vector vtNodes = model.getQueryService().searchTransclusions(model.getSession(), cleantext, nodeid);
 			if (vtNodes.size() > 0) {
@@ -188,10 +189,10 @@ public class UIHintNodeLabelPanel extends JPanel {
 	 */
 	public void refresh() {
         NodeListCellRenderer nodeListRenderer = new NodeListCellRenderer();
-		lstNodes.setCellRenderer(nodeListRenderer);	
+		lstNodes.setCellRenderer(nodeListRenderer);
 		lstNodes.repaint();
 	}
-	
+
 	/**
 	 * This class draws the elements of the list of nodes whose labels match
 	 */
@@ -204,7 +205,7 @@ public class UIHintNodeLabelPanel extends JPanel {
 			noFocusBorder = new EmptyBorder(1, 1, 1, 1);
 			setOpaque(true);
 			setBorder(noFocusBorder);
-			
+
 			Font font = getFont();
 			int scale = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 			Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+ scale);
@@ -284,14 +285,6 @@ public class UIHintNodeLabelPanel extends JPanel {
 				int x = loc.x;
 				int y = loc.y;
 
-				// preserve links so they can be transfer to the new node.
-				Vector keepLinks = new Vector();
-				for(Enumeration es = oNode.getLinks();es.hasMoreElements();) {
-					UILink uilink = (UILink)es.nextElement();
-					keepLinks.addElement(uilink);
-				}
-				String oldNodeID = oNode.getNode().getId();
-				
 				// CHECK TO SEE IF THE SELECTED NODE IS ALREADY IN THIS VIEW
 				// IF IT IS - ASK IF THEY WANT TO CREATE A SHORTCUT
 				Object obj2 = oPane.get(node.getId());
@@ -302,41 +295,18 @@ public class UIHintNodeLabelPanel extends JPanel {
 
 					if (answer == JOptionPane.YES_OPTION) {
 						ui.onDelete(); // DO I REALLY WANT TO PURGE AT THIS POINT?
-						UINode uiNode = ui.createShortCutNode(uinode, x, y);
-						restoreLinks(keepLinks, oldNodeID, uiNode, ui);
+						ui.createShortCutNode(uinode, x, y);
 					}
 					else {
 						return;
 					}
 				}
 				else {
+
 					node.initialize(session, model);
 					ui.onDelete();
 					UINode uiNode = ui.addNodeToView(node, x, y);
-					restoreLinks(keepLinks, oldNodeID, uiNode, ui);
 				}
-			}
-		}
-	}
-	
-	/**
-	 * Restore any links that where on the node that was replaced with the transclusion
-	 * @param links the links to restore
-	 * @param oldNodeID the id that the node had before it was replaced
-	 * @param newNode the new translcuded node
-	 * @param viewui the view they are all in
-	 */private void restoreLinks(Vector links, String oldNodeID, UINode newNode, ViewPaneUI viewui) {
-		int count = links.size();
-		for(int i=0; i<count; i++) {
-			UILink uilink = (UILink)links.elementAt(i);
-			UINode fromNode = uilink.getFromNode();
-			UINode toNode = uilink.getToNode();
-			if (fromNode == null || fromNode.getNode() == null || 
-					fromNode.getNode().getId().equals(oldNodeID)) {				
-				viewui.createLink(newNode, toNode, UIUtilities.getLinkType(newNode), ICoreConstants.ARROW_TO);
-			} else if (toNode == null || toNode.getNode() == null || 
-					toNode.getNode().getId().equals(oldNodeID) ) {
-				viewui.createLink(fromNode, newNode, UIUtilities.getLinkType(newNode), ICoreConstants.ARROW_TO);
 			}
 		}
 	}

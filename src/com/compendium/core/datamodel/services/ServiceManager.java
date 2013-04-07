@@ -22,12 +22,13 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
 import java.io.*;
 import java.util.*;
 import java.sql.*;
+
+import javax.swing.*;
 
 import com.compendium.core.db.management.*;
 import com.compendium.core.datamodel.*;
@@ -247,24 +248,29 @@ public class ServiceManager implements IServiceManager, java.io.Serializable {
 		UserProfile up = ((UserService)getUserService()).getUserProfile(modelName, loginName, password);
 
 		if(up != null) {
-			String userID = up.getId();
+			if (up.isActive()) {
+				String userID = up.getId();
 
-			// get a new session id for this user
-			String sessionID = Model.getStaticUniqueID();
+				// get a new session id for this user
+				String sessionID = Model.getStaticUniqueID();
 
-			// add the session id to the UserSessionCache since a user can have different sessions
-			oUserSessionCache.put(loginName, sessionID);
+				// add the session id to the UserSessionCache since a user can have different sessions
+				oUserSessionCache.put(loginName, sessionID);
 
-			// create a session object which will be used during the lifetime of the user session
-			PCSession session = new PCSession(sessionID, modelName, userID);
+				// create a session object which will be used during the lifetime of the user session
+				PCSession session = new PCSession(sessionID, modelName, userID);
 
-			// get model for the user from the database
-			model = createModel(session, up) ;
+				// get model for the user from the database
+				model = createModel(session, up) ;
 
-			// add model to hashtable with the session ID as the key
-			// this ht is used when a user logs off, the services held by user are released
-			if(!htModels.containsKey((model.getSession()).getSessionID()))
-				htModels.put( (model.getSession()).getSessionID(), model);
+				// add model to hashtable with the session ID as the key
+				// this ht is used when a user logs off, the services held by user are released
+				if(!htModels.containsKey((model.getSession()).getSessionID()))
+					htModels.put( (model.getSession()).getSessionID(), model);
+			} else {
+				JOptionPane.showMessageDialog(null, "This user account has been deactivated.", "User ID Deactivated", JOptionPane.WARNING_MESSAGE);
+				model = null;
+			}
 		}
 
 		return model;

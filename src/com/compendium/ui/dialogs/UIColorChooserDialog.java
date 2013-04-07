@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.awt.*;
@@ -73,7 +72,7 @@ public class UIColorChooserDialog extends UIDialog implements ActionListener {
 		setTitle("Colour Chooser");
 
 		oParent=parent;
-		
+
         tcc = new JColorChooser(oColour);
 		oContentPane = getContentPane();
 		JPanel mainpanel = new JPanel(new BorderLayout());
@@ -124,7 +123,7 @@ public class UIColorChooserDialog extends UIDialog implements ActionListener {
 	public void setColour(Color color) {
 		tcc.setColor(color);
 	}
-	
+
 	/**
 	 * Return the colour the user has chosen.
 	 */

@@ -23,7 +23,6 @@
  ********************************************************************************/
 
 
-
 package com.compendium.ui;
 
 import java.awt.Point;
@@ -44,60 +43,60 @@ import com.compendium.core.datamodel.services.IViewService;
  *
  */
 public class UIAlign {
-	
+
 	/** The value for the Top Align option.*/
 	public static final String 	TOP 								= "top";
-	
+
 	/** The value for the Center Align option.*/
 	public static final String 	CENTER 								= "center";
-	
+
 	/** The value for the Bottom Align option.*/
 	public static final String 	BOTTOM 								= "bottom";
-	
+
 	/** The value for the Left Align option.*/
 	public static final String 	LEFT 								= "left";
-	
+
 	/** The value for the Middle Align option.*/
 	public static final String 	MIDDLE 								= "middle";
-	
+
 	/** The value for the Right Align option.*/
 	public static final String 	RIGHT 								= "right";
-	
+
 	/** The view service for accessing the databse.*/
 	private IViewService 		vs 									= null;
 
 	/** The session object for the current user with the current database.*/
 	private PCSession 			session 							= null;
-	
+
 	/** Used for undo operations.*/
 	private Hashtable			nodePositionsCloneHashtable 		= new Hashtable();
 
 	/** Used for redo operations.*/
 	private Hashtable			nodePositionsCloneHashtableForRedo 	= new Hashtable();
-	
+
 	/** The selected align option.*/
 	private String 				alignOption 						= null;
-	
+
 	/** The selected nodes to perform align.*/
 	private Vector 				vtSelectedNodes 					= new Vector();
-	
+
 	/**
 	 * Constructor.
 	 * @param option
 	 */
-	
+
 	public UIAlign(String option){
 		this.alignOption = option;
 	}
 
 	/**
-	 * performs aligning 
+	 * performs aligning
 	 * @param viewFrame com.compenduim.ui.UIViewFrame, the frame of the map view to align.
  	 */
 	public void alignNodes(UIViewFrame viewFrame){
 		View view =  viewFrame.getView();
 		UIViewPane uiViewPane = ((UIMapViewFrame)viewFrame).getViewPane();
-		
+
 		if(uiViewPane.getNumberOfSelectedNodes() > 1){
 			for (Enumeration e = uiViewPane.getSelectedNodes(); e.hasMoreElements() ;) {
 				UINode node = (UINode) e.nextElement();
@@ -105,7 +104,7 @@ public class UIAlign {
 					vtSelectedNodes.add(node);
 			}//end for
 			Vector 	vtTemp	 = processNodes(view);
-			
+
 			for(int i = vtTemp.size()-1; i >= 0; i--) {
 				String nodeId = ((NodePosition)vtTemp.elementAt(i)).getNode().getId();
 				UINode uinode = ((UINode) ((UIMapViewFrame)viewFrame).getViewPane().get(nodeId));
@@ -137,7 +136,7 @@ public class UIAlign {
 					}
 				}//end if
 			}//end for
-				
+
 			if (uiViewPane != null)
 				uiViewPane.repaint();
 
@@ -157,13 +156,13 @@ public class UIAlign {
 			}//end for
 		}//end if
 	}//alignNodes
-	
+
 	/**
 	 * process the nodes to align.
 	 * @param view com.compendium.core.datamodel.View, the view to align.
 	 */
 	private Vector processNodes(View view){
-		
+
 		Vector vtTemp = new Vector();
 		IModel model = ProjectCompendium.APP.getModel();
 		session = model.getSession();
@@ -197,11 +196,11 @@ public class UIAlign {
 		}//end else
 		return vtTemp;
 	}//processNodes
-	
+
 	/**
 	 * To perform right align
 	 */
-	
+
 	private void alignRight() {
 		double rightXPos = 0.0;
 		for(int i = 0; i < vtSelectedNodes.size() ; i++){
@@ -221,9 +220,9 @@ public class UIAlign {
 			node.getNodePosition().setPos(pt);
 			node.setLocation(pt);
 		}//end for
-	
+
 	}//alignRight
-	
+
 	/**
 	 * To perform center align
 	 */
@@ -244,11 +243,11 @@ public class UIAlign {
 				lXPos = xPos + width;
 			}
 		}//end for
-		
+
 		center = (sXPos + lXPos) /2 ;
 		//To check if it is already centered
 		boolean isCenter = true;
-		
+
 		for(int i = 0; i < vtSelectedNodes.size() ; i++){
 			UINode node = (UINode) vtSelectedNodes.get(i);
 			double scale = node.getScale();
@@ -258,7 +257,7 @@ public class UIAlign {
 				isCenter = false;
 			}//end if
 		}//end for
-		
+
 		if(!isCenter){
 			// To put the nodes at the center
 			for(int i = 0; i < vtSelectedNodes.size() ; i++){
@@ -272,9 +271,9 @@ public class UIAlign {
 				node.setLocation(pt);
 			}//end for
 		}//end if
-		
+
 	}//alignCenter
-	
+
 	/**
 	 * To perform left align
 	 */
@@ -297,9 +296,9 @@ public class UIAlign {
 			node.getNodePosition().setPos(pt);
 			node.setLocation(pt);
 		}//end for
-		
+
 	}//alignLeft
-	
+
 	/**
 	 * To perform bottom align
 	 */
@@ -324,15 +323,15 @@ public class UIAlign {
 			node.getNodePosition().setPos(pt);
 			node.setLocation(pt);
 		}//end for
-		
+
 	}//alignBottom
 
 	/**
 	 * To perform middle align
 	 */
-	
+
 	private void alignMiddle() {
-		
+
 		double sYPos = 0;
 		double lYPos = 0;
 		double middle = 0;
@@ -349,7 +348,7 @@ public class UIAlign {
 			}
 		}//end for
 		middle = (lYPos + sYPos)/2 ;
-		
+
 		//To check if it is already in the middle
 		boolean isMiddle = true;
 		for(int i = 0; i < vtSelectedNodes.size() ; i++){
@@ -361,7 +360,7 @@ public class UIAlign {
 				isMiddle = false;
 			}//end if
 		}//end for
-		
+
 		if(!isMiddle){
 			// To put the nodes at the center
 			for(int i = 0; i < vtSelectedNodes.size() ; i++){
@@ -376,7 +375,7 @@ public class UIAlign {
 			}//end for
 		}//end if
 	}//alignMiddle
-	
+
 	/**
 	 * To perform Top align
 	 */
@@ -400,8 +399,8 @@ public class UIAlign {
 			node.setLocation(pt);
 		}//end for
 	}//align Top
-	
-	
+
+
 //	******** UNDO / REDO **************//
 
 	/**

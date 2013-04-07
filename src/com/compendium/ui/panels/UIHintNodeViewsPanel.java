@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
 
 import java.awt.*;
@@ -33,6 +32,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import com.compendium.ui.*;
+import com.compendium.ui.menus.UIMenuView;
+import com.compendium.ui.tags.UITagTreePanel;
 import com.compendium.ProjectCompendium;
 import com.compendium.core.CoreUtilities;
 import com.compendium.core.datamodel.*;
@@ -56,19 +57,19 @@ public class UIHintNodeViewsPanel extends JPanel {
 
 	/** The title for this hint.*/
 	protected String sTitle = "Node Rollover Views";
-	
+
 	/** The user Id of the current user */
 	protected String userID = "";
-	
+
 	/** The list of user views.*/
 	protected Hashtable htUserViews = null;
-	
+
 	/** The node the views list if for.*/
 	protected NodeSummary oNode = null;
-	
+
 	/** the current view.*/
 	protected View currentView = null;
-	
+
 	/**
 	 * Constructor. Loads the given node's parent views, and paints them in this panel.
 	 *
@@ -80,7 +81,7 @@ public class UIHintNodeViewsPanel extends JPanel {
 
 		setBorder(new LineBorder(Color.gray, 1));
 		setLocation(xPos, yPos);
-		
+
 		//this.userID = userID;
 
 		//JTextArea area = new JTextArea();
@@ -95,12 +96,12 @@ public class UIHintNodeViewsPanel extends JPanel {
 		lstViews.setCellRenderer(new ViewListCellRenderer());
 		lstViews.setBackground(tool.getBackground());
 		lstViews.setBorder(null);
-		
+
 		Font font = tool.getFont();
 		int scale = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+ scale);
 		lstViews.setFont(newFont);
-		
+
 		JScrollPane sp = new JScrollPane(lstViews);
 		sp.setBorder(null);
 
@@ -111,7 +112,7 @@ public class UIHintNodeViewsPanel extends JPanel {
 
 		try {
 			views = node.getMultipleViews();
-			views = CoreUtilities.sortList(views);
+//			views = CoreUtilities.sortList(views);		//Sorts by ViewID, not by view Name :(
 			IModel model = ProjectCompendium.APP.getModel();
 			PCSession session = model.getSession();
 
@@ -182,25 +183,25 @@ public class UIHintNodeViewsPanel extends JPanel {
 				View view = (View)views.elementAt(index);
 				id = view.getId();
 				if ( !id.equals(currentView.getId())) {
-					if (!htUserViews.containsKey(view.getId()) 							
+					if (!htUserViews.containsKey(view.getId())
 						|| id.equals(ProjectCompendium.APP.getInBoxID())) {
-						UIViewFrame oUIViewFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());						
+						UIViewFrame oUIViewFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 						Vector history = new Vector();
 						history.addElement(new String(sTitle));
 						oUIViewFrame.setNavigationHistory(history);
 						UIUtilities.focusNodeAndScroll(oNode, oUIViewFrame);
-						
+
 						if (frame instanceof UIMapViewFrame) {
 							UIViewPane pane = ((UIMapViewFrame)frame).getViewPane();
 							pane.hideViews();
 						} else {
 							UIList list = ((UIListViewFrame)frame).getUIList();
 							list.hideHint();
-						}						
+						}
 					}
 				}
 			}
-			
+
 			public void mouseExited(MouseEvent evt) {
 				if (frame instanceof UIMapViewFrame) {
 					UIViewPane pane = ((UIMapViewFrame)frame).getViewPane();
@@ -209,11 +210,16 @@ public class UIHintNodeViewsPanel extends JPanel {
 					UIList list = ((UIListViewFrame)frame).getUIList();
 					list.hideHint();
 				}
-			}			
+				UITagTreePanel tagTreePanel = UIMenuView.getTagTreePanel();
+				if (tagTreePanel != null) {
+					tagTreePanel.hideHint();
+				}
+				
+			}
 		};
 		return mouse;
 	}
-	
+
 	/**
 	 * Helper class to render the element in the views list.
 	 */

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -74,6 +73,11 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 	/** The button to open the relevant help.*/
 	private UIButton				pbHelp	 		= null;
 
+	/** Control to hide INRs from search results */
+	private JCheckBox				pcbHideINRs		= null;
+
+	private JLabel 					lblViews 		= null;
+
 	/** The list of nodes added to the JList.*/
 	private Vector					vtNodes 		= new Vector();
 
@@ -88,7 +92,7 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 
 	/** The constraints used with the layout manager.*/
 	private GridBagConstraints 		gc 				= null;
-	
+
 	/** Lists all the user home and inbox views for filtering.*/
 	private Hashtable				htUserViews		= null;
 
@@ -149,7 +153,7 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 		JPanel listpanel = new JPanel(new BorderLayout());
 		listpanel.setBorder(new EmptyBorder(10,15,15,10));
 
-		JLabel lblViews = new JLabel();
+		lblViews = new JLabel();
 		listpanel.add(lblViews, BorderLayout.NORTH);
 
 		// Create the list
@@ -238,6 +242,12 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 			buttonpanel.add(pbSearch);
 		}
 
+		pcbHideINRs = new JCheckBox("Hide C-Mail Reference Nodes");
+		pcbHideINRs.setSelected(false);
+		pcbHideINRs.addActionListener(this);
+		gb.setConstraints(pcbHideINRs, gc);
+		buttonpanel.add(pcbHideINRs);
+
 		return buttonpanel;
 	}
 
@@ -296,6 +306,12 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 				}
 			}
 		}
+		if (source == pcbHideINRs) {
+			((DefaultListModel)lstNodes.getModel()).clear();
+			vtNodes.removeAllElements();
+			updateListView();
+			lblViews.setText(String.valueOf(vtNodes.size()) + " nodes found");
+		}
 	}
 
 	/**
@@ -306,8 +322,8 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 		int selection = lstNodes.getSelectedIndex();
 		NodeSummary node = (NodeSummary)vtNodes.elementAt(selection);
 		String sNodeID = node.getId();
-		
-		if (!htUserViews.containsKey(sNodeID)) { 
+
+		if (!htUserViews.containsKey(sNodeID)) {
 			UINodeContentDialog contentDialog = new UINodeContentDialog(this, node, UINodeContentDialog.CONTENTS_TAB);
 			UIUtilities.centerComponent(contentDialog, ProjectCompendium.APP);
 			contentDialog.setVisible(true);
@@ -326,30 +342,39 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 			htUserViews = ProjectCompendium.APP.getModel().getUserViews();
 			String id = "";
 			for(Enumeration e = vtResults.elements();e.hasMoreElements();) {
+				long start_time = System.currentTimeMillis();
 				NodeSummary node = (NodeSummary)e.nextElement();
-				id = node.getId();		
+				id = node.getId();
 				node.initialize(ProjectCompendium.APP.getModel().getSession(), ProjectCompendium.APP.getModel());
 				ImageIcon img = null;
 				img = UINode.getNodeImageSmall(node.getType());
 				JLabel label = new JLabel(img, SwingConstants.LEFT);
-				
+
 				String text = node.getLabel();
 				if (text.equals("")) {
 					text = "-- Unlabelled Node --";
 				}
-				
-				if (htUserViews.containsKey(id)) {					
+
+				if (htUserViews.containsKey(id)) {
 					label.setText( text + " - " + ((String)htUserViews.get(id)) );
 					label.setFont(new Font("Helvetica", Font.ITALIC, 12));
 					label.setForeground(Color.gray);
-					label.validate();					
+					label.validate();
 				} else {
-					label.setFont(new Font("Helvetica", Font.PLAIN, 12));					
+					label.setFont(new Font("Helvetica", Font.PLAIN, 12));
 					label.setText(text);
 				}
-				
+
+				if (pcbHideINRs.isSelected() && (node.getType() == ICoreConstants.REFERENCE)) {
+					String sPath = node.getSource();
+					if (sPath.startsWith(ICoreConstants.sINTERNAL_REFERENCE)) {
+						continue;
+					}
+				}
 				((DefaultListModel)lstNodes.getModel()).addElement(label);
-				vtNodes.addElement(node);				
+				vtNodes.addElement(node);
+				long end_time = System.currentTimeMillis();
+				System.out.println("345 UISearchResultDialog exiting for loop time is " + (end_time - start_time) + " msec");
 			}
 		}
 		lstNodes.setSelectedIndex(0);
@@ -369,7 +394,7 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 	 * Insert the selected nodes in the current view.
 	 */
 	private void onInsert() throws Exception {
-		
+
 		UIViewFrame activeFrame = ProjectCompendium.APP.getCurrentFrame();
 		ProjectCompendium.APP.setWaitCursor();
 		activeFrame.setCursor(new Cursor(java.awt.Cursor.WAIT_CURSOR));
@@ -395,14 +420,15 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 			String sNodeID = "";
 			for(i=0;i<selection.length;i++) {
 
+				System.out.println("420 UISearchResultDialog");
 				NodeSummary node = (NodeSummary)vtNodes.elementAt(selection[i]);
 				sNodeID = node.getId();
-				if (!htUserViews.containsKey(sNodeID)) { 				
+				if (!htUserViews.containsKey(sNodeID)) {
 					node.initialize(session, model);
-	
+
 					// CHECK IF NODE WAS DELETED
 					boolean deleted = model.getNodeService().isMarkedForDeletion(session, sNodeID);
-	
+
 					index = list.getIndexOf(node);
 					if(index == -1) {
 						// IF NODE WAS DELETED, RESTORE IT
@@ -416,7 +442,7 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 							Date date = new Date();
 							NodePosition np = new NodePosition(listview, node, xpos, ypos, date, date);
 							nps[i]=np;
-								
+
 							try {
 								listview.addNodeToView(node, xpos, ypos);
 							}
@@ -433,7 +459,9 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 					}
 				}
 			}
- 		   	list.insertNodes(nps, listview.getNumberOfNodes());							
+			System.out.println("459 UISearchResultDialog");
+ 		   	list.insertNodes(nps, listview.getNumberOfNodes());
+			System.out.println("461 UISearchResultDialog");
 		}
 		else {
 
@@ -447,24 +475,24 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 			int [] selection = lstNodes.getSelectedIndices();
 
 			String sNodeID = "";
-			NodeSummary node = null;			
+			NodeSummary node = null;
 			for(i=0;i<selection.length;i++) {
 
 				node = (NodeSummary)vtNodes.elementAt(selection[i]);
 				sNodeID = node.getId();
 
-				if (!htUserViews.containsKey(sNodeID)) {				
+				if (!htUserViews.containsKey(sNodeID)) {
 					node.initialize(session, model);
 
 					// CHECK IF NODE WAS DELETED
 					boolean deleted = model.getNodeService().isMarkedForDeletion(session, sNodeID);
-	
+
 					UINode uiNodeInView = null;
 					if (!deleted) {
 						//add the node to the view if it isn't already in there
 						uiNodeInView = (UINode)uiviewpane.get(sNodeID);
 					}
-	
+
 					if(uiNodeInView == null) {
 						// IF NODE WAS DELETED, RESTORE IT
 						if (deleted) {
@@ -474,10 +502,10 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 							// GET CURRENT SCROLL POSITION AND ADD THIS TO POSITIONING INFO
 							int hPos = activeFrame.getHorizontalScrollBarPosition();
 							int vPos = activeFrame.getVerticalScrollBarPosition();
-	
+
 							int xpos = hPos + ViewPaneUI.LEFTOFFSET;
 							int ypos = vPos + ((i+1)*ViewPaneUI.INTERNODE_DISTANCE);
-	
+
 							UINode newnode = viewpaneui.addNodeToView(node,xpos,ypos);
 							newnode.setSelected(true);
 							uiviewpane.setSelectedNode(newnode,ICoreConstants.MULTISELECT);
@@ -495,6 +523,7 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 		this.setCursor(Cursor.getDefaultCursor());
 		activeFrame.setCursor(Cursor.getDefaultCursor());
 		ProjectCompendium.APP.setDefaultCursor();
+		ProjectCompendium.APP.refreshIconIndicators();
 
 		onCancel();
 	}
@@ -510,7 +539,7 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 		setVisible(false);
 		dispose();
 	}
-	
+
 	/**
 	 * Helper class the render the list.
 	 */
@@ -553,5 +582,5 @@ public class UISearchResultDialog extends UIDialog implements ActionListener, IU
 
 			return this;
 		}
-	}	
+	}
 }

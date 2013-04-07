@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -79,7 +78,7 @@ public class UIImportXMLDialog extends UIDialog implements ActionListener, IUICo
 
 	/** Select to preserve node ids on import.*/
 	private JCheckBox			cbPreserveID 	= null;
-	
+
 	/** Select to mark all nodes seen /unseen  on import.*/
 	private JCheckBox			cbMarkSeen 	= null;
 
@@ -97,7 +96,7 @@ public class UIImportXMLDialog extends UIDialog implements ActionListener, IUICo
 
 	/** The XML file to import.*/
 	private File 				file 			= null;
-	
+
 	/**
 	 * Initializes and sets up the dialog.
 	 * @param parent, the parent view for this doalog.
@@ -206,17 +205,17 @@ public class UIImportXMLDialog extends UIDialog implements ActionListener, IUICo
 		gc.gridy = 5;
 		gb.setConstraints(cbPreserveID, gc);
 		oCenterPanel.add(cbPreserveID);
-		
+
 		//flag to mark seen/unseen on import
 		cbMarkSeen = new JCheckBox("Mark nodes seen");
 		cbMarkSeen.setSelected(true);
 		cbMarkSeen.addActionListener(this);
-		
+
 		gc.insets = new Insets(5,5,5,5);
 		gc.gridy = 6;
 		gb.setConstraints(cbMarkSeen, gc);
 		oCenterPanel.add(cbMarkSeen);
-		
+
 
 		// Add spacer label
 		JLabel spacer = new JLabel(" ");
@@ -344,14 +343,14 @@ public class UIImportXMLDialog extends UIDialog implements ActionListener, IUICo
 		boolean preserveIDs 	= cbPreserveID.isSelected();
 		boolean transclude 		= cbTransclude.isSelected();
 		boolean markseen 		= cbMarkSeen.isSelected();
-		
+
 		ProjectCompendium.APP.setImportProfile(normalProfile, includeInDetail, preserveIDs, transclude);
 
 		DBNode.setImportAsTranscluded(cbTransclude.isSelected());
 		DBNode.setPreserveImportedIds(cbPreserveID.isSelected());
 		DBNode.setUpdateTranscludedNodes(cbUpdateTrans.isSelected());
 		DBNode.setNodesMarkedSeen(cbMarkSeen.isSelected());
-		
+
 		String finalFile = "";
 
 		if (file == null) {

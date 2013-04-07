@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
 import java.sql.*;
@@ -31,6 +30,7 @@ import java.util.*;
 import com.compendium.core.datamodel.*;
 import com.compendium.core.db.*;
 import com.compendium.core.db.management.*;
+import com.compendium.core.ICoreConstants;
 
 /**
  *	The interface for the UserService class
@@ -79,6 +79,7 @@ public class UserService extends ClientService implements IUserService, java.io.
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(modelName) ;
 
+		//Returns a Vector of UserProfile objects
 		Vector users = DBUser.getUsers(dbcon, userID);
 
 		getDatabaseManager().releaseConnection(modelName,dbcon);
@@ -90,7 +91,7 @@ public class UserService extends ClientService implements IUserService, java.io.
 	 * Gets a Hashtable of all user homeview ids currently in the database.
 	 *
 	 * @param PCSession session, the PCSession object for the database to use.
-	 * @return a hastable mapping HomeView id to user name.	 * 
+	 * @return a hastable mapping HomeView id to user name.	 *
 	 * @exception java.sql.SQLException
 	 */
 	public Hashtable getHomeViews(PCSession session) throws SQLException {
@@ -121,7 +122,7 @@ public class UserService extends ClientService implements IUserService, java.io.
 
 		return homeviews;
 	}
-	
+
 	/**
 	 * Inserts a new user in the database.
 	 *
@@ -138,15 +139,15 @@ public class UserService extends ClientService implements IUserService, java.io.
 	 * @param boolean bIsAdministrator, true if this user is an administrator, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public UserProfile insertUserProfile(PCSession session, String sUserID, String sAuthor, java.util.Date dCreationDate,
-			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean bIsAdministrator)
-			throws SQLException {
-
-		return insertUserProfile(session, sUserID, sAuthor, dCreationDate,
-				dModificationDate, sLoginName, sUserName, sPassword,
-				sUserDescription, sHomeViewID, bIsAdministrator, "");
-	}
+//	public UserProfile insertUserProfile(PCSession session, String sUserID, String sAuthor, java.util.Date dCreationDate,
+//			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
+//			String sUserDescription, String sHomeViewID, boolean bIsAdministrator)
+//			throws SQLException {
+//
+//		return insertUserProfile(session, sUserID, sAuthor, dCreationDate,
+//				dModificationDate, sLoginName, sUserName, sPassword,
+//				sUserDescription, sHomeViewID, bIsAdministrator, "", ICoreConstants.STATUS_ACTIVE);
+//	}
 
 	/**
 	 * Inserts a new user in the database.
@@ -167,7 +168,7 @@ public class UserService extends ClientService implements IUserService, java.io.
 	 */
 	public UserProfile insertUserProfile(PCSession session, String sUserID, String sAuthor, java.util.Date dCreationDate,
 			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean bIsAdministrator, String sLinkViewID)
+			String sUserDescription, String sHomeViewID, boolean bIsAdministrator, String sLinkViewID, int iActiveStatus)
 			throws SQLException {
 
 		String modelName = session.getModelName();
@@ -176,13 +177,13 @@ public class UserService extends ClientService implements IUserService, java.io.
 
 		UserProfile up = DBUser.insert(	dbcon, sUserID, sAuthor, dCreationDate,
 								dModificationDate, sLoginName, sUserName, sPassword,
-								sUserDescription, sHomeViewID, bIsAdministrator, sLinkViewID);
+								sUserDescription, sHomeViewID, bIsAdministrator, sLinkViewID, iActiveStatus);
 
 		getDatabaseManager().releaseConnection(modelName,dbcon);
 
 		return up;
-	}	
-	
+	}
+
 	/**
 	 * This method returns the user profile for a given user for a given project.
 	 *
@@ -321,8 +322,8 @@ public class UserService extends ClientService implements IUserService, java.io.
 		// String modelName = session.getModelName();
 		// get from db and return
 		return null;
-	}	
-	
+	}
+
 	/**
 	 *	CURRENTLY NOT IMPLEMENTED.
 	 *	<p>
@@ -497,5 +498,20 @@ public class UserService extends ClientService implements IUserService, java.io.
 	public void setAdministrator(PCSession session, String sUserID, boolean oldValue, boolean newValue) throws SQLException {
 		// String modelName = session.getModelName() ;
 		// call db and update
+	}
+
+	/**
+	 * CURRENTLY NOT IMPLEMENTED.
+	 *
+	 * 	Sets the CurrentStatus field for the given user id and returns if successful.
+	 *
+	 *	@param PCSession session, the PCSession object for the database to use.
+	 *	@param sUserID, the id of the user whose link view to set.
+	 *	@param iCurrentStatus, the User's Status (active/inactive).
+	 *	@return boolean, true if it was successful, else false.
+	 *	@throws java.sql.SQLException
+	 */
+	public boolean setCurrentStatus(PCSession session, String sUserID, int iCurrentStatus) throws SQLException {
+		return true;
 	}
 }

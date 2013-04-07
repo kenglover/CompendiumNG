@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.dnd.*;
@@ -32,6 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.sql.SQLException;
+import java.text.*;
 import java.util.*;
 import java.io.*;
 import java.beans.*;
@@ -64,14 +66,14 @@ import com.compendium.ui.panels.*;
  */
 public class UIList implements PropertyChangeListener, TableModelListener, ListSelectionListener,
 											DropTargetListener,	MouseListener, MouseMotionListener {
-	
+
 	/** The data flavors supported by this class.*/
     //public static final 		DataFlavor[] supportedFlavors = { null };
 	//static    {
 	//	try { supportedFlavors[0] = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+"; class=com.compendium.ui.UIList", null); }
 	//	catch (Exception ex) { ex.printStackTrace(); }
 	//}
-	
+
 	/** The view associated with this list view.*/
 	protected View			oView			= null;
 
@@ -101,25 +103,25 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 
 	/** The crop target reference for this list instance.*/
 	private DropTarget 		dropTarget 				= null;
-	
+
 	/** The NodeSummary of the deleted node*/
 	private NodeSummary 		deletedNode 		= null;
-	
+
 	/** The author name of the current user.*/
 	private String sAuthor = "";
-	
+
 	/** The dialog used for the rollover hints.*/
-	private JDialog dialog				= null;		
-	
+	private JDialog dialog				= null;
+
 	/** The last row the rollover hint was for.*/
 	int		lastRow				= -1;
-	
+
 	/** The last column the rollover hint was for.*/
 	int		lastColumn			= -1;
-	
+
 	/** The DragSource object associated with this draggable item.*/
 	//private DragSource 			dragSource;
-	
+
 	/**
 	 * Constructor. Initializes and table and options for this list view.
 	 * @param view com.compendium.core.datamodel.View, the view associated with this list view.
@@ -138,9 +140,9 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		model.setSorter(sorter);
 		table = new JTable(sorter);
 		table.getSelectionModel().addListSelectionListener(this);
-		
+
 		this.sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName() ;
-		
+
 		CSH.setHelpIDString(table,"node.views");
 
 		table.getColumn("No.").setMinWidth(0);
@@ -150,45 +152,46 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 
 		table.getColumn("No.").setMaxWidth(0);
 		table.getColumn("ID").setMaxWidth(0);
-		table.getColumn("Create Date").setMaxWidth(0);
+		table.getColumn("Create Date").setMaxWidth(200);
 		table.getColumn("Mod Date").setMaxWidth(0);
 
 		table.getColumn("No.").setPreferredWidth(0);
 		table.getColumn("ID").setPreferredWidth(0);
-		table.getColumn("Create Date").setPreferredWidth(0);
+		table.getColumn("Create Date").setPreferredWidth(200);
 		table.getColumn("Mod Date").setPreferredWidth(0);
-		
+
 		table.getColumn("Img").setPreferredWidth(15);
 		table.getColumn("Tags").setPreferredWidth(15);
 		table.getColumn("Views").setPreferredWidth(15);
 		table.getColumn("Details").setPreferredWidth(15);
-		table.getColumn("Weight").setPreferredWidth(15);		
-		table.getColumn("Label").setPreferredWidth(1000);
+		table.getColumn("Weight").setPreferredWidth(15);
+		table.getColumn("Label").setPreferredWidth(700);
+		table.getColumn("Author").setPreferredWidth(150);
 
 		table.getColumn("Img").setMaxWidth(60);
 		table.getColumn("Tags").setMaxWidth(60);
 		table.getColumn("Views").setMaxWidth(60);
 		table.getColumn("Details").setMaxWidth(60);
-		table.getColumn("Weight").setMaxWidth(60);		
-		
+		table.getColumn("Weight").setMaxWidth(60);
+
 		table.getTableHeader().setReorderingAllowed(false);
 		table.setFont(ProjectCompendiumFrame.labelFont);
 		FontMetrics metrics = table.getFontMetrics(ProjectCompendiumFrame.labelFont);
 		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
-		
+
 		sorter.addMouseListenerToHeaderInTable(table);
 		setRenderers();
  		listUI = new ListUI(table, this);
-		table.addMouseMotionListener(this);		
-		table.addMouseListener(this);	
-		
+		table.addMouseMotionListener(this);
+		table.addMouseListener(this);
+
 		sorter.setSelectedColumn(ListTableModel.LABEL_COLUMN);
 
 		dropTarget = new DropTarget((Component)table, this);
 		DropTarget dropTarget2 = new DropTarget((Component)table.getTableHeader(), this);
-		
+
 		//dragSource = new DragSource();
-		//dragSource.createDefaultDragGestureRecognizer((JComponent)table, DnDConstants.ACTION_MOVE, this);   			
+		//dragSource.createDefaultDragGestureRecognizer((JComponent)table, DnDConstants.ACTION_MOVE, this);
 	}
 
 	/**
@@ -197,143 +200,143 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	 */
 	public void onReturnTextAndZoom(int zoom) {
 		Font font = ProjectCompendiumFrame.labelFont;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);
 		table.setFont(newFont);
 		FontMetrics metrics = table.getFontMetrics(newFont);
-		table.setRowHeight(table.getRowMargin()+metrics.getHeight());				
+		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
 	}
 
 	/**
 	 * Checks to see if there are any open content dialogs and repaints them if there are.
 	 */
-	private void repaintDialogs() {		
-		UINodeContentDialog dlg = null;				
+	private void repaintDialogs() {
+		UINodeContentDialog dlg = null;
 		for (Enumeration e = contentDialogs.elements(); e.hasMoreElements();) {
 			dlg = (UINodeContentDialog)e.nextElement();
 			dlg.refreshFont();
 		}
 	}
-	
+
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextToActual() {
 		table.setFont(ProjectCompendiumFrame.labelFont);
 		FontMetrics metrics = table.getFontMetrics(ProjectCompendiumFrame.labelFont);
 		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
-		
+
 		repaintDialogs();
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 */
 	public void onIncreaseTextSize() {
 		Font font = table.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);
 		table.setFont(newFont);
 		FontMetrics metrics = table.getFontMetrics(newFont);
 		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
-		
+
 		repaintDialogs();
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 */
 	public void onReduceTextSize() {
 		Font font = table.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);
 		table.setFont(newFont);
 		FontMetrics metrics = table.getFontMetrics(newFont);
 		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
-		
+
 		repaintDialogs();
 	}
-	
+
 	/** Unsort the table*/
 	/*public void unsort() {
 		sorter.reallocateIndexes();
 		table.invalidate();
 		table.repaint();
 	}*/
-	
+
 	public void mousePressed(MouseEvent e) {}
 	public void mouseReleased(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e){}
-	
+
 	public void mouseClicked(MouseEvent e) {
     	if (lastColumn == ListTableModel.VIEWS_COLUMN && dialog != null) {
     		dialog.setVisible(false);
 	    	dialog.dispose();
     		dialog = null;
-	    	lastRow = -1;		
-	    	lastColumn = -1;		    		
-    	}				
+	    	lastRow = -1;
+	    	lastColumn = -1;
+    	}
 	}
-	
+
 	public void mouseExited(MouseEvent e) {
     	if ((lastColumn == ListTableModel.TAGS_COLUMN || lastColumn == ListTableModel.DETAIL_COLUMN) && dialog != null) {
     		dialog.setVisible(false);
 	    	dialog.dispose();
     		dialog = null;
-	    	lastRow = -1;		
+	    	lastRow = -1;
 	    	lastColumn = -1;
-    	}				
+    	}
 	}
-	
+
 	public void mouseDragged(MouseEvent e){}
-	
-	public void mouseMoved(MouseEvent e) {				
+
+	public void mouseMoved(MouseEvent e) {
 		int column = table.columnAtPoint( e.getPoint() );
 		int row = table.rowAtPoint( e.getPoint() );
 		int ind = sorter.getRealRow(row);
 		if (ind == -1) {
 			return;
-		}		
+		}
 		if (ind == lastRow && column == lastColumn) {
 			e.consume();
 			return;
 		}
-		
+
 	    if (column == ListTableModel.TAGS_COLUMN) {
 			if (dialog != null) {
 		    	dialog.setVisible(false);
 		    	dialog.dispose();
 		    	dialog = null;
-		    	lastRow = -1;		
+		    	lastRow = -1;
 		    	lastColumn = -1;
-			}					
+			}
 			NodePosition pos = getNodePosition(ind);
 			NodeSummary summary = pos.getNode();
 			try {
-				if (summary.getCodeCount() > 0 ) {							
+				if (summary.getCodeCount() > 0 ) {
 					UIHintNodeCodePanel pop = new UIHintNodeCodePanel(summary, 0, 0);
 					dialog = new JDialog(ProjectCompendium.APP);
 					lastRow = ind;
 					lastColumn = column;
 					dialog.add(pop);
 					dialog.setUndecorated(true);
-					dialog.pack();							
+					dialog.pack();
 					Point point = e.getPoint();
-					SwingUtilities.convertPointToScreen(point, table);					
+					SwingUtilities.convertPointToScreen(point, table);
 					//Point point = SwingUtilities.convertPoint(table, e.getPoint(), ProjectCompendium.APP);
 					dialog.setLocation(point.x+5, point.y);
 					dialog.setVisible(true);
-				} 
+				}
 			}
 			catch(Exception ex) {
 				System.out.println("Error: (UIList.showCodes)\n\n"+ex.getMessage());
-			}			    
+			}
 	    } if (column == ListTableModel.VIEWS_COLUMN) {
 			if (dialog != null) {
 		    	dialog.setVisible(false);
 		    	dialog.dispose();
 		    	dialog = null;
-		    	lastRow = -1;		
+		    	lastRow = -1;
 		    	lastColumn = -1;
-			}											 
+			}
 			NodePosition pos = getNodePosition(ind);
 			NodeSummary summary = pos.getNode();
 			try {
@@ -343,12 +346,12 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 				lastColumn = column;
 				dialog.add(pop);
 				dialog.setUndecorated(true);
-				dialog.pack();		
+				dialog.pack();
 				Point point = e.getPoint();
-				SwingUtilities.convertPointToScreen(point, table);					
+				SwingUtilities.convertPointToScreen(point, table);
 				//Point point = SwingUtilities.convertPoint(table, e.getPoint(), ProjectCompendium.APP);
 				dialog.setLocation(point.x+5, point.y);
-				dialog.setVisible(true); 
+				dialog.setVisible(true);
 			}
 			catch(Exception ex) {
 				System.out.println("Error: (UIList.showViews)\n\n"+ex.getMessage());
@@ -358,9 +361,9 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		    	dialog.setVisible(false);
 		    	dialog.dispose();
 		    	dialog = null;
-		    	lastRow = -1;		
+		    	lastRow = -1;
 		    	lastColumn = -1;
-			}					
+			}
 			NodePosition pos = getNodePosition(ind);
 			NodeSummary summary = pos.getNode();
 			try {
@@ -373,30 +376,30 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 					lastColumn = column;
 					dialog.add(pop);
 					dialog.setUndecorated(true);
-					dialog.pack();		
+					dialog.pack();
 					Point point = e.getPoint();
-					SwingUtilities.convertPointToScreen(point, table);					
+					SwingUtilities.convertPointToScreen(point, table);
 					//Point point = SwingUtilities.convertPoint(table, e.getPoint(), ProjectCompendium.APP);
 					dialog.setLocation(point.x+5, point.y);
 					dialog.setVisible(true);
-				} 
+				}
 			}
 			catch(Exception ex) {
 				System.out.println("Error: (UIList.showDetail)\n\n"+ex.getMessage());
-			}			    
+			}
 	    }
-	}	
-	
+	}
+
 	public void hideHint() {
 		if (dialog != null) {
 	    	dialog.setVisible(false);
 	    	dialog.dispose();
 	    	dialog = null;
-	    	lastRow = -1;		
+	    	lastRow = -1;
 	    	lastColumn = -1;
-		}							
+		}
 	}
-	
+
 	/**
 	 * Set the header renderers for the table column headers and the table cells.
 	 */
@@ -404,18 +407,18 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
     	int count = table.getColumnCount();
         for (int i = 0; i < count; i++) {
         	TableColumn aColumn = table.getColumnModel().getColumn(i);
-        	
+
         	// Set the cell renderer for the column headers
         	UITableHeaderRenderer headerRenderer = new UITableHeaderRenderer();
             aColumn.setHeaderRenderer(headerRenderer);
-            
+
             // Set the cell renderer for column cells
             CellRenderer cellRenderer = new CellRenderer();
             aColumn.setCellRenderer(cellRenderer);
     	}
  	}
 
- 
+
 	/**
 	 * The helper class renderers the table cells.
 	 */
@@ -425,15 +428,15 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
         	super();
         	setHorizontalAlignment(SwingConstants.LEFT);
  		}
-    	
-    	public Component getTableCellRendererComponent(JTable table, Object value, 
+
+    	public Component getTableCellRendererComponent(JTable table, Object value,
     			boolean isSelected, boolean hasFocus, int row, int column) {
-        		
+
     		NodePosition node = model.getNodePosition(row);
     		if (node != null) {
 	    		NodeSummary oNodeSummary = node.getNode();
-	    		
-				// Important do the user's font choice is applied 
+
+				// Important do the user's font choice is applied
 	    		// Make weight column italic to show it is not active.
 	    		if (column == ListTableModel.WEIGHT_COLUMN) {
 	    			Font font = table.getFont();
@@ -448,35 +451,40 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 				}
 				else {
 					setBackground(table.getBackground());
-					setForeground(table.getForeground());					
+					setForeground(table.getForeground());
 				}
-				
-				if (column == ListTableModel.IMAGE_COLUMN) { 
+
+				if (column == ListTableModel.IMAGE_COLUMN) {
 					setIcon( (Icon) value);
 					setHorizontalAlignment(CENTER);
 					setVerticalAlignment(CENTER);
-					setBorder(new NodeBorder(oNodeSummary));						
+					setBorder(new NodeBorder(oNodeSummary));
 					value = "";
-				}				
+				}
+
+				if (column == ListTableModel.CREATION_DATE_COLUMN) {
+					SimpleDateFormat dateFormat = new SimpleDateFormat("EEE dd-MMM-yy h:mm a");
+					value = dateFormat.format(value);
+				}
     		}
-    		    		
-			setValue(value);			     	
+
+			setValue(value);
         	return this;
 		}
 
         protected void setValue(Object value) {
         	setText((value == null) ? "" : value.toString());
         }
-	}    	
+	}
 
 	/**
 	 * This border class paints the border for this node.
 	 */
 	private class NodeBorder extends AbstractBorder {
-		
+
 		int state		 = 0;
 		NodeSummary node = null;
-		
+
 		public NodeBorder(NodeSummary node){
 			this.node  = node;
 			this.state = node.getState();
@@ -484,15 +492,20 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 
 		public void paintBorder (Component c, Graphics g, int x, int y, int width, int height) {
 
+			//System.out.println("UIList.java 495 entered paintBorder");
+
 			if (state == ICoreConstants.UNREADSTATE) {
 				Color oldColor = g.getColor();
 				g.setColor(IUIConstants.UNREAD_BORDER_COLOR);
 				g.draw3DRect(x, y, width - 1, height - 1, true);
 				g.setColor(oldColor);
-				
+
 			}
 			else if (state == ICoreConstants.MODIFIEDSTATE) {
 				Color oldColor = g.getColor();
+
+				System.out.println("UIList 507 setColor Modified Border Color");
+
 				g.setColor(IUIConstants.MODIFIED_BORDER_COLOR);
 				g.draw3DRect(x, y, width - 1, height - 1, true);
 				g.setColor(oldColor);
@@ -500,7 +513,9 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 				Color oldColor = g.getColor();
 				g.setColor(oldColor);
 			}
-			
+
+			//System.out.println("UIList.java 514 exiting paintBorder");
+
 		}
 	}
 
@@ -548,27 +563,29 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 
 		if (isSmall) {
 			table.getColumn("ID").setMaxWidth(0);
-			table.getColumn("Create Date").setMaxWidth(0);
+			table.getColumn("Create Date").setMaxWidth(200);	//mlb add Cr Date & Author to default list view
 			table.getColumn("Mod Date").setMaxWidth(0);
 
 			table.getColumn("ID").setPreferredWidth(0);
-			table.getColumn("Create Date").setPreferredWidth(0);
+			table.getColumn("Create Date").setPreferredWidth(200);
 			table.getColumn("Mod Date").setPreferredWidth(0);
-			
-			table.getColumn("Label").setPreferredWidth(1000);
+
+			table.getColumn("Label").setPreferredWidth(700);
 			//((TableSorter)table.getModel()).setSelectedColumn(ListTableModel.LABEL_COLUMN);
+			table.getColumn("Author").setPreferredWidth(150);
 		}
 		else  {
 			table.getColumn("ID").setMaxWidth(200);
 			table.getColumn("Create Date").setMaxWidth(200);
 			table.getColumn("Mod Date").setMaxWidth(200);
-			
+
 			table.getColumn("ID").setPreferredWidth(180);
 			table.getColumn("Create Date").setPreferredWidth(100);
 			table.getColumn("Mod Date").setPreferredWidth(100);
-			
-			table.getColumn("Label").setPreferredWidth(400);		
+
+			table.getColumn("Label").setPreferredWidth(400);
 			//((TableSorter)table.getModel()).setSelectedColumn(ListTableModel.LABEL_COLUMN);
+			table.getColumn("Author").setPreferredWidth(150);
 		}
 
 		updateTable();
@@ -614,19 +631,19 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	 */
 	public void setView(View view) {
 		NodePosition pos = null;
-		
+
 		if (oView != null) {
 			for(Enumeration e = oView.getPositions();e.hasMoreElements();) {
 				pos = ((NodePosition)e.nextElement());
 				pos.getNode().removePropertyChangeListener(this);
 			}
 		}
-				
+
 		oView = view;
 		for(Enumeration e = view.getPositions();e.hasMoreElements();) {
 			pos = ((NodePosition)e.nextElement());
 			pos.getNode().addPropertyChangeListener(this);
-		}		
+		}
 	}
 
 	/**
@@ -689,18 +706,22 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	 * @return com.compendium.ui.dialogs.UINodeContentDialog, the content dialog for the given node and tab.
 	 */
 	private UINodeContentDialog showContentDialog(NodePosition nodePos, int tab) {
-		
+
 		String sNodeID = nodePos.getNode().getId();
 		if (contentDialogs.containsKey(sNodeID)) {
 			UINodeContentDialog contentDialog = (UINodeContentDialog)contentDialogs.get((Object)sNodeID);
-			if (contentDialog != null && contentDialog.isVisible())
+			if (contentDialog != null) {
+				contentDialog.setVisible(true);
+				contentDialog.requestFocus();
 				return contentDialog;
+			}
 		}
-				
+
 		UINodeContentDialog contentDialog  = new UINodeContentDialog(ProjectCompendium.APP, getView(), nodePos, tab);
 		contentDialogs.put(nodePos.getNode().getId(), contentDialog);
 		contentDialog.setVisible(true);
-		
+		contentDialog.requestFocus();
+
 		//Lakshmi (4/24/06) - if the contents dialog is opened set state as read in NodeUserState DB
    		int state = nodePos.getNode().getState();
    		if(state != ICoreConstants.READSTATE){
@@ -713,7 +734,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 				e.printStackTrace();
 				System.out.println("Error: (UIList.showContentDialog) \n\n"+e.getMessage());
 			}
-   		} 
+   		}
 		return contentDialog;
 	}
 
@@ -836,7 +857,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		}
 		oViewFrame.repaint();
 	}
-	
+
 	/**
 	 * Update the table after a change.
 	 */
@@ -892,7 +913,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	public boolean contains(NodePosition np) {
 		return model.contains(np);
 	}
-	
+
 	/**
 	 * Return the number of nodes currently in this list view.
 	 * @return int, the number of nodes currently in this list view.
@@ -900,7 +921,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	public int getNumberOfNodes() {
 		return table.getRowCount();
 	}
-  	
+
 	/**
 	 * Return the node at the given index.
 	 * @param index, the index of the node to return.
@@ -908,8 +929,8 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	 */
 	public NodePosition getNodePosition(int index) {
 		return model.getNodePosition(index);
-	}			
- 	
+	}
+
 	/**
 	 * Return the node for the given node id.
 	 * @param sNodeID the id of the node to return.
@@ -927,9 +948,9 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 
 	  	return null;
   	}
-  	
+
   	/**
-	 * Return the index of the given node. 
+	 * Return the index of the given node.
 	 * @param node com.compendium.core.datamodel.NodeSummary, the node to return the index for.
 	 * @return int, the index of the row position for the given node, else -1 if not found.
 	 */
@@ -980,24 +1001,27 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 														  label,							//String label
 														  detail,							//String detail
 														  np.getXPos(),						//int x
-														  (table.getRowCount() + i + 1)* 10 //int y														  
+														  (table.getRowCount() + i + 1)* 10 //int y
 														  );
 				NodeSummary node = nodePos.getNode();
 				node.initialize(oView.getModel().getSession(), oView.getModel());
 				node.setSource(parentnode.getSource(), parentnode.getImage(), sAuthor);
 
 				//add the shortcut to the parent node list
-				node.addShortCutNode(node);
-				((ShortCutNodeSummary)node).setReferredNode(node);
+				//node.addShortCutNode(node);							// MLB: Replaced these w/the following 2 lines
+				// ((ShortCutNodeSummary)node).setReferredNode(node);	// as it was creating a shortcut that pointed to itself
+				parentnode.addShortCutNode(node);
+				((ShortCutNodeSummary)node).setReferredNode(parentnode);
 			}
 			((AbstractTableModel)table.getModel()).fireTableChanged(new TableModelEvent(table.getModel()));
 		}
 		catch(Exception e) {
 			ProjectCompendium.APP.displayError("Exception:" + e.getMessage());
 		}
+		updateTable();
 		return ;
 	}
-  	
+
 	/**
 	 * Set the selection mode of the node at the given index.
 	 * @param index, the index of the node row to select.
@@ -1007,21 +1031,21 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 
 		if (selectMode == ICoreConstants.DESELECTALL) {
 		  	deselectAll();
-		  	//Done through the selection event listener now 
-			//ProjectCompendium.APP.setNodeOrLinkSelected(false);		  	
+		  	//Done through the selection event listener now
+			//ProjectCompendium.APP.setNodeOrLinkSelected(false);
 	  	}
 		else if (selectMode == ICoreConstants.MULTISELECT) {
 		  	table.addRowSelectionInterval(index, index);
-		  	//Done through the selection event listener now 
-			//ProjectCompendium.APP.setNodeOrLinkSelected(true);		  	
+		  	//Done through the selection event listener now
+			//ProjectCompendium.APP.setNodeOrLinkSelected(true);
 	  	}
 		else if (selectMode == ICoreConstants.SINGLESELECT) {
 		  	table.setRowSelectionInterval(index, index);
-		  	//Done through the selection event listener now 
-			//ProjectCompendium.APP.setNodeOrLinkSelected(true);		  	
+		  	//Done through the selection event listener now
+			//ProjectCompendium.APP.setNodeOrLinkSelected(true);
 	  	}
-  	}  	
-	
+  	}
+
 	/**
 	 * Insert the given set of nodes into the list at the given index position.
 	 * @param nps the array of com.compendium.core,datamodel.NodePosition to insert.
@@ -1041,12 +1065,15 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		model.insertNode(np, index);
 		((UIListViewFrame)oViewFrame).updateCountLabel();
 	}
-		
+
 	/**
 	 * Delete all the currently selected nodes.
 	 * @param edit, the PCEdit object to use to store changes for later undo/redo.
 	 */
 	public void deleteSelectedNodes(PCEdit edit) {
+
+		System.out.println("UIList 1075 entered deleteSelectedNodes " + System.currentTimeMillis());
+
 		int[] selectedRows = table.getSelectedRows();
 		IModel imodel = ProjectCompendium.APP.getModel();
 
@@ -1062,18 +1089,21 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 				}
 			}
 			catch (SQLException ex) {
-				// WHAT TO DO?
+				ex.printStackTrace();
 			}
 
+			System.out.println("UIList 1095 " + System.currentTimeMillis());
+
 			try {
-				//boolean deleted = oView.removeMemberNode(NodeSummary.getNodeSummary(nodeId));
-				NodeSummary oNode = NodeSummary.getNodeSummary(nodeId);
-				oView.removeMemberNode(oNode);
-				boolean lastInstance = false;
-				if(oNode.getViewCount() == 0 ) {
-					lastInstance = true;
-		        } 
-				
+				NodeSummary oNode = NodeSummary.getNodeSummary(nodeId);		// This section a bug fix from Michelle - patch to 1.5.2
+                oView.removeMemberNode(oNode);
+                boolean lastInstance = false;
+                if(oNode.getViewCount() == 0 ) {
+                      lastInstance = true;
+           }
+
+			System.out.println("UIList 1105 " + System.currentTimeMillis());
+
 				// IF NODE IS A VIEW AND IF NODE WAS ACTUALLY LAST INSTANCE AND WAS DELETED, DELETE CHILDREN
 				if (NodeSummary.getNodeSummary(nodeId) instanceof View && lastInstance && !wasDeleted) {
 					View childView = (View)NodeSummary.getNodeSummary(nodeId);
@@ -1082,9 +1112,9 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 						((UIMapViewFrame)childViewFrame).deleteChildren(childView);
 					else
 						((UIListViewFrame)childViewFrame).deleteChildren(childView);
-					
+
 					// delete from ProjectCompendium.APP opened frame list.
-					ProjectCompendium.APP.removeViewFromHistory(childView);										
+					ProjectCompendium.APP.removeViewFromHistory(childView);
 				}
 			}
 			catch(Exception ex) {
@@ -1092,15 +1122,22 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 				System.out.println("Error: (UIList.deleteSelectedNodes) \n\n"+ex.getMessage());
 			}
 
+			System.out.println("UIList 1125 " + System.currentTimeMillis());
+
 			if (edit != null) {
 				edit.AddNodeToEdit(	 getNodePosition(selectedRows[i]), selectedRows[i]);
 			}
 		}
 
+		System.out.println("UIList 1132 " + System.currentTimeMillis());
+
 		model.deleteRows(selectedRows);
 		selectNode(0, ICoreConstants.DESELECTALL);
-		sorter.fireTableChanged(new TableModelEvent(table.getModel()));
+		//sorter.fireTableChanged(new TableModelEvent(table.getModel()));
 		((UIListViewFrame)oViewFrame).updateCountLabel();
+
+		System.out.println("UIList 1139 exiting deleteSelectedNodes " + System.currentTimeMillis());
+
 	}
 
 	/**
@@ -1108,17 +1145,20 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	 * @param index, the index position of the node to delete.
 	 */
 	public void deleteNode(int index) {
+		System.out.println("UIList 1141 entered deleteNode " + System.currentTimeMillis());
+
 		int[] selectedRows = {sorter.getRealRow(index)};
 		String nodeId = nodeId = (String)table.getValueAt(index, ListTableModel.ID_COLUMN);
 		try {
 			oView.removeMemberNode(NodeSummary.getNodeSummary(nodeId));
-			//updateTable();			
+			//updateTable();
 		}
 		catch(Exception ex) {
 			ProjectCompendium.APP.displayError("Unable to delete node: (UIList.deleteNode)\n\n"+ex.getMessage());
 		}
+		System.out.println("UIList 1152 exiting deleteNode " + System.currentTimeMillis());
 	}
-	
+
 	/** Print the current table.*/
 	public void print(PrintRequestAttributeSet aset) {
 		try {
@@ -1127,6 +1167,11 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		catch(Exception ex) {
 			System.out.println("printable exception: "+ex.getMessage());
 		}
+	}
+
+	/** Set the view to be sorted by the Date field.  Used when opening the Inbox */
+	public void sortByCreationDate() {
+		sorter.sortByColumn(ListTableModel.CREATION_DATE_COLUMN, false);
 	}
 
 	/**
@@ -1143,10 +1188,10 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	    if (source instanceof NodeSummary) {
 		    if (prop.equals(NodeSummary.LABEL_PROPERTY) || prop.equals(View.CHILDREN_PROPERTY)) {
 				table.revalidate();
-				table.repaint();		
+				table.repaint();
 		    }
 		}
-	    
+
 	    if (source instanceof View) {
 		    if (prop.equals(View.NODE_ADDED)) {
 				// IF RECODRING or REPLAYING A MEETING, SENT A NODE ADDED EVENT
@@ -1183,31 +1228,31 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		    else if (prop.equals(View.NODE_REMOVED)) {
 				// IF RECODRING or REPLAYING A MEETING, SENT A NODE REMOVED EVENT
 				if (ProjectCompendium.APP.oMeetingManager != null && ProjectCompendium.APP.oMeetingManager.captureEvents()) {
-					NodeSummary node = (NodeSummary)newvalue;						
+					NodeSummary node = (NodeSummary)newvalue;
 					ProjectCompendium.APP.oMeetingManager.addEvent(
 						new MeetingEvent(ProjectCompendium.APP.oMeetingManager.getMeetingID(),
 										 ProjectCompendium.APP.oMeetingManager.isReplay(),
 										 MeetingEvent.NODE_REMOVED_EVENT,
 										 oView,
-										 node));						
+										 node));
 				}
 			}
 		}
-	}	
-		
+	}
+
 	// LIST SELECTION LISTENER
 	/**
 	 * Need this to detect selection changes made with the keyboard arrows.
 	 */
-	public void valueChanged(ListSelectionEvent e) {		
+	public void valueChanged(ListSelectionEvent e) {
 		if (table.getSelectedRowCount() > 0) {
-			ProjectCompendium.APP.setNodeOrLinkSelected(true);	
+			ProjectCompendium.APP.setNodeOrLinkSelected(true);
 		} else {
-			ProjectCompendium.APP.setNodeOrLinkSelected(false);			
+			ProjectCompendium.APP.setNodeOrLinkSelected(false);
 		}
 	}
-	
-  	//  TRANSFERABLE  	
+
+  	//  TRANSFERABLE
    /**
      * Returns an array of DataFlavor objects indicating the flavors the data
      * can be provided in.
@@ -1241,11 +1286,11 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	//		return this;
 	//	else return null;
 	//}
-	
+
 	//	SOURCE
-	
+
 	//private int[] dragRows = null;
-	
+
     /**
      * A <code>DragGestureRecognizer</code> has detected
      * a platform-dependent drag initiating gesture and
@@ -1258,7 +1303,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 	/*public void dragGestureRecognized(DragGestureEvent e) {
 	    InputEvent in = e.getTriggerEvent();
 	    dragRows = null;
-	    int action = e.getDragAction();	    
+	    int action = e.getDragAction();
 	    if (in instanceof MouseEvent) {
 	    	dragRows = table.getSelectedRows();
  	    	if (action == DnDConstants.ACTION_MOVE) {
@@ -1340,8 +1385,8 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		int action = e.getUserAction();
 		DragSourceContext context = e.getDragSourceContext();
 		Point loc = e.getLocation();
-		SwingUtilities.convertPointFromScreen(loc, table);		
-		table.scrollRectToVisible(new Rectangle(loc.x-20, loc.y-20, 40, 40));								
+		SwingUtilities.convertPointFromScreen(loc, table);
+		table.scrollRectToVisible(new Rectangle(loc.x-20, loc.y-20, 40, 40));
 	}*/
 
     /**
@@ -1353,8 +1398,8 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
     *
      * @param e the <code>DragSourceDragEvent</code>
      */
-	//public void dropActionChanged(DragSourceDragEvent e) {}	
-	
+	//public void dropActionChanged(DragSourceDragEvent e) {}
+
 //	 TARGET DROP METHODS
 
     /**
@@ -1440,7 +1485,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 				JTable table = getList();
 				table.setCursor(Cursor.getDefaultCursor());
 				int index = table.rowAtPoint(e.getLocation());
-				
+
 				if (index != -1) {
 					NodePosition np = getNodePosition(index);
 					NodePosition[] npList = new NodePosition[dragRows.length];
@@ -1456,12 +1501,12 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 					deleteSelectedNodes(null);
 					//for (int i = 0; i < dragRows.length; i++) {
 					//	deleteNode(dragRows[i]);
-					//}					
+					//}
 					deselectAll();
 
 					// Need to find the new index of the insert point after deleting the nodes to move.
 					//index = getIndexOf(np.getNode());
-					
+
 					NodePosition pos = null;
 					String id = null;
 					for (int i = 0; i < npList.length; i++) {
@@ -1484,10 +1529,10 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 							ProjectCompendium.APP.displayError("Exception: (ListUI.mouseReleased) \n" + ex.getMessage());
 						}
 					}
-					
+
 					//updateTable();
 					//unsort();
-				}		    	
+				}
 			} else */if (tr.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
 
                 e.acceptDrop (DnDConstants.ACTION_COPY_OR_MOVE);
@@ -1648,11 +1693,11 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 								String fileName = newFile.getName();
 								fileName = fileName.toLowerCase();
 
-								String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);						
+								String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);
 								UserProfile oUser = ProjectCompendium.APP.getModel().getUserProfile();
 								String sUserDir = CoreUtilities.cleanFileName(oUser.getUserName())+"_"+oUser.getId();
-								String sFullPath = "Linked Files"+ProjectCompendium.sFS+sDatabaseName+ProjectCompendium.sFS+sUserDir;			
-								
+								String sFullPath = "Linked Files"+ProjectCompendium.sFS+sDatabaseName+ProjectCompendium.sFS+sUserDir;
+
 								File directory = new File(sFullPath);
 								if (!directory.isDirectory()) {
 									directory.mkdirs();
@@ -1714,7 +1759,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 										System.out.println("Error: (UIList.drop-3)\n\n"+ex.getMessage());
 									}
 
-									updateTable();																												
+									updateTable();
 									selectNode(getNumberOfNodes() - 1, ICoreConstants.MULTISELECT);
 								}
 
@@ -1723,7 +1768,7 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 							else {
 								UIDropSelectionDialog dropDialog = new UIDropSelectionDialog(ProjectCompendium.APP, list, s, nX, nY);
 
-								if (FormatProperties.dndNoTextChoice) {
+								if (APP_PROPERTIES.isDndNoTextChoice()) {
 									dropDialog.processAsPlain();
 									dropDialog.onCancel();
 								}
@@ -1748,5 +1793,5 @@ public class UIList implements PropertyChangeListener, TableModelListener, ListS
 		catch(UnsupportedFlavorException ufe) {
 			e.rejectDrop();
 		}
-	}	
+	}
 }

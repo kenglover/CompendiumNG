@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
@@ -73,7 +72,7 @@ public class DBNewDatabase implements DBProgressListener {
 	/** SQL statement to add the default view node to the desktop of the newly created user, if there is one*/
 	//public static final String INSERT_DEFAULT_NODE =
 	//	"INSERT INTO ViewNode (ViewID, NodeID, XPos, YPos, CreationDate, ModificationDate, CurrentStatus)"+
-	//	"VALUES (? , '13710825351068804681614', 99 , 7, ?, ?, 0)"; 
+	//	"VALUES (? , '13710825351068804681614', 99 , 7, ?, ?, 0)";
 
 	/** SQL statement to check the default view node exits before adding to the desktop of the newly created user*/
 	public static final String SELECT_DEFAULT_NODE =
@@ -82,12 +81,12 @@ public class DBNewDatabase implements DBProgressListener {
 	/** SQL statement to add the default view node to the desktop of the newly created user, if there is one*/
 	public static final String INSERT_DEFAULT_NODE =
 		"INSERT INTO ViewNode (ViewID, NodeID, XPos, YPos, CreationDate, ModificationDate, CurrentStatus)"+
-		"VALUES (? , '137108251921165929909344', 200 , 7, ?, ?, 0)"; 
+		"VALUES (? , '137108251921165929909344', 200 , 7, ?, ?, 0)";
 
 	/** SQL statement to add the default view node to the desktop of the newly created user, if there is one*/
 	public static final String INSERT_DEFAULT_NODE2 =
 		"INSERT INTO ViewNode (ViewID, NodeID, XPos, YPos, CreationDate, ModificationDate, CurrentStatus)"+
-		"VALUES (? , '137108251921158578648470', 99 , 7, ?, ?, 0)"; 
+		"VALUES (? , '137108251921158578648470', 99 , 7, ?, ?, 0)";
 
 	/** SQL statement to insert the homeview node for the newly created user*/
 	public final static String INSERT_NODE_QUERY =
@@ -109,7 +108,7 @@ public class DBNewDatabase implements DBProgressListener {
 
 	/** Set state to READSTATE for all records.*/
 	private static final String UPDATE_NODEUSERSTATE_TABLE = "UPDATE NodeUserState set State = "+ICoreConstants.READSTATE;
-		
+
 	/** the name of the file containing the default data for a new database in Derby*/
 	public static final String DERBY_DEFAULT_DATA_FILE 	= "DefaultDataDerby.sql";
 
@@ -237,7 +236,7 @@ public class DBNewDatabase implements DBProgressListener {
 		fireProgressCount(DEFAULT_DATA_COUNT);
 
 		insertDefaultData(connection);
-		
+
 		fireProgressUpdate(increment, "Finished");
 		fireProgressComplete();
 
@@ -349,8 +348,8 @@ public class DBNewDatabase implements DBProgressListener {
 				nRowCount = pstmt.executeUpdate();
 				pstmt.close();
 
-				if (nRowCount >0) {					
-					
+				if (nRowCount >0) {
+
 					// CHECK DEFAULT NODE EXISTS AND IF IT DOES, INSERT ON USERS DESKTOP
 					pstmt = con.prepareStatement(SELECT_DEFAULT_NODE);
 					ResultSet rs = pstmt.executeQuery();
@@ -368,31 +367,32 @@ public class DBNewDatabase implements DBProgressListener {
 							pstmt.setDouble(3, new Long(date.getTime()).doubleValue());
 							nRowCount = pstmt.executeUpdate();
 							pstmt.close();
-							
+
 							// INSERT DEFAULT NODE ON DESKTOP - FUNDERS
 							pstmt = con.prepareStatement(INSERT_DEFAULT_NODE2);
 					 		pstmt.setString(1, homeViewId);
 							pstmt.setDouble(2, new Long(date.getTime()).doubleValue());
 							pstmt.setDouble(3, new Long(date.getTime()).doubleValue());
 							nRowCount = pstmt.executeUpdate();
-							pstmt.close();							
+							pstmt.close();
 						}
 					}
-					
+
 					// SET THE STATE FOR ALL NODES FOR THIS USER AS READ.
 					pstmt = con.prepareStatement("SELECT NodeID FROM Node");
 					rs = pstmt.executeQuery();
 
-					String sNodeID = "";				
+					String sNodeID = "";
 					while (rs.next()) {
 						sNodeID	= rs.getString(1);
-						
+
 						pstmt = con.prepareStatement(DBNodeUserState.INSERT_STATE_QUERY);
 				 		pstmt.setString(1, sNodeID);
 						pstmt.setString(2, id) ;
-						pstmt.setInt(3, ICoreConstants.READSTATE) ;
+						pstmt.setInt(3, ICoreConstants.READSTATE);
+						pstmt.setLong(4, (new java.util.Date()).getTime());
 						pstmt.executeUpdate();
-					}																	
+					}
 				}
 			}
 		}
@@ -442,12 +442,12 @@ public class DBNewDatabase implements DBProgressListener {
 		PreparedStatement pstmt = con.prepareStatement(INSERT_SYSTEM_QUERY);
 		pstmt.executeUpdate();
 		pstmt.close();
-		
+
 		// SET ALL DEFAULT NODES TO READ.
 		PreparedStatement pstmt2 = con.prepareStatement(UPDATE_NODEUSERSTATE_TABLE);
 		pstmt2.executeUpdate() ;
-		pstmt2.close();						
-		
+		pstmt2.close();
+
 		//System.out.println("system updated");
 	}
 

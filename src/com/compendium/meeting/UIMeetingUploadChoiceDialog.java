@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting;
 
 import java.awt.Container;
@@ -190,7 +189,7 @@ public class UIMeetingUploadChoiceDialog extends UIDialog implements ActionListe
 			thread.start();
 		}*/
 		}
-    
+
     /**
      * Handles the upload dialog action
      */

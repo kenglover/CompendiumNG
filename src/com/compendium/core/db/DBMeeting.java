@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.util.*;
@@ -50,7 +49,7 @@ public class DBMeeting {
         "DELETE "+
         "FROM Meeting "+
         "WHERE MeetingID = ? ";
-    
+
 	/** SQL statement to insert a new Meeting Record into the Meeting table.*/
 	public final static String INSERT_MEETING_QUERY =
 		"INSERT INTO Meeting (MeetingID, MeetingMapID, MeetingName, MeetingDate, CurrentStatus) "+
@@ -191,7 +190,7 @@ public class DBMeeting {
 		}
 		return false;
 	}
-    
+
     /**
      *  Update the meeting map id in the database and return if successful.
      *

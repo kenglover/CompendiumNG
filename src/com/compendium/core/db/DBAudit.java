@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
@@ -197,8 +196,9 @@ public class DBAudit {
 		Date creationDate = nodeSummary.getCreationDate();
 		long creationDateSecs = creationDate.getTime();
 
-		Date modificationDate = nodeSummary.getModificationDate();
-		long modificationDateSecs = modificationDate.getTime();
+		//Date modificationDate = nodeSummary.getModificationDate();
+		java.util.Date now = new java.util.Date();
+		long modificationDateSecs = now.getTime();
 
 		String label = nodeSummary.getLabel();
 		label = CoreUtilities.cleanXMLText(label);
@@ -271,7 +271,9 @@ public class DBAudit {
 
 		String id = detail.getNodeID();
 		long creationDateSecs = detail.getCreationDate().getTime();
-		long modifiedDateSecs = detail.getModificationDate().getTime();
+
+		java.util.Date now = new java.util.Date();
+		long modifiedDateSecs = now.getTime();
 
 		String detailText = (String)detail.getText();
 		if (detailText.equals(ICoreConstants.NODETAIL_STRING))
@@ -386,7 +388,7 @@ public class DBAudit {
 	 */
 	public static boolean auditCode(DBConnection dbcon, int nAction, Code code) throws SQLException {
 
-		/* DATABASE 'Code' TABLE FOR REFERENCE
+		/* DATBASE 'Code' TABLE FOR REFERENCE
 			CodeID				= Text 50
 			Author				= Text 50
 			CreationDate		= Number Double
@@ -464,7 +466,7 @@ public class DBAudit {
 			FontFace VARCHAR(100)
 			FontStyle INTEGER
 			Foreground INTEGER
-			Background INTEGER																																	
+			Background INTEGER
 		*/
 
 		NodeSummary node = nodePos.getNode();
@@ -555,7 +557,7 @@ public class DBAudit {
 		xmlReferenceNode.append("source=\""+ sSource +"\" ");
 		xmlReferenceNode.append("image=\""+ sImage +"\" ");
 		xmlReferenceNode.append("imagewidth=\"0\" ");
-		xmlReferenceNode.append("imageheight=\"0\">");				
+		xmlReferenceNode.append("imageheight=\"0\">");
 		xmlReferenceNode.append("</referencenode>");
 
 		return addAudit(dbcon, sNodeID, "ReferenceNode", nAction, xmlReferenceNode.toString());
@@ -825,7 +827,7 @@ public class DBAudit {
 
 		xmlFavorite.append("userref=\""+ fav.getUserID() +"\" ");
 		xmlFavorite.append("noderef=\""+ fav.getNodeID() +"\" ");
-		xmlFavorite.append("viewref=\""+ fav.getViewID() +"\" ");		
+		xmlFavorite.append("viewref=\""+ fav.getViewID() +"\" ");
 		xmlFavorite.append("label=\""+ fav.getLabel() +"\" ");
 		xmlFavorite.append("type=\""+ fav.getType() +"\" ");
 		xmlFavorite.append("created=\""+ (fav.getCreationDate()).getTime() +"\" ");
@@ -835,7 +837,7 @@ public class DBAudit {
 
 		return addAudit(dbcon, sID, "Favorite", nAction, xmlFavorite.toString());
 	}
-	
+
 	/**
 	 *  Add a new Audit record for a ViewProperty record.
 	 *

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
 import java.util.*;
@@ -68,7 +67,7 @@ public class SystemService extends ClientService implements ISystemService, java
 	public SystemService(String name, ServiceManager sm, DBDatabaseManager dbMgr) {
 		super(name, sm, dbMgr);
 	}
-	
+
 	/**
 	 *  Update the project level properties.
 	 *
@@ -87,7 +86,7 @@ public class SystemService extends ClientService implements ISystemService, java
 
 		return successful;
 	}
-	
+
 	/**
 	 *  Update the default user property and return if successful.
 	 *
@@ -122,7 +121,7 @@ public class SystemService extends ClientService implements ISystemService, java
 
 		return table;
 	}
-	
+
 	/**
 	 * Update the active codegroup id and return if successful
 	 *

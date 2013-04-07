@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -144,7 +145,7 @@ public class UILogonDialog extends UIDialog implements ActionListener, DocumentL
 		// TOKENIZE DATABASE NAMES AND FETCH AND STORE THE DEFAULT USER FOR EACH DATABASE
 		// IF CONNECTION TO A LOCAL DATABASE AND ITS SCHEMA DOES NOT NEED UPDATING
 
-		if (FormatProperties.nDatabaseType == ICoreConstants.DERBY_DATABASE || mysqlip.equals(ICoreConstants.sDEFAULT_DATABASE_ADDRESS)) {
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.DERBY_DATABASE || mysqlip.equals(ICoreConstants.sDEFAULT_DATABASE_ADDRESS)) {
 			int count = projects.size();
 			for (int i=0; i<count; i++) {
 				String project = (String)projects.elementAt(i);
@@ -152,7 +153,9 @@ public class UILogonDialog extends UIDialog implements ActionListener, DocumentL
 
 				UserProfile oUser = null;
 				try {
+					System.out.println("156 UILogonDialog project is " + project);
 					String nextModel = adminDatabase.getDatabaseName(project);
+					System.out.println("158 UILogonDialog nextModel is " + nextModel);
 					int status = adminDatabase.getSchemaStatusForDatabase(nextModel);
 					if (status == ICoreConstants.CORRECT_DATABASE_SCHEMA) {
 			    	   	DBConnection dbcon = databaseManager.requestConnection(nextModel);
@@ -347,13 +350,16 @@ public class UILogonDialog extends UIDialog implements ActionListener, DocumentL
 					int index = lstProjects.getSelectedIndex();
 					sModel = (String)vtProjects.elementAt(index);
 					//int status = ((Integer)htProjectCheck.get(sModel)).intValue();
+/*					System.out.println("353 UILogonDialog sending sModel of " + sModel);
 					int status = ProjectCompendium.APP.adminDerbyDatabase.getSchemaStatusForDatabase(sModel);
+
+					System.out.println("356 status returned is " + status);
 
 					if (status == ICoreConstants.NEWER_DATABASE_SCHEMA) {
 						ProjectCompendium.APP.displayError("This project requires a newer version of Compendium.\n\nPlease select again.\n\n");
 						return;
 					}
-
+*/
 					sUserName = txtName.getText();
 					sUserPassword = new String(txtPasswordField.getPassword());
 

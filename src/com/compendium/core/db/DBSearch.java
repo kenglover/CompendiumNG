@@ -22,20 +22,33 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
-import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
-import java.io.*;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Vector;
+import java.util.regex.Pattern;
 
-import com.compendium.core.datamodel.*;
-import com.compendium.core.db.management.*;
+import com.compendium.core.CoreUtilities;
 import com.compendium.core.ICoreConstants;
+import com.compendium.core.SearchParams;
+import com.compendium.core.datamodel.Code;
+import com.compendium.core.datamodel.NodePosition;
+import com.compendium.core.datamodel.NodeSummary;
+import com.compendium.core.datamodel.UserProfile;
+import com.compendium.core.datamodel.View;
+import com.compendium.core.db.management.DBConnection;
+
+import static com.compendium.ProjectCompendium.*;
+import static com.compendium.core.CoreUtilities.*;
 
 /**
  *  The DBSearch class serves as the interface layer to make queries and searches into the
@@ -59,47 +72,6 @@ public class DBSearch {
 
 	/** String to represent match condition 'all' */
 	public final static int MATCH_ALL = 1 ;
-
-
-	/**
-	 * This String is an SQL stub for building a statement to return
-	 * the node data from the Node table, under the later given conditions.
-	 */
-	public final static String SEARCH_ALLVIEWS_QUERY =
-		"Select NodeID, NodeType, ExtendedNodeType, OriginalID, Author, CreationDate," +
-		"ModificationDate, Label, Detail, LastModAuthor " +
-		"FROM Node " +
-		"WHERE ";
-
-	/**
-	 * This String is an SQL stub for building a statement to return
-	 * the node data from the Node table joined with the Code table, under the later given conditions.
-	 */
-	public final static String SEARCH_ALLVIEWS_AND_CODES_QUERY =
-		"Select Node.NodeID, Node.NodeType, Node.ExtendedNodeType, Node.OriginalID, Node.Author, Node.CreationDate," +
-		"Node.ModificationDate, Node.Label, Node.Detail, LastModAuthor " +
-		"FROM Node, NodeCode, Code " +
-		"WHERE NodeCode.NodeID = Node.NodeID AND " +
-		"NodeCode.CodeID = Code.CodeID ";
-
-	/** This search query returns the node summaries in the current given view. */
-	public final static String SEARCH_CURRENTVIEW_QUERY =
-		"Select Node.NodeID, Node.NodeType, Node.ExtendedNodeType, Node.OriginalID, Node.Author, Node.CreationDate," +
-		"Node.ModificationDate, Node.Label, Node.Detail, LastModAuthor " +
-		"FROM ViewNode, Node " +
-		"WHERE ViewNode.NodeID = Node.NodeID AND ViewNode.ViewID = ";
-
-	/**
-	 * This search query returns the node summaries in the current
-	 * given view, when searching on Codes as well as other criteria.
-	 */
-	public final static String SEARCH_CURRENTVIEW_AND_CODES_QUERY =
-		"Select Node.NodeID, Node.NodeType, Node.ExtendedNodeType, Node.OriginalID, Node.Author, Node.CreationDate," +
-		"Node.ModificationDate, Node.Label, Node.Detail, Node.LastModAuthor " +
-		"FROM ViewNode, NodeCode, Node, Code " +
-		"WHERE NodeCode.NodeID = Node.NodeID AND " +
-		"NodeCode.CodeID = Code.CodeID AND " +
-		"ViewNode.NodeID = Node.NodeID AND ViewNode.ViewID = ";
 
 
 	/**
@@ -154,13 +126,14 @@ public class DBSearch {
 		if (con == null)
 			return null;
 
+		System.out.println("170 DBSearch");
 		PreparedStatement pstmt = con.prepareStatement("Select Node.NodeID, Node.NodeType, Node.ExtendedNodeType, Node.OriginalID, Node.Author, Node.CreationDate," +
 										"Node.ModificationDate, Node.Label, Node.Detail, Node.LastModAuthor, " +
 										"ViewNode.XPos, ViewNode.YPos, ViewNode.CreationDate, ViewNode.ModificationDate " +
 										"FROM Node LEFT JOIN ViewNode ON Node.NodeID = ViewNode.NodeID " +
-										"WHERE Node.Label LIKE ('"+sText+"%') AND Node.NodeType = "+nType+
+										"WHERE lower(Node.Label) LIKE ('"+sText.toLowerCase()+"%') AND Node.NodeType = "+nType+
 										" AND ViewNode.ViewID LIKE ('"+sViewID+"')"+
-										" AND Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+											
+										" AND Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 										" AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE);
 
 		ResultSet rs = pstmt.executeQuery();
@@ -208,7 +181,7 @@ public class DBSearch {
 										"FROM Node LEFT JOIN ViewNode ON Node.NodeID = ViewNode.NodeID " +
 										"WHERE Node.Label LIKE ('"+sText+"') AND Node.NodeType = "+nType+
 										" AND ViewNode.ViewID LIKE ('"+sViewID+"')"+
-										" AND Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+										
+										" AND Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 										" AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE);
 
 		ResultSet rs = pstmt.executeQuery();
@@ -296,11 +269,11 @@ public class DBSearch {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
-
+		System.out.println("313 DBSearch");
 		PreparedStatement pstmt = con.prepareStatement("Select NodeID, NodeType, ExtendedNodeType, OriginalID, Author, CreationDate," +
 										"ModificationDate, Label, Detail, LastModAuthor " +
 										"FROM Node " +
-										"WHERE Label LIKE('"+text+"%') AND NodeID NOT IN ('"+sNodeID+"') "+
+										"WHERE lower(Label) LIKE('"+text.toLowerCase()+"%') AND NodeID NOT IN ('"+sNodeID+"') "+
 										"AND NodeType = "+type+
 										" AND Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 										" AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE);
@@ -334,11 +307,11 @@ public class DBSearch {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
-
+		System.out.println("351 DBSearch");
 		PreparedStatement pstmt = con.prepareStatement("Select NodeID, NodeType, ExtendedNodeType, OriginalID, Author, CreationDate," +
 										"ModificationDate, Label, Detail, LastModAuthor  " +
 										"FROM Node " +
-										"WHERE Label LIKE('"+text+"%') AND NodeID NOT IN ('"+sNodeID+"') "+
+										"WHERE lower(Label) LIKE('"+text.toLowerCase()+"%') AND NodeID NOT IN ('"+sNodeID+"') "+
 										" AND Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE);
 
 		ResultSet rs = pstmt.executeQuery();
@@ -361,258 +334,158 @@ public class DBSearch {
 	 *	Searches the node table for nodes that satisfy user query conditions.
 	 *
 	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
-	 *	@param contextCondition three choices -- search only in current view or home window
-	 *	/all views/all views and deleted objects -- refer const string definitions above.
-	 *	@param viewID -- only applicable in case of context choice 'current view or home window' contains the viewID
-	 *	@param vtSelectedNodeTypes, a Vector of the node types to search on.
-	 *	@param vtSelectedAuthors, a Vector of the author names to search on.
-	 *	@param vtSelectedCodes, a Vector of the code id to search on.
-	 *	@param matchCodesCondition -- (1) match any (2) match all codes listed
-	 *	@param vKeywords -- a Vector of the keywords to search on
-	 *	@param matchKeywordCondition -- (1) match any (2) match all keywords listed
-	 *  @param attrib, lists whether to match the keyword on the label, detail, or label and detail fields.
-	 *	@param beforeCreationDate java.util.Date , the creation date to search up to.
-	 *	@param afterCreationDate java.util.Date , the creation date to search from.
-	 *	@param beforeModificationDate java.util.Date , the modification date to search up to.
-	 *	@param afterModificationDate java.util.Date , the modification date to search from.
+	 *  @param SearchParams searchParams, the parameters of the user search.
+	 *  @param String userID, the user id from a session.
 	 *	@return an Enumeration of <code>NodeSummary</code> objects that match the search query.
 	 *	@throws java.sql.SQLException
 	 */
-	public static Enumeration searchAttribute(DBConnection dbcon,
-											  String contextCondition,
-							 String viewID, Vector vtSelectedNodeTypes, Vector vtSelectedAuthors,
-							 Vector vtSelectedCodes, int matchCodesCondition, Vector vKeywords,
-							 int matchKeywordCondition, Vector attrib,
-							 java.util.Date beforeCreationDate, java.util.Date afterCreationDate,
-							 java.util.Date beforeModificationDate,
-							 java.util.Date afterModificationDate, 
-							 String userID) throws SQLException
+	public static Enumeration searchAttribute(
+			DBConnection dbcon, SearchParams params, String userID) throws SQLException
 	{
 
-		Vector vAttribFields = new Vector();
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
 
-		String query = "" ;
-		boolean prevCond = false;
+		String viewId = params.getViewId();
 
 		//-----------------------------------------------------------------------
 		//View
-		if (contextCondition.equals(CONTEXT_SINGLE_VIEW)) {
+		Vector qv = new Vector();
 
-			if (viewID == "") {
+		if (params.getContextCondition().equals(CONTEXT_SINGLE_VIEW))
+		{
+
+			if (viewId.equals(""))
+			{
 				throw new SQLException("invalid view id") ;
 			}
-			else {
-				if (vtSelectedCodes.isEmpty()) {
-					query = SEARCH_CURRENTVIEW_QUERY + "'" + viewID + "'";
-				}
-				else {
-					query = SEARCH_CURRENTVIEW_AND_CODES_QUERY + "'" + viewID + "'";
-				}
-				prevCond = true;
+			else
+			{
+				qv.add("ViewID = '" + viewId + "' ");
 			}
 		}
-		else if (contextCondition.equals(CONTEXT_ALLVIEWS)) {
-			if (vtSelectedCodes.isEmpty()) {
-				query = SEARCH_ALLVIEWS_QUERY;
-			}
-			else {
-				query = SEARCH_ALLVIEWS_AND_CODES_QUERY;
-				prevCond = true;
-			}
-		}
-		else if (contextCondition.equals(CONTEXT_ALLVIEWS_AND_DELETEDOBJECTS)) {
-			if (vtSelectedCodes.isEmpty()) {
-				query = SEARCH_ALLVIEWS_QUERY;
-			}
-			else {
-				query = SEARCH_ALLVIEWS_AND_CODES_QUERY;
-				prevCond = true;
-			}
-		}
-		else if (!contextCondition.equals(CONTEXT_ALLVIEWS_AND_DELETEDOBJECTS)) {
-			throw new SQLException("unknown context condition in search query: searchNodeDetail, for keyword " +
-				" in view " + viewID + "for match condition " + contextCondition ) ;
+
+		String q = "Select distinct n.NodeID as NodeID " +
+					"From ViewNode vn " +
+					"join Node n on vn.NodeID = n.NodeID ";
+
+		if (!params.getSelectedCodes().isEmpty())
+		{
+			q += "join NodeCode nc on nc.NodeID = n.NodeID " +
+					"join Code c on nc.CodeID = c.CodeID ";
 		}
 
 		//------------------------------------------------------------------------
 		// Creation and Modification dates
-		if (beforeCreationDate != null) {
-			Double dDate = new Double(new Long(beforeCreationDate.getTime()).doubleValue());
-			if (prevCond)
-				query = query + " AND ";
-			query = query + "Node.CreationDate < " + dDate.toString();
-			prevCond = true;
+		if (params.getBeforeCreationDate() != null) {
+			qv.add("n.CreationDate < " + doubleValue(params.getBeforeCreationDate()));
 		}
-		if (afterCreationDate != null) {
-			Double dDate = new Double(new Long(afterCreationDate.getTime()).doubleValue());
-			if (prevCond)
-				query = query + " AND ";
-			query = query + "Node.CreationDate > " + dDate.toString();
-			prevCond = true;
+
+		if (params.getAfterCreationDate() != null) {
+			qv.add("n.CreationDate > " + doubleValue(params.getAfterCreationDate()));
 		}
-		if (beforeModificationDate != null) {
-			Double dDate = new Double(new Long(beforeModificationDate.getTime()).doubleValue());
-			if (prevCond)
-				query = query + " AND ";
-			query = query + "Node.ModificationDate < " + dDate.toString();
-			prevCond = true;
+
+		if (params.getBeforeModificationDate() != null) {
+			qv.add("n.ModificationDate < " + doubleValue(params.getBeforeModificationDate()));
 		}
-		if (afterModificationDate != null) {
-			Double dDate = new Double(new Long(afterModificationDate.getTime()).doubleValue());
-			if (prevCond)
-				query = query + " AND ";
-			query = query + "Node.ModificationDate > " + dDate.toString();
-			prevCond = true;
+
+		if (params.getAfterModificationDate() != null) {
+			qv.add("n.ModificationDate > " + doubleValue(params.getAfterModificationDate()));
 		}
 
 		//------------------------------------------------------------------------
 		// Keywords
 		// generate partial query for match condition on attrib
-		if (!vKeywords.isEmpty()) {
-			if (prevCond)
-				query = query + " AND ";
-			if (matchKeywordCondition == MATCH_ALL) {
-				query = query + matchAttrib(attrib, vKeywords, "AND");
+		if (!params.getKeywords().isEmpty()) {
+			if (params.getMatchKeywordCondition() == MATCH_ALL) {
+				qv.add(matchAttrib(dbcon, params, "AND"));
 			}
-			else if (matchKeywordCondition == MATCH_ANY) {
-				query = query + matchAttrib(attrib, vKeywords, "OR");
+			else if (params.getMatchCodesCondition() == MATCH_ANY) {
+				qv.add(matchAttrib(dbcon, params, "OR"));
 			}
 			else {
 				throw new SQLException("unknown match condition for Keywords") ;
 			}
-			prevCond = true;
 		}
 		//------------------------------------------------------------------------
 		// NodeTypes
-		if (!vtSelectedNodeTypes.isEmpty()) {
-			if (prevCond)
-				query = query + " AND ";
-
-			/* comment out by Lin Yang to correct the Node Type match error.
-			Delete after testing.
-			vAttribFields.removeAllElements();
-			vAttribFields.addElement("Node.NodeType");
-			query = query + matchAttrib(vAttribFields, vtSelectedNodeTypes, "OR");*/
-
-			query = query + matchAttrib(vtSelectedNodeTypes);
-			prevCond = true;
+		if (!params.getSelectedNodeTypes().isEmpty()) {
+			qv.add(matchAttrib(params.getSelectedNodeTypes()));
 		}
 		//------------------------------------------------------------------------
 		// Authors
-		if (!vtSelectedAuthors.isEmpty()) {
-			if (prevCond)
-				query = query + " AND ";
-
-			vAttribFields.removeAllElements();
-			vAttribFields.addElement("Node.Author");
-			query = query + matchAttrib(vAttribFields, vtSelectedAuthors, "OR");
-			prevCond = true;
-		}
-
-		//------------------------------------------------------------------------
-		// Codes
-		if (!vtSelectedCodes.isEmpty()) {
-			if (prevCond)
-				query = query + " AND ";
-
-			vAttribFields.removeAllElements();
-			vAttribFields.addElement("Code.Name");
-
-			// THE MATCH ALL CODE DID NOT WORK, THIS IS NOW DEALT WITH LOWER DOWN
-			// AFTER THE FIRST RESULTS SET HAS RETURNED.
-
-			//if (matchCodesCondition == MATCH_ALL) {
-			//	query = query + matchAttrib(vAttribFields, vtSelectedCodes, "AND");
-			//}
-			//else if (matchCodesCondition == MATCH_ANY) {
-				query = query + matchAttrib(vAttribFields, vtSelectedCodes, "OR");
-			//}
-			//else {
-			//	throw new SQLException("unknown match condition for Codes") ;
-			//}
-			prevCond = true;
+		if (!params.getSelectedAuthors().isEmpty()) {
+			qv.add(matchAttrib(dbcon, params, "OR"));
 		}
 
 		// now cover the 'delete' flag consideration
 		// if context does not cover the deleted objects, exclude them from
-		// the test results
-		if (!(contextCondition.equals(CONTEXT_ALLVIEWS_AND_DELETEDOBJECTS))) {
-			if (prevCond)
-				query = query + " AND ";
-
-			if (contextCondition.equals(CONTEXT_SINGLE_VIEW)) {
-				query = query + "( Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
-				" AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+ ") ";				
-			} else {
-				query = query + "( Node.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+") ";
+		// the test results - limit here to only active objects.
+		if (!(params.getContextCondition().equals(CONTEXT_ALLVIEWS_AND_DELETEDOBJECTS))) {
+			if (params.getContextCondition().equals(CONTEXT_SINGLE_VIEW))
+			{
+				qv.add("( n.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+				" AND vn.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+ ") ");
+			} else
+			{
+				qv.add("( n.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+") ");
 			}
 		}
 
-		System.out.println("query = "+query);
-
-		Statement statement = con.createStatement() ;
-		ResultSet rs = statement.executeQuery(query) ;
-
-		Vector vtNodes = new Vector(51);
-		NodeSummary node = null;
-
-		if (rs != null) {
-			Vector vtTempNodes = new Vector(51);
-			Hashtable htTempNodes = new Hashtable(51);
-
-			while (rs.next()) {				
-				String	sId			= rs.getString(1) ;
-				if (!htTempNodes.containsKey(sId)) {
-					htTempNodes.put(sId, sId);
-					node = DBNode.processNode(dbcon, rs, userID);
-					vtTempNodes.addElement(node);
+		if (!params.getSelectedCodes().isEmpty())
+		{
+			String q2 = "c.Name IN (";
+			for (int i=0 ;i<params.getSelectedCodes().size();i++)
+			{
+				Code code = (Code)params.getSelectedCodes().elementAt(i);
+				if (i==0)
+				{
+					q2 += " '"+code.getName()+"'";
+				}
+				else
+				{
+					q2 += ", '"+code.getName()+"'";
 				}
 			}
-			statement.close() ;
+			q2 += ")";
+			qv.add(q2);
+		}
 
-			if (matchCodesCondition == MATCH_ALL) {
+		String final_query = q;
 
-				String query2 = "SELECT Count(NodeCode.NodeID) FROM Code, NodeCode WHERE NodeCode.CodeID=Code.CodeID and Code.Name IN (";
-				int codecount = vtSelectedCodes.size();
-				for (int i=0 ;i<codecount;i++) {
-					Code code = (Code)vtSelectedCodes.elementAt(i);
-	 				if (i==0)
-						query2 = query2 + " '"+code.getName()+"'";
-					else
-						query2 = query2 + ", '"+code.getName()+"'";
-				}
-				query2 += ")";
-
-				String finalQuery = "";
-				NodeSummary node2 = null;
-				int jcount = vtTempNodes.size();
-				for (int j=0; j< jcount; j++) {
-					node2 = (NodeSummary)vtTempNodes.elementAt(j);
-					finalQuery = query2 + " AND NodeCode.NodeID='"+node2.getId()+"'";
-					//System.out.println("finalQuery = "+finalQuery);
-					Statement statement2 = con.createStatement();
-					ResultSet rs2 = statement2.executeQuery(finalQuery);
-					if (rs2 != null) {
-						while (rs2.next()) {
-							int idcount = rs2.getInt(1);
-							//System.out.println("idcount = "+idcount);
-
-							if (idcount == codecount)
-								vtNodes.addElement(node2);
-						}
-					}
-					statement2.close();
-				}
+		if (qv.size() > 0)
+		{
+			//remove for condition when both label and detail are de-selected
+			for (int i=0; i<qv.size(); i++)
+			{
+				if (qv.get(i).equals("()"))
+					qv.remove(i);
 			}
-			else {
-				vtNodes = vtTempNodes;
+
+			final_query += " WHERE " + qv.get(0);
+			for (int i=1; i<qv.size(); i++)
+			{
+				final_query += " AND " + qv.get(i);
 			}
 		}
 
-		return (Enumeration)vtNodes.elements();
+		System.out.println("644 DBSearch new query is " + final_query);
+
+		Statement	statement = con.createStatement() ;
+		ResultSet	rs = statement.executeQuery(final_query) ;
+
+		Vector vtn = new Vector();
+		while (rs.next())
+		{
+			long start_time = System.currentTimeMillis();
+			vtn.addElement(DBNode.processNode(dbcon, rs.getString("NodeID"), userID));
+			long end_time = System.currentTimeMillis();
+			System.out.println("476 DBSearch entered resultset iterator " + (end_time - start_time) + " msec.");
+
+		}
+
+		return (Enumeration)vtn.elements();
 	}
 
 
@@ -625,79 +498,112 @@ public class DBSearch {
 	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
 	 *  @param attrib, a list of fields to search on.
 	 *	@param vKeywords, a Vector of the keywords to search on.
-	 *  @param sConjunction, whether to perfom and 'AND' or 'OR' search on those fields.
+	 *  @param searchParams, an Object with search params like conjunction, etc...
 	 * 	@param String, the partial SQL string to search on for the given parameters.
 	 */
-	private static String matchAttrib(Vector vAttrib, Vector vKeywords, String sConjunction) {
+	private static String matchAttrib(DBConnection dbcon, SearchParams searchParams, String conjunction) {
 
-		boolean firstAttrib = true;
-		boolean firstKeyword = true;
-		Enumeration attrib = vAttrib.elements();
+		System.out.println("628 DBSearch entered matchAttrib");
 
-		String partialQuery = " ( ";
+		Enumeration attributes = searchParams.getAttrib().elements();
+		//while(attributes.hasMoreElements())
+		//	System.out.println("644 DBSearch attributes " + attributes.nextElement());
 
-		if ((attrib.hasMoreElements() == false)||((vKeywords.elements()).hasMoreElements() == false)) {
-			return null ;
-		}
+		Enumeration keywords = searchParams.getKeywords().elements();
+		//while(keywords.hasMoreElements())
+		//	System.out.println("647 DBSearch keywords " + keywords.nextElement());
 
-		do {
-			String nextAttrib = (String) attrib.nextElement();
-			if (firstAttrib) {
-				partialQuery = partialQuery + " ( " + nextAttrib + " Like " ;
-				firstAttrib = false;
-			}
-			else {
-				partialQuery = partialQuery + " " + "OR" + " ( " + nextAttrib + " Like " ;
-			}
+		Enumeration authors = searchParams.getSelectedAuthors().elements();
+		//while(authors.hasMoreElements())
+		//	System.out.println("651 DBSearch authors " + authors.nextElement());
 
-			firstKeyword = true;
-			Enumeration keywords = vKeywords.elements();
-			do {
-				Object nextKeyword = (Object)keywords.nextElement() ;
-				String sNextKeyword = "";
+
+		System.out.println("636 DBSearch attributes " + attributes + " hasMoreElements " + attributes.hasMoreElements());
+		System.out.println("637 DBSearch keywords " + keywords + " hasMoreElements " + keywords.hasMoreElements());
+		System.out.println("637 DBSearch authors " + authors + " hasMoreElements " + authors.hasMoreElements());
+
+//		if (!attributes.hasMoreElements() || !keywords.hasMoreElements())
+//		{
+//			System.out.println("637 DBSearch exiting matchAttrib returning null");
+//			return null;
+//		}
+
+		Vector full_list = searchParams.getKeywords();
+		full_list.addAll(searchParams.getSelectedAuthors());
+
+		// attach the authors to the end of keywords?  or make a new vector of both?
+
+		List<String> attrClauses = new ArrayList<String>();
+		while (attributes.hasMoreElements()) {
+			String attrib = (String) attributes.nextElement();
+			System.out.println("655 attrib is " + attrib);
+			List<String> keywordClauses = new ArrayList<String>();
+			//keywords = searchParams.getKeywords().elements();
+			keywords = full_list.elements();
+			while (keywords.hasMoreElements()) {
+				//attrib = "Label";
+				Object keyword = keywords.nextElement() ;
+				String keywordString = "";
 				boolean isCode = false;
 				boolean isAuthor = false;
 
 				//get string for UserProfiles
-				if (nextKeyword.getClass() == UserProfile.class) {
+				if (keyword instanceof UserProfile) {
 					isAuthor = true;
-					sNextKeyword = ((UserProfile) nextKeyword).getUserName();
-				}
-				else if (nextKeyword.getClass() == Code.class) {
+					keywordString = ((UserProfile) keyword).getUserName();
+					System.out.println("668 DBSearch java UserProfile " + keywordString);
+					keywordString = CoreUtilities.cleanSQLText(keywordString, APP_PROPERTIES.getDatabaseType());	// Solves SQL err when searching for names like O'Toole
+					attrib = "n.Author";
+				} else if (keyword.getClass() == Code.class) {
 					isCode = true;
-					sNextKeyword = ((Code) nextKeyword).getName();
-				}
-				else {
-					sNextKeyword = (String) nextKeyword;
+					keywordString = ((Code) keyword).getName();
+					System.out.println("673 DBSearch java Class " + keywordString);
+				} else {
+					keywordString = (String) keyword;
+					System.out.println("676 DBSearch java 'else' " + keywordString);
 				}
 
-				if (firstKeyword) {
-					if (isCode || isAuthor) {
-						partialQuery = partialQuery + "'" + sNextKeyword + "'";
+				//String collate = dbcon.isMySql() ? "COLLATE latin1_general_cs" : "";
+				String collate = "";
+				String keywordClause;
+				if (searchParams.isMatchWholeWords()) {
+					if (dbcon.isMySql()) {
+						keywordClause = " lower(" + attrib + ") RLIKE " + "'[[:<:]]" + keywordString.toLowerCase() + "[[:>:]]' " + collate;
+					} else if (dbcon.isDerby()) {
+						keywordClause = " RLIKE('\\b" + keywordString.toLowerCase() + "\\b', lower(" + attrib + ")) = 1 ";
+					} else {
+						throw new RuntimeException("The underlying database type is not supported.");
 					}
-					else {
-						partialQuery = partialQuery + "'%" + sNextKeyword + "%'";
-					}
-					firstKeyword = false;
+				} else {
+					System.out.println("690 DBSearch not match whole words");
+					String likePattern = (isCode || isAuthor ? "'" + keywordString.toLowerCase() + "' " : "lower('%" + keywordString + "%') ");
+					keywordClause = " lower(" + attrib + ") Like " + likePattern + collate;
 				}
-				else {
-					if (isCode || isAuthor) {
-						partialQuery = partialQuery + " " + sConjunction + " " + nextAttrib + " Like " + "'" + sNextKeyword + "'" ;
-					}
-					else {
-						partialQuery = partialQuery + " " + sConjunction + " " + nextAttrib + " Like " + "'%" + sNextKeyword + "%'" ;
-					}
-				}
+				keywordClauses.add(keywordClause);
 			}
-
-			while (keywords.hasMoreElements());
-			partialQuery = partialQuery + " ) ";
+			System.out.println("700 DBSearch attrClauses is " + attrClauses);
+			attrClauses.add("(" + CoreUtilities.join(keywordClauses, " " + conjunction + " ") + ")");
+			System.out.println("702 DBSearch attrClauses is " + attrClauses);
 		}
-		while (attrib.hasMoreElements());
 
-		partialQuery = partialQuery + " ) ";
-		return partialQuery;
+		System.out.println("678 DBSearch exiting matchAttrib clause is " + "(" + CoreUtilities.join(attrClauses, " OR ")+ ")");
+
+		return "(" + CoreUtilities.join(attrClauses, " OR ")+ ")";
 	}
+
+	/**
+	 * This methods tests the text for the regex regular expression.
+	 * The method returns 1 if there is atleast one match or 0 otherwise.
+	 * <p>
+	 * This method is used define RLIKE function for Derby database.
+	 *
+	 * @param regex The regular expression.
+	 * @param text  The exemined text.
+	 * @return 1 if text matches with the regex. Othewise 0.
+	 */
+  	public static int rlike(String regex, String text) {
+  		return Pattern.compile(regex).matcher(text).find() ? 1 : 0;
+  	}
 
 	/**
 	 *  Method to help generate a partial query for searching NodeType

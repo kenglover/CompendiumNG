@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.util.*;
@@ -154,7 +153,7 @@ public class ImportImageFolder extends Thread {
 	private void importImages() {
 
 		String sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
-		
+
 		int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "In the following file browser window:\n\n1. locate the folder from which you wish to import images; \n2. then select ANY image and press the 'Open' button.\n  (This will import all the image files in the folder)\n",
 														"Import Image Folder", JOptionPane.OK_CANCEL_OPTION);
 

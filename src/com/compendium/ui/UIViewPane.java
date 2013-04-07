@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.print.*;
 
@@ -152,14 +153,14 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	protected UIViewPopupMenu 		viewPopup 		= null;
 
 	/** The label holding the background layer image.*/
-	private JLabel 			lblBackgroundLabel		= null;
+	private ScalableLabel 			lblBackgroundLabel		= null;
 
 	/** The original title of the map.*/
 	private String 			sTitle 					= "";
 
 	/** The user name of the current user */
 	private String 			sAuthor 				= "";
-	
+
 	/**
 	 * Constructor. Creates and initializes a new instance of UIViewPane.
 	 * @param view the view holding the data for this pane to dispaly.
@@ -169,7 +170,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 
 		oViewFrame = viewframe;
 		this.sAuthor = viewframe.getCurrentAuthor();
-		
+
 		if (oViewFrame != null) {
 			sTitle = oViewFrame.getTitle();
 		}
@@ -190,7 +191,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 
 		updateUI();
 	}
-	
+
 	/**
 	 * Return the current user's author name.
 	 * @return the current user's author name.
@@ -198,7 +199,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	public String getCurrentAuthor() {
 		return sAuthor;
 	}
-	
+
 	/**
      * Set the current zoom scale for this view pane.
  	 * @param zoom, the current zoom scale for this view pane.
@@ -317,7 +318,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 				if (source instanceof DraggableStencilIcon) {
 					DraggableStencilIcon stencil = (DraggableStencilIcon)source;
 					createNodeFromStencil(stencil, nX, nY);
-				} 
+				}
 			}
             else if (tr.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
 
@@ -339,7 +340,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 							createNodes(pane, (File) iterator.next(), nX, nY);
 							nY = +80;
 						}
-												
+
 						/*
 						int nType = ICoreConstants.REFERENCE;
 						String fileName = "";
@@ -425,7 +426,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 								}
 							}
 						}*/
-						
+
 						evt.getDropTargetContext().dropComplete(true);
 					}
 				};
@@ -463,7 +464,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 
 
 						boolean bdragdropKDE = false;
-						if (ProjectCompendium.isLinux) { 
+						if (ProjectCompendium.isLinux) {
 							if (s.startsWith("www.") || s.startsWith("http://")
 									|| s.startsWith("https://")) {
 								UINode node = oViewPaneUI.addNewNode(
@@ -481,13 +482,13 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 							} else {
 								final java.util.List fileList = new LinkedList();
 								if (s.startsWith("file://")) {
-									// remove 'file://' from file path								
+									// remove 'file://' from file path
 									String[] liste = s.split("file://");
 
 									for (int i = 1; i < liste.length; i++) {
 										// remove 'file://' from file path
 										String filename = new String(liste[i]
-												.replaceFirst("\n", "")); 
+												.replaceFirst("\n", ""));
 										File file = new File(filename);
 										fileList.add(file);
 									}
@@ -500,14 +501,14 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 												.next(), nX, nY);
 										nY = +80;
 									}
-									// drop object is not a file but e.g. text									
-									bdragdropKDE = true; 
+									// drop object is not a file but e.g. text
+									bdragdropKDE = true;
 								} else {
 									bdragdropKDE = false;
 								}
 							}
 						}
-						
+
 						try {
 							int nType = new Integer(s).intValue();
 							oViewPaneUI.addNewNode(nType, nX, nY);
@@ -521,10 +522,10 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 								String fileName = newFile.getName();
 								fileName = fileName.toLowerCase();
 
-								String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);						
+								String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);
 								UserProfile oUser = ProjectCompendium.APP.getModel().getUserProfile();
 								String sUserDir = CoreUtilities.cleanFileName(oUser.getUserName())+"_"+oUser.getId();
-								String sFullPath = "Linked Files"+ProjectCompendium.sFS+sDatabaseName+ProjectCompendium.sFS+sUserDir;			
+								String sFullPath = "Linked Files"+ProjectCompendium.sFS+sDatabaseName+ProjectCompendium.sFS+sUserDir;
 
 								File directory = new File(sFullPath);
 								if (!directory.isDirectory()) {
@@ -581,9 +582,9 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 								evt.getDropTargetContext().dropComplete(true);
 							}
 							else {
-								if (!bdragdropKDE) { 
+								if (!bdragdropKDE) {
 									UIDropSelectionDialog dropDialog = new UIDropSelectionDialog(ProjectCompendium.APP, pane, s, nX, nY);
-									if (FormatProperties.dndNoTextChoice) {
+									if (APP_PROPERTIES.isDndNoTextChoice()) {
 										dropDialog.processAsPlain();
 										dropDialog.onCancel();
 									}
@@ -663,7 +664,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		String sImage = stencil.getImage();
 		String sBackgroundImage = stencil.getBackgroundImage();
 		String sTemplate = stencil.getTemplate();
-		
+
 		String sLabel = stencil.getLabel();
 		int nType = stencil.getNodeType();
 		Vector vtTags = stencil.getTags();
@@ -716,7 +717,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		}
 
 		if (node.getNode() instanceof View) {
-			View view  = (View)node.getNode();			
+			View view  = (View)node.getNode();
 			if (sBackgroundImage != null && !sBackgroundImage.equals("")) {
 				try {
 					view.setBackground(sBackgroundImage);
@@ -725,22 +726,22 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 				catch(Exception ex) {
 					System.out.println("error in UIViewPane.createNodeFromStencil) \n\n"+ex.getMessage());
 				}
-			} 
-			if (sTemplate != null && !sTemplate.equals("")) {				
+			}
+			if (sTemplate != null && !sTemplate.equals("")) {
 				UIMapViewFrame mapFrame = null;
 				try {
-					view.initializeMembers();					
+					view.initializeMembers();
 					mapFrame = new UIMapViewFrame(view, view.getLabel());
 				}
 				catch(Exception ex) {
 					ex.printStackTrace();
-				}				
+				}
 				if (mapFrame != null) {
 					ProjectCompendium.APP.onTemplateImport(sTemplate, mapFrame.getViewPane());
 				}
-			}		
-		}	
-		
+			}
+		}
+
 		node.getUI().refreshBounds();
 	}
 
@@ -754,7 +755,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	public void createNodes(UIViewPane pane, File file, int nX, int nY) {
 
 		UINode node;
-		if (file.isDirectory()) {			
+		if (file.isDirectory()) {
 			int oneLevelChoice = JOptionPane.showConfirmDialog(
 					ProjectCompendium.APP,
 					"Create a Reference to the directory?\nSelect 'No' to create a Map " +
@@ -770,7 +771,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 				node.getUI().refreshBounds();
 				return;
 			} else if (oneLevelChoice == JOptionPane.CANCEL_OPTION) return; //do nothing
-						
+
 
 			node = oViewPaneUI.addNewNode(ICoreConstants.MAPVIEW, nX, nY);
 			node.setText(file.getName());
@@ -783,9 +784,9 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 			View view = (View) node.getNode();
 			boolean add_recursively = false;
 			boolean alreadyAsked = false;
-			if (FormatProperties.dndAddDirRecursively) {
+			if (APP_PROPERTIES.isDndAddDirRecursively()) {
 				add_recursively = true;
-				alreadyAsked = true;				
+				alreadyAsked = true;
 			}
 			for (int i = 0; i < files.length; i++) {
 				if (files[i].isDirectory() && !alreadyAsked) {
@@ -844,16 +845,16 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	 * @param recursive whether to traverse the directory structure recrusvely creating maps.
 	 */
 	protected void createSingleNode(View view, File file, int nX, int nY, boolean recursive) {
-		 
+
 		if (file.isDirectory()) {
 			try {
 				int nType;
 				if (recursive) {
 					nType=ICoreConstants.MAPVIEW;
-				} else { 
+				} else {
 					nType=ICoreConstants.REFERENCE;
 				}
-				
+
 				NodePosition nodePos = view.addMemberNode(nType, "", "", sAuthor, file.getName(), "", nX, nY);
 				nodePos.getNode().setSource(file.getPath(), "", sAuthor);
 				nY += 80;
@@ -869,7 +870,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 				for (int i = 0; i < files.length; i++) {
 					createSingleNode(view, files[i], nX, nY, recursive);
 					nY += 80;
-				}				
+				}
 			}
 
 		} else {
@@ -886,7 +887,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 			}
 		}
 	}
-	
+
 	/////////////////////////////////////////////
 
 	/**
@@ -1015,7 +1016,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	 * @param realY the starting y
 	 * @return the final location for the panel
 	 */private Point calculateLocation(JPanel pop, int realX, int realY) {
-		
+
 		Rectangle rect = getViewFrame().getViewport().getViewRect();
 		int screenWidth = rect.width;
 		int screenHeight = rect.height;
@@ -1037,10 +1038,10 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		if (realX+offsetX < rect.x) {
 			finalX = rect.x;
 		}
-		
+
 		return new Point(finalX, realY+offsetY);
 	}
-	
+
 	/**
 	 * Show tags (codes) rollover popup for the given node.
 	 * @param node com.compendium.core.datamodel.NodeSummary, the node to show the tags for.
@@ -1055,7 +1056,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 			int realY = nY+hintOffset;
 
 			UIHintNodeCodePanel pop = new UIHintNodeCodePanel(node, realX, realY);
-			Point newLoc= calculateLocation(pop, realX, realY);				
+			Point newLoc= calculateLocation(pop, realX, realY);
 			pop.setLocation(newLoc.x, newLoc.y);
 
 			add(pop, HINT_LAYER);
@@ -1091,12 +1092,13 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 
 		if (!viewsPopups.containsKey(node.getId())) {
 
+			hideViews();
 			int realX = nX+hintOffset;
 			int realY = nY+hintOffset;
 
 			UIHintNodeViewsPanel pop = new UIHintNodeViewsPanel(node, realX, realY);
 
-			Point newLoc= calculateLocation(pop, realX, realY);				
+			Point newLoc= calculateLocation(pop, realX, realY);
 			pop.setLocation(newLoc.x, newLoc.y);
 
 			add(pop, HINT_LAYER);
@@ -1131,13 +1133,13 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	public void showDetail(NodeSummary node, int nX, int nY) {
 
 		if (!detailPopups.containsKey(node.getId())) {
-			
+
 			int realX = nX+hintOffset;
 			int realY = nY+hintOffset;
-				
+
 			UIHintNodeDetailPanel pop = new UIHintNodeDetailPanel(node, realX, realY);
 
-			Point newLoc= calculateLocation(pop, realX, realY);				
+			Point newLoc= calculateLocation(pop, realX, realY);
 			pop.setLocation(newLoc.x, newLoc.y);
 
 			add(pop, HINT_LAYER);
@@ -1347,7 +1349,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		invalidate();
 		repaint();
 	}
-	
+
 	/**
 	 * Refresh search label to redraw fonts.
 	 */
@@ -1357,7 +1359,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 			UIHintNodeLabelPanel pop = (UIHintNodeLabelPanel)e.nextElement();
 			pop.refresh();
 		}
-	}	
+	}
 
 	/**
 	 * Return the scribble pad.
@@ -1477,7 +1479,8 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		if (lblBackgroundLabel != null)
 			removeBackground();
 
-		lblBackgroundLabel = new JLabel();
+		lblBackgroundLabel = new ScalableLabel(); 
+		lblBackgroundLabel.setZoom(getScale());
 		ImageIcon oIcon	= UIImages.createImageIcon(sImagePath);
 		lblBackgroundLabel.setIcon(oIcon);
 		lblBackgroundLabel.setLocation(0,0);
@@ -1749,17 +1752,17 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 
 			vtNodeSelected.removeAllElements();
 			addNode(node);
-			
+
 			ProjectCompendium.APP.setNodeOrLinkSelected(true);
-			ProjectCompendium.APP.setNodeSelected(true);			
+			ProjectCompendium.APP.setNodeSelected(true);
 		}
 
 		if(mode == ICoreConstants.MULTISELECT) {
 			oNode = node;
-			addNode(node);			
+			addNode(node);
 
 			ProjectCompendium.APP.setNodeOrLinkSelected(true);
-			ProjectCompendium.APP.setNodeSelected(true);			
+			ProjectCompendium.APP.setNodeSelected(true);
 		}
 
 		if(mode == ICoreConstants.DESELECTALL) {
@@ -1783,7 +1786,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 				}
 			}
 			vtNodeSelected.removeAllElements();
-			ProjectCompendium.APP.setNodeSelected(false);			
+			ProjectCompendium.APP.setNodeSelected(false);
 		}
 	}
 
@@ -1962,11 +1965,25 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		vtLinkSelected.removeAllElements();
 	}
 
+	private static int showConfirmDeleteDialog(String label, String author) {
+	    Object[] options = {"Yes", "No", "Yes to All", "No to All"};
+        return JOptionPane.showOptionDialog(
+            ProjectCompendium.APP, "\"" + label + "\" node belongs to " + author + ". Are you sure you want to delete it?",
+            UIManager.getString("OptionPane.titleText"),
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[1]);
+    }
+
 	/**
 	 * Delete selected nodes and links in the view.
 	 * @param edit, the PCEdit object to add the deleted object to for undo/redo purposes.
 	 */
 	public void deleteSelectedNodesAndLinks(PCEdit edit) {
+
+		boolean isAdmin = ProjectCompendium.APP.getModel().getUserProfile().isAdministrator();
 		Hashtable links = new Hashtable(51);
 
 		// delete the NODES selected
@@ -1975,11 +1992,51 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		String sHomeViewID = ProjectCompendium.APP.getHomeView().getId();
 		String sInBoxID = ProjectCompendium.APP.getInBoxID();
 		IModel model = ProjectCompendium.APP.getModel();
+		boolean deleteAll = false;
 		for(Enumeration e = getSelectedNodes(); e.hasMoreElements(); i++) {
 
 			UINode uinode = (UINode)e.nextElement();
 			String sNodeID = uinode.getNode().getId();
-			if (uinode.getType() != ICoreConstants.TRASHBIN 
+			String author = uinode.getNode().getAuthor();
+
+			//TODO: Work on locking functions has been frozen. Finish or delete.
+//			int iNodeLockID = uinode.getNode().getLockID();
+
+			//2010-11-04 MS "rip out node locking"-JC
+/*			if (! author.equals(sAuthor) && ! isAdmin) {
+
+				JOptionPane.showMessageDialog(ProjectCompendium.APP, "Sorry, you are not authorized to make that change. " +
+						"\nPlease contact " + author + " or an Administrator to delete that node.");
+
+				return;
+
+
+			} else */
+
+			if (! author.equals(sAuthor)) //&& isAdmin ) {
+			{
+				int retval = deleteAll ?
+			        0 : showConfirmDeleteDialog(uinode.getNode().getLabel(), author);
+
+				// 3 = no to all, -1 = cancel (??)
+                if (retval == 3 || retval == -1) {
+                    //break;
+                    return;
+                } else if (retval == 2) {
+                    deleteAll = true;
+                } else if (retval == 1) {
+                    continue;
+                }
+			}
+		    //TODO: Work on locking functions has been frozen. Finish or delete.
+//			} else if (0 != iNodeLockID) {
+//
+//				ProjectCompendium.APP.displayError("Sorry, that node is locked. Please unlock it before continuing.");
+//				return;
+//
+			//}
+
+			if (uinode.getType() != ICoreConstants.TRASHBIN
 					&& !sNodeID.equals(sInBoxID)) {
 
 				NodeUI nodeui = uinode.getUI();
@@ -2003,7 +2060,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 					}
 					nodeui.removeFromUI(uinode);
 				} else {
-					
+
 					// IF NODE ALREADY DELETED, DON'T TRY AND DELETE CHILDREN AGAIN
 					// NEED TO CATCH NEVERENDING LOOP WHEN NODE CONTAINS ITSELF SOMEWHERE IN CHILDREN TREE
 					boolean wasDeleted = false;
@@ -2013,20 +2070,20 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 						}
 					}
 					catch (SQLException ex) {
-						// WHAT TO DO?
+						ex.printStackTrace();
 					}
-					boolean lastInstance = nodeui.removeFromDatamodel(uinode);
-					//if (lastInstance || wasDeleted) {
-						// StoreLinks being deleted					
+					boolean deleted = nodeui.removeFromDatamodel(uinode);
+					//if (deleted || wasDeleted) {
+						// StoreLinks being deleted
 						for(Enumeration es = uinode.getLinks();es.hasMoreElements();) {
 							UILink uilink = (UILink)es.nextElement();
 							links.put(uilink.getLink().getId(), uilink);
 						}
-						nodeui.deleteLinksforNode(uinode, edit);	
+						nodeui.deleteLinksforNode(uinode, edit);
 						edit.AddNodeToEdit(uinode);
 
 						// IF NODE IS A VIEW AND IF NODE WAS ACTUALLY LAST INSTANCE AND HAS NOT ALREADY BEEN DELETED, DELETE CHILDREN
-						if (uinode.getNode() instanceof View && lastInstance && !wasDeleted) {
+						if (uinode.getNode() instanceof View && deleted && !wasDeleted) {
 							View childView = (View)uinode.getNode();
 							UIViewFrame childViewFrame = ProjectCompendium.APP.getViewFrame(childView, childView.getLabel());
 							if (childViewFrame instanceof UIMapViewFrame) {
@@ -2035,8 +2092,8 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 								((UIListViewFrame)childViewFrame).deleteChildren(childView);
 							}
 							// delete from ProjectCompendium.APP opened frame list.
-							ProjectCompendium.APP.removeViewFromHistory(childView);		
-						}	
+							ProjectCompendium.APP.removeViewFromHistory(childView);
+						}
 						// NEED TO CALL THIS TO REMOVE NODE
 						nodeui.removeFromUI(uinode);
 					//}
@@ -2064,7 +2121,62 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		repaint();
  	}
 
-	
+	/**
+	 * markSelectionSeen() - Marks all the nodes in the current selection as seen/read - mlb
+	 */
+	public void markSelectionSeen() {
+
+	  	int i = 0;
+
+		for(Enumeration e = getSelectedNodes(); e.hasMoreElements(); i++) {
+
+			UINode uinode = (UINode)e.nextElement();
+
+			try {
+				uinode.getNode().setState(ICoreConstants.READSTATE);
+			}
+			catch (SQLException ex) {
+				ex.printStackTrace();
+			}
+			catch (ModelSessionException ex1) {
+				ex1.printStackTrace();
+			}
+		}
+//		setSelectedNode(null, ICoreConstants.DESELECTALL);		// mlb: Uncomment this to deselect after performing the action
+//		setSelectedLink(null, ICoreConstants.DESELECTALL);
+
+		repaint();
+		return;
+	}
+
+	/**
+	 * markSelectionUnseen() - Marks all the nodes in the current selection as unseen/unread - mlb
+	 */
+	public void markSelectionUnseen() {
+	  	int i = 0;
+
+		for(Enumeration e = getSelectedNodes(); e.hasMoreElements(); i++) {
+
+			UINode uinode = (UINode)e.nextElement();
+
+			try {
+				uinode.getNode().setState(ICoreConstants.UNREADSTATE);
+			}
+			catch (SQLException ex) {
+				ex.printStackTrace();
+			}
+			catch (ModelSessionException ex1) {
+				ex1.printStackTrace();
+			}
+		}
+//		setSelectedNode(null, ICoreConstants.DESELECTALL);		// mlb: Uncomment this to deselect after performing the action
+//		setSelectedLink(null, ICoreConstants.DESELECTALL);
+
+		repaint();
+		return;
+	}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 	/**
@@ -2102,7 +2214,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		if (c instanceof UINode) {
 			UINode node = (UINode)c;
 			checkScale(node);
-			checkFont(node);			
+			checkFont(node);
 			node.addPropertyChangeListener(this);
 			moveToFront(c);
 		}
@@ -2388,15 +2500,15 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 
 		RepaintManager currentManager = RepaintManager.currentManager(this);
 		currentManager.setDoubleBufferingEnabled(false);
-		
+
 		//paint the page to be printed
         paint(preparePage(g2d, pageFormat, pageIndex, columnNum, viewPaneSize));
 
 		currentManager.setDoubleBufferingEnabled(true);
-       
+
 		return Printable.PAGE_EXISTS;
 	}
-	
+
 	/**
 	 * Prepare page to be printed.
      * It is assumed that the printing area begins at (0, 0) of current UIViewPane.
@@ -2421,8 +2533,8 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
         if(columnNum == 1){
             //move the coordinates vertically to the page to be printed
             g2d.translate(0, -pageIndex * paperHeight);
-            
-            //double scale = pf.getImageableWidth() / viewPaneSize.getWidth();                       
+
+            //double scale = pf.getImageableWidth() / viewPaneSize.getWidth();
             //g2d.scale(scale, scale); //scale to the paper size, could be optional
         }
         else{
@@ -2446,7 +2558,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	public double getScale() {
 		return currentScale;
 	}
-	
+
 	/**
 	 * Scale the nodes and links and their locations in this view.
 	 */
@@ -2455,6 +2567,9 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		for(int i=0;i<array.length;i++) {
 			UINode node = (UINode)array[i];
 			scaleNode(node, currentScale);
+		}
+   	if (lblBackgroundLabel != null){
+			lblBackgroundLabel.setZoom(getScale());
 		}
 	}
 
@@ -2467,17 +2582,17 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	public void scaleNode(UINode node, double scale) {
 
 		NodePosition pos = node.getNodePosition();
-		
+
 		if (scale != 0.0 && scale != 1.0) {
 			node.setScale(scale);
-			
+
 			// SCALE FONT - setFont scales font.
 			node.setFont(node.getFont());
 
 			// SCALE ICON - calls setIcon which scales to scale set in node.
 			node.restoreIcon();
 
-			// SCALE LOCATION - setLocation scales location	
+			// SCALE LOCATION - setLocation scales location
 			node.setLocation(pos.getPos());
 
 			// SCALE LINK ARROW HEAD AND TEXT
@@ -2518,7 +2633,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 			// SCALE FONT - setFont scales font.
 			node.setFont(node.getFont());
 
-			// SCALE ICON - calls setIcon which scales to scale set in node.			
+			// SCALE ICON - calls setIcon which scales to scale set in node.
 			node.restoreIcon();
 			//node.setIcon(icon);
 
@@ -2540,7 +2655,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 	}
 
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To what is stored in the database with current map zoom applied)
 	 */
 	public void onReturnTextToActual() {
@@ -2556,18 +2671,18 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 				dlg.refreshFont();
 			}
 		}
-		
+
 		Component[] links = getComponentsInLayer(UIViewPane.LINK_LAYER.intValue());
 		count = links.length;
 		UILink link = null;
 		for (int i=0; i<count;i++) {
 			link = (UILink)links[i];
 			link.setDefaultFont();
-		}		
-		
+		}
+
 		refreshLabels();
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 * (This does not change the stored value in the database)
@@ -2576,57 +2691,57 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		Component[] nodes = getComponentsInLayer(UIViewPane.NODE_LAYER.intValue());
 		int count = nodes.length;
 		UINode node = null;
-		UINodeContentDialog dlg = null;		
+		UINodeContentDialog dlg = null;
 		for (int i=0; i<count;i++) {
 			node = (UINode)nodes[i];
 			node.increaseFontSize();
 			dlg = node.getCurrentContentDialog();
 			if (dlg != null) {
 				dlg.refreshFont();
-			}			
+			}
 		}
-		
+
 		Component[] links = getComponentsInLayer(UIViewPane.LINK_LAYER.intValue());
 		count = links.length;
 		UILink link = null;
 		for (int i=0; i<count;i++) {
 			link = (UILink)links[i];
 			link.increaseFontSize();
-		}	
-		
+		}
+
 		refreshLabels();
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 * (This does not change the stored value in the database)
 	 */
 	public void onReduceTextSize() {
-		
+
 		Component[] nodes = getComponentsInLayer(UIViewPane.NODE_LAYER.intValue());
 		int count = nodes.length;
 		UINode node = null;
-		UINodeContentDialog dlg = null;		
+		UINodeContentDialog dlg = null;
 		for (int i=0; i<count;i++) {
 			node = (UINode)nodes[i];
 			node.decreaseFontSize();
 			dlg = node.getCurrentContentDialog();
 			if (dlg != null) {
 				dlg.refreshFont();
-			}			
+			}
 		}
-		
+
 		Component[] links = getComponentsInLayer(UIViewPane.LINK_LAYER.intValue());
 		count = links.length;
 		UILink link = null;
 		for (int i=0; i<count;i++) {
 			link = (UILink)links[i];
 			link.decreaseFontSize();
-		}		
-		
+		}
+
 		refreshLabels();
 	}
-	
+
 //*********************** PROPERTY CHANGE LISTENER *************************/
 
 	/**
@@ -2640,7 +2755,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 		Object source = evt.getSource();
 	    Object oldvalue = evt.getOldValue();
 	    Object newvalue = evt.getNewValue();
-	    
+
 	    if (source instanceof View) {
 		    if (prop.equals(View.LINK_ADDED)) {
 				Link link = (Link)newvalue;
@@ -2702,7 +2817,7 @@ public class UIViewPane extends JLayeredPane implements PropertyChangeListener, 
 										 node));
 				}
 			}
-		}   
+		}
 		else if (source instanceof UINode) {
 		    if (prop.equals(UINode.ROLLOVER_PROPERTY)) {
 				UINode node = (UINode)source;

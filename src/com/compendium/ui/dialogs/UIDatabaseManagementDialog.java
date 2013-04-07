@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -33,15 +34,12 @@ import java.sql.*;
 import java.beans.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
 import javax.swing.border.*;
 
 import com.compendium.*;
 import com.compendium.ui.*;
-import com.compendium.io.*;
 
 import com.compendium.core.*;
-import com.compendium.core.datamodel.*;
 import com.compendium.core.db.management.*;
 
 /**
@@ -413,23 +411,23 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 									dlg.setVisible(false);
 									dlg.dispose();
 
-									UserProfile oUser = databaseAdmin.isAdministrator(sDatabaseName, login, password);
-									if (databaseAdmin != null && oUser != null) {
-										
+									if (databaseAdmin != null
+										&& databaseAdmin.isAdministrator(sDatabaseName, login, password)) {
+
 										if (source.equals(pbEdit)) {
 											onEdit(sFriendlyName, sDatabaseName);
 										}
 										else if (source.equals(pbBackup)) {
-											onBackup(sFriendlyName, sDatabaseName, RESUME_NONE, false, oUser);
+											onBackup(sFriendlyName, sDatabaseName, RESUME_NONE, false);
 										}
 										//else if (source.equals(pbBackupZip)) {
 										//	onBackupZip(sFriendlyName, sDatabaseName, RESUME_NONE);
 										//}
 										else if (source.equals(pbRestore)) {
-											onRestore(sFriendlyName, sDatabaseName, oUser);
+											onRestore(sFriendlyName, sDatabaseName);
 										}
 										else if (source.equals(pbDelete)) {
-											onDelete(sFriendlyName, sDatabaseName, oUser);
+											onDelete(sFriendlyName, sDatabaseName);
 										}
 									}
 									else {
@@ -469,6 +467,8 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 			if (!sNewName.equals("") && !sNewName.equals(sFriendlyName)) {
 
 				int count = vtProjects.size();
+				System.out.println("470 UIDatabaseManagementDialog.java project size is " + count);
+				System.out.flush();
 				for (int i=0; i<count; i++) {
 					String next = (String)vtProjects.elementAt(i);
 					if (next.equals(sNewName)) {
@@ -478,18 +478,22 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 				}
 
 				if (!bNameExists) {
+					System.out.println("482 UIDatabaseManagementDialog.java new name does not exist");
+					System.out.flush();
 					databaseAdmin.editFriendlyName(sFriendlyName, sNewName);
 
-					// UPDATE THE DEFAULT DATABASE
+					System.out.println("482 UIDatabaseManagementDialog.java UPDATE THE DEFAULT DATABASE");
+					System.out.flush();
 					String sOldDefault = ProjectCompendium.APP.getDefaultDatabase();
 					if (sOldDefault.equals(sFriendlyName)) {
 						ProjectCompendium.APP.setDefaultDatabase(sNewName);
 					}
 
-					// UPDATE MAIN FRAME DATA AND LOCAL LIST
-					ProjectCompendium.APP.updateProjects();					
-					vtProjects.removeAllElements();					
-					vtProjects = ProjectCompendium.APP.getProjects();					 
+					System.out.println("482 UIDatabaseManagementDialog.java UPDATE MAIN FRAME DATA AND LOCAL LIST");
+					System.out.flush();
+					ProjectCompendium.APP.updateProjects();
+					vtProjects.removeAllElements();
+					vtProjects = ProjectCompendium.APP.getProjects();
 					updateProjectList();
 				}
 				else {
@@ -556,7 +560,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 
 					Thread thread = new Thread("UIDatabaseManagementDialog.actionPerformed-Copy") {
 						public void run() {
-							DBCopyDatabase copy = new DBCopyDatabase(FormatProperties.nDatabaseType, ProjectCompendium.APP.adminDatabase, mysqlname, mysqlpassword, mysqlip);
+							DBCopyDatabase copy = new DBCopyDatabase(APP_PROPERTIES.getDatabaseType(), ProjectCompendium.APP.adminDatabase, mysqlname, mysqlpassword, mysqlip);
 							try {
 								copy.addProgressListener((DBProgressListener)manager);
 								oThread = new ProgressThread("Copying Project..", "Project Copying Completed");
@@ -611,8 +615,8 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 	 * @param int resumeAction (if backup was called from 'Delete' or 'Restore To', action to resume after backup (thread syn issue).
 	 * @param boolean bCloseAfter, should this dialog be closed when the action is complete.
      */
-	public void onBackup(String sFriendlyName, String sDatabaseName, int nResumeAction, boolean bCloseAfter, UserProfile oUser) {
-		oBackupDialog = new UIBackupDialog(ProjectCompendium.APP, this, sFriendlyName, sDatabaseName, nResumeAction, bCloseAfter, oUser);
+	public void onBackup(String sFriendlyName, String sDatabaseName, int nResumeAction, boolean bCloseAfter) {
+		oBackupDialog = new UIBackupDialog(ProjectCompendium.APP, this, sFriendlyName, sDatabaseName, nResumeAction, bCloseAfter);
 		UIUtilities.centerComponent(oBackupDialog, ProjectCompendium.APP);
 		oBackupDialog.setVisible(true);
 	}
@@ -681,7 +685,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 					Thread thread = new Thread("UIDatabaseManagementDialog.actionPerformed-Backup") {
 						public void run() {
 							//System.out.println("About to backup");
-							DBBackupDatabase backup = new DBBackupDatabase(FormatProperties.nDatabaseType, mysqlname, mysqlpassword, mysqlip);
+							DBBackupDatabase backup = new DBBackupDatabase(APP_PROPERTIES.getDatabaseType(), mysqlname, mysqlpassword, mysqlip);
 							try {
 								backup.addProgressListener((DBProgressListener)manager);
 								oThread = new ProgressThread("Backing up Project..", "Project Backup Completed");
@@ -750,9 +754,8 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 	 * @param sDatabaseName, the system assigned name for the selected database project to backup.
 	 * @param int resumeAction (if backup was called from 'Delete' or 'Restore To', action to resume after backup (thread syn issue).
 	 * @param boolean bCloseAfter, should this dialog be closed when the action is complete.
-	 * @param oUser the user currently performing this operation.
 	 */
-	public void onBackupZip(String sFriendlyName, String sDatabaseName, int nResumeAction, boolean bKeepPaths, boolean bCloseAfter, UserProfile oUser) {
+	public void onBackupZip(String sFriendlyName, String sDatabaseName, int nResumeAction, boolean bKeepPaths, boolean bCloseAfter) {
 
 		DBConnection dbcon = ProjectCompendium.APP.getServiceManager().getDatabaseManager().requestConnection(sDatabaseName);
 
@@ -806,15 +809,14 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 					final int fnResumeAction = nResumeAction;
 					final boolean fbKeepPaths = bKeepPaths;
 					final boolean fbCloseAfter = bCloseAfter;
-					final UserProfile foUser = oUser;
 					Thread thread = new Thread("UIDatabaseManagementDialog.actionPerformed-Backup") {
 						public void run() {
-							DBBackupDatabase backup = new DBBackupDatabase(FormatProperties.nDatabaseType, mysqlname, mysqlpassword, mysqlip);
+							DBBackupDatabase backup = new DBBackupDatabase(APP_PROPERTIES.getDatabaseType(), mysqlname, mysqlpassword, mysqlip);
 							try {
 								backup.addProgressListener((DBProgressListener)manager);
 								oThread = new ProgressThread("Backing up Project..", "Project Backup Completed");
 								oThread.start();
-								backup.backupDatabaseToZip(fsDatabaseName, fsFriendlyName, new File(fsFileName), false, fbKeepPaths, foUser);
+								backup.backupDatabaseToZip(fsDatabaseName, fsFriendlyName, new File(fsFileName), false, fbKeepPaths, ProjectCompendium.APP.getModel().getUserProfile());
 								backup.removeProgressListener((DBProgressListener)manager);
 								boolean bNotFound = backup.getNotFound();
 								if (bNotFound) {
@@ -877,15 +879,14 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 	 *
 	 * @param sFriendlyName, the user assigned name for the selected database project to restore over.
 	 * @param sDatabaseName, the system assigned name for the selected database project to restore over.
-	 * @param oUser, the current user performing this operation.
 	 */
-	private void onRestore(String sFriendlyName, String sDatabaseName, UserProfile oUser) {
+	private void onRestore(String sFriendlyName, String sDatabaseName) {
 
    		int answer = JOptionPane.showConfirmDialog(this, "Restoring to '"+sFriendlyName+"' will delete all current data in that project, would you like to backup first?\n", "Warning",
 				JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
 		if (answer == JOptionPane.YES_OPTION) {
-			onBackup(sFriendlyName, sDatabaseName, RESUME_RESTORE, false, oUser);
+			onBackup(sFriendlyName, sDatabaseName, RESUME_RESTORE, false);
 		}
 		else if (answer == JOptionPane.NO_OPTION) {
 			doRestore(sFriendlyName, sDatabaseName, false);
@@ -948,7 +949,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 							final String fsDatabaseName = sDatabaseName;
 							Thread thread = new Thread("UIDatabaseManagementDialog.actionPerformed-Restore") {
 								public void run() {
-									DBRestoreDatabase restore = new DBRestoreDatabase(FormatProperties.nDatabaseType, ProjectCompendium.APP.adminDatabase, mysqlname, mysqlpassword, mysqlip);
+									DBRestoreDatabase restore = new DBRestoreDatabase(APP_PROPERTIES.getDatabaseType(), ProjectCompendium.APP.adminDatabase, mysqlname, mysqlpassword, mysqlip);
 
 									restore.addProgressListener((DBProgressListener)manager);
 									oThread = new ProgressThread("Restoring Project..", "Project Restoration Completed");
@@ -958,7 +959,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 
 									// UPDATE MAIN FRAME DATA AND LOCAL LIST
 									ProjectCompendium.APP.updateProjects();
-									vtProjects.removeAllElements();									
+									vtProjects.removeAllElements();
 									vtProjects = ProjectCompendium.APP.getProjects();
 									updateProjectList();
 								}
@@ -1033,7 +1034,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 									Thread thread = new Thread("UIDatabaseManagementDialog.actionPerformed-RestoreNew") {
 										public void run() {
 											try {
-												DBRestoreDatabase restore = new DBRestoreDatabase(FormatProperties.nDatabaseType, ProjectCompendium.APP.adminDatabase, mysqlname, mysqlpassword, mysqlip);
+												DBRestoreDatabase restore = new DBRestoreDatabase(APP_PROPERTIES.getDatabaseType(), ProjectCompendium.APP.adminDatabase, mysqlname, mysqlpassword, mysqlip);
 
 												restore.addProgressListener((DBProgressListener) manager);
 												oThread = new ProgressThread("Restoring Project..", "Project Restoration Completed");
@@ -1043,7 +1044,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 
 												// UPDATE MAIN FRAME DATA AND LOCAL LIST
 												ProjectCompendium.APP.updateProjects();
-												vtProjects.removeAllElements();												
+												vtProjects.removeAllElements();
 												vtProjects = ProjectCompendium.APP.getProjects();
 												updateProjectList();
 											}
@@ -1090,11 +1091,10 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 	/**
 	 * Check for backup before Delete the selected database.
 	 *
-	 * @param sFriendlyName the user assigned name for the selected database project to delete.
-	 * @param sDatabaseName the system assigned name for the selected database project to delete.
-	 * @param oUser the user currently performing this operation.
+	 * @param sFriendlyName, the user assigned name for the selected database project to delete.
+	 * @param sDatabaseName, the system assigned name for the selected database project to delete.
 	 */
-	private void onDelete(String sFriendlyName, String sDatabaseName, UserProfile oUser) {
+	private void onDelete(String sFriendlyName, String sDatabaseName) {
 
 		// CHECK AGAINST DEFAULT
 		if ((ProjectCompendium.APP.getDefaultDatabase()).equals(sFriendlyName)) {
@@ -1115,7 +1115,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 
 		String fileName = null;
 		if (answer == JOptionPane.YES_OPTION) {
-			onBackup(sFriendlyName, sDatabaseName, RESUME_DELETE, false, oUser);
+			onBackup(sFriendlyName, sDatabaseName, RESUME_DELETE, false);
 		}
 		else if (answer == JOptionPane.NO_OPTION) {
 			doDelete(sFriendlyName, sDatabaseName, false);
@@ -1153,7 +1153,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 
 			// UPDATE MAIN FRAME DATA AND LOCAL LIST
 			ProjectCompendium.APP.updateProjects();
-			vtProjects.removeAllElements();			
+			vtProjects.removeAllElements();
 			vtProjects = ProjectCompendium.APP.getProjects();
 			updateProjectList();
    		}
@@ -1165,7 +1165,7 @@ public class UIDatabaseManagementDialog extends UIDialog implements ActionListen
 	private void updateProjectList() {
 		//htProjectCheck = databaseAdmin.getProjectSchemaStatus();
 		//lstProjects.updateProjectList(vtProjects, htProjectCheck);
-		lstProjects.updateProjectList(vtProjects);		
+		lstProjects.updateProjectList(vtProjects);
 	}
 
 	/**

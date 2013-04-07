@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -34,18 +35,13 @@ import java.awt.datatransfer.*;
 import java.sql.SQLException;
 
 import java.beans.*;
-import java.util.Vector;
 import java.util.*;
 import java.io.*;
 
 import javax.swing.*;
 import javax.help.*;
-import javax.swing.border.*;
-import javax.swing.filechooser.FileSystemView;
 
 import com.compendium.ProjectCompendium;
-import com.compendium.ui.*;
-import com.compendium.ui.edits.*;
 import com.compendium.ui.plaf.NodeUI;
 import com.compendium.ui.popups.*;
 import com.compendium.ui.linkgroups.*;
@@ -111,7 +107,8 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	private String			sText						= "";
 
 	/** The distance for the gap between the node icon and its text.*/
-	private int			nIconTextGap					= 4;
+	private int			nIconDefaultTextGap				= 4;
+	private int			nIconTextGap					= nIconDefaultTextGap;
 
 	/** The current font to use for the node label text.*/
 	protected Font		oFont							= null;
@@ -140,16 +137,16 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	/** The node type of this node.*/
 	private int				oNodeType					= -1;
 
-	/** The current scale factor for this node in its parent view.*/
+    /** The current scale factor for this node in its parent view.*/
 	private double scale 								= 1.0;
 
 	/** A local reference to the name of the current computer platform.*/
 	//private String os 									= "";
 
 	private Date			focusGainedDate				= null;
-	
+
 	private String 			originalLabel				= null;
-	
+
 	/** The user author name of the current user */
 	private String 			sAuthor = "";
 
@@ -161,7 +158,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 */
 	public UINode(NodePosition nodePos, String sAuthor) {
 	    //os = ProjectCompendium.platform.toLowerCase();
-	    
+
 	    dragSource = new DragSource();
 	    dragSource.createDefaultDragGestureRecognizer((Component)this, DnDConstants.ACTION_LINK, this);
 
@@ -174,7 +171,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 
 	    this.setCursor(new Cursor(java.awt.Cursor.HAND_CURSOR));
 	    this.sAuthor = sAuthor;
-	    
+
 	    addFocusListener( new FocusListener() {
 			public void focusGained(FocusEvent e) {
 				focusGainedDate = new Date();
@@ -197,18 +194,39 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 												 oPos.getNode()));
 					}
 				}
-				
+
 				if (oNode == null) {
 					oNode = oPos.getNode();
 				}
-				
+
 				String sSource = oNode.getSource();
-				if (FormatProperties.startUDigCommunications &&
+				if (APP_PROPERTIES.isStartUDigCommunications() &&
 						sSource.startsWith("UDIG") && oNode.getType() == ICoreConstants.MAPVIEW) {
 					String sCurrentLabel = oPos.getNode().getLabel();
 					if (!sCurrentLabel.equals(originalLabel)) {
 						ProjectCompendium.APP.oUDigCommunicationManager.editLabel(sSource+"&&"+sCurrentLabel);
 					}
+				}
+
+				if (ProjectCompendium.APP.getModel() == null)
+					System.out.println("212 UINode.java getModel is null");
+				if (ProjectCompendium.APP.getModel().getUserProfile() == null)
+					System.out.println("214 UINode.java getUserProfile is null");
+				if (ProjectCompendium.APP.getModel().getUserProfile().getUserName() == null)
+					System.out.println("216 UINode.java getUserName is null");
+
+				String sUserName = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
+				try {
+					if (oNode.flushLabel(sUserName)) {
+						NodeUI nodeui = getUI();	// Label length changed, so update node's view position
+						nodeui.flushPosition();
+					}
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+					System.out.println("Error: (UINode.showContentDialog) \n\n"+e1.getMessage());
+				} catch (ModelSessionException e2) {
+					e2.printStackTrace();
+					System.out.println("Error: (UINode.showContentDialog) \n\n"+e2.getMessage());
 				}
 
 			    getUI().resetEditing();
@@ -293,7 +311,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
      * A <code>DragGestureRecognizer</code> has detected
      * a platform-dependent drag initiating gesture and
      * is notifying this listener
-     * in order for it to initiate the action for the user.
+     * in order for it to initiate the action for the .
      * <P>Currently only used to create links on the Mac platform.</p>
      * @param e the <code>DragGestureEvent</code> describing the gesture that has just occurred.
      */
@@ -462,11 +480,11 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	}
 
     /**
-     * Called when the user has modified the drop gesture.
+     * Called when the  has modified the drop gesture.
      * This method is invoked when the state of the input
-     * device(s) that the user is interacting with changes.
+     * device(s) that the  is interacting with changes.
      * Such devices are typically the mouse buttons or keyboard
-     * modifiers that the user is interacting with.
+     * modifiers that the  is interacting with.
 	 * HERE THE METHOD DOES NOTHING.
      *
      * @param e the <code>DragSourceDragEvent</code>
@@ -478,7 +496,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 // TARGET
 
     /**
-     * Called if the user has modified
+     * Called if the  has modified
      * the current drop gesture.
      * <P>HERE DOES NOTHING</P>
      * @param e the <code>DropTargetDragEvent</code>
@@ -761,7 +779,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 */
 	public static ImageIcon getNodeImageSmall(int type) {
 	    ImageIcon img = null;
-	    
+
 	    switch (type) {
 		case ICoreConstants.ISSUE:
 		    img = UIImages.getNodeIcon(IUIConstants.ISSUE_SM_ICON);
@@ -863,16 +881,16 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	public static ImageIcon getReferenceImageSmall(String sRefString) {
 		return UIReferenceNodeManager.getSmallReferenceIcon(sRefString);
 	}
-	
+
 	/**
 	 * Return the small size icon for the given reference string for file types (not images).
 	 * @param sRefString the reference string to get an icon for.
 	 * @return ImageIcon the icon for the given node type.
 	 */
 	public static ImageIcon getReferenceImage(String sRefString) {
-		return UIReferenceNodeManager.getReferenceIcon(sRefString);		
+		return UIReferenceNodeManager.getReferenceIcon(sRefString);
 	}
-	
+
 	/**
 	* Returns the L&F object that renders this component.
 	*
@@ -981,22 +999,12 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	    else if ( nNewType == ICoreConstants.LISTVIEW || nNewType == ICoreConstants.MAPVIEW) {
 			if (nOldType == ICoreConstants.LISTVIEW || nOldType == ICoreConstants.MAPVIEW) {
 				try {
-					if (nOldType == ICoreConstants.MAPVIEW && nNewType == ICoreConstants.LISTVIEW) {
-						int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "WARNING! Any links inside the Map will be deleted.\n\nAre you sure you still want to continue?",
-							      "Change Type - "+oNode.getLabel(), JOptionPane.YES_NO_OPTION);
-						if (response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) {
-							return false;
-						}
-						else {							
-							View view = (View)oNode;
-							view.purgeAllLinks();
-							ProjectCompendium.APP.removeView((View)oNode);
-							oNode.setType(nNewType, sAuthor);
-						}
-					} else {
-						ProjectCompendium.APP.removeView((View)oNode);
-						oNode.setType(nNewType, sAuthor);
+					if (nOldType == ICoreConstants.MAPVIEW) {
+						View view = (View)oNode;
+						view.purgeAllLinks();
 					}
+					ProjectCompendium.APP.removeView((View)oNode);
+				    oNode.setType(nNewType, sAuthor);
 				}
 				catch(Exception io){
 					io.printStackTrace();
@@ -1186,12 +1194,12 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	public int increaseFontSize() {
 		Font font = getFont();
 		int newSize = font.getSize()+1;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);	
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);
 		super.setFont(newFont);
-		getUI().refreshBounds();		
+		getUI().refreshBounds();
 		return newSize;
 	}
-	
+
 	/**
 	 * Decrease the font size displayed by one point.
 	 * This does not change the setting in the database.
@@ -1200,24 +1208,24 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	public int decreaseFontSize() {
 		Font font = getFont();
 		int newSize = font.getSize()-1;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);	
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);
 		super.setFont(newFont);
 	   	getUI().refreshBounds();
 	   	return newSize;
 	}
-	
+
 	/**
 	 * Sets the font used to display the node's text to the given font without scaling
  	 *
 	 * @param size The size to set the font.
 	 */
-	public void setFontSize(int size) {		
+	public void setFontSize(int size) {
 		Font font = getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), size);	
+		Font newFont = new Font(font.getName(), font.getStyle(), size);
 		super.setFont(newFont);
-	   	getUI().refreshBounds();		
+	   	getUI().refreshBounds();
 	}
-		
+
 	/**
 	 * Restore the font to the default settings.
 	 *
@@ -1225,12 +1233,12 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	public void setDefaultFont() {
 		Font labelFont = new Font(oPos.getFontFace(), oPos.getFontStyle(), oPos.getFontSize());
 		setFont(labelFont);
-		
-		if (getUI() != null) {					
+
+		if (getUI() != null) {
 			getUI().refreshBounds();
 		}
 	}
-	
+
 	/**
 	 * Sets the font used to display the node's text.
 	 * Scales if required.
@@ -1238,8 +1246,8 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 * @param font The font to use.
 	 */
 	public void setFont(Font font) {
-		
-		if (scale != 0.0 && scale != 1.0) {	
+
+		if (scale != 0.0 && scale != 1.0) {
 			if (oPos != null) {
 				String sFontFace = oPos.getFontFace();
 				int nFontSize = oPos.getFontSize();
@@ -1247,13 +1255,14 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 				Font font2 = new Font(sFontFace, nFontStyle, nFontSize);
 				Point p1 = UIUtilities.transformPoint(font2.getSize(), font2.getSize(), scale);
 				font = new Font(font2.getName() , font2.getStyle(), p1.x);
+				nIconTextGap = (int)(scale * nIconDefaultTextGap);
 			}
 		}
-		
-		super.setFont(font);				
+
+		super.setFont(font);
 	    repaint(10);
 	}
-		
+
 	/**
 	 * Returns the text string that the node displays.
 	 *
@@ -1278,6 +1287,41 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	    try {
 			if (oNode != null) {
 				oNode.setLabel(text, sAuthor);
+				sText = text;
+				firePropertyChange(TEXT_PROPERTY, oldValue, sText);
+				repaint();
+			}
+	    }
+	    catch(Exception io) {
+			io.printStackTrace();
+			ProjectCompendium.APP.displayError("Error: (UINode.setText) Unable to update label.\n\n"+io.getMessage());
+	    }
+	}
+
+	/**
+	 * Defines the single line of text this component will display.  This method (with the bDefer param)
+	 * is used only by NodeUI.addChartoLabel() - this is a performance mod to speed up typing when
+	 * entering node labels (otherwise, each character typed generated 6 DB interactions). Going this
+	 * route, the DB update for the label is deferred until the node loses focus.
+	 *
+	 * @param text, the new text to display as the node label.
+	 * @param bDefer,
+	 */
+	public void setText(String text, Boolean bDefer) {
+
+	    String oldValue = sText;
+
+	    //TODO: Work on locking functions has been frozen. Finish or delete.
+//	    if (0 != oNode.getLockID()) {
+//
+//			ProjectCompendium.APP.displayError("Sorry, that node is locked. Please unlock it before continuing.");
+//			return;
+//
+//		}
+
+	    try {
+			if (oNode != null) {
+				oNode.setLabelLocal(text);
 				sText = text;
 				firePropertyChange(TEXT_PROPERTY, oldValue, sText);
 				repaint();
@@ -1451,19 +1495,19 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 		//Thread thread = new Thread("UINode.setReferenceIcon") {
 		//	public void run() {
 			    ImageIcon icon = null;
-		
+
 			    if (imageRef != null) {
 					if ( UIImages.isImage(imageRef) ) {
-						ImageIcon originalSizeImage = UIImages.createImageIcon(imageRef); 		
+						ImageIcon originalSizeImage = UIImages.createImageIcon(imageRef);
 						if (originalSizeImage == null) {
 							setIcon(UIImages.get(IUIConstants.BROKEN_IMAGE_ICON));
 							return;
 						}
-						
+
 						Image originalIcon = originalSizeImage.getImage();
 						int originalWidth = originalIcon.getWidth(null);
 						int originalHeight = originalIcon.getHeight(null);
-		
+
 						Dimension specifiedSize = getNode().getImageSize();
 						if (specifiedSize.width == 0 && specifiedSize.height == 0) {
 				    		icon = UIImages.thumbnailIcon(originalSizeImage);
@@ -1483,20 +1527,20 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 							int newHeight = newIcon.getHeight(null);
 				    		if (newWidth < originalWidth || newHeight < originalHeight) {
 								bIsImageScaled = true;
-							}					
+							}
 						}
 					}
 					else {
 					    //FileSystemView fsv = FileSystemView.getFileSystemView();
 				     	//File file = new File(refString);
 				     	//icon = (ImageIcon)fsv.getSystemIcon(file);
-		
+
 					    // IF USING SMALL ICON MODE, LOAD SMALL VERSION
 					    if (oPos.getShowSmallIcon()) {
 					    	icon = getReferenceImageSmall(imageRef);
 					    }
 					    else {
-					    	icon = getReferenceImage(imageRef);			    	
+					    	icon = getReferenceImage(imageRef);
 					    }
 					}
 			    }
@@ -1580,7 +1624,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 			    String refString = oNode.getImage();
 			    if (refString == null || refString.equals(""))
 					refString = oNode.getSource();
-			    
+
 			    if (refString == null || refString.equals("")) {
 			    	setIcon(getNodeImage(type, oPos.getShowSmallIcon()));
 			    } else {
@@ -1821,14 +1865,14 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 * Location must be passed in at the original 100% scale value.
 	 */
 	public void setLocation(Point loc) {
-		
-		if (scale != 0.0 && scale != 1.0) {		
+
+		if (scale != 0.0 && scale != 1.0) {
 			loc = UIUtilities.transformPoint(loc.x, loc.y, scale);
 		}
-		
-		super.setLocation(loc);		
+
+		super.setLocation(loc);
 	}
-	
+
 	/**
 	 * Sets the font used to display the node's text. Fires a PropertyChangeEvent.
  	 *
@@ -1855,11 +1899,11 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 * @return com.compendium.ui.dialogs.UINodeContentDialog, the content dialog for this node.
 	 */
 	public UINodeContentDialog getContentDialog() {
-	    if(getNode().getType() == ICoreConstants.TRASHBIN || 
+	    if(getNode().getType() == ICoreConstants.TRASHBIN ||
 	    		getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 	    	return null;
 	    }
-		
+
 	    if (contentDialog == null)
 			contentDialog = new UINodeContentDialog(ProjectCompendium.APP, oPos.getView(), this, UINodeContentDialog.CONTENTS_TAB);
 
@@ -1897,17 +1941,17 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 * @return com.compendium.ui.dialogs.UINodeContentDialog, the content dialog for this node.
 	 */
 	private UINodeContentDialog showContentDialog(int tab) {
-	    if(getNode().getType() == ICoreConstants.TRASHBIN || 
+	    if(getNode().getType() == ICoreConstants.TRASHBIN ||
 	    		getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 	    	return null;
 	    }
-	    	
+
 		if (contentDialog != null && contentDialog.isVisible())
 			return contentDialog;
 
 		contentDialog = new UINodeContentDialog(ProjectCompendium.APP, oPos.getView(), this, tab);
    		contentDialog.setVisible(true);
-   		//Lakshmi (4/19/06) - if the contents dialog is opened set state as read in NodeUserState DB
+   		//Lakshmi (4/19/06) - if the contents dialog is opened set state as read in NodeState DB
    		int state = this.getNode().getState();
    		if(state != ICoreConstants.READSTATE){
    			try {
@@ -1928,7 +1972,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 * @return com.compendium.ui.popups.UINodePopupMenu, the right-click node menu for this node.
 	 */
 	public UINodePopupMenu getPopupMenu() {
-	    if(getNode().getType() == ICoreConstants.TRASHBIN || 
+	    if(getNode().getType() == ICoreConstants.TRASHBIN ||
 	    		getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 			return null;
 	    }
@@ -1947,7 +1991,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 	 */
 	public UINodePopupMenu showPopupMenu(NodeUI nodeui,  int x, int y) {
 
-	    if(getNode().getType() == ICoreConstants.TRASHBIN || 
+	    if(getNode().getType() == ICoreConstants.TRASHBIN ||
 	    		getNode().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 			return null;
 	    }
@@ -2007,7 +2051,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
    		Object source = evt.getSource();
 	    Object oldvalue = evt.getOldValue();
 	    Object newvalue = evt.getNewValue();
-	    
+
 		if (source instanceof NodePosition) {
 		    if (prop.equals(NodePosition.POSITION_PROPERTY)) {
 				firePropertyChange(NodePosition.POSITION_PROPERTY, oldvalue, newvalue);
@@ -2015,51 +2059,51 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 		    else if (prop.equals(NodePosition.FONTFACE_PROPERTY)) {
 				Font font = getFont();
 				Font newFont = new Font((String)newvalue, font.getStyle(), font.getSize());
-				setFont(newFont);		
+				setFont(newFont);
 		    	getUI().refreshBounds();
-			}	
+			}
 		    else if (prop.equals(NodePosition.FONTSTYLE_PROPERTY)) {
 				Font font = getFont();
-				Font newFont = new Font(font.getName(), ((Integer)newvalue).intValue(), font.getSize());	
-				setFont(newFont);	
+				Font newFont = new Font(font.getName(), ((Integer)newvalue).intValue(), font.getSize());
+				setFont(newFont);
 		    	getUI().refreshBounds();
-			}		    
+			}
 		    else if (prop.equals(NodePosition.FONTSIZE_PROPERTY)) {
 				Font font = getFont();
 				int newsize = ((Integer)newvalue).intValue();
-				Font newFont = new Font(font.getName(), font.getStyle(), newsize);				
-				setFont(newFont);	//scales	
-				
+				Font newFont = new Font(font.getName(), font.getStyle(), newsize);
+				setFont(newFont);	//scales
+
 				int adjustment = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 				font = getFont();
-				Font adjustedFont = new Font(font.getName(), font.getStyle(), font.getSize()+adjustment);	
+				Font adjustedFont = new Font(font.getName(), font.getStyle(), font.getSize()+adjustment);
 				super.setFont(adjustedFont);
-				
-				getUI().refreshBounds();		
-			}	
+
+				getUI().refreshBounds();
+			}
 		    else if (prop.equals(NodePosition.TEXT_FOREGROUND_PROPERTY)) {
 		    	//setForeground(new Color( ((Integer)newvalue).intValue() ));
 		    	getUI().refreshBounds();
-			}		    
+			}
 		    else if (prop.equals(NodePosition.TEXT_BACKGROUND_PROPERTY)) {
 		    	//setBackground(new Color( ((Integer)newvalue).intValue() ));
 		    	getUI().refreshBounds();
-			}		    		    
+			}
 		    else if (prop.equals(NodePosition.TAGS_INDICATOR_PROPERTY)) {
 		    	getUI().refreshBounds();
-			}		    
+			}
 		    else if (prop.equals(NodePosition.TEXT_INDICATOR_PROPERTY)) {
 		    	getUI().refreshBounds();
-			}		    
+			}
 		    else if (prop.equals(NodePosition.TRANS_INDICATOR_PROPERTY)) {
 		    	getUI().refreshBounds();
-			}		    
+			}
 		    else if (prop.equals(NodePosition.WEIGHT_INDICATOR_PROPERTY)) {
 		    	getUI().refreshBounds();
-			}		    
+			}
 		    else if (prop.equals(NodePosition.HIDE_ICON_PROPERTY)) {
 		    	getUI().refreshBounds();
-			}		    
+			}
 		    else if (prop.equals(NodePosition.SMALL_ICON_PROPERTY)) {
 		    	int nType = oNode.getType();
 		    	ImageIcon icon = null;
@@ -2086,10 +2130,10 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 					refreshIcon( icon );
 				}
 				updateLinks();
-			}	
+			}
 		    else if (prop.equals(NodePosition.WRAP_WIDTH_PROPERTY)) {
 		    	getUI().refreshBounds();
-			}		    		    
+			}
 		}
 		else if (source instanceof NodeSummary) {
 
@@ -2153,7 +2197,7 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 				}
 
 				newnode.initialize(model.getSession(), model);
-	
+
 				oPos.setNode(newnode);
     			oNode = newnode;
 				oNodeType = newnode.getType();
@@ -2222,4 +2266,13 @@ public class UINode extends JComponent implements PropertyChangeListener, SwingC
 		htLinks.clear();
 	    htLinks = null;
 	}
+
+	/**
+	 * The accessor for oNodeType property.
+	 *
+	 * @return The value of oNodeType property.
+	 */
+    public int getNodeType() {
+        return oNodeType;
+    }
 }

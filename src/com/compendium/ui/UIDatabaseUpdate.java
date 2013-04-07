@@ -23,24 +23,36 @@
  ********************************************************************************/
 
 
-
 package com.compendium.ui;
 
-import java.sql.*;
-import java.util.*;
-import java.io.*;
-import javax.swing.*;
+import static com.compendium.ProjectCompendium.*;
 
-import com.compendium.*;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Vector;
 
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
+
+import com.compendium.ProjectCompendium;
+import com.compendium.core.CoreUtilities;
+import com.compendium.core.ICoreConstants;
+import com.compendium.core.db.DBLink;
+import com.compendium.core.db.DBViewLink;
+import com.compendium.core.db.management.DBAdminDatabase;
 import com.compendium.core.db.management.DBConnection;
-import com.compendium.core.datamodel.*;
-import com.compendium.core.datamodel.services.*;
-import com.compendium.core.db.*;
-import com.compendium.core.db.management.*;
-import com.compendium.core.*;
-
-import com.compendium.ui.dialogs.*;
+import com.compendium.core.db.management.DBConstants;
+import com.compendium.core.db.management.DBConstantsDerby;
+import com.compendium.core.db.management.DBConstantsMySQL;
+import com.compendium.core.db.management.DBDatabaseManager;
+import com.compendium.ui.dialogs.UIProgressDialog;
 
 /**
  * This class updates a database structure as and when required by different versions of the software.
@@ -122,13 +134,13 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 
 // 1.3.8 VERSION CHANGE - release 1.4.2 Alpha 2
 // for UDIG references
-	
+
 	/** Alter the reference node table's Source field to increase the varchar length to Text in MySQL syntax.*/
 	private static final String UPDATE_REFERENCE_SOURCE = "ALTER TABLE ReferenceNode MODIFY Source TEXT";
-	
+
 	/** Alter the reference node table's Source field to increase the varchar length to long varchar in Derby database syntax.*/
 	private static final String UPDATE_REFERENCE_SOURCE_DERBY = "ALTER TABLE ReferenceNode ALTER Source SET DATA TYPE VARCHAR(2500)";
-	
+
 // 1.3.9 VERSION CHANGE  -release 1.4.2 - Beta 3
 // DROP NodeProperty Table
 
@@ -138,7 +150,7 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 
 	/** Add a ShowText field to the ViewNode table.*/
 	private static final String VIEWNODE_UPDATE_SHOWTEXT = "ALTER TABLE ViewNode ADD COLUMN ShowText VARCHAR(1) NOT NULL DEFAULT 'Y'";
-		
+
 	/** Add a ShowTrans field to the ViewNode table.*/
 	private static final String VIEWNODE_UPDATE_SHOWTRANS = "ALTER TABLE ViewNode ADD COLUMN ShowTrans VARCHAR(1) NOT NULL DEFAULT 'Y'";
 
@@ -168,7 +180,7 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 
 	/** Add a Background field to the ViewNode table.*/
 	private static final String VIEWNODE_UPDATE_BACKGROUND = "ALTER TABLE ViewNode ADD COLUMN Background INTEGER NOT NULL DEFAULT -1";
-		
+
 	/** Add last modification author column to the Node table.*/
 	private static final String UPDATE_NODE_TABLE = "ALTER TABLE Node ADD COLUMN LastModAuthor VARCHAR(50)";
 
@@ -177,18 +189,18 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 
 	/** Set state to READSTATE for all records.*/
 	private static final String UPDATE_NODEUSERSTATE_TABLE = "UPDATE NodeUserState set State = "+ICoreConstants.READSTATE;
-	
+
 // SET ALL CURRENT NODES AS READ FOR ALL CURRENT USERS IN THE USERS TABLE
-	
-//	 1.5.0 VERSION CHANGE  -release 1.5 - Beta 1	
-	
+
+//	 1.5.0 VERSION CHANGE  -release 1.5 - Beta 1
+
 	/** Add a ViewId column to the Favorite table.*/
 	private static final String FAVORITE_UPDATE = "ALTER TABLE Favorite ADD COLUMN ViewID VARCHAR(50)";
 
 	/** Add the constraint for the Favorite table's new ViewID column*/
-	private static final String FAVORITE_CONSTRAINT_UPDATE = "ALTER TABLE Favorite ADD CONSTRAINT FK_Favorite_3 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+	private static final String FAVORITE_CONSTRAINT_UPDATE = "ALTER TABLE Favorite ADD CONSTRAINT FK_Favorite_3 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE";
 
-	
+
 ////////////////////
 
 	/** Holds the Link and ViewLink table data when transfering for table update.*/
@@ -395,9 +407,9 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 					}
 					if (version.equals("1.3.8")) {
 						progressUpdate(increment, sFriendlyName+": Drop Node Property, Update NodeView..");
-						successful = replaceNodePropertyTable(dbcon, adminDatabase);						
-						if (successful) {						
-							successful = addGroupwareColumns(dbcon);							
+						successful = replaceNodePropertyTable(dbcon, adminDatabase);
+						if (successful) {
+							successful = addGroupwareColumns(dbcon);
 							if (successful) {
 								progressUpdate(increment, sFriendlyName+": Updating version..");
 								successful = adminDatabase.updateVersion(con, "1.3.9");
@@ -406,19 +418,19 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 								}
 							}
 						}
-					}	
+					}
 					if (version.equals("1.3.9")) {
 						progressUpdate(increment, sFriendlyName+": Add ViewID column to Favorite..");
 						successful = updateFavoriteTable(dbcon);
 						if (successful) {
-							progressUpdate(increment, sFriendlyName+": Updating version..");						
+							progressUpdate(increment, sFriendlyName+": Updating version..");
 							// Make database version mathc release version for 1.5
 							successful = adminDatabase.updateVersion(con, "1.5.0");
 							if (successful) {
 								version = "1.5.0";
 							}
 						}
-					}																					
+					}
 				}
 				else {
 					successful = true;
@@ -625,7 +637,7 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 				data.append(DBConstants.INSERT_LINK_QUERY_BASE);
 				data.append("(");
 				data.append("\'"+sLinkID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, FormatProperties.nDatabaseType)+"\',");
+				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, APP_PROPERTIES.getDatabaseType())+"\',");
 				data.append(dbCDate+",");
 				data.append(dbMDate+",");
 				data.append("\'"+sType+"\',");
@@ -914,7 +926,7 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 	/**
 	 * Add a CurrentStatus column to the Meeting table.
 	 * @param dbcon the DBConnection to use to run the sql.
-	 * @param sDatabaseName the name of the databases being updated. 
+	 * @param sDatabaseName the name of the databases being updated.
 	 */
 	private static boolean addMeetingStatusColumn(DBConnection dbcon) throws SQLException {
 
@@ -983,15 +995,15 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 
 		return true;
 	}
-	
+
 // 1.3.9 VERSION CHANGE = for Compendium 1.4.2 - Beta 3
-	
+
 	/**
 	 * Delete the NodeProperty table and add new fields to ViewNode.
 	 * @param dbcon the DBConnection to use to run the sql.
 	 */
 	private static boolean replaceNodePropertyTable(DBConnection dbcon, DBAdminDatabase adminDatabase) throws SQLException {
-	
+
 		Connection con = dbcon.getConnection();
 
 		// IF CALLED AFTER A RESTORE, TABLE MAY NOT EXIST
@@ -1010,22 +1022,22 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 			}
 		}
 
-		if (proceed) {		
-			String sDropNodePropertyTable = DROP_NODEPROPERTY_TABLE;			
+		if (proceed) {
+			String sDropNodePropertyTable = DROP_NODEPROPERTY_TABLE;
 			if (adminDatabase.getDatabaseManager().getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
 				sDropNodePropertyTable = MYSQL_DROP_NODEPROPERTY_TABLE;
 			}
-			
+
 			PreparedStatement pstmt = con.prepareStatement(sDropNodePropertyTable);
 			pstmt.executeUpdate() ;
 			pstmt.close();
 		}
-			
+
 		// IF CALLED AFTER A RESTORE, TABLE WILL HAVE NEW COLUMNS
 		// CHECK IF Background COLUMN EXISTS
-		rs = dbmd.getColumns(null, null, "VIEWNODE", "BACKGROUND");		
+		rs = dbmd.getColumns(null, null, "VIEWNODE", "BACKGROUND");
 		if (rs == null || !rs.next()) {
-			
+
 			PreparedStatement pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_SHOWTAGS);
 			pstmt2.executeUpdate();
 			pstmt2.close();
@@ -1033,11 +1045,11 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_SHOWTEXT);
 			pstmt2.executeUpdate();
 			pstmt2.close();
-				
+
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_SHOWTRANS);
 			pstmt2.executeUpdate();
 			pstmt2.close();
-	
+
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_SHOWWEIGHT);
 			pstmt2.executeUpdate();
 			pstmt2.close();
@@ -1049,11 +1061,11 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_HIDEICON);
 			pstmt2.executeUpdate();
 			pstmt2.close();
-			
+
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_WRAPWIDTH);
 			pstmt2.executeUpdate();
 			pstmt2.close();
-	
+
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_FONTSIZE);
 			pstmt2.executeUpdate();
 			pstmt2.close();
@@ -1061,7 +1073,7 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_FONTFACE);
 			pstmt2.executeUpdate();
 			pstmt2.close();
-		
+
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_FONTSTYLE);
 			pstmt2.executeUpdate();
 			pstmt2.close();
@@ -1073,13 +1085,13 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 			pstmt2 = con.prepareStatement(VIEWNODE_UPDATE_BACKGROUND);
 			pstmt2.executeUpdate();
 			pstmt2.close();
-			
-			return true;			
-		}				
-		
+
+			return true;
+		}
+
 		return true;
 	}
-		
+
 	/**
 	 * Add new columns to help groupware.
 	 * One to the node table to hold the author who last modified a node.
@@ -1089,10 +1101,10 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param dbcon the DBConnection to use to run the sql.
 	 */
 	private static boolean addGroupwareColumns(DBConnection dbcon) throws SQLException {
-	
-		Connection con = dbcon.getConnection();		
+
+		Connection con = dbcon.getConnection();
 		DatabaseMetaData dbmd = con.getMetaData();
-		
+
 		// IF CALLED AFTER A RESTORE, TABLE WILL HAVE NEW COLUMNS
 		// CHECK IF COLUMN EXISTS
 		ResultSet rs = dbmd.getColumns(null, null, "NODE", "LASTMODAUTHOR");
@@ -1101,7 +1113,7 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 			pstmt.executeUpdate();
 			pstmt.close();
 		}
-		
+
 		// IF CALLED AFTER A RESTORE, TABLE WILL HAVE NEW COLUMNS
 		// CHECK IF COLUMN EXISTS
 		rs = dbmd.getColumns(null, null, "USERS", "LINKVIEW");
@@ -1114,19 +1126,19 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 		PreparedStatement pstmt3 = con.prepareStatement(UPDATE_NODEUSERSTATE_TABLE);
 		pstmt3.executeUpdate() ;
 		pstmt3.close();
-		
+
 		return true;
-	}	
-	
+	}
+
 	/**
 	 * Add new column for ViewID and its constraint.
 	 * @param dbcon the DBConnection to use to run the sql.
 	 */
 	private static boolean updateFavoriteTable(DBConnection dbcon) throws SQLException {
-	
-		Connection con = dbcon.getConnection();		
+
+		Connection con = dbcon.getConnection();
 		DatabaseMetaData dbmd = con.getMetaData();
-		
+
 		// IF CALLED AFTER A RESTORE, TABLE WILL HAVE NEW COLUMN
 		// CHECK IF COLUMN EXISTS
 		ResultSet rs = dbmd.getColumns(null, null, "FAVORITE", "VIEWID");
@@ -1134,15 +1146,15 @@ public class UIDatabaseUpdate implements DBConstants, DBConstantsMySQL, DBConsta
 			PreparedStatement pstmt = con.prepareStatement(FAVORITE_UPDATE);
 			pstmt.executeUpdate();
 			pstmt.close();
-			
+
 			PreparedStatement pstmt2 = con.prepareStatement(FAVORITE_CONSTRAINT_UPDATE);
 			pstmt2.executeUpdate();
 			pstmt2.close();
 		}
 
 		return true;
-	}	
-	
+	}
+
 // PROGRESS BAR METHODS
 	/**
 	 * Draws the progress dialog.

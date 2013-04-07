@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import javax.swing.*;
@@ -41,10 +40,10 @@ import com.compendium.core.datamodel.*;
  * @author ? / Michelle Bachler / Lakshmi Prabhakaran
  */
 public class ListTableModel extends AbstractTableModel {
-	
+
 	/**Serial ID*/
 	private static final long serialVersionUID = 6863795268955672400L;
-	
+
 	public final static int NUMBER_COLUMN = 0;
 	public final static int IMAGE_COLUMN = 1;
 	public final static int TAGS_COLUMN = 2;
@@ -55,22 +54,24 @@ public class ListTableModel extends AbstractTableModel {
 	public final static int CREATION_DATE_COLUMN = 7;
 	public final static int MODIFICATION_DATE_COLUMN = 8;
 	public final static int ID_COLUMN = 9;
-	
-	
-	protected String[] columnNames = {"No.", 
+	public final static int AUTHOR_COLUMN = 10;
+
+
+	protected String[] columnNames = {"No.",
 									"Img",
 									"Tags",
 									"Views",
-									"Details",									
-									"Weight",											
+									"Details",
+									"Weight",
 									"Label",
 									"Create Date",
 									"Mod Date",
-									"ID"};
+									"ID",
+									"Author"};
 
 	protected Vector nodeData = new Vector(20);
 	protected View view;
-	protected TableSorter sorter;	
+	protected TableSorter sorter;
 
 	public ListTableModel(View listView) {
 		super();
@@ -162,7 +163,7 @@ public class ListTableModel extends AbstractTableModel {
 		constructTableData();
 		sorter.reallocateIndexes();
 	}
-	
+
 	public int getColumnCount() {
 		return columnNames.length;
 	}
@@ -178,12 +179,12 @@ public class ListTableModel extends AbstractTableModel {
 	public Object getValueAt(int row, int col) {
 
 		if (nodeData == null) {
-			return null;			
+			return null;
 		}
 		if (row >= nodeData.size()) {
-			return null;			
+			return null;
 		}
-		
+
 		NodePosition np = (NodePosition) nodeData.elementAt(row);
 		if (np != null) {
 			NodeSummary node = np.getNode();
@@ -191,7 +192,7 @@ public class ListTableModel extends AbstractTableModel {
 				switch (col) {
 					case ListTableModel.NUMBER_COLUMN: {
 						return new Integer(row);
-					}				
+					}
 					case ListTableModel.IMAGE_COLUMN: {
 						if (node.getType() == ICoreConstants.REFERENCE) {
 							return UINode.getReferenceImageSmall(node.getSource());
@@ -205,7 +206,7 @@ public class ListTableModel extends AbstractTableModel {
 						} else {
 							return "";
 						}
-					}	
+					}
 					case ListTableModel.VIEWS_COLUMN: {
 						int count = node.getViewCount();
 						if (count == 0) {
@@ -213,7 +214,7 @@ public class ListTableModel extends AbstractTableModel {
 							count = node.getViewCount();
 						}
 						return new Integer(count);
-					}								
+					}
 					case ListTableModel.DETAIL_COLUMN: {
 						String sDetail = node.getDetail();
 						sDetail = sDetail.trim();
@@ -229,10 +230,10 @@ public class ListTableModel extends AbstractTableModel {
 							int count = 0;
 							try {count = view.getNodeCount();}
 							catch(Exception e){}
-							return new Integer(count);							
-						} 
+							return new Integer(count);
+						}
 						return null;
-					}					
+					}
 					case ListTableModel.LABEL_COLUMN: {
 						return node.getLabel();
 					}
@@ -244,6 +245,9 @@ public class ListTableModel extends AbstractTableModel {
 					}
 					case ListTableModel.ID_COLUMN: {
 						return node.getId();
+					}
+					case ListTableModel.AUTHOR_COLUMN: {
+						return node.getAuthor();
 					}
 					default:
 						return null;
@@ -257,7 +261,7 @@ public class ListTableModel extends AbstractTableModel {
 	public void setValueAt(Object o, int row, int col) {
 
 		String sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
-		
+
 		NodePosition np = (NodePosition) nodeData.elementAt(row);
 		NodeSummary node = np.getNode();
 		switch (col) {
@@ -265,7 +269,7 @@ public class ListTableModel extends AbstractTableModel {
 				if (o instanceof Integer)
 					np.setYPos( ( ((Integer)o).intValue() +1 )*10 );
 				break;
-			}		
+			}
 			case ListTableModel.LABEL_COLUMN: {
 				String oldLabel = node.getLabel();
 				String newLabel = (String) o;
@@ -287,17 +291,18 @@ public class ListTableModel extends AbstractTableModel {
 			case ListTableModel.IMAGE_COLUMN: {
 				return new ImageIcon().getClass();
 			}
-			case ListTableModel.TAGS_COLUMN: 
+			case ListTableModel.TAGS_COLUMN:
 			case ListTableModel.DETAIL_COLUMN:
-			case ListTableModel.LABEL_COLUMN: 
-			case ListTableModel.ID_COLUMN: {
+			case ListTableModel.LABEL_COLUMN:
+			case ListTableModel.ID_COLUMN:
+			case ListTableModel.AUTHOR_COLUMN: {
 				return new String().getClass();
-			}	
-			case ListTableModel.VIEWS_COLUMN: 
-			case ListTableModel.NUMBER_COLUMN:			
+			}
+			case ListTableModel.VIEWS_COLUMN:
+			case ListTableModel.NUMBER_COLUMN:
 			case ListTableModel.WEIGHT_COLUMN: {
 				return new Integer(0).getClass();
-			}					
+			}
 			case ListTableModel.CREATION_DATE_COLUMN:
 			case ListTableModel.MODIFICATION_DATE_COLUMN: {
 				return new Date().getClass();
@@ -320,8 +325,11 @@ public class ListTableModel extends AbstractTableModel {
 
 	public void deleteRows(int[] rowIndexes) {
 
+		System.out.println("ListTableModel 328 entered deleteRows " + System.currentTimeMillis());
+
 		Vector tempData = new Vector(nodeData.size());
 
+		// TODO: quicker to find the ones to be deleted first and hold onto them rather than copy entire array?
 		for (int j=0; j<nodeData.size(); j++) {
 			tempData.addElement(nodeData.elementAt(j));
 		}
@@ -334,11 +342,20 @@ public class ListTableModel extends AbstractTableModel {
 			}
 		}
 
+		System.out.println("ListTableModel 344 " + System.currentTimeMillis());
+
 		tempData.removeAllElements();
 		tempData = null;
-		
+
+		System.out.println("ListTableModel 349 " + System.currentTimeMillis());
+
 		sorter.reallocateIndexes();
-		sorter.fireTableChanged(new TableModelEvent(this));		
+
+		System.out.println("ListTableModel 353 " + System.currentTimeMillis());
+
+		sorter.fireTableChanged(new TableModelEvent(this));
+
+		System.out.println("ListTableModel 357 exiting deleteRows " + System.currentTimeMillis());
 	}
 
 	public void insertNodes(NodePosition[] nps, int index) {
@@ -351,13 +368,14 @@ public class ListTableModel extends AbstractTableModel {
 				if (index > nodeData.size()) {
 					nodeData.addElement(nps[i]);
 				} else {
-					nodeData.insertElementAt(nps[i], index+i);
+					nodeData.insertElementAt(nps[i], index);
+					index++;
 				}
 			}
 		}
-		
+
 		sorter.reallocateIndexes();
-		sorter.fireTableChanged(new TableModelEvent(this));		
+		sorter.fireTableChanged(new TableModelEvent(this));
 	}
 
 	public void insertNode(NodePosition np, int index) {
@@ -369,10 +387,10 @@ public class ListTableModel extends AbstractTableModel {
 				nodeData.insertElementAt(np, index);
 			}
 			sorter.reallocateIndexes();
-			sorter.fireTableChanged(new TableModelEvent(this));			
+			sorter.fireTableChanged(new TableModelEvent(this));
 		}
 	}
-	
+
 	public boolean contains(NodePosition np) {
 		return nodeData.contains(np);
 	}

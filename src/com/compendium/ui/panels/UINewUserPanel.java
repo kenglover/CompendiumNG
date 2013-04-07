@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
 
 import java.util.*;
@@ -55,10 +54,10 @@ import com.compendium.ui.UIImages;
 public class UINewUserPanel extends JPanel {
 
 	/** The field to hold the user name.*/
-	public JTextField		txtUserName		= null;
+	public JTextField		txtUserName		= null;  //LOGIN NAME
 
 	/** The field to use the author name.*/
-	public JTextField		txtAuthorName	= null;
+	public JTextField		txtAuthorName	= null;   //USER NAME
 
 	/** The field to hold the the user description.*/
 	public JTextField		txtDesc			= null;
@@ -74,6 +73,12 @@ public class UINewUserPanel extends JPanel {
 
 	/** Indicates this use is not an administrator.*/
 	private JRadioButton	rbAdminNo		= null;
+
+	/** Indicates this user ID is Active.*/
+	private JRadioButton	rbActiveYes		= null;
+
+	/** Indicates this user ID is Inactive.*/
+	private JRadioButton	rbActiveNo		= null;
 
 	/** The UserProfile object associated with this user.*/
 	private UserProfile		oUserProfileUpdate = null;
@@ -101,13 +106,12 @@ public class UINewUserPanel extends JPanel {
 	 * @param up com.compendium.core.datamodel.UserProfile, the UserProfile of the user being edited.
 	 */
 	public UINewUserPanel(UserProfile up) {
-		oUserProfileUpdate = up;
 		drawPanel();
 		setUserProfile(up);
 	}
 
 	/**
-	 * Draw the contetns of the panel.
+	 * Draw the contents of the panel.
 	 */
 	public void drawPanel() {
 
@@ -122,7 +126,7 @@ public class UINewUserPanel extends JPanel {
 
 		int y=0;
 
-		JLabel lblAuthor = new JLabel("Author Name: * ");
+		JLabel lblAuthor = new JLabel("User Name: * ");
 		gc.gridy = y;
 		gb.setConstraints(lblAuthor, gc);
 		add(lblAuthor);
@@ -218,6 +222,31 @@ public class UINewUserPanel extends JPanel {
 		ButtonGroup rgGroup = new ButtonGroup();
 		rgGroup.add(rbAdminYes);
 		rgGroup.add(rbAdminNo);
+
+		//Radio button for the User Active/Inactive status
+		JLabel lblActive = new JLabel("User Status:");
+		gc.gridy = y;
+		gb.setConstraints(lblActive, gc);
+
+		add(lblActive);
+
+		JPanel panel2 = new JPanel();
+		rbActiveYes = new JRadioButton("Active");
+		panel2.add(rbActiveYes);
+		rbActiveYes.setSelected(true);
+
+		rbActiveNo = new JRadioButton("Inactive");
+		rbActiveNo.setSelected(false);
+		panel2.add(rbActiveNo);
+
+		gc.gridy = y;
+		y++;
+		gb.setConstraints(panel2, gc);
+		add(panel2);
+
+		ButtonGroup rgGroup2 = new ButtonGroup();
+		rgGroup2.add(rbActiveYes);
+		rgGroup2.add(rbActiveNo);
 	}
 
 	/**
@@ -242,22 +271,39 @@ public class UINewUserPanel extends JPanel {
 			rbAdminYes.setSelected(true);
 			rbAdminNo.setSelected(false);
 		}
+
+		if (up.isActive()) {
+			rbActiveYes.setSelected(true);
+			rbActiveNo.setSelected(false);
+		} else {
+			rbActiveYes.setSelected(false);
+			rbActiveNo.setSelected(true);
+		}
 	}
 
 
 	/**
 	 * Return the UserProfile for a new user created based on the data currently in this panel.
+	 * Invoked only from the "Create a New Project" dialog
 	 * @return com.compendium.core.datamodel.UserProfile, the new user created.
 	 */
 	public UserProfile getNewUserData() {
 
+		int iActiveStatus = 0;
+		if (rbActiveYes.isSelected()){
+			iActiveStatus= ICoreConstants.STATUS_ACTIVE;
+		} else{
+			iActiveStatus =ICoreConstants.STATUS_INACTIVE;
+		}
 		UserProfile newUp = new UserProfile("-1", ICoreConstants.WRITEVIEWNODE,
 											txtUserName.getText(),
 											txtAuthorName.getText(),
 											new String(pfPassword.getPassword()),
 											txtDesc.getText(),
 											null,
-											rbAdminYes.isSelected());
+											rbAdminYes.isSelected(),
+											null,
+											iActiveStatus);
 
 		return newUp;
 	}
@@ -265,7 +311,7 @@ public class UINewUserPanel extends JPanel {
 	/**
 	 * Test the user data entered in this panel is valid.
 	 */
-	public boolean testUserData() {
+	public boolean testUserData( ArrayList<String> vtUsers, ArrayList<String> vtLogins) {
 
 		boolean bError = false;
 		String sErrorString = "";
@@ -274,30 +320,46 @@ public class UINewUserPanel extends JPanel {
 		String confirmString = new String(pfConfPassword.getPassword());
 
 		//match the passwords and create a user by the given param and groups
-		if(txtUserName.getText().length() < 1) {
+		if(txtUserName.getText().length() < 1)
+		{
 			bError = true;
 			sErrorString = "Please give a valid Login Name (Required for Login ID)";
 		}
-		else if(txtAuthorName.getText().length() < 1)	{
+		else if ( (vtUsers != null) && (vtUsers.contains(txtAuthorName.getText() ) ) )
+		{
+			bError = true;
+			sErrorString = "Duplicate User Name is not allowed";
+		}
+		else if ( (vtLogins != null) && (vtLogins.contains(txtUserName.getText() ) ) )
+		{
+			bError = true;
+			sErrorString = "Duplicate Login Name is not allowed";
+		}
+		else if(txtAuthorName.getText().length() < 1)
+		{
 			bError = true;
 			sErrorString = "Please give a valid Author Name (Required for Authoring PC)";
 		}
-		else if(!passwordString.equals(confirmString)) {
+		else if(!passwordString.equals(confirmString))
+		{
 			bError = true;
 			sErrorString = "'Password' and 'Confirm Password' fields don't match!";
 		}
-		else if( passwordString.length() < 1) {
+		else if( passwordString.length() < 1)
+		{
 			bError = true;
 			sErrorString = "You must enter at least one character for a password";
 			//sErrorString = "'Password' field length should be more than five characters!";
 		}
-		else if(confirmString.length() < 1) {
+		else if(confirmString.length() < 1)
+		{
 			bError = true;
 			sErrorString = "You must enter at least one character for a password confirmation";
 			//sErrorString = "'Confirm Password' field length should be more than five characters!";
 		}
 
-		if(bError) {
+		if(bError)
+		{
 			ProjectCompendium.APP.displayError(sErrorString, "Error Messages (New User)");
 			return false;
 		}
@@ -307,22 +369,28 @@ public class UINewUserPanel extends JPanel {
 	}
 
 	/**
-	 * Add a new user to the database and return if successful.
+	 * Invoked when user clicks OK.  Add a new user to the database and return if successful.
 	 * @return boolean, true if the new user was added to the database, else false.
 	 */
-	public boolean addNewUser() {
+	public boolean addNewUser( ArrayList<String> vtUsers, ArrayList<String> vtLogins) {
 
-		if (!testUserData()) {
+		if (!testUserData(vtUsers, vtLogins)) {
 			return false;
 		}
 		else {
+			int iActiveStatus = 0;
+			if (rbActiveYes.isSelected()) {
+				iActiveStatus = ICoreConstants.STATUS_ACTIVE;
+			} else {
+				iActiveStatus = ICoreConstants.STATUS_INACTIVE;
+			}
 			return createNewUser(txtAuthorName.getText(), txtUserName.getText(),
-									txtDesc.getText(), new String(pfPassword.getPassword()), rbAdminYes.isSelected());
+									txtDesc.getText(), new String(pfPassword.getPassword()), rbAdminYes.isSelected(), iActiveStatus);
 		}
 	}
 
 	/**
-	 * Create a new suer from the given data.
+	 * Create a new user from the given data.
 	 *
 	 * @param author, the author name for the user.
 	 * @param login, the login name for the user.
@@ -331,7 +399,7 @@ public class UINewUserPanel extends JPanel {
 	 * @param isAdministrator, true if the user is an administrator, else false.
 	 * @return boolean, true if the new user was successfully created, else false.
 	 */
-	public boolean createNewUser(String author, String login, String desc, String password, boolean isAdministrator) {
+	public boolean createNewUser(String author, String login, String desc, String password, boolean isAdministrator, int iActiveStatus) {
 
 		UserProfile up = null;
 		Date date = new Date();
@@ -343,15 +411,17 @@ public class UINewUserPanel extends JPanel {
 		if(oUserProfileUpdate != null) {
 			userId = oUserProfileUpdate.getId();
 			view = oUserProfileUpdate.getHomeView();
+			oInboxNode = oUserProfileUpdate.getLinkView();
+//			ProjectCompendium.APP.getModel().updateUserProfile(userId, author, login, desc, password, isAdministrator, iActiveStatus);
 		}
 		else {
 			userId = ProjectCompendium.APP.getModel().getUniqueID();
 		}
-		
+
 		Model oModel = (Model)ProjectCompendium.APP.getModel();
 
 		/////////////////////////////////////////////////////////////////////////////////
-		//Begin: create a home view for the user if the user doesnt have one (new user)
+		//Begin: create a home view for the user if the user doesn't have one (new user)
 		/////////////////////////////////////////////////////////////////////////////////
 		if(view == null) {
 			try {
@@ -361,7 +431,7 @@ public class UINewUserPanel extends JPanel {
 																				"",
 																				"",
 																				ICoreConstants.WRITEVIEWNODE,
-																				ICoreConstants.READSTATE, 
+																				ICoreConstants.READSTATE,
 																				author,
 																				"Home Window",
 																				"Home Window of " + txtAuthorName.getText(),
@@ -380,7 +450,7 @@ public class UINewUserPanel extends JPanel {
 				//add to the DB
 				Code code = oModel.getCodeService().createCode(session, codeId, codeauthor, creationDate, modificationDate, name, description, behavior);
 				oModel.addCode(code);
-				
+
 				// add dropbox
 				if (view != null) {
 					String sLinkViewID = "";
@@ -398,14 +468,14 @@ public class UINewUserPanel extends JPanel {
 							date,
 							date
 							);
-								
-					oInboxNode.initialize(oModel.getSession(), oModel);					
+
+					oInboxNode.initialize(oModel.getSession(), oModel);
 			  		IViewService vs = oModel.getViewService() ;
-					NodePosition oLinkPos = vs.addMemberNode(oModel.getSession(), view, (NodeSummary)oInboxNode, 
-							0, 75, date, date,  false, false, false, true, false, false, 
-							oModel.labelWrapWidth, oModel.fontsize, oModel.fontface, 
+					NodePosition oLinkPos = vs.addMemberNode(oModel.getSession(), view, (NodeSummary)oInboxNode,
+							0, 75, date, date,  false, false, false, true, false, false,
+							oModel.labelWrapWidth, oModel.fontsize, oModel.fontface,
 							oModel.fontstyle, oModel.FOREGROUND_DEFAULT.getRGB(), oModel.BACKGROUND_DEFAULT.getRGB());
-					oLinkPos.initialize(oModel.getSession(),oModel);				
+					oLinkPos.initialize(oModel.getSession(),oModel);
 					oInboxNode.setSource("", CoreUtilities.unixPath(UIImages.getPathString(IUIConstants.INBOX)), author);
 				}
 			}
@@ -418,13 +488,9 @@ public class UINewUserPanel extends JPanel {
 		//End: create a home view for the user
 		////////////////////////////////////////////////////////
 
-		String homeViewId = view.getId();		
+		String homeViewId = view.getId();
 		String linkViewId = "";
-		if (oInboxNode != null) {
-			linkViewId = oInboxNode.getId();
-		} else {
-			linkViewId = ProjectCompendium.APP.getInBoxID();
-		}
+		linkViewId = oInboxNode.getId();
 		//add the user to the project
 		try {
 			up = ProjectCompendium.APP.getModel().getUserService().insertUserProfile(ProjectCompendium.APP.getModel().getSession(),
@@ -438,12 +504,14 @@ public class UINewUserPanel extends JPanel {
 															 desc,						// String userDescription
 															 homeViewId,				// String homeViewId
 															 isAdministrator,			// boolean isAdministrator
-															 linkViewId);				// the user's link view (InBox).
+															 linkViewId,				// the user's link view (InBox).
+															 iActiveStatus);			// int if the User is Active or Inactive
 		    if(up == null) {
 				String prob = "Cannot create user (check if user already exists)";
 				ProjectCompendium.APP.displayError(prob, "Information (Operation Failed)");
 			}
 			else {
+				ProjectCompendium.APP.getModel().updateUserProfile(up);
 				return true;
 			}
 		}

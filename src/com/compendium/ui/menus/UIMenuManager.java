@@ -22,10 +22,10 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.menus;
 
 
+import java.sql.SQLException;
 import java.util.*;
 import javax.help.*;
 import javax.swing.*;
@@ -58,7 +58,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 
 	/** The File menu.*/
 	private UIMenuFile				oFile				= null;
-	
+
 	/** The Edit menu.*/
 	private UIMenuEdit				oEdit				= null;
 
@@ -79,15 +79,15 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 
 	/** The Help menu.*/
 	private UIMenuHelp				oHelp				= null;
-	
+
 	/**Indicates whether this menu is draw as a Simple interface or a advance user inteerface.*/
-	private boolean bSimpleInterface					= false;		
+	private boolean bSimpleInterface					= false;
 
 	/**
 	 * Constructor.
 	 * @param hs the HelpSet to use for menus and menuitems.
 	 * @param hb the HelpBroker to use for menus and menuitems.
-	 * @param isSimple indicates if the toolbars should be draw for a simple user interface, false for a complex one. 
+	 * @param isSimple indicates if the toolbars should be draw for a simple user interface, false for a complex one.
 	 */
 	public UIMenuManager(HelpSet hs, HelpBroker hb) {
 		mainHS = hs;
@@ -116,16 +116,16 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 
 		// FAVORITES MENU
 		mbMenuBar.add(createFavoritesMenu());
-						
+
 		// WORKSPACES MENU
 		mbMenuBar.add(createWorkspacesMenu());
-		
+
 		// WINDOWS MENU
 		mbMenuBar.add(createWindowsMenu());
 
 		// HELP MENU
 		mbMenuBar.add(createHelpMenu());
-		
+
 		// Mac l&f and menu at the top of screen, remove menu Mnemonics
 		//if (ProjectCompendium.isMac && (FormatProperties.macMenuBar || (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) )
 		//	UIUtilities.removeMenuMnemonics(mbMenuBar.getSubElements());
@@ -160,7 +160,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 					e.setHandled(true);
 				}
 			});
-		}		
+		}
 		return mbMenuBar;
 	}
 
@@ -169,7 +169,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	 * @return JMenu the File menu.
 	 */
 	private JMenu createFileMenu() {
-		oFile = new UIMenuFile(bSimpleInterface);		
+		oFile = new UIMenuFile(bSimpleInterface);
 		return oFile.getMenu();
 	}
 
@@ -199,7 +199,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		oTools = new UIMenuTools(bSimpleInterface);
 		return oTools.getMenu();
 	}
-	
+
 	/**
 	 * Create and return the Favorites menu.
 	 * @return JMenu, the Favorites menu.
@@ -243,9 +243,9 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void setIsSimple(boolean isSimple) {
 		bSimpleInterface = isSimple;
 	}
-	
+
 // VIEW MENU REDIRECTS
-	
+
 	/**
 	 * Return the font size to its default and then appliy the passed text zoom.
 	 * (To the default specificed by the user in the Project Options)
@@ -253,37 +253,37 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void onReturnTextAndZoom(int zoom) {
 		if (oView != null) {
 			oView.onReturnTextAndZoom(zoom);
-		}	
+		}
 	}
 
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextToActual() {
 		if (oView != null) {
 			oView.onReturnTextToActual();
-		}	
+		}
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 */
 	public void onIncreaseTextSize() {
 		if (oView != null) {
 			oView.onIncreaseTextSize();
-		}	
+		}
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 */
 	public void onReduceTextSize() {
 		if (oView != null) {
 			oView.onReduceTextSize();
-		}					
+		}
 	}
-	
+
 	/**
 	 * Remove the Outline View from the tabbed pane.
 	 * @param store indicates whether to store the change to the properties file.
@@ -291,7 +291,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void removeOutlineView(boolean store) {
 		oView.removeOutlineView(store);
 	}
-	
+
 	/**
 	 * open the outline view of the type specified.
 	 * @param sType the type of outline view to open
@@ -300,7 +300,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void addOutlineView(String sType, boolean store) {
 		oView.addOutlineView(sType, store);
 	}
-	
+
 	/**
 	 * Remove the unread View from the tabbed pane.
 	 * @param store indicates whether to store the change to the properties file.
@@ -308,15 +308,16 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void removeUnreadView(boolean store){
 		oView.removeUnreadView(store);
 	}
-	
+
 	/**
 	 * open the unread view.
 	 * @param store indicates whether to store the change to the properties file.
+	 * @throws SQLException
 	 */
-	public void addUnreadView(boolean store){
+	public void addUnreadView(boolean store) throws SQLException{
 		oView.addUnreadView(store);
 	}
-	
+
 	/**
 	 * Remove the tags View from the tabbed pane.
 	 * @param store indicates whether to store the change to the properties file.
@@ -324,7 +325,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void removeTagsView(boolean store){
 		oView.removeTagsView(store);
 	}
-	
+
 	/**
 	 * open the tags view.
 	 * @param store indicates whether to store the change to the properties file.
@@ -333,6 +334,13 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		oView.addTagsView(store);
 	}
 	
+	/**
+	 * Toggle the Tags view on and off
+	 */
+	public void toggleTagView() {
+		oView.toggleTagView();
+	}
+
 	/**
 	 * Zoom the current map to the next level (75/50/25/full);
 	 */
@@ -361,7 +369,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void onZoomRefocused() {
 		oView.onZoomRefocused();
 	}
-	
+
 	/**
 	 * Record the state of the image rollover option.
 	 */
@@ -374,8 +382,8 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	 */
 	public void onSearchLabel() {
 		oView.onSearchLabel();
-	}	
-	
+	}
+
 	/**
 	 * Select/unselect the given toolbar.
 	 * @param enabled true to select, false to unselect.
@@ -383,7 +391,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void setToolbar(int nToolbar, boolean selected) {
 		oView.setToolbar(nToolbar, selected);
 	}
-		
+
 	/**
 	 * Gets the outline view object
 	 * @return UIViewOutline, the UIViewOutline object
@@ -411,8 +419,8 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	 */
 	public void setUnreadView(UIViewUnread unreadView) {
 		oView.setUnreadView(unreadView);
-	}		
-		
+	}
+
 	/**
 	 * Select/unselect the aerial view.
 	 * @param enabled true to select, false to unselect.
@@ -427,8 +435,8 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	 */
 	public void updateImageRollover(boolean enabled) {
 		oView.updateImageRollover(enabled);
-	}	
-	
+	}
+
 	/**
 	 * Enable/disable the map menu and its components.
 	 * @param enabled, true to enable, false to disable.
@@ -436,10 +444,10 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void setMapMenuEnabled(boolean enabled) {
 		oView.setMapMenuEnabled(enabled);
 	}
-	
-	
+
+
 	// FILE MENU REDIRECTS
-	
+
 	/**
 	 * Enable/disable the convert database menu option as appropriate.
 	 */
@@ -448,54 +456,14 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	}
 	
 	/**
-	 * Draw the roster menu list for a Jabber connection.
-	 *
-	 * @param menu the menu to add the options to.
-	 * @param node the node, associated with this menu.
-	 * - only applies if request activated from node right-click menu, else value will be null.
-	 * @param rosterEntries the roster entries to create menu items for.
-	 */
-	public void drawJabberRoster(JMenu menu, NodeSummary node, Enumeration rosterEntries) {
-		oFile.drawJabberRoster(menu, node, rosterEntries);
-	}
-
-	/**
-	 * Draw the roster menu list for the IX panel connection.
-	 *
-	 * @param menu the menu to add the options to.
-	 * @param node the node, associated with this menu.
-	 * - only applies if request activated from node right-click menu, else value will be null.
-	 * @param rosterEntries the roster entries to create menu items for.
-	 */
-	public void drawIXRoster(JMenu menu, NodeSummary node, Enumeration rosterEntries) {
-		oFile.drawIXRoster(menu, node, rosterEntries);
-	}
-
-	/**
-	 * Enable/disable the jabber menu item.
-	 * @param enabled true to enable, false to disable.
-	 */
-	public void setJabberMenuEnablement(boolean enabled) {
-		oFile.setJabberMenuEnablement(enabled);
-	}
-
-	/**
-	 * Enable/disable the jabber menu item.
-	 * @param enabled true to enable, false to disable.
-	 */
-	public void setIXMenuEnablement(boolean enabled) {
-		oFile.setIXMenuEnablement(enabled);
-	}	
-
-	/**
 	 * Enable/disable the file open menu item.
 	 * @param enabled true to enable, false to disable.
 	 */
 	public void setFileOpenEnablement(boolean enabled) {
 		oFile.setFileOpenEnablement(enabled);
 	}
-	
-	
+
+
 	// EDIT MENU REDIRECTS
 	/**
 	 * Enable/disable the paste menu item.
@@ -512,7 +480,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void setExternalPasteEnablement(boolean enabled) {
 		oEdit.setExternalPasteEnablement(enabled);
 	}
-	
+
 	/**
 	 * Refreshes the undo/redo buttons for the last action performed.
 	 */
@@ -520,9 +488,9 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		oEdit.refreshUndoRedo(oUndoManager);
 	}
 
-	
+
 	// TOOLS MENU REDIRECTS
-	
+
 	/**
 	 * Enable/disable the scribblepad option.
 	 * @param enabled true to enable, false to disable.
@@ -537,8 +505,8 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	 */
 	public void setScribblePadActive(boolean enabled) {
 		oTools.setScribblePadActive(enabled);
-	}	
-	
+	}
+
 	/**
 	 * Enable/disable the file open menu item.
 	 * @param enabled true to enable, false to disable.
@@ -546,17 +514,17 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 	public void setUDigEnablement(boolean enabled) {
 		oTools.setUDigEnablement(enabled);
 	}
-	
+
 	/**
 	 * Create the menu holding the currently available stencil sets.
 	 */
 	public void createStencilMenu() {
 		oTools.createStencilMenu();
 	}
-	
-	
+
+
 //////////////////////////////////////////////////////////////////////////
-	
+
 	/**
 	 * Refresh the workspaces menu with the new Vector of workspaces.
 	 * @param workspaces the list of workspaces to refresh the menu with.
@@ -585,7 +553,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		if (oWindow != null) {
 			oWindow.refreshWindowsMenu();
 		}
-	}	
+	}
 
 	/**
 	 * Updates the menus look and feels.
@@ -602,7 +570,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		}
 		if (oTools != null ) {
 			oTools.updateLAF();
-		}		
+		}
 		if (oFavorites != null) {
 			oFavorites.updateLAF();
 		}
@@ -616,11 +584,11 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 			oHelp.updateLAF();
 		}
 	}
-		
+
 	/**
 	 * Updates the menus when a database project is closed.
 	 */
-	public void onDatabaseClose() {		
+	public void onDatabaseClose() {
 		if (oFile != null) {
 			oFile.onDatabaseClose();
 		}
@@ -632,7 +600,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		}
 		if (oTools != null ){
 			oTools.onDatabaseClose();
-		}		
+		}
 		if (oFavorites != null) {
 			oFavorites.onDatabaseClose();
 		}
@@ -662,7 +630,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		}
 		if (oTools != null ) {
 			oTools.onDatabaseOpen();
-		}		
+		}
 		if (oFavorites != null) {
 			oFavorites.onDatabaseOpen();
 		}
@@ -676,13 +644,13 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 			oHelp.onDatabaseOpen();
 		}
 	}
-	
+
 	/**
  	 * For menus to know when nodes are selected and deselected and adjust accordingly.
   	 * @param selected true for enabled false for disabled.
 	 */
 	public void setNodeSelected(boolean selected) {
-		
+
 		if (oFile != null) {
 			oFile.setNodeSelected(selected);
 		}
@@ -694,7 +662,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		}
 		if (oTools != null) {
 			oTools.setNodeSelected(selected);
-		}		
+		}
 		if (oFavorites != null) {
 			oFavorites.setNodeSelected(selected);
 		}
@@ -707,14 +675,14 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		if (oHelp != null) {
 			oHelp.setNodeSelected(selected);
 		}
-	}	
-	
+	}
+
 	/**
  	 * Enable/disable cut copy and delete menu items.
   	 * @param selected, true for enabled, false for disabled.
 	 */
 	public void setNodeOrLinkSelected(boolean selected) {
-		
+
 		if (oFile != null) {
 			oFile.setNodeOrLinkSelected(selected);
 		}
@@ -726,7 +694,7 @@ public class UIMenuManager implements IUIConstants, ICoreConstants {
 		}
 		if (oTools != null) {
 			oTools.setNodeOrLinkSelected(selected);
-		}		
+		}
 		if (oFavorites != null) {
 			oFavorites.setNodeOrLinkSelected(selected);
 		}

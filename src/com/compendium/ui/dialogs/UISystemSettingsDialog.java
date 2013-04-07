@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.Vector;
@@ -63,7 +62,7 @@ import com.compendium.ui.dialogs.UIDialog;
 public class UISystemSettingsDialog extends UIDialog implements ActionListener {
 
 	/** The file holding the data.*/
-	public final static String		SETUPFILE = "System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"AccessGrid.properties";
+	public final static String		SETUPFILE = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"AccessGrid.properties";
 
 	/** The button to save data.*/
 	private UIButton				pbSave		= null;

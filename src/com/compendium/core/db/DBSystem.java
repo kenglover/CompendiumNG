@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
@@ -45,39 +44,44 @@ public class DBSystem {
 	// AUDITED
 
 	/** SQL statement to add a new System record into the System table.*/
-	public final static String INSERT_PROPERTY_QUERY =
+	private final static String INSERT_PROPERTY_QUERY =
 		"INSERT INTO System " +
-		"(Property, Contents) " +
-		"VALUES (?, ?)";
+		"(Property, Contents, ModificationDate) " +
+		"VALUES (?, ?, ?)";
 
 	/** SQL statement to update a new System record into the System table.*/
-	public final static String UPDATE_PROPERTY_QUERY =
+	private final static String UPDATE_PROPERTY_QUERY =
 		"UPDATE System " +
 		"SET Contents = ? " +
+		",ModificationDate = ? " +
 		"WHERE Property = ?";
 
 	/** SQL statement to update the default CodeGroup in the system table.*/
-	public final static String UPDATE_CODEGROUP_QUERY =
+	private final static String UPDATE_CODEGROUP_QUERY =
 		"UPDATE System " +
 		"SET Contents = ? " +
+		",ModificationDate = ? " +
 		"WHERE Property = 'codegroup'";
 
 	/** SQL statement to update the default Link group in the system table.*/
-	public final static String UPDATE_LINKGROUP_QUERY =
+	private final static String UPDATE_LINKGROUP_QUERY =
 		"UPDATE System " +
 		"SET Contents = ? " +
+		",ModificationDate = ? " +
 		"WHERE Property = 'linkgroup'";
 
 	/** SQL statement to update the database version number in the system table.*/
-	public final static String UPDATE_VERSION_QUERY =
+	private final static String UPDATE_VERSION_QUERY =
 		"UPDATE System " +
 		"SET Contents = ? " +
+		",ModificationDate = ? " +
 		"WHERE Property = 'version'";
 
 	/** SQL statement to update the default user in the system table.*/
-	public final static String UPDATE_USER_QUERY =
+	private final static String UPDATE_USER_QUERY =
 		"UPDATE System " +
 		"SET Contents = ? " +
+		",ModificationDate = ? " +
 		"WHERE Property = 'defaultuser'";
 
 	// UNAUDITED
@@ -104,7 +108,7 @@ public class DBSystem {
 		"SELECT * " +
 		"FROM System";
 
-	
+
 	/**
 	 *  Update the project level properties.
 	 *
@@ -126,9 +130,9 @@ public class DBSystem {
 			sValue = (String)properties.get(sKey);
 			insertProperty(dbcon, sKey, sValue);
 		}
-		
+
 		return true;
-	}	
+	}
 
 	/**
 	 *  Update the default user property and return if successful.
@@ -147,7 +151,8 @@ public class DBSystem {
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_PROPERTY_QUERY);
 		pstmt.setString(1, sValue);
-		pstmt.setString(2, sProperty);
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(3, sProperty);
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close() ;
@@ -162,6 +167,7 @@ public class DBSystem {
 			pstmt = con.prepareStatement(INSERT_PROPERTY_QUERY);
 			pstmt.setString(1, sProperty);
 			pstmt.setString(2, sValue);
+			pstmt.setDouble(3, new Long((new java.util.Date()).getTime()).doubleValue());
 
 			nRowCount = pstmt.executeUpdate();
 			pstmt.close() ;
@@ -175,7 +181,7 @@ public class DBSystem {
 			}
 		}
 	}
-	
+
 	/**
 	 *  Update the default user property and return if successful.
 	 *
@@ -192,6 +198,7 @@ public class DBSystem {
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_USER_QUERY);
 		pstmt.setString(1, sUserID) ;
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close() ;
@@ -206,6 +213,7 @@ public class DBSystem {
 			pstmt = con.prepareStatement(INSERT_PROPERTY_QUERY);
 			pstmt.setString(1, "defaultuser");
 			pstmt.setString(2, sUserID) ;
+			pstmt.setDouble(3, new Long((new java.util.Date()).getTime()).doubleValue());
 
 			nRowCount = pstmt.executeUpdate();
 			pstmt.close() ;
@@ -235,6 +243,7 @@ public class DBSystem {
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_CODEGROUP_QUERY);
 		pstmt.setString(1, sCodeGroupID) ;
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close() ;
@@ -249,6 +258,7 @@ public class DBSystem {
 			pstmt = con.prepareStatement(INSERT_PROPERTY_QUERY);
 			pstmt.setString(1, "codegroup");
 			pstmt.setString(2, sCodeGroupID) ;
+			pstmt.setDouble(3, new Long((new java.util.Date()).getTime()).doubleValue());
 
 			nRowCount = pstmt.executeUpdate();
 			pstmt.close() ;
@@ -278,6 +288,7 @@ public class DBSystem {
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_LINKGROUP_QUERY);
 		pstmt.setString(1, sLinkGroupID) ;
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close() ;
@@ -292,6 +303,7 @@ public class DBSystem {
 			pstmt = con.prepareStatement(INSERT_PROPERTY_QUERY);
 			pstmt.setString(1, "linkgroup");
 			pstmt.setString(2, sLinkGroupID) ;
+			pstmt.setDouble(3, new Long((new java.util.Date()).getTime()).doubleValue());
 
 			nRowCount = pstmt.executeUpdate();
 			pstmt.close() ;
@@ -321,6 +333,7 @@ public class DBSystem {
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_VERSION_QUERY);
 		pstmt.setString(1, sVersion) ;
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -418,7 +431,7 @@ public class DBSystem {
 
 		return oUser;
 	}
-	
+
 	/**
 	 *  Return the project level preferences.
 	 *
@@ -436,8 +449,8 @@ public class DBSystem {
 		ResultSet rs = pstmt.executeQuery();
 
 		String sProperty = "";
-		String sValue = "";		
-		
+		String sValue = "";
+
 		if (rs != null) {
 			while (rs.next()) {
 				sProperty = rs.getString(1);
@@ -448,5 +461,5 @@ public class DBSystem {
 		pstmt.close();
 
 		return table;
-	}	
+	}
 }

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.menus;
 
 
@@ -76,26 +75,26 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 
 	/** The platform specific shortcut key to use.*/
 	private int shortcutKey;
-	
+
 	/**Indicates whether this menu is draw as a Simple interface or a advance user inteerface.*/
 	private boolean bSimpleInterface					= false;
-	
-	
+
+
 	/**
 	 * Constructor.
-	 * @param bSimple true if the simple interface should be draw, false if the advanced. 
+	 * @param bSimple true if the simple interface should be draw, false if the advanced.
 	 */
 	public UIMenuEdit(boolean bSimple) {
 		shortcutKey = ProjectCompendium.APP.shortcutKey;
-		this.bSimpleInterface = bSimple;		
-		
-		mnuMainMenu	= new JMenu("Edit"); 
+		this.bSimpleInterface = bSimple;
+
+		mnuMainMenu	= new JMenu(Messages.getString("UIMenuManager.31")); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuMainMenu,"menus.edit"); //$NON-NLS-1$
 		mnuMainMenu.setMnemonic(KeyEvent.VK_E);
-		
+
 		createMenuItems();
 	}
-	
+
 	/**
 	 * If true, redraw the simple form of this menu, else redraw the complex form.
 	 * @param isSimple true for the simple menu, false for the advanced.
@@ -110,9 +109,9 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 	private void recreateMenu() {
 		mnuMainMenu.removeAll();
 		createMenuItems();
-		onDatabaseOpen();				
+		onDatabaseOpen();
 	}
-	
+
 	/**
 	 * Create and return the Edit menu.
 	 * @return JMenu the Edit menu.
@@ -120,7 +119,7 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 	private JMenu createMenuItems() {
 
 		//Undo
-		miEditUndo = new JMenuItem("Undo"); 
+		miEditUndo = new JMenuItem(Messages.getString("UIMenuManager.33")); //$NON-NLS-1$
 		miEditUndo.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_Z, shortcutKey));
 		miEditUndo.setMnemonic(KeyEvent.VK_U);
 		miEditUndo.addActionListener(this);
@@ -128,7 +127,7 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 		miEditUndo.setEnabled(false);
 
 		//Redo
-		miEditRedo = new JMenuItem("Redo"); 
+		miEditRedo = new JMenuItem(Messages.getString("UIMenuManager.34")); //$NON-NLS-1$
 		miEditRedo.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_Y, shortcutKey));
 		miEditRedo.setMnemonic(KeyEvent.VK_R);
 		miEditRedo.addActionListener(this);
@@ -138,21 +137,21 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 		mnuMainMenu.addSeparator();
 
 		//Cut
-		miEditCut = new JMenuItem("Cut"); 
+		miEditCut = new JMenuItem(Messages.getString("UIMenuManager.35")); //$NON-NLS-1$
 		miEditCut.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_X, shortcutKey));
 		miEditCut.setMnemonic(KeyEvent.VK_T);
 		miEditCut.addActionListener(this);
 		miEditCut.setEnabled(false);
 		mnuMainMenu.add(miEditCut);
 
-		miEditCopy = new JMenuItem("Copy"); 
+		miEditCopy = new JMenuItem(Messages.getString("UIMenuManager.36")); //$NON-NLS-1$
 		miEditCopy.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_C, shortcutKey));
 		miEditCopy.setMnemonic(KeyEvent.VK_C);
 		miEditCopy.addActionListener(this);
 		miEditCopy.setEnabled(false);
 		mnuMainMenu.add(miEditCopy);
 
-		miEditPaste = new JMenuItem("Paste"); 
+		miEditPaste = new JMenuItem(Messages.getString("UIMenuManager.37")); //$NON-NLS-1$
 		miEditPaste.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_V, shortcutKey));
 		miEditPaste.setMnemonic(KeyEvent.VK_P);
 		miEditPaste.addActionListener(this);
@@ -161,27 +160,27 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 
 		mnuMainMenu.addSeparator();
 
-		miEditExternalCopy = new JMenuItem("Copy to Another Project"); 
+		miEditExternalCopy = new JMenuItem(Messages.getString("UIMenuManager.38")); //$NON-NLS-1$
 		miEditExternalCopy.setMnemonic(KeyEvent.VK_A);
 		miEditExternalCopy.addActionListener(this);
 		miEditExternalCopy.setEnabled(false);
 		mnuMainMenu.add(miEditExternalCopy);
-	
-		miEditExternalPaste = new JMenuItem("Paste from Another Project"); 
+
+		miEditExternalPaste = new JMenuItem(Messages.getString("UIMenuManager.39")); //$NON-NLS-1$
 		miEditExternalPaste.setMnemonic(KeyEvent.VK_F);
 		miEditExternalPaste.addActionListener(this);
 		miEditExternalPaste.setEnabled(false);
 		mnuMainMenu.add(miEditExternalPaste);
-	
+
 		mnuMainMenu.addSeparator();
 
-		miEditSelectAll = new JMenuItem("Select All"); 
+		miEditSelectAll = new JMenuItem(Messages.getString("UIMenuManager.40")); //$NON-NLS-1$
 		miEditSelectAll.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_A, shortcutKey));
 		miEditSelectAll.setMnemonic(KeyEvent.VK_S);
 		miEditSelectAll.addActionListener(this);
 		mnuMainMenu.add(miEditSelectAll);
 
-		miEditDelete = new JMenuItem("Delete"); 
+		miEditDelete = new JMenuItem(Messages.getString("UIMenuManager.41")); //$NON-NLS-1$
 		miEditDelete.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_DELETE, 0));
 		miEditDelete.setMnemonic(KeyEvent.VK_D);
 		miEditDelete.addActionListener(this);
@@ -190,7 +189,7 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 
 		mnuMainMenu.addSeparator();
 
-		miSearch = new JMenuItem("Search..."); 
+		miSearch = new JMenuItem(Messages.getString("UIMenuManager.42")); //$NON-NLS-1$
 		miSearch.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_F, shortcutKey));
 		miSearch.setMnemonic(KeyEvent.VK_S);
 		miSearch.addActionListener(this);
@@ -247,7 +246,7 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 		}
 		catch (Exception ex) {
 			ex.printStackTrace();
-			ProjectCompendium.APP.displayError("Exception: (UIMenuManager.onDatabaseClose) " + ex.getMessage()); 
+			ProjectCompendium.APP.displayError(Messages.getString("UIMenuManager.175") + ex.getMessage()); //$NON-NLS-1$
 		}
 	}
 
@@ -259,13 +258,13 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 			mnuMainMenu.setEnabled(true);
 		}
 	}
-	
+
 	/**
  	 * Enable/disable cut copy and delete menu items.
   	 * @param selected true for enabled, false for disabled.
 	 */
 	public void setNodeOrLinkSelected(boolean selected) {
-				
+
 		if (miEditCopy != null) {
 			miEditCopy.setEnabled(selected);
 		}
@@ -279,14 +278,14 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 			miEditDelete.setEnabled(selected);
 		}
 	}
-	
+
 	/**
  	 * Indicates when nodes on a view are selected and deselected.
  	 * Does Nothing.
   	 * @param selected true for selected false for deselected.
 	 */
 	public void setNodeSelected(boolean selected) {}
-	
+
 	/**
 	 * Enable/disable the paste menu item.
 	 * @param enabled true to enable, false to disable.
@@ -321,20 +320,20 @@ public class UIMenuEdit implements IUIMenu, ActionListener {
 			miEditRedo.setEnabled(oUndoManager.canRedo());
 		}
 	}
-	
+
 	/**
 	 * Update the look and feel of the menu.
 	 */
 	public void updateLAF() {
 		if (mnuMainMenu != null)
 			SwingUtilities.updateComponentTreeUI(mnuMainMenu);
-	}	
-	
+	}
+
 	/**
 	 * Return a reference to the main menu.
 	 * @return JMenu a reference to the main menu.
 	 */
 	public JMenu getMenu() {
 		return mnuMainMenu;
-	}	
+	}
 }

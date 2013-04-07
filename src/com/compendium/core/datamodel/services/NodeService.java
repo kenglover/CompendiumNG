@@ -22,13 +22,15 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
 import java.util.*;
 import java.sql.*;
 import java.awt.Dimension;
 
+import javax.swing.JOptionPane;
+
+import com.compendium.ProjectCompendium;
 import com.compendium.core.ICoreConstants;
 import com.compendium.core.datamodel.*;
 import com.compendium.core.db.*;
@@ -119,16 +121,16 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @return NodeSummary, the node summary object representing the node created successfully, null otherwise
 	 * @exception java.sql.SQLException
 	 */
-	
+
 	public NodeSummary createNode(PCSession session, String sNodeID, int nType, String sXNodeType,
 			String sImportedID, String sOriginalID, int nPermission, int nState, String sAuthor, String sLabel, String sDetail,
 			java.util.Date dCreationDate, java.util.Date dModificationDate)
 			throws SQLException {
-	
+
 		return createNode(session, sNodeID, nType, sXNodeType, "", sOriginalID, nPermission, nState, sAuthor, sLabel,
-				sDetail, dCreationDate, dModificationDate, "");		
+				sDetail, dCreationDate, dModificationDate, "");
 	}
-	
+
 	/**
 	 *	Adds a new node to the database and returns it if successful
 	 *
@@ -149,7 +151,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @return NodeSummary, the node summary object representing the node created successfully, null otherwise
 	 * @exception java.sql.SQLException
 	 */
-	
+
 	public NodeSummary createNode(PCSession session, String sNodeID, int nType, String sXNodeType,
 			String sImportedID, String sOriginalID, int nPermission, int nState, String sAuthor, String sLabel, String sDetail,
 			java.util.Date dCreationDate, java.util.Date dModificationDate, String sLastModAuthor)
@@ -161,7 +163,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 		if (sDetail == null)
 			sDetail = "";
 
-		node = DBNode.insert(dbcon, sNodeID, nType, sXNodeType, sImportedID, sOriginalID, sAuthor, sLabel, 
+		node = DBNode.insert(dbcon, sNodeID, nType, sXNodeType, sImportedID, sOriginalID, sAuthor, sLabel,
 			sDetail, dCreationDate, dModificationDate, session.getUserID(), sLastModAuthor);
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
@@ -404,7 +406,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * Returns an Enumeration of all nodes for the given view ID.
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String viewID, the id of the view 
+	 * @param String viewID, the id of the view
 	 * @return Enumeration, of all active nodes in given view ID (ones not marked for deletion).
 	 * @exception java.sql.SQLException
 	 * @author Lakshmi Prabhakaran
@@ -420,12 +422,12 @@ public class NodeService extends ClientService implements INodeService, java.io.
 
 		return nodes;
 	}
-	
+
 	/**
 	 * Returns an Vector of all nodes for the given view ID.
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String viewID, the id of the view 
+	 * @param String viewID, the id of the view
 	 * @return Vector, of all active nodes in given view ID (ones not marked for deletion).
 	 * @exception java.sql.SQLException
 	 * @author Lakshmi Prabhakaran
@@ -441,12 +443,12 @@ public class NodeService extends ClientService implements INodeService, java.io.
 
 		return nodes;
 	}
-	
+
 	/**
 	 * Returns an Enumeration of all view nodes to full depth for the given view ID.
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String viewID, the id of the view 
+	 * @param String viewID, the id of the view
 	 * @return Vector, of all active nodes in given view ID (ones not marked for deletion).
 	 * @exception java.sql.SQLException
 	 * @author Lakshmi Prabhakaran
@@ -624,6 +626,24 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	}
 
 	/**
+	 * Returns a count of all deleted nodes from the database.
+	 *
+	 * @param PCSession session, the session object for the database to use.
+	 * @return Vector, of NodeSummary objects which have been marked for deletion.
+	 * @exception java.sql.SQLException
+	 */
+	public int iGetDeletedNodeCount(PCSession session) throws SQLException {
+
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+
+		int iCount = DBNode.iGetDeletedNodeCount(dbcon);
+
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		return iCount;
+	}
+
+	/**
 	 * Returns a Vector of nodes given a keyword
 	 *
 	 * @param PCSession session, the session object for the database to use.
@@ -655,11 +675,11 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param oldValue the original original id of the node.
 	 * @param newValue the new original id of the node.
 	 * @param dModificationDate the date this node is being modified.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @exception java.sql.SQLException
 	 */
-	public void setOriginalID(PCSession session, String sNodeID, String oldValue, 
+	public void setOriginalID(PCSession session, String sNodeID, String oldValue,
 			String newValue, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 		if (oldValue == newValue)
 			return;
@@ -681,11 +701,11 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param int oldValue, the old value for the node type.
 	 * @param int newValue, the new value for the node type.
 	 * @param java.util.Date modificationDate, the modification date of the type change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @exception java.sql.SQLException
 	 */
-	public void setType(PCSession session, String sNodeID, int oldValue, int newValue, 
+	public void setType(PCSession session, String sNodeID, int oldValue, int newValue,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 
 		if (oldValue == newValue)
@@ -695,7 +715,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName());
 
-		boolean typeChanged = DBNode.setType(dbcon, sNodeID, oldValue, newValue, 
+		boolean typeChanged = DBNode.setType(dbcon, sNodeID, oldValue, newValue,
 				dModificationDate, sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
@@ -707,28 +727,28 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param PCSession session, the session object for the database to use.
 	 * @param String sNodeID, the id of the node to set the creation date for.
 	 * @param java.util.Date dCreationDate, the creation date for the node.
-	 * @param java.util.Date dModificationDate, the modification date for this change. 
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param java.util.Date dModificationDate, the modification date for this change.
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @return boolean, true if the creation date was successfuly set, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setCreationDate(PCSession session, String sNodeID, 
-			java.util.Date dCreationDate, java.util.Date dModificationDate, 
+	public boolean setCreationDate(PCSession session, String sNodeID,
+			java.util.Date dCreationDate, java.util.Date dModificationDate,
 			String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName() ;
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
 
-		boolean	changed = DBNode.setCreationDate(dbcon, sNodeID, dCreationDate, 
+		boolean	changed = DBNode.setCreationDate(dbcon, sNodeID, dCreationDate,
 				dModificationDate, sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return changed;
 	}
-	
+
 	/**
 	 * Sets the author for the node
 	 *
@@ -736,11 +756,11 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param String sNodeID, the id of the node to set the author for.
 	 * @param String sAuthor, the author to set for the node.
 	 * @param java.util.Date dModificationDate, the modification date for the author change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @return boolean, true if the author was successfuly set, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setAuthor(PCSession session, String sNodeID, String sAuthor, 
+	public boolean setAuthor(PCSession session, String sNodeID, String sAuthor,
 			java.util.Date modificationDate, String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName() ;
@@ -761,23 +781,23 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param String sNodeID, the id of the node whose label to change
 	 * @param String sLabel, the label of this node.
 	 * @param java.util.Date dModificationDate, the modification date for the label change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @exception java.sql.SQLException
 	 */
-	public void setLabel(PCSession session, String sNodeID, String sLabel, 
+	public void setLabel(PCSession session, String sNodeID, String sLabel,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName();
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName());
 
-		boolean labelChanged = DBNode.setLabel(dbcon, sNodeID, sLabel, dModificationDate, 
+		boolean labelChanged = DBNode.setLabel(dbcon, sNodeID, sLabel, dModificationDate,
 				sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 	}
-	
+
 	/**
 	 * Associated the given Code with the node with the given node id.
 	 *
@@ -942,18 +962,18 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param String newValue, the new value of the node detail (page 1).
 	 * @param String sAuthor, the author of the change.
 	 * @param java.util.Date dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public void setDetail(PCSession session, String sNodeID, String oldValue, 
-			String newValue, String sAuthor, java.util.Date dModificationDate, 
+	public void setDetail(PCSession session, String sNodeID, String oldValue,
+			String newValue, String sAuthor, java.util.Date dModificationDate,
 			String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName() ;
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
 
-		boolean	labelChanged = DBNode.setDetail(dbcon, sNodeID, newValue, sAuthor, 
+		boolean	labelChanged = DBNode.setDetail(dbcon, sNodeID, newValue, sAuthor,
 				dModificationDate, sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
@@ -966,18 +986,18 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param String sAuthor, the author of the change.
 	 * @param NodeDetailPage oDetail, the node detail page to set.
 	 * @param java.util.Date dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @return boolean, inidcating whether the update was successful.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setDetailPage(PCSession session, String sAuthor, NodeDetailPage oDetail, 
+	public boolean setDetailPage(PCSession session, String sAuthor, NodeDetailPage oDetail,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName() ;
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
 
-		boolean detailChanged = DBNode.setDetailPage(dbcon, sAuthor, oDetail, 
+		boolean detailChanged = DBNode.setDetailPage(dbcon, sAuthor, oDetail,
 				dModificationDate, sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
@@ -1036,18 +1056,18 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param Vector oldDetails, a vector of all the current detail pages.
 	 * @param Vector newDetails, a vector of the new details pages for the given nodeid.
 	 * @param java.util.Date dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @return boolean inidcating whether the update was successful.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setAllDetailPages(PCSession session, String sNodeID, String sAuthor, 
+	public boolean setAllDetailPages(PCSession session, String sNodeID, String sAuthor,
 			Vector oldDetails, Vector newDetails, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName() ;
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
 
-		boolean wasUpdated = DBNode.setAllDetailPages(dbcon, sNodeID, sAuthor, oldDetails, 
+		boolean wasUpdated = DBNode.setAllDetailPages(dbcon, sNodeID, sAuthor, oldDetails,
 				newDetails, dModificationDate, sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
@@ -1066,16 +1086,16 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param sPath the path of the external reference.
 	 * @param sImage the path of the external image.
 	 * @param dModificationDate the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setReference(PCSession session, String sNodeID, String sPath, 
+	public boolean setReference(PCSession session, String sNodeID, String sPath,
 			String sImage, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName() ;
 		DBConnection dbcon = getDatabaseManager().requestConnection(modelName) ;
 
-		boolean pathAdded = DBReferenceNode.setReference(dbcon, sNodeID, sPath, sImage, dModificationDate, 
+		boolean pathAdded = DBReferenceNode.setReference(dbcon, sNodeID, sPath, sImage, dModificationDate,
 																sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(modelName,dbcon);
@@ -1090,18 +1110,18 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param sNodeID the node id of the node whose reference and image to set.
 	 * @param sPath the path of the external reference.
 	 * @param sImage the path of the external image.
-	 * @param oImageSize the size to draw the image. 
+	 * @param oImageSize the size to draw the image.
 	 * @param dModificationDate the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setReference(PCSession session, String sNodeID, String sPath, 
+	public boolean setReference(PCSession session, String sNodeID, String sPath,
 			String sImage, Dimension oImageSize, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName();
 		DBConnection dbcon = getDatabaseManager().requestConnection(modelName);
 
-		boolean pathAdded = DBReferenceNode.setReference(dbcon, sNodeID, sPath, sImage, oImageSize, dModificationDate, 
+		boolean pathAdded = DBReferenceNode.setReference(dbcon, sNodeID, sPath, sImage, oImageSize, dModificationDate,
 																sLastModAuthor, session.getUserID());
 
 		getDatabaseManager().releaseConnection(modelName,dbcon);
@@ -1135,10 +1155,10 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param sNodeID the id of the node whose image size to change.
 	 * @param oSize the new size for the image.
 	 * @param dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setImageSize(PCSession session, String sNodeID, Dimension oSize,	
+	public boolean setImageSize(PCSession session, String sNodeID, Dimension oSize,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 
 		String modelName = session.getModelName();
@@ -1150,7 +1170,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 
 		return pathAdded;
 	}
-	
+
 	/**
 	 * Gets the image widht and height for the given node.
 	 *
@@ -1167,8 +1187,8 @@ public class NodeService extends ClientService implements INodeService, java.io.
 		getDatabaseManager().releaseConnection(modelName,dbcon);
 
 		return dim;
-	}	
-	
+	}
+
 	/**
 	 * Gets the Reference Node Image
 	 *
@@ -1207,7 +1227,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	}
 
 	/**
-	 * 
+	 *
 	 * Returns the Node state.
 	 *
 	 * @param PCSession session, the session object for the database to use.
@@ -1215,7 +1235,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @return int, the current state of the node. read - 1 unread - 0 modified - 2
 	 * @exception java.sql.SQLException
 	 */
-	
+
 	// Lakshmi (4/20/06)
 	public int getState(PCSession session, String nodeID) throws SQLException {
 
@@ -1224,8 +1244,8 @@ public class NodeService extends ClientService implements INodeService, java.io.
 		DBConnection dbcon = getDatabaseManager().requestConnection(modelName) ;
 
 		state = DBNodeUserState.get(dbcon, nodeID, modelName);
-		
-		getDatabaseManager().releaseConnection(modelName,dbcon);		
+
+		getDatabaseManager().releaseConnection(modelName,dbcon);
 		return state;
 	}
 
@@ -1239,18 +1259,18 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param java.util.Date modificationDate, the modification date of the state change.
 	 * @exception java.sql.SQLException
 	 */
-	
+
 	// Lakshmi (4/20/06)
-	public void setState(PCSession session, String sNodeID, int oldValue, int newValue, 
+	public void setState(PCSession session, String sNodeID, int oldValue, int newValue,
 			java.util.Date dModificationDate) throws SQLException {
-		
-		String modelName = session.getModelName();		
+
+		String modelName = session.getModelName();
 		DBConnection dbcon = getDatabaseManager().requestConnection(modelName) ;
-		
+
 		// update db, this is an update to the history table here
 		DBNodeUserState.updateUser(dbcon, sNodeID, session.getUserID(), oldValue, newValue);
-		
-		getDatabaseManager().releaseConnection(modelName,dbcon);		
+
+		getDatabaseManager().releaseConnection(modelName,dbcon);
 	}
 
 // METHODS NOT COMPLETED
@@ -1258,7 +1278,7 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	/**
 	 * CURRENTLY NOT IMPLEMENTED.
 	 * <p>
-	 *  
+	 *
 	 * Gets the last modification author of this node.
 	 *
 	 * @param session the current session object.
@@ -1267,11 +1287,11 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 */
 	public String getLastModificationAuthor(PCSession session, String sNodeID) throws SQLException {
 		//String modelName = session.getModelName() ;
-		// get from db and return		
+		// get from db and return
 		return "";
 	}
 
-	
+
 	/**
 	 * CURRENTLY NOT IMPLEMENTED.
 	 * <p>
@@ -1314,10 +1334,10 @@ public class NodeService extends ClientService implements INodeService, java.io.
 	 * @param int oldValue, the old value for the extended node type.
 	 * @param int newValue, the new value for the extended node type.
 	 * @param java.util.Date modificationDate, the modification date of the extended node type change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public void setExtendedNodeType(PCSession session, String sNodeID, String oldValue, 
+	public void setExtendedNodeType(PCSession session, String sNodeID, String oldValue,
 			String newValue, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException {
 		//String modelName = session.getModelName() ;
 		//update db
@@ -1353,33 +1373,183 @@ public class NodeService extends ClientService implements INodeService, java.io.
 		//get from db and return
 		return -1;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param session
 	 * @param nodeID
 	 * @return
 	 * @throws SQLException
 	 */
 	//Lakshmi (4/19/06)
-	public Vector getReaders(PCSession session, String nodeID) throws SQLException {
+//	public Vector getReaders(PCSession session, String nodeID) throws SQLException {
+//
+//		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+//		Vector users = new Vector();
+//
+//		int state = ICoreConstants.READSTATE;
+//
+//		Vector nodes = DBNodeUserState.getUserIDs(dbcon, nodeID, state);
+//
+//		for(int i = 0; i < nodes.size(); i ++){
+//			String userID = (String)(nodes.get(i));
+//			users.add(DBUser.getUserNameFromID(dbcon, userID));
+//		}
+//		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+//
+//		return users;
+//	}
+
+	/**
+	 *
+	 * @param session
+	 * @param nodeID
+	 * @return
+	 * @throws SQLException
+	 */
+	//Lakshmi (4/19/06)
+	public Vector getReaderIDs(PCSession session, String nodeID) throws SQLException {
 
 		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
-		Vector users = new Vector(); 
-		
-		int state = ICoreConstants.READSTATE;
 
-		Vector nodes = DBNodeUserState.getUserIDs(dbcon, nodeID, state);
+// Changed this so that readers returns people who have seen the node, even if the node has
+// been modified since they last saw it (per J. Conklin)
+//		int state = ICoreConstants.READSTATE;
+//		Vector userIDs = DBNodeUserState.getUserIDs(dbcon, nodeID, state);
 
-		for(int i = 0; i < nodes.size(); i ++){
-			String userID = (String)(nodes.get(i));
-			UserProfile user = DBUser.getUserProfileFromID(dbcon, userID);
-			users.add(user.getAuthor());
-		}
+		Vector userIDs = DBNodeUserState.getReaderIDs(dbcon, nodeID);
+
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
-		return users;
+		return userIDs;
 	}
+
+	/**
+	 * Counts the number of nodes in the Node table (mlb 11/07)
+	 *
+	 * @param PCSession session, the current session object.
+	 * @return long - the number of nodes in the Node table.
+	 * @exception java.sql.SQLException
+	 */
+	public long lGetNodeCount(PCSession session) throws SQLException {
+
+		long lNodeCount = 0;
+		String modelName = session.getModelName() ;
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+
+		lNodeCount = DBNode.lGetNodeCount(dbcon);
+
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		return lNodeCount;
+	}
+
+	/**
+	 * Counts the number of nodes in the View table (mlb 11/07)
+	 *
+	 * @param PCSession session, the current session object.
+	 * @return long - the number of nodes in the Node table.
+	 * @exception java.sql.SQLException
+	 */
+	public long lGetViewCount(PCSession session) throws SQLException {
+
+		long lViewCount = 0;
+		String modelName = session.getModelName() ;
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+
+		lViewCount = DBNode.lGetViewCount(dbcon);
+
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		return lViewCount;
+	}
+
+	/**
+	 * Gets the number of NodeUserStaterecords for the given user. (mlb 11/07)
+	 *
+	 * @param PCSession session, the session object for the database to use.
+	 * @exception java.sql.SQLException
+	 */
+
+	public long lGetStateCount(PCSession session) throws SQLException {
+
+		long lRecordCount = 0;
+		String modelName = session.getModelName();
+		DBConnection dbcon = getDatabaseManager().requestConnection(modelName) ;
+
+		lRecordCount = DBNodeUserState.lGetStateCount(dbcon, session.getUserID());
+
+		getDatabaseManager().releaseConnection(modelName,dbcon);
+		return lRecordCount;
+	}
+
+	/**
+	 * Counts the number of parents of the given node (mlb 01/08)
+	 *
+	 * @param PCSession session, the current session object.
+	 * @param sNodeID - the node to find the count of its parents
+	 * @return long - the number of nodes in the Node table.
+	 * @exception java.sql.SQLException
+	 */
+	public int iGetParentCount(PCSession session, String sNodeID) throws SQLException {
+
+		int iViewCount = 0;
+		String modelName = session.getModelName() ;
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+
+		iViewCount = DBNode.iGetParentCount(dbcon, sNodeID);
+
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		return iViewCount;
+	}
+
+	/**
+	 * Sets the state of all nodes in the current project as "Seen" for the current user
+	 *
+	 * @param PCSession session, the current session object.
+	 * @exception java.sql.SQLException
+	 */
+	public void vMarkProjectSeen(PCSession session) throws SQLException {
+
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName());
+		DBNode.vMarkProjectSeen(dbcon, session.getUserID());
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+	}
+	
+	
+	
+	public boolean bLockNode(PCSession session, String sOwnerID, String sNodeID) throws SQLException {
+		
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName());
+		DBNodeLock.insert(dbcon, sOwnerID, sNodeID);
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+		
+		return true;
+		
+	}
+	
+	public boolean bUnLockNode(PCSession session, int iLockID) throws SQLException {
+		
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName());
+		DBNodeLock.delete(dbcon, iLockID);
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+		
+		return true;
+		
+	}
+	
+	public int iCheckNodeLock(PCSession session, String sNodeID) throws SQLException {
+		
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName());
+		int iLockID = DBNodeLock.check(dbcon, sNodeID);
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+		
+		return iLockID;
+		
+	}
+
 }
 
 

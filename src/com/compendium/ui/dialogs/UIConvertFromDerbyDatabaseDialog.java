@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.awt.*;
@@ -128,9 +127,9 @@ public class UIConvertFromDerbyDatabaseDialog extends UIDialog implements Action
 		oContentPane.setLayout(new BorderLayout());
 
 		vtProjects = projects;
-		
+
 		vtMySQLProjects = ProjectCompendium.APP.getProjects();
-			
+
 		// create label and text box for model name
 		JLabel label = new JLabel("Choose a Derby Database Project To Convert To MySQL");
 		JPanel labelpanel = new JPanel();

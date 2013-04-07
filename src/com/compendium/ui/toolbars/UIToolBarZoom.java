@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars;
 
 import java.awt.*;
@@ -49,20 +48,20 @@ import com.compendium.core.datamodel.*;
  * @version	1.0
  */
 public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
-	
+
 	/** Indicates whether the node format toolbar is switched on or not by default.*/
 	private final static boolean DEFAULT_STATE			= true;
-	
+
 	/** Indicates the default orientation for this toolbars ui object.*/
-	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;	
-	
-	
+	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;
+
+
 	/** This indicates the type of the toolbar.*/
-	private	int 					nType			= -1;	
-	
+	private	int 					nType			= -1;
+
 	/** The parent frame for this class.*/
 	private ProjectCompendiumFrame	oParent			= null;
-	
+
 	/** The overall toolbar manager.*/
 	private IUIToolBarManager 		oManager		= null;
 
@@ -92,7 +91,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 
 	/** The action listener for the zoom choicebox.*/
 	private ActionListener 		zoomActionListener 	= null;
-	
+
 	/** The button to zoom the label text up a size.*/
 	private JButton				pbZoomInText		= null;
 
@@ -101,20 +100,20 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 
 	/** The button to zoom the label text back to normal.*/
 	private JButton				pbZoomFullText		= null;
-	
+
 	/** Displays the current text zoom.*/
 	private JLabel				lblTextZoom			= null;
-	
-	
+
+
 	/** Holds the last zoom choicebox index selected.*/
 	private int 				lastZoom			= 0;
-	
-	/** Holds the current + or minus count on zooming the default text size for presentations. **/ 
+
+	/** Holds the current + or minus count on zooming the default text size for presentations. **/
 	private int					currentTextZoom		= 0;
 
 	/** Are we currently setting a zoom choice in the coice box?*/
 	private boolean				setChoice			= false;
-	
+
 	/**
 	 * Create a new instance of UIToolBarZoom, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
@@ -126,9 +125,9 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 		this.oParent = parent;
 		this.oManager = oManager;
 		this.nType = nType;
-		createToolBar(DEFAULT_ORIENTATION);		
+		createToolBar(DEFAULT_ORIENTATION);
 	}
-	
+
 	/**
 	 * Create a new instance of UIToolBarZoom, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
@@ -141,20 +140,20 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 		this.oParent = parent;
 		this.oManager = oManager;
 		this.nType = nType;
-		createToolBar(orientation);		
+		createToolBar(orientation);
 	}
 
 	/**
 	 * Update the look and feel of the toolbar
 	 */
 	public void updateLAF() {
-		
+
 	    pbZoomIn.setIcon(UIImages.get(ZOOM_IN_ICON));
 	    pbZoomFull.setIcon(UIImages.get(ZOOM_FULL_ICON));
 	    pbZoomOut.setIcon(UIImages.get(ZOOM_OUT_ICON));
 	    pbZoomFit.setIcon(UIImages.get(ZOOM_FIT_ICON));
 	    pbZoomFocus.setIcon(UIImages.get(ZOOM_FOCUS_ICON));
-		
+
 		if (tbrToolBar != null) {
 			SwingUtilities.updateComponentTreeUI(tbrToolBar);
 		}
@@ -205,7 +204,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 		CSH.setHelpIDString(pbZoomFocus,"toolbars.zoom");
 
 		tbrToolBar.addSeparator();
-		
+
 		pbZoomInText = tbrToolBar.createToolBarButton("Reduce Font Size", UIImages.get(TEXT_MINUS_ICON));
 		pbZoomInText.addActionListener(this);
 		pbZoomInText.setEnabled(true);
@@ -222,14 +221,14 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 		pbZoomOutText.addActionListener(this);
 		pbZoomOutText.setEnabled(true);
 		tbrToolBar.add(pbZoomOutText);
-		CSH.setHelpIDString(pbZoomOutText,"toolbars.zoom");		
-		
+		CSH.setHelpIDString(pbZoomOutText,"toolbars.zoom");
+
 		lblTextZoom = new JLabel("0");
 		lblTextZoom.setFont(new Font("Dialog", Font.ITALIC, 12));
 		lblTextZoom.setToolTipText("The current font size adjustment");
 		lblTextZoom.setBorder(new EmptyBorder(0,2,0,2));
 		tbrToolBar.add(lblTextZoom);
-		
+
 		return tbrToolBar;
 	}
 
@@ -315,6 +314,12 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 				}
 
 				lastZoom = ind;
+
+				if (oParent.isScribblePadOn())
+				{
+					oParent.onHideScribblePad();
+					oParent.onShowScribblePad();
+				}
           	}
 		};
         cbZoom.addActionListener(zoomActionListener);
@@ -337,6 +342,12 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 
 		if (source.equals(pbZoomIn)) {
 			onZoomIn();
+			System.out.println("339 UIToolBarZoom about to toggle scribble");
+			if (oParent.isScribblePadOn())
+			{
+				oParent.onHideScribblePad();
+				oParent.onShowScribblePad();
+			}
 		}
 		else if (source.equals(pbZoomOut)) {
 			onZoomOut();
@@ -368,11 +379,18 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 			onReturnTextToActual();
 		}
 
+		if (oParent.isScribblePadOn())
+		{
+			oParent.onHideScribblePad();
+			oParent.onShowScribblePad();
+		}
+
 		oParent.setDefaultCursor();
+
 	}
-		
+
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To what is stored in the database with current map zoom applied)
 	 */
 	public void onReturnTextToActual() {
@@ -393,10 +411,10 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 				list.onReturnTextToActual();
 			}
 		}
-		
-		ProjectCompendium.APP.getMenuManager().onReturnTextToActual();				
+
+		ProjectCompendium.APP.getMenuManager().onReturnTextToActual();
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 * (This does not change the stored value in the database)
@@ -417,12 +435,12 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 				list.onIncreaseTextSize();
 			}
 		}
-		
-		ProjectCompendium.APP.getMenuManager().onIncreaseTextSize();	
+
+		ProjectCompendium.APP.getMenuManager().onIncreaseTextSize();
 		currentTextZoom++;
 		lblTextZoom.setText(String.valueOf(currentTextZoom));
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 * (This does not change the stored value in the database)
@@ -443,16 +461,16 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 				list.onReduceTextSize();
 			}
 		}
-		
+
 		ProjectCompendium.APP.getMenuManager().onReduceTextSize();
-		currentTextZoom--;	
-		lblTextZoom.setText(String.valueOf(currentTextZoom));		
+		currentTextZoom--;
+		lblTextZoom.setText(String.valueOf(currentTextZoom));
 	}
 
 	public int getTextZoom() {
 		return currentTextZoom;
 	}
-	
+
 	/**
 	 * Updates the menu when a new database project is opened.
 	 */
@@ -481,7 +499,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 				UIMapViewFrame mapframe = (UIMapViewFrame)frame;
 				double scale = mapframe.onZoomNextUp();
 				resetZoomChoiceBox(scale);
-				
+
 				// APPLY CURRENT TEXT ZOOM
 				int count = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 				boolean increase = false;
@@ -502,7 +520,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 							}
 						}
 					}
-				}				
+				}
 			}
 		}
 	}
@@ -544,7 +562,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 		}
 		resetZoomChoiceBox(scale);
 	}
-	
+
 	/**
 	 * Zoom the current map to the next level down(75/50/25/full).
 	 */
@@ -552,10 +570,10 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 		UIViewFrame frame = oParent.getCurrentFrame();
 		if (frame != null) {
 			if (frame instanceof UIMapViewFrame) {
-				UIMapViewFrame mapframe = (UIMapViewFrame)frame;				
+				UIMapViewFrame mapframe = (UIMapViewFrame)frame;
 				double scale = mapframe.onZoomNextDown();
 				resetZoomChoiceBox(scale);
-				
+
 				// APPLY CURRENT TEXT ZOOM
 				int count = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 				boolean increase = false;
@@ -576,11 +594,11 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 							}
 						}
 					}
-				}								
+				}
 			}
 		}
 	}
-	
+
 	/**
 	 * Zoom the current map using the given scale.
 	 * @param scale, the scale to zoom to.
@@ -591,7 +609,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 			if (frame instanceof UIMapViewFrame) {
 				UIMapViewFrame mapframe = (UIMapViewFrame)frame;
 				mapframe.onZoomTo(scale);
-				
+
 				// APPLY CURRENT TEXT ZOOM
 				int count = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 				boolean increase = false;
@@ -612,7 +630,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 							}
 						}
 					}
-				}								
+				}
 			}
 		}
 	}
@@ -626,7 +644,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 			if (frame instanceof UIMapViewFrame) {
 				UIMapViewFrame mapframe = (UIMapViewFrame)frame;
 				mapframe.onZoomToFit();
-				
+
 				// APPLY CURRENT TEXT ZOOM
 				int count = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 				boolean increase = false;
@@ -647,7 +665,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 							}
 						}
 					}
-				}								
+				}
 			}
 		}
 	}
@@ -661,7 +679,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 			if (frame instanceof UIMapViewFrame) {
 				UIMapViewFrame mapframe = (UIMapViewFrame)frame;
 				boolean zoomed = mapframe.onZoomRefocused();
-				
+
 				// APPLY CURRENT TEXT ZOOM
 				int count = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 				boolean increase = false;
@@ -682,7 +700,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 							}
 						}
 					}
-				}				
+				}
 
 				return zoomed;
 			}
@@ -696,7 +714,7 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
 	 */
 	public void setEnabled(boolean enabled) {
 		//tbrToolBar.setEnabled(enabled);
-		
+
 		pbZoomIn.setEnabled(enabled);
 		pbZoomOut.setEnabled(enabled);
 		pbZoomFull.setEnabled(enabled);
@@ -715,28 +733,28 @@ public class UIToolBarZoom implements IUIToolBar, ActionListener, IUIConstants {
  	 * Does nothing
  	 * @param selected true to enable, false to disable.
 	 */
-	public void setNodeOrLinkSelected(boolean selected) {}	
-	
+	public void setNodeOrLinkSelected(boolean selected) {}
+
 	/**
 	 * Return the ui toolbar object.
 	 */
 	public UIToolBar getToolBar() {
 		return tbrToolBar;
 	}
-	
+
 	/**
 	 * Return true if this toolbar is active by default, or false if it must be switched on by the user.
 	 * @return true if the toolbar is active by default, else false.
 	 */
 	public boolean getDefaultActiveState() {
 		return DEFAULT_STATE;
-	}	
-		
+	}
+
 	/**
 	 * Return a unique integer identifier for this toolbar.
 	 * @return a unique integer identifier for this toolbar.
 	 */
 	public int getType() {
 		return nType;
-	}			
+	}
 }

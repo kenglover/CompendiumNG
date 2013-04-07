@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.plaf;
 
 import java.awt.*;
@@ -447,14 +446,14 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 
         String text = link.getText();
         Font font = link.getFont();
- 
+
         oViewPane = link.getViewPane();
 		AffineTransform trans=new AffineTransform();
 		trans.setToScale(oViewPane.getScale(), oViewPane.getScale());
 		Point p1 = new Point(font.getSize(), font.getSize());
 		try { p1 = (Point)trans.transform(p1, new Point(0, 0));}
 		catch(Exception e) {System.out.println("can't convert font size (LinkUI.paint 1) \n\n"+e.getMessage()); }
-		Font newFont = new Font(font.getFontName(), font.getStyle(), p1.x);                
+		Font newFont = new Font(font.getFontName(), font.getStyle(), p1.x);
         g.setFont(newFont);
 
 		int maxWidth = maxTextWidth;
@@ -486,7 +485,7 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 
 		if (textHeight == -1)
 			textHeight = viewR.height;
-			
+
         if (textHeight < viewR.height) {
         	textR.y = viewR.y + ((viewR.height - textHeight) / 2) + fm.getAscent();
         } else {
@@ -1332,7 +1331,7 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 			}
 		}
 	}
-	
+
 	/**
 	 * Invoked when a key is pressed in a component.
 	 * @param evt, the associated KeyEvent.
@@ -1627,8 +1626,8 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 				delete();
 				evt.consume();
 			}
-			
-			// MOVED TO KEYTYPED TO PICK UP ACCENTED CHARACTER ETC WHICH ARE DOUBLE KEYSTOKES			
+
+			// MOVED TO KEYTYPED TO PICK UP ACCENTED CHARACTER ETC WHICH ARE DOUBLE KEYSTOKES
 			/*else if ( Character.isLetterOrDigit(keyChar) || sKeyPressed.equals(" ")  ||
 							IUIConstants.NAVKEYCHARS.indexOf(sKeyPressed) != -1) {
 				addCharToLabel(sKeyPressed);
@@ -1650,7 +1649,7 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 			int nX = evt.getX();
 			int nY = evt.getY();
 
-			// CHECK LABEL HAS BEEN CLICKED			
+			// CHECK LABEL HAS BEEN CLICKED
 			if (labelRectangle != null && labelRectangle.contains(nX, nY)) {
 				if (clickCount == 1) {
 					editing = true;
@@ -1669,7 +1668,7 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 						oLink.getViewPane().setSelectedLink(oLink, ICoreConstants.SINGLESELECT);
 						oLink.setSelected(true);
 					}
-					
+
 					oLink.requestFocus();
 					evt.consume();
 				}
@@ -1688,7 +1687,7 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 						oLink.setSelected(true);
 					}
 					oLink.requestFocus();
-					evt.consume();					
+					evt.consume();
 				}
 			}
 			else {
@@ -1899,8 +1898,8 @@ public	class LinkUI extends LineUI implements PropertyChangeListener{
 		int maxHeight = maxSize.height;
 
 		int oldMaxWidth = maxWidth;
-		
-		Model oModel = (Model)ProjectCompendium.APP.getModel();		
+
+		Model oModel = (Model)ProjectCompendium.APP.getModel();
 		int wrapWidth = oModel.labelWrapWidth;
 		int preferredWrapWidth = fm.charWidth('W') * wrapWidth;
 

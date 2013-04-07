@@ -23,7 +23,6 @@
  ********************************************************************************/
 
 
-
 package com.compendium.io;
 
 import java.util.*;
@@ -44,7 +43,7 @@ import com.compendium.ui.*;
 
 /**
  * ShorthandParser contains code for creating nodes from specific syntax in text blocks.
- * This can be either from a Jabber client messsage or the details panel of a node
+ * This can be either from the details panel of a node
  *
  * @author	Michelle Bachler
  */

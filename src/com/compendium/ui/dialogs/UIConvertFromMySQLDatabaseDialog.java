@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.awt.*;
@@ -443,7 +442,7 @@ public class UIConvertFromMySQLDatabaseDialog extends UIDialog implements Action
 
 					ServiceManager oManager = new ServiceManager(ICoreConstants.MYSQL_DATABASE, oConnection.getLogin(), oConnection.getPassword(), oConnection.getServer());
 					DBAdminDatabase oAdminDatabase = new DBAdminDatabase(oManager, oConnection.getLogin(), oConnection.getPassword(), oConnection.getServer());
-					String sFromName = oAdminDatabase.getDatabaseName(sfFriendlyName);					
+					String sFromName = oAdminDatabase.getDatabaseName(sfFriendlyName);
 					int status = oAdminDatabase.getSchemaStatusForDatabase(sFromName);
 
 					/*int status = -1;

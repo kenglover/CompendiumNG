@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
 import java.util.*;
@@ -50,7 +49,7 @@ public interface ISystemService extends IService {
 	 *	@throws java.sql.SQLException
 	 */
 	public boolean insertProperties(PCSession session, Hashtable properties) throws SQLException;
-	
+
 	/**
 	 *  Update the default user property and return if successful.
 	 *
@@ -60,8 +59,8 @@ public interface ISystemService extends IService {
 	 *	@return boolean, true if it was successful, else false.
 	 *	@throws java.sql.SQLException
 	 */
-	public boolean insertProperty(PCSession session, String sProperty, String sValue) throws SQLException;	
-	
+	public boolean insertProperty(PCSession session, String sProperty, String sValue) throws SQLException;
+
 	/**
 	 *  Return the project level preferences.
 	 *
@@ -69,7 +68,7 @@ public interface ISystemService extends IService {
 	 *	@throws java.sql.SQLException
 	 */
 	public Hashtable getProperties(PCSession session) throws SQLException;
-	
+
 	/**
 	 * Update the active codegroup id and return if successful
 	 *

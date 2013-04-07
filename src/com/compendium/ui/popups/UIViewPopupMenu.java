@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.popups;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -43,7 +44,6 @@ import com.compendium.ui.dialogs.*;
 import com.compendium.ui.stencils.*;
 import com.compendium.ProjectCompendium;
 
-import com.compendium.io.jabber.*;
 import com.compendium.io.udig.UDigClientSocket;
 
 /**
@@ -190,33 +190,28 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 
 	/** The JMenuItem to export to a HTML Outline.*/
 	private JMenuItem		miExportHTMLOutline		= null;
+	private JMenuItem		miExportWordDocOutline		= null;
 
 	/** The JMenuItem to export to a HTML Views.*/
 	private JMenuItem		miExportHTMLView		= null;
 
 	/** The JMenuItem to export to XML.*/
 	private JMenuItem		miExportXMLView			= null;
-	
+
 	/** The menu item to export a HTML view with the XML included.*/
-	private JMenuItem		miExportHTMLViewXML		= null;	
+	private JMenuItem		miExportHTMLViewXML		= null;
 
 	/** The JMenuItem to import XML.*/
 	private JMenuItem		miImportXMLView			= null;
-	
+
 	/** The menu item to import Flashmeeting XML.*/
 	private JMenuItem		miImportXMLFlashmeeting = null;
-	
+
 	/** The JMenuItem to import an external folder of image files into the current map.*/
 	private JMenuItem		miImportImageFolder		= null;
 
 	/** JMenuItem to export the current map to a Jpge file.*/
 	private JMenuItem		miSaveAsJpeg			= null;
-
-	/** The JMenu to send information to IX Panels.*/
-	private JMenu			mnuSendToIX				= null;
-
-	/** The JMenu to send information to a Jabber client.*/
-	private JMenu			mnuSendToJabber			= null;
 
 	/** The JMenu to holds links to Reference nodes contained in the current view.*/
 	private JMenu			mnuRefNodes				= null;
@@ -229,8 +224,8 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 
 	/** The JMenuItem to move the selected nodes' label text inot their detail.*/
 	private JMenuItem		miMoveLabel				= null;
-	
-	/** The  JMenuItem to mark the nodes as read*/ 
+
+	/** The  JMenuItem to mark the nodes as read*/
 	private JMenuItem		miMenuItemMarkSeen 		= null;
 
 	/**The  JMenuItem to mark the nodes as unread*/
@@ -242,9 +237,9 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 
 	/** The menu item to open the stencil  management dialog.*/
 	private JMenuItem		miStencilManagement		= null;
-	
+
 	/** The menu item to add node label as property to parent udig map point in UDIG.*/
-	private JMenuItem		miUDIGProperty			= null;	
+	private JMenuItem		miUDIGProperty			= null;
 
 	/** The x value for the location of this popup menu.*/
 	private int				nX						= 0;
@@ -499,16 +494,16 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 				addSeparator();
 			}
 		}
-		
+
 		String sParentSource = view.getSource();
-		if (sParentSource.startsWith("UDIG") && FormatProperties.startUDigCommunications) {
+		if (sParentSource.startsWith("UDIG") && APP_PROPERTIES.isStartUDigCommunications()) {
 			miUDIGProperty = new JMenuItem("Add Selected Labels to Parent map point", UIImages.get(IUIConstants.UDIG_ICON));
 			miUDIGProperty.addActionListener(this);
 			miUDIGProperty.setMnemonic(KeyEvent.VK_I);
-			add(miUDIGProperty);	
+			add(miUDIGProperty);
 			addSeparator();
 		}
-		
+
 		miMenuItemCopy = new JMenuItem("Copy", UIImages.get(IUIConstants.COPY_ICON));
 		miMenuItemCopy.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_C, shortcutKey));
 		miMenuItemCopy.addActionListener(this);
@@ -581,11 +576,16 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 		miExportXMLView.setMnemonic(KeyEvent.VK_X);
 		miExportXMLView.addActionListener(this);
 		mnuExport.add(miExportXMLView);
-				
+
 		miExportHTMLOutline = new JMenuItem("Web Outline...");
 		miExportHTMLOutline.setMnemonic(KeyEvent.VK_O);
 		miExportHTMLOutline.addActionListener(this);
 		mnuExport.add(miExportHTMLOutline);
+
+		miExportWordDocOutline = new JMenuItem("Word Doc Outline...");
+		//miExportWordDocOutline.setMnemonic(KeyEvent.VK_O);
+		miExportWordDocOutline.addActionListener(this);
+		mnuExport.add(miExportWordDocOutline);
 
 		miExportHTMLView = new JMenuItem("Web Maps...");
 		miExportHTMLView.setMnemonic(KeyEvent.VK_M);
@@ -607,29 +607,7 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 		addSeparator();
 
 		// SEND TO OPTIONS
-		boolean addSep = false;
-		if (ProjectCompendium.APP.jabber != null &&
-							ProjectCompendium.APP.jabber.getRoster().hasMoreElements()) {
-			addSep = true;
-			mnuSendToJabber = new JMenu("Send To Jabber");
-			mnuSendToJabber.setMnemonic(KeyEvent.VK_J);
-			mnuSendToJabber.setEnabled(false);
-			add(mnuSendToJabber);
-
-			ProjectCompendium.APP.drawJabberRoster( mnuSendToJabber );
-		}
-
-		if (ProjectCompendium.APP.ixPanel != null &&
-							ProjectCompendium.APP.ixPanel.getRoster().hasMoreElements()) {
-
-			addSep = true;
-			mnuSendToIX = new JMenu("Send To IX");
-			mnuSendToIX.setMnemonic(KeyEvent.VK_X);
-			mnuSendToIX.setEnabled(false);
-			add(mnuSendToIX);
-			ProjectCompendium.APP.drawIXRoster( mnuSendToIX );
-		}
-
+		boolean addSep = false;   
 		// END IMPORT / EXPORT / SEND OPTIONS
 
 		if ( addSep )
@@ -644,9 +622,9 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 		miMoveLabel.addActionListener(this);
 		miMoveLabel.setMnemonic(KeyEvent.VK_V);
 		add(miMoveLabel);
-	
+
 		addSeparator();
-		
+
 		// Mark seen and unseen for multiple nodes.
 		miMenuItemMarkSeen = new JMenuItem("Mark Seen");
 		miMenuItemMarkSeen.addActionListener(this);
@@ -659,7 +637,7 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 		miMenuItemMarkUnseen.setMnemonic(KeyEvent.VK_N);
 		add(miMenuItemMarkUnseen);
 		miMenuItemMarkUnseen.setEnabled(false);
-		
+
 		//Lakshmi (4/25/06) - if node is in read state enable mark unseen
 		// and disable mark seen and vice versa
 		Enumeration e = viewpaneUI.getViewPane().getSelectedNodes();
@@ -676,7 +654,7 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 				miMenuItemMarkSeen.setEnabled(true);
 			}
 		}
-		
+
 		if (!(viewpaneUI.getViewPane().getView().getId()).equals(ProjectCompendium.APP.getHomeView().getId())) {
 
 			addSeparator();
@@ -698,7 +676,7 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 		}
 
 	 	// If on the Mac OS and the Menu bar is at the top of the OS screen, remove the menu shortcut Mnemonics.
-		if (ProjectCompendium.isMac && (FormatProperties.macMenuBar || (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) )
+		if (ProjectCompendium.isMac && (APP_PROPERTIES.isMacMenuBar() || (!APP_PROPERTIES.isMacMenuBar() && !APP_PROPERTIES.isMacMenuUnderline())) )
 			UIUtilities.removeMenuMnemonics(getSubElements());
 
 		pack();
@@ -730,10 +708,10 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 				String sNotSent = "";
 				String sDate = CoreCalendar.getCurrentDateStringFull();
 				String sDetail = "";
-				IModel model = ProjectCompendium.APP.getModel();				
+				IModel model = ProjectCompendium.APP.getModel();
 				String sAuthor = oViewPane.getCurrentAuthor();
-				
-				Code oCode = null;				
+
+				Code oCode = null;
 				try {
 					oCode = CoreUtilities.checkCreateCode("UDIG", model, model.getSession(), sAuthor);
 				} catch(Exception e) {
@@ -742,9 +720,9 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 
 				if(oViewPane.getNumberOfSelectedNodes() > 0) {
 					String sData = "";
-					
+
 					Vector vtMatches = new Vector(10);
-					
+
 					for(Enumeration e = oViewPane.getSelectedNodes();e.hasMoreElements();) {
 						UINode uinode = (UINode)e.nextElement();
 						String sLabel = uinode.getText();
@@ -753,7 +731,7 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 						if (index == -1) {
 							sNotSent+=sLabel+"\n";
 						} else if (index != last) {
-							sNotSent+=sLabel+"\n";					
+							sNotSent+=sLabel+"\n";
 						} else {
 							if (sData.equals("")) {
 								sData = sLabel;
@@ -761,37 +739,37 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 								sData += "%%"+sLabel;
 							}
 							vtMatches.add(uinode);
-						}		
-					}	
-					
+						}
+					}
+
 					if (!sData.equals("")) {
 						View view = oViewPane.getView();
 						String mapid = view.getSource();
 						mapid = mapid.substring(5);
-						String reply = ProjectCompendium.APP.oUDigCommunicationManager.addProperty(mapid+"&&"+sData);						
+						String reply = ProjectCompendium.APP.oUDigCommunicationManager.addProperty(mapid+"&&"+sData);
 						if (reply.equals(UDigClientSocket.OK)) {
 							int count = vtMatches.size();
 							for(int i=0; i<count; i++) {
-								UINode uinode = (UINode)vtMatches.elementAt(i);									
+								UINode uinode = (UINode)vtMatches.elementAt(i);
 								sDetail = uinode.getNode().getDetail();
 								sDetail += "\nLabel: "+uinode.getText()+" Sent To UDIG: "+sDate;
 								try {
 									uinode.getNode().setDetail(sDetail, sAuthor, sAuthor);
 									if (oCode != null) {
 										uinode.getNode().addCode(oCode);
-									}								
-								} catch (Exception io) {								
-									ProjectCompendium.APP.displayError("Problem encountered: \n"+io.getMessage());								
-								}										
+									}
+								} catch (Exception io) {
+									ProjectCompendium.APP.displayError("Problem encountered: \n"+io.getMessage());
+								}
 							}
 						}
 					}
 					if (!sNotSent.equals("")) {
 						ProjectCompendium.APP.displayError("Label was not correctly formated.\n'Key = Value' format expected.\n\n"+sNotSent);
-					}					
+					}
 				}
 			}
-		}						
+		}
 		else if(source.equals(miImportMultipleViews)) {
 			onImportFile(true);
 		}
@@ -842,19 +820,21 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 			ProjectCompendium.APP.onSaveAsJpeg();
 		else if (source.equals(miExportHTMLOutline))
 			onExportFile();
+		else if (source.equals(miExportWordDocOutline))
+			onExportFile();
 		else if (source.equals(miExportHTMLView))
 			onExportView();
 
 		else if (source.equals(miExportXMLView)) {
 			onXMLExport(false);
 		} else if (source.equals(miExportHTMLViewXML)) {
-			ProjectCompendium.APP.onFileExportPower();			
+			ProjectCompendium.APP.onFileExportPower();
 		} else if (source.equals(miImportXMLView)) {
 			onXMLImport();
 		} else if (source.equals(miImportXMLFlashmeeting)) {
 			UIImportFlashMeetingXMLDialog dlg = new UIImportFlashMeetingXMLDialog(ProjectCompendium.APP);
 			UIUtilities.centerComponent(dlg, ProjectCompendium.APP);
-			dlg.setVisible(true);							
+			dlg.setVisible(true);
 		} else if(source.equals(miMenuItemOpen)) {
 			oViewPaneUI.getViewPane().getViewFrame().showEditDialog();
 		}
@@ -866,7 +846,7 @@ public class UIViewPopupMenu extends JPopupMenu implements ActionListener{
 					UINode node = (UINode) e.nextElement();
 					NodeSummary oNode = node.getNode();
 					oNode.setState(ICoreConstants.READSTATE);
-				
+
 				}
 			}
 			catch(Exception io) {

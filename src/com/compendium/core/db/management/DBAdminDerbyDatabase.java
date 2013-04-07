@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
@@ -51,7 +50,8 @@ import com.compendium.core.*;
 public class DBAdminDerbyDatabase extends DBAdminDatabase implements DBConstants, DBConstantsDerby {
 
 	/** A reference to the system file path separator*/
-	private final static String	sFS		= System.getProperty("file.separator");
+	private final static String	sFS			= System.getProperty("file.separator");
+	private final static String sHOMEPATH	= System.getenv("CompendiumUserPath");
 
 	/** SQL statement to add a new Connection record into the Connections   table.*/
 	private final static String INSERT_CONNECTION_QUERY =
@@ -136,7 +136,7 @@ public class DBAdminDerbyDatabase extends DBAdminDatabase implements DBConstants
 	 */
 	public boolean firstTime() throws SQLException, ClassNotFoundException {
 
-		File file = new File("System"+sFS+"resources"+sFS+"Databases"+sFS+DATABASE_NAME);
+		File file = new File(sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"Databases"+sFS+DATABASE_NAME);
 		if (!file.exists())
 			return true;
 
@@ -152,7 +152,9 @@ public class DBAdminDerbyDatabase extends DBAdminDatabase implements DBConstants
 	 */
 	public boolean checkAdminDatabase() throws SQLException, ClassNotFoundException {
 
-		File file = new File("System"+sFS+"resources"+sFS+"Databases"+sFS+DATABASE_NAME);
+		String file_name = sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"Databases"+sFS+DATABASE_NAME;
+		System.out.println("156 DBAdminDerbyDatabase file name is " + file_name);
+		File file = new File(file_name);
 		if (!file.exists()) {
 			Connection con = DBConnectionManager.getDerbyCreationConnection(DATABASE_NAME);
 			if (con != null) {
@@ -236,7 +238,7 @@ public class DBAdminDerbyDatabase extends DBAdminDatabase implements DBConstants
 	 */
 	public boolean deleteDatabase(String sProjectName, String sDatabaseName) throws SQLException {
 
-		File file = new File("System"+sFS+"resources"+sFS+"Databases"+sFS+sDatabaseName);
+		File file = new File(sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"Databases"+sFS+sDatabaseName);
 
 		boolean successful = CoreUtilities.deleteDirectory(file);
 

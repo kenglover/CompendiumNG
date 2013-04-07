@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -21,7 +21,6 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 
 package com.compendium.core.db;
 
@@ -50,45 +49,47 @@ public class DBUser {
 
 	// AUDITED
 	/** SQL statement to insert a new user profile in the User table.*/
-	public final static String INSERT_USER_QUERY =
-		"INSERT INTO Users (UserID, Author, CreationDate, ModificationDate, " +
-		"Login, Name, Password, Description, " +
-		"HomeView, IsAdministrator) "+
-		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+//	public final static String INSERT_USER_QUERY =
+//		"INSERT INTO Users (UserID, Author, CreationDate, ModificationDate, " +
+//		"Login, Name, Password, Description, " +
+//		"HomeView, IsAdministrator) "+
+//		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
 
 	/** SQL statement to insert a new user profile in the User table with the User Link View field (inbox).*/
 	public final static String INSERT_USER_WITH_LINKVIEW_QUERY =
 		"INSERT INTO Users (UserID, Author, CreationDate, ModificationDate, " +
 		"Login, Name, Password, Description, " +
-		"HomeView, IsAdministrator, LinkView) "+
-		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
-	
+		"HomeView, IsAdministrator, CurrentStatus, LinkView) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+
 	/** SQL statement to update the user profiles.*/
-	public final static String UPDATE_USER_QUERY =
-		"UPDATE Users " +
-		"SET Author = ?, CreationDate = ?, ModificationDate = ?, " +
-		"Login = ?, Name = ?, Password = ?, Description = ?, HomeView = ?, IsAdministrator = ? " +
-		"WHERE UserID = ? ";
+//	public final static String UPDATE_USER_QUERY =
+//		"UPDATE Users " +
+//		"SET Author = ?, CreationDate = ?, ModificationDate = ?, " +
+//		"Login = ?, Name = ?, Password = ?, Description = ?, HomeView = ?, IsAdministrator = ? " +
+//		"WHERE UserID = ? ";
 
 	/** SQL statement to update the user profiles including the link view field.*/
 	public final static String UPDATE_USER_WITH_LINKVIEW_QUERY =
 		"UPDATE Users " +
 		"SET Author = ?, CreationDate = ?, ModificationDate = ?, " +
-		"Login = ?, Name = ?, Password = ?, Description = ?, HomeView = ?, IsAdministrator = ?, LinkView = ? " +
+		"Login = ?, Name = ?, Password = ?, Description = ?, HomeView = ?, IsAdministrator = ?, LinkView = ?, CurrentStatus = ? " +
 		"WHERE UserID = ? ";
-	
+
 	/** SQL statement to update a users home view id.*/
 	public final static String UPDATE_HOMEVIEW_QUERY =
 		"UPDATE Users " +
-		"SET HomeView = ? "+
+		"SET HomeView = ? "+ "," +
+		"ModificationDate = ? " +
 		"WHERE UserID = ?";
 
 	/** SQL statement to update a users link view id (inbox).*/
 	public final static String UPDATE_LINKVIEW_QUERY =
 		"UPDATE Users " +
-		"SET LinkView = ? "+
+		"SET LinkView = ? "+"," +
+		"ModificationDate = ? " +
 		"WHERE UserID = ?";
-	
+
 	/** SQL statement to delete a user profile from the User table.*/
 	public final static String DELETE_USER_QUERY =
 		"DELETE "+
@@ -97,24 +98,37 @@ public class DBUser {
 
 
 	// UNAUDITED
+
+	/** SQL statement to update a users Status (active or inactive). */
+	public final static String UPDATE_CURRENTSTATUS_QUERY =
+		"UPDATE Users " +
+		"SET CurrentStatus = ? "+"," +
+		"ModificationDate = ? " +
+		"WHERE UserID = ?";
+
 	/** SQL statement to get user profile for the user with the given user login name and password, only when user logs on.*/
 	public final static String GET_USER_QUERY =
 		"SELECT UserID, Author, CreationDate, ModificationDate, " +
-		"Login, Name, Password, Description, HomeView, IsAdministrator, LinkView "+
+		"Login, Name, Password, Description, HomeView, IsAdministrator, CurrentStatus, LinkView "+
 		"FROM Users "+
 		"WHERE Login = ? AND Password = ?";
 
 	/** SQL statement to get user profile for the user with the given user id.*/
 	public final static String GET_USER_FROM_ID_QUERY =
 		"SELECT UserID, Author, CreationDate, ModificationDate, " +
-		"Login, Name, Password, Description, HomeView, IsAdministrator, LinkView "+
+		"Login, Name, Password, Description, HomeView, IsAdministrator, CurrentStatus, LinkView "+
 		"FROM Users "+
+		"WHERE UserID = ?";
+
+	/** SQL statement to get user name for the user with the given user id.*/
+	public final static String GET_USERNAME_FROM_ID_QUERY =
+		"SELECT Name FROM Users "+
 		"WHERE UserID = ?";
 
 	/** SQL statement to get user profile for the user with the given userid.*/
 	public final static String GET_USERDATA_QUERY =
 		"SELECT UserID, Author, CreationDate, ModificationDate, " +
-		"Login, Name, Password, Description, HomeView, IsAdministrator, LinkView "+
+		"Login, Name, Password, Description, HomeView, IsAdministrator, CurrentStatus, LinkView "+
 		"FROM Users "+
 		"WHERE UserID = ?";
 
@@ -127,12 +141,13 @@ public class DBUser {
 	public final static String GET_LINKVIEW_QUERY =
 		"Select LinkView, Name " +
 		"FROM Users";
-	
+
 	/** SQL statement to get all user profiles.*/
 	public final static String GET_ALL_USERS =
 		"SELECT UserID, Author, CreationDate, ModificationDate, " +
-		"Login, Name, Password, Description, HomeView, IsAdministrator, LinkView "+
-		"FROM Users ";
+		"Login, Name, Password, Description, HomeView, IsAdministrator, CurrentStatus, LinkView "+
+		"FROM Users " +
+		"ORDER BY CurrentStatus, Name";
 
 
 	/**
@@ -152,15 +167,15 @@ public class DBUser {
 	 *	@return boolean, true if it was successful, else false.
 	 *	@throws java.sql.SQLException
 	 */
-	public static UserProfile insert(DBConnection dbcon, String sUserID, String sAuthor, java.util.Date dCreationDate,
-			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean isAdministrator)
-				throws SQLException {
-
-		return insert(dbcon, sUserID, sAuthor, dCreationDate,
-				dModificationDate, sLoginName, sUserName, sPassword,
-				sUserDescription, sHomeViewID, isAdministrator, "");
-	}
+//	public static UserProfile insert(DBConnection dbcon, String sUserID, String sAuthor, java.util.Date dCreationDate,
+//			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
+//			String sUserDescription, String sHomeViewID, boolean isAdministrator)
+//				throws SQLException {
+//
+//		return insert(dbcon, sUserID, sAuthor, dCreationDate,
+//				dModificationDate, sLoginName, sUserName, sPassword,
+//				sUserDescription, sHomeViewID, isAdministrator, "", ICoreConstants.STATUS_ACTIVE);
+//	}
 
 	/**
 	 * 	Inserts a new user profile in the table and returns it.
@@ -176,13 +191,13 @@ public class DBUser {
 	 *	@param sUserDescription the description of the new user.
 	 *	@param sHomeViewID the id of the new user's home view.
 	 *  @param isAdministrator is this new user an administrator?
-	 *  @param sLinkViewID the id og the user's inbox.
+	 *  @param sLinkViewID the id of the user's inbox.
 	 *	@return boolean, true if it was successful, else false.
 	 *	@throws java.sql.SQLException
 	 */
 	public static UserProfile insert(DBConnection dbcon, String sUserID, String sAuthor, java.util.Date dCreationDate,
 			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean isAdministrator, String sLinkViewID)
+			String sUserDescription, String sHomeViewID, boolean isAdministrator, String sLinkViewID, int iActiveStatus)
 				throws SQLException {
 
 		Connection con = dbcon.getConnection();
@@ -193,8 +208,8 @@ public class DBUser {
 		UserProfile up = getUser(dbcon, sUserID);
 		if(up != null) {
 			up = DBUser.update(dbcon, sUserID, sAuthor, dCreationDate,
-						dModificationDate, sLoginName, sUserName, sPassword,
-						sUserDescription, sHomeViewID, isAdministrator);
+						(new java.util.Date()), sLoginName, sUserName, sPassword,
+						sUserDescription, sHomeViewID, isAdministrator, sLinkViewID, iActiveStatus);
 			return up;
 		}
 
@@ -207,14 +222,15 @@ public class DBUser {
 		pstmt.setString(1, sUserID);
 		pstmt.setString(2, sAuthor);
 		pstmt.setDouble(3, new Long(dCreationDate.getTime()).doubleValue());
-		pstmt.setDouble(4, new Long(dModificationDate.getTime()).doubleValue());
+		pstmt.setDouble(4, new Long((new java.util.Date()).getTime()).doubleValue());
 		pstmt.setString(5, sLoginName);
 		pstmt.setString(6, sUserName);
 		pstmt.setString(7, sPassword);
 		pstmt.setString(8, sUserDescription);
 		pstmt.setString(9, sHomeViewID);
 		pstmt.setString(10, admin);
-		pstmt.setString(11, sLinkViewID);
+		pstmt.setInt(11, iActiveStatus);
+		pstmt.setString(12, sLinkViewID);
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -233,7 +249,7 @@ public class DBUser {
 			//TODO: set the right permissions
 			int permission = ICoreConstants.WRITEVIEWNODE;
 			up = new UserProfile(sUserID, permission, sLoginName, sUserName, sPassword,
-								 sUserDescription, homeView, isAdministrator, linkView);
+								 sUserDescription, homeView, isAdministrator, linkView, iActiveStatus);
 			up.setAuthorLocal(sAuthor);
 
 			if (DBAudit.getAuditOn())
@@ -242,8 +258,8 @@ public class DBUser {
 			return up;
 		} else
 			return up;
-	}	
-	
+	}
+
 	/**
 	 * Updates a user profile in the table and returns it.
 	 *
@@ -261,16 +277,16 @@ public class DBUser {
 	 *	@return boolean, true if it was successful, else false.
 	 *	@throws java.sql.SQLException
 	 */
-	public static UserProfile update(DBConnection dbcon, String sUserID, String sAuthor, java.util.Date dCreationDate,
-			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean isAdministrator)
-				throws SQLException {
+//	public static UserProfile update(DBConnection dbcon, String sUserID, String sAuthor, java.util.Date dCreationDate,
+//			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
+//			String sUserDescription, String sHomeViewID, boolean isAdministrator, int iActiveStatus)
+//				throws SQLException {
+//
+//		return update(dbcon, sUserID, sAuthor, dCreationDate,
+//				dModificationDate, sLoginName, sUserName, sPassword,
+//				sUserDescription, sHomeViewID, isAdministrator, "", iActiveStatus);
+//	}
 
-		return update(dbcon, sUserID, sAuthor, dCreationDate,
-				dModificationDate, sLoginName, sUserName, sPassword,
-				sUserDescription, sHomeViewID, isAdministrator, "");
-	}
-	
 	/**
 	 * Updates a user profile in the table and returns it.
 	 *
@@ -291,7 +307,7 @@ public class DBUser {
 	 */
 	public static UserProfile update(DBConnection dbcon, String sUserID, String sAuthor, java.util.Date dCreationDate,
 			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean isAdministrator, String sLinkViewID)
+			String sUserDescription, String sHomeViewID, boolean isAdministrator, String sLinkViewID, int iActiveStatus)
 				throws SQLException {
 
 		Connection con = dbcon.getConnection();
@@ -306,15 +322,16 @@ public class DBUser {
 
 		pstmt.setString(1, sAuthor);
 		pstmt.setDouble(2, new Long(dCreationDate.getTime()).doubleValue());
-		pstmt.setDouble(3, new Long(dModificationDate.getTime()).doubleValue());
+		pstmt.setDouble(3, new Long((new java.util.Date()).getTime()).doubleValue());
 		pstmt.setString(4, sLoginName);
 		pstmt.setString(5, sUserName);
 		pstmt.setString(6, sPassword);
 		pstmt.setString(7, sUserDescription);
 		pstmt.setString(8, sHomeViewID);
 		pstmt.setString(9, admin);
-		pstmt.setString(10, sLinkViewID);		
-		pstmt.setString(11, sUserID);
+		pstmt.setString(10, sLinkViewID);
+		pstmt.setInt(11, iActiveStatus);
+		pstmt.setString(12, sUserID);
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -324,7 +341,7 @@ public class DBUser {
 
 			//Get the home view object from the database with the home view id
 			View homeView = (View)DBNode.getNodeSummary(dbcon, sHomeViewID, sUserID);
-			
+
 			//Get the link view object from the database with the link view id
 			View linkView = (View)DBNode.getNodeSummary(dbcon, sLinkViewID, sUserID);
 
@@ -335,7 +352,7 @@ public class DBUser {
 			int permission = ICoreConstants.WRITEVIEWNODE;
 
 			up = new UserProfile(sUserID, permission, sLoginName, sUserName, sPassword,
-								 sUserDescription, homeView, isAdministrator, linkView);
+								 sUserDescription, homeView, isAdministrator, linkView, iActiveStatus);
 			up.setAuthorLocal(sAuthor);
 
 			if (DBAudit.getAuditOn())
@@ -345,7 +362,7 @@ public class DBUser {
 		}
 		else
 			return up;
-	}	
+	}
 
 	/**
 	 *  Deletes a user profile from the table for the given USerID.
@@ -370,6 +387,32 @@ public class DBUser {
 		pstmt.setString(1, sUserID) ;
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
+
+			java.util.Date now = new java.util.Date();
+			long lnow = now.getTime();
+
+			String audit_id = "delete_user_" + sUserID + "_" + lnow;
+
+			PreparedStatement audit = con.prepareStatement("insert into Audit values " +
+					"(?,?,?,?,?,?,?,?)");
+
+			audit.setString(1, audit_id);
+			audit.setString(2, "mstucky");
+			audit.setString(3, sUserID);
+			audit.setLong(4, lnow);
+			audit.setString(5, "User:Delete");
+			audit.setInt(6,0);
+			audit.setString(7,"");
+			audit.setLong(8, lnow);
+
+			
+			try {
+				audit.executeUpdate();
+
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+
 
 		UserProfile user = null ;
 		if (nRowCount >0) {
@@ -398,7 +441,8 @@ public class DBUser {
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_HOMEVIEW_QUERY);
 		pstmt.setString(1, sViewID);
-		pstmt.setString(2, sUserID);
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(3, sUserID);
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -413,7 +457,7 @@ public class DBUser {
 
 		return false;
 	}
-	
+
 	/**
 	 * 	Sets the link view for the given user id and returns if successful.
 	 *
@@ -431,7 +475,8 @@ public class DBUser {
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_LINKVIEW_QUERY);
 		pstmt.setString(1, sViewID);
-		pstmt.setString(2, sUserID);
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(3, sUserID);
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -445,9 +490,38 @@ public class DBUser {
 		}
 
 		return false;
-	}	
+	}
 
 // UNAUDITED
+
+	/**
+	 * 	Sets the link view for the given user id and returns if successful.
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@param sUserID, the id of the user whose link view to set.
+	 *	@param iCurrentStatus, the User's Status (active/inactive).
+	 *	@return boolean, true if it was successful, else false.
+	 *	@throws java.sql.SQLException
+	 */
+	public static boolean setCurrentStatus(DBConnection dbcon, String sUserID, int iCurrentStatus) throws SQLException{
+
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return false;
+
+		PreparedStatement pstmt = con.prepareStatement(UPDATE_CURRENTSTATUS_QUERY);
+		pstmt.setInt(1, iCurrentStatus);
+		pstmt.setDouble(2, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(3, sUserID);
+
+		int nRowCount = pstmt.executeUpdate();
+		pstmt.close();
+
+		if (nRowCount >0) {
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	 *  Returns all the home view ids from the database
@@ -502,8 +576,8 @@ public class DBUser {
 		if (rs != null) {
 			while (rs.next()) {
 				String	sId	= rs.getString(1);
-				String sName = rs.getString(2);				
-				if (sId != null) {				
+				String sName = rs.getString(2);
+				if (sId != null) {
 					views.put(sId, sName);
 				}
 			}
@@ -511,8 +585,8 @@ public class DBUser {
 		pstmt.close();
 
 		return views;
-	}	
-	
+	}
+
 	/**
 	 *  Returns a user profile in the table for the given login name and password.
 	 *
@@ -540,14 +614,16 @@ public class DBUser {
 				String  userId			= rs.getString(1);
 				String	author			= rs.getString(2);
 				double  creationdate 	= rs.getDouble(3);
-				double  moddate			= rs.getDouble(4);
+				//double  moddate			= rs.getDouble(4);
+				double	moddate 		= (new java.util.Date()).getTime();
 				sLoginName				= rs.getString(5);
 				String	userName		= rs.getString(6);
 				sPassword				= rs.getString(7);
 				String	userDesc		= rs.getString(8);
 				String	homeViewId		= rs.getString(9);
 				String admin 			= rs.getString(10);
-				String	linkViewId		= rs.getString(11);
+				int		iCurrentStatus 	= rs.getInt(11);
+				String	linkViewId		= rs.getString(12);
 
 				boolean isAdministrator = false;
 				if (admin.equals("Y"))
@@ -559,15 +635,15 @@ public class DBUser {
 				//get the homeview for the user given the homeviewId
 				View homeView = (View)DBNode.getNodeSummary(dbcon, homeViewId, userId);
 				View linkView = null;
-				if (linkViewId != null) {					
-					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, userId);					
+				if (linkViewId != null) {
+					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, userId);
 				}
 
 				up = new UserProfile(userId, permission, sLoginName, userName, sPassword,
-									 userDesc, homeView, isAdministrator, linkView);
+									 userDesc, homeView, isAdministrator, linkView, iCurrentStatus);
 				up.setAuthorLocal(author);
 				up.setCreationDateLocal(new Date(new Double(creationdate).longValue()));
-				up.setModificationDateLocal(new Date(new Double(moddate).longValue()));				
+				up.setModificationDateLocal(new Date(new Double(moddate).longValue()));
 			}
 		}
 		pstmt.close();
@@ -597,14 +673,16 @@ public class DBUser {
 				String  userId		= rs.getString(1) ;
 				String	author		= rs.getString(2) ;
 				double  creationdate = rs.getDouble(3) ;
-				double  moddate		= rs.getDouble(4) ;
+				//double  moddate		= rs.getDouble(4) ;
+				double	moddate		= (new java.util.Date()).getTime();
 				String 	loginName	= rs.getString(5) ;
 				String	userName	= rs.getString(6) ;
 				String 	password	= rs.getString(7) ;
 				String	userDesc	= rs.getString(8) ;
 				String	homeViewId	= rs.getString(9) ;
 				String 	admin 		= rs.getString(10);
-				String 	linkViewId	= rs.getString(11) ;
+				int		iCurrentStatus 	= rs.getInt(11);
+				String	linkViewId		= rs.getString(12);
 
 				boolean isAdministrator = false;
 				if (admin.equals("Y"))
@@ -615,21 +693,50 @@ public class DBUser {
 
 				//get the homeview for the user given the homeviewId
 				View homeView = (View)DBNode.getNodeSummary(dbcon, homeViewId, sUserID);
-				
+
 				View linkView = null;
-				if (linkViewId != null) {					
-					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, sUserID);					
-				}				
+				if (linkViewId != null) {
+					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, sUserID);
+				}
 
 				up = new UserProfile(userId, permission, loginName, userName, password,
-									 userDesc, homeView, isAdministrator, linkView);
+									 userDesc, homeView, isAdministrator, linkView, iCurrentStatus);
 				up.setAuthorLocal(author);
 				up.setCreationDateLocal(new Date(new Double(creationdate).longValue()));
-				up.setModificationDateLocal(new Date(new Double(moddate).longValue()));				
+				up.setModificationDateLocal(new Date(new Double(moddate).longValue()));
 			}
 		}
 		pstmt.close();
 		return up;
+	}
+
+	/**
+	 * Returns the user name associated with the given UserID.					// mlb: Jan. 08
+	 *	@param DBConnection, the DBConnection object to access the database with.
+	 *	@param String sUserID - The UserID of the User record we want
+	 *	@return String sUserName - the Name field from the User table for the given UserID
+	 *	@exception java.sql.SQLException
+	 */
+	public static String getUserNameFromID(DBConnection dbcon, String sUserID) throws SQLException {
+
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return null;
+
+		PreparedStatement pstmt = con.prepareStatement(GET_USERNAME_FROM_ID_QUERY);
+		pstmt.setString(1, sUserID) ;
+
+		ResultSet rs = pstmt.executeQuery();
+
+		String sUserName = "";
+		if (rs != null) {
+
+			while (rs.next()) {
+				sUserName = rs.getString(1) ;
+			}
+		}
+		pstmt.close();
+		return sUserName;
 	}
 
 	/**
@@ -659,14 +766,16 @@ public class DBUser {
 				String  userId		= rs.getString(1) ;
 				String	author		= rs.getString(2) ;
 				double  creationdate = rs.getDouble(3) ;
-				double  moddate		= rs.getDouble(4) ;
+				//double  moddate		= rs.getDouble(4) ;
+				double	moddate		= (new java.util.Date()).getTime();
 				String 	loginName	= rs.getString(5) ;
 				String	userName	= rs.getString(6) ;
 				String	password	= rs.getString(7) ;
 				String	userDesc	= rs.getString(8) ;
 				String	homeViewId	= rs.getString(9) ;
 				String 	admin 		= rs.getString(10) ;
-				String	linkViewId	= rs.getString(11) ;
+				int		iCurrentStatus 	= rs.getInt(11);
+				String	linkViewId		= rs.getString(12);
 
 				boolean isAdministrator = false;
 				if (admin.equals("Y"))
@@ -677,17 +786,17 @@ public class DBUser {
 
 				//get the homeview for the user given the homeviewId
 				View homeView = (View)DBNode.getNodeSummary(dbcon, homeViewId, sUserID);
-				
+
 				View linkView = null;
-				if (linkViewId != null) {					
-					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, sUserID);					
+				if (linkViewId != null) {
+					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, sUserID);
 				}
 
 				up = new UserProfile(userId, permission, loginName, userName, password,
-									 userDesc, homeView, isAdministrator, linkView);
+									 userDesc, homeView, isAdministrator, linkView, iCurrentStatus);
 				up.setAuthorLocal(author);
 				up.setCreationDateLocal(new Date(new Double(creationdate).longValue()));
-				up.setModificationDateLocal(new Date(new Double(moddate).longValue()));				
+				up.setModificationDateLocal(new Date(new Double(moddate).longValue()));
 			}
 		}
 		pstmt.close();
@@ -718,15 +827,17 @@ public class DBUser {
 				String  userId		= rs.getString(1);
 				String	author		= rs.getString(2);
 				double  creationdate = rs.getDouble(3);
-				double  moddate		= rs.getDouble(4);
+				//double  moddate		= rs.getDouble(4);
+				double	moddate		= (new java.util.Date()).getTime();
 				String  loginName	= rs.getString(5);
 				String	userName	= rs.getString(6);
 				String  password	= rs.getString(7);
 				String	userDesc	= rs.getString(8);
 				String	homeViewId	= rs.getString(9);
 				String  admin 		= rs.getString(10);
-				String	linkViewId	= rs.getString(11);
-				
+				int		iCurrentStatus 	= rs.getInt(11);
+				String	linkViewId		= rs.getString(12);
+
 				boolean isAdministrator = false;
 				if (admin.equals("Y"))
 					isAdministrator = true;
@@ -737,12 +848,12 @@ public class DBUser {
 				View homeView = (View)DBNode.getNodeSummary(dbcon, homeViewId, userID);
 
 				View linkView = null;
-				if (linkViewId != null) {					
-					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, userID);					
+				if (linkViewId != null) {
+					linkView = (View)DBNode.getNodeSummary(dbcon, linkViewId, userID);
 				}
-				
+
 				UserProfile up = new UserProfile(userId, permission, loginName, userName, password,
-									 userDesc, homeView, isAdministrator, linkView);
+									 userDesc, homeView, isAdministrator, linkView, iCurrentStatus);
 				up.setAuthorLocal(author);
 				up.setCreationDateLocal(new Date(new Double(creationdate).longValue()));
 				up.setModificationDateLocal(new Date(new Double(moddate).longValue()));

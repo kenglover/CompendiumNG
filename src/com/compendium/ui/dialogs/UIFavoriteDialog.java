@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.awt.*;
@@ -166,7 +165,7 @@ public class UIFavoriteDialog extends UIDialog implements ActionListener {
 					hint = sNodeLabel+" ( "+sViewLabel+" )";
 				} else {
 					sNodeLabel = sLabel;
-					hint = sNodeLabel;					
+					hint = sNodeLabel;
 				}
 
 				if (nType > -1) {
@@ -174,7 +173,7 @@ public class UIFavoriteDialog extends UIDialog implements ActionListener {
 					if (sViewID == null || sViewID.equals("")) {
 						setIcon(UINode.getNodeImageSmall(nType));
 					} else {
-						setIcon(UIImages.getReferenceIcon(IUIConstants.REFERENCE_INTERNAL_SM_ICON));						
+						setIcon(UIImages.getReferenceIcon(IUIConstants.REFERENCE_INTERNAL_SM_ICON));
 					}
 				}
 
@@ -235,7 +234,7 @@ public class UIFavoriteDialog extends UIDialog implements ActionListener {
 
 		Vector vtTempFavorites = null;
 		Vector vtOldFavorites = new Vector();
-		
+
 		try { vtTempFavorites = favserv.getFavorites(oSession, sUserID); }
 		catch(Exception io) {
 			System.out.println("Could not retrieve bookmarks from the database due to: \n"+io.getMessage());
@@ -247,18 +246,18 @@ public class UIFavoriteDialog extends UIDialog implements ActionListener {
 			for (int i=0; i < count; i++) {
 				fav = (Favorite)vtTempFavorites.elementAt(i);
 				if (fav.getViewID() != null) {
-					oFavorites.addElement(fav);				
+					oFavorites.addElement(fav);
 					listModel.addElement(fav);
 				} else {
 					vtOldFavorites.addElement(fav);
 				}
 			}
-			
+
 			count = vtOldFavorites.size();
 			for (int i=0; i<count; i++) {
 				fav = (Favorite)vtOldFavorites.elementAt(i);
-				oFavorites.addElement(fav);				
-				listModel.addElement(fav);			
+				oFavorites.addElement(fav);
+				listModel.addElement(fav);
 			}
 		}
 
@@ -293,15 +292,15 @@ public class UIFavoriteDialog extends UIDialog implements ActionListener {
 			ProjectCompendium.APP.displayError("Please select a Bookmark to delete");
 			return;
 		}
-		
+
 		Vector vtFavorites = new Vector(count);
 		for(int i=0; i<count; i++) {
 			Favorite next = (Favorite)favs[i];
 			vtFavorites.add(next);
 		}
-			
+
 		ProjectCompendium.APP.deleteFavorites(vtFavorites);
-		
+
 		updateFavoriteData();
 	}
 }

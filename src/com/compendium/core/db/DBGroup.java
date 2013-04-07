@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.*;
@@ -81,7 +80,7 @@ public class DBGroup {
  		pstmt.setString(1, id);
 		pstmt.setString(2, author) ;
 		pstmt.setDouble(3, new Long(creationDate.getTime()).doubleValue());
-		pstmt.setDouble(4, new Long(modificationDate.getTime()).doubleValue());
+		pstmt.setDouble(4, new Long((new java.util.Date()).getTime()).doubleValue());
 		pstmt.setString(5, name) ;
 		pstmt.setString(6, description);
 
@@ -170,7 +169,7 @@ public class DBGroup {
   		pstmt.setString(1, id);
 		pstmt.setString(2, author) ;
 		pstmt.setDouble(3, new Long(creationDate.getTime()).doubleValue());
-		pstmt.setDouble(4, new Long(modificationDate.getTime()).doubleValue());
+		pstmt.setDouble(4, new Long((new java.util.Date()).getTime()).doubleValue());
 		pstmt.setString(5, name) ;
 		pstmt.setString(6, description);
 

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import javax.swing.*;
@@ -50,16 +49,16 @@ public class UITagsListTableModel extends AbstractTableModel {
 	public final static int VIEWS_COLUMN = 2;
 	public final static int LABEL_COLUMN = 3;
 	public final static int MODIFICATION_DATE_COLUMN = 4;
-	
+
 	private String[] columnNames = {"Img",
 									"Tags",
 									"Views",
-									"Label",								
+									"Label",
 									"Mod Date",
 									};
 
 	private Vector nodeData = new Vector(20);
-	
+
 	public UITagsListTableModel() {
 		super();
 	}
@@ -67,15 +66,15 @@ public class UITagsListTableModel extends AbstractTableModel {
 	public void removeAllElements() {
 		nodeData.removeAllElements();
 	}
-	
+
 	public void setData(Vector vtData) {
 		this.nodeData = vtData;
 	}
-		
+
 	public Vector getData() {
 		return this.nodeData;
 	}
-	
+
 	public int getColumnCount() {
 		return columnNames.length;
 	}
@@ -91,24 +90,24 @@ public class UITagsListTableModel extends AbstractTableModel {
 	public NodeSummary getNodeAt(int row) {
 
 		if (nodeData == null) {
-			return null;			
+			return null;
 		}
 		if (row >= nodeData.size()) {
-			return null;			
+			return null;
 		}
-		
+
 		return (NodeSummary) nodeData.elementAt(row);
-	}	
-	
+	}
+
 	public Object getValueAt(int row, int col) {
 
 		if (nodeData == null) {
-			return null;			
+			return null;
 		}
 		if (row >= nodeData.size()) {
-			return null;			
+			return null;
 		}
-		
+
 		NodeSummary node = (NodeSummary) nodeData.elementAt(row);
 		if (node != null) {
 			switch (col) {
@@ -125,7 +124,7 @@ public class UITagsListTableModel extends AbstractTableModel {
 					} else {
 						return "";
 					}
-				}	
+				}
 				case UITagsListTableModel.VIEWS_COLUMN: {
 					int count = node.getViewCount();
 					if (count == 0) {
@@ -133,7 +132,7 @@ public class UITagsListTableModel extends AbstractTableModel {
 						count = node.getViewCount();
 					}
 					return new Integer(count);
-				}								
+				}
 				case UITagsListTableModel.LABEL_COLUMN: {
 					return node.getLabel();
 				}
@@ -149,7 +148,7 @@ public class UITagsListTableModel extends AbstractTableModel {
 	}
 
 	public void setValueAt(Object o, int row, int col) {
-				
+
 	}
 
 	public Class getColumnClass(int c) {

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.io.xml;
 
 import java.util.*;
@@ -83,10 +82,10 @@ public class FlashMeetingXMLImport extends Thread {
 
 	/** The label for the map node holding voting information.*/
 	public static final String 	VOTING_LABEL		=	"Voting";
-	
+
 	private static final Color LABEL_COLOUR			=   new Color(102, 102, 255);
 
-	
+
 	private int nKeywordCount = 0;
 	private int nPlaylistCount = 0;
 	private int nAttendeeCount = 0;
@@ -146,27 +145,27 @@ public class FlashMeetingXMLImport extends Thread {
 
 	/** The Thread class which runs the progress bar.*/
 	private ProgressThread		oThread 			= null;
-	
+
 	private Vector			htChosenElements	= null;
 
 	/** The x position of the main map.*/
 	private int nMainMapX				= 200;
-	
+
 	/** The y position of the main map.*/
 	private int nMainMapY				= 200;
-	
+
 	/** The main url stub for jumps.*/
 	private String sMeetingReplayURLSTUB		= "";
-	
+
 	/** The url stub to use to access the folksonomy.*/
-	private String sMeetingFolksonomyURLSTUB	= "";	
-	
+	private String sMeetingFolksonomyURLSTUB	= "";
+
 	/** The url stub to use to access the files.*/
 	private String sMeetingMediaURLSTUB	= "";
 
 	/** Holds the attendee information.*/
 	private Hashtable people					= null;
-	
+
 	/**
 	 * Constructor.
 	 *
@@ -176,7 +175,7 @@ public class FlashMeetingXMLImport extends Thread {
 	 * be added to the node detail text, else false.
 	 */
 	public FlashMeetingXMLImport(String fileName, IModel model, Vector htChosenElements) {
-		
+
 		this.sFileName = fileName;
 		this.htChosenElements = htChosenElements;
 		this.oModel = model;
@@ -198,7 +197,7 @@ public class FlashMeetingXMLImport extends Thread {
 	 * be added to the node detail text, else false.
 	 */
 	public FlashMeetingXMLImport(String fileName, IModel model, Vector htChosenElements, int x, int y) {
-		
+
 		this.nMainMapX = x;
 		this.nMainMapY = y;
 		this.sFileName = fileName;
@@ -264,11 +263,11 @@ public class FlashMeetingXMLImport extends Thread {
 
         try {
 			XMLReader reader = new XMLReader();
-			Document document = reader.read(uri, true);			
+			Document document = reader.read(uri, true);
 			if (document != null) {
 				processDocument( document );
 			} else {
-				ProjectCompendium.APP.displayError("Exception: Your document cannot be imported.\n");	
+				ProjectCompendium.APP.displayError("Exception: Your document cannot be imported.\n");
 			}
 			document = null;
         }
@@ -288,24 +287,24 @@ public class FlashMeetingXMLImport extends Thread {
 		try {
 	 		ProjectCompendium.APP.setWaitCursor();
 	 		UIViewFrame oViewFrame =ProjectCompendium.APP.getCurrentFrame();
-	 		
+
 			NodeList events = document.getElementsByTagName("event");
 			Node event = events.item(0);
 			NamedNodeMap attrs = event.getAttributes();
-	
+
 			String date = ((Attr)attrs.getNamedItem("date")).getValue();
 			date = date.substring(0, date.length()-6); // remove extra +0000 from end
-	
+
 			String title = ((Attr)attrs.getNamedItem("title")).getValue();
 			String firstname = ((Attr)attrs.getNamedItem("firstnames")).getValue();
 			String lastname = ((Attr)attrs.getNamedItem("lastname")).getValue();
 			String sDescription = "";
-			
+
 			Node mediaurl = XMLReader.getFirstChildWithTagName(event, "media");
 			Node replayurl = XMLReader.getFirstChildWithTagName(event, "replay");
 			Node publicurl = XMLReader.getFirstChildWithTagName(event, "public");
-			Node description = XMLReader.getFirstChildWithTagName(event, "description");		
-			
+			Node description = XMLReader.getFirstChildWithTagName(event, "description");
+
 			Node first = mediaurl.getFirstChild();
 			if (first != null) {
 				sMeetingMediaURLSTUB = first.getNodeValue();
@@ -322,18 +321,18 @@ public class FlashMeetingXMLImport extends Thread {
 			if (first != null) {
 				sDescription = first.getNodeValue();
 			}
-					
+
 			View view = null;
 			UIViewPane oUIViewPane = null;
 			IModel oModel = ProjectCompendium.APP.getModel();
 			PCSession oSession = (PCSession)oModel.getSession();
 			UINode newMap = null;
-	
+
 			if (oViewFrame instanceof UIMapViewFrame) {
 				UIMapViewFrame map = (UIMapViewFrame) oViewFrame;
 				oUIViewPane = map.getViewPane();
 				ViewPaneUI oViewPaneUI = oUIViewPane.getViewPaneUI();
-	
+
 				String sDetails = "";
 				newMap = oViewPaneUI.createNode(ICoreConstants.MAPVIEW,
 											 "",
@@ -342,48 +341,48 @@ public class FlashMeetingXMLImport extends Thread {
 											 "Booked by "+firstname+" "+lastname+"\n\n"+sDescription,
 											 nMainMapX,
 											 nMainMapY);
-	
+
 				// GIVE IT THE SPECIAL FLASHMEETING MAP IMAGE
 				try {
 					newMap.getNode().initialize(oSession, oModel);
 					newMap.getNode().setSource("", UIImages.getPathString(IUIConstants.FLASHMEETING_ICON), sAuthor);
 				} catch(Exception e) {}
 				newMap.setIcon(UIImages.get(IUIConstants.FLASHMEETING_ICON));
-	
+
 				view = ((View)newMap.getNode());
 			}
 			else {
 				UIListViewFrame list = (UIListViewFrame) oViewFrame;
 				UIList oUIList = list.getUIList();
 				ListUI oListUI = oUIList.getListUI();
-	
+
 				NodePosition newMap2 = oListUI.createNode(ICoreConstants.MAPVIEW,
 											 "",
 											 sAuthor,
 											 date+": "+title,
 											 "Booked by "+firstname+" "+lastname,
 											 0,
-											 ((oUIList.getNumberOfNodes() + 1) * 10)										 
+											 ((oUIList.getNumberOfNodes() + 1) * 10)
 											 );
-	
+
 				// GIVE IT THE SPECIAL MEETING MAP IMAGE
 				try {
 					newMap.getNode().initialize(oSession, oModel);
 					newMap.getNode().setSource("", UIImages.getPathString(IUIConstants.FLASHMEETING_ICON), sAuthor);
 				} catch(Exception e) {}
-	
+
 				view = ((View)newMap2.getNode());
 			}
-			
+
 			if (view != null) {
 				NodeList people = document.getElementsByTagName("person");
 				nAttendeeCount = people.getLength();
 				preProcessAttendees(people);
-				
-				NodePosition oReplay = view.addMemberNode(ICoreConstants.REFERENCE, "", "", sAuthor, "Replay: "+title, "", 10, 20);	
+
+				NodePosition oReplay = view.addMemberNode(ICoreConstants.REFERENCE, "", "", sAuthor, "Replay: "+title, "", 10, 20);
 				oReplay.setForeground(LABEL_COLOUR.getRGB());
 				oReplay.setFontStyle(Font.BOLD);
-				oReplay.setFontSize(14);				
+				oReplay.setFontSize(14);
 				NodeSummary nodeSum = oReplay.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(sMeetingReplayURLSTUB, "", sAuthor);
@@ -392,11 +391,11 @@ public class FlashMeetingXMLImport extends Thread {
 					nodeSum.initialize(oSession, oModel);
 					nodeSum.setSource("", UIImages.getPathString(IUIConstants.FLASHMEETING_ICON), sAuthor);
 				} catch(Exception e) {}
-								
-				Dimension dim = (new UINode(oReplay, sAuthor)).getPreferredSize();			
-				int y = 20+dim.height+20;				
+
+				Dimension dim = (new UINode(oReplay, sAuthor)).getPreferredSize();
+				int y = 20+dim.height+20;
 				int startY = 20+dim.height;
-				
+
 				NodeList keywords = null;
 				NodeList playlist = null;
 				NodeList urls = null;
@@ -406,7 +405,7 @@ public class FlashMeetingXMLImport extends Thread {
 				NodeList annotations = null;
 				NodeList filedata = null;
 				NodeList votes = null;
-								
+
 				if (htChosenElements.contains(KEYWORDS_LABEL)) {
 					keywords = document.getElementsByTagName("keyword");
 					nKeywordCount = keywords.getLength();
@@ -447,19 +446,19 @@ public class FlashMeetingXMLImport extends Thread {
 					votes = document.getElementsByTagName("vote");
 					nVoteCount = votes.getLength();
 				}
-				
+
 		  		oProgressBar.setMaximum(nKeywordCount+nPlaylistCount+nAttendeeCount+nURLCount+nChatCount+nAnnotationCount+nWhiteboardCount+nFiledataCount+nVoteCount);
-				
+
 				if (htChosenElements.contains(FILEDATA_LABEL)) {
 					if (nFiledataCount > 0) {
 						y = processFileData(filedata, view, y);
 					}
-				}		  		
+				}
 				if (htChosenElements.contains(ATTENDEE_LABEL)) {
 					if (nAttendeeCount > 0) {
 						y = processAttendees(people, view, y);
 					}
-				}				
+				}
 				if (htChosenElements.contains(PLAYLIST_LABEL)) {
 					if (nPlaylistCount > 0) {
 						y = processPlayList(playlist, view, y);
@@ -485,7 +484,7 @@ public class FlashMeetingXMLImport extends Thread {
 				}
 				if (htChosenElements.contains(VOTING_LABEL)) {
 					if (nVoteCount > 0) {
-						y = processVotes(votes, view, y);					
+						y = processVotes(votes, view, y);
 					}
 				}
 				if (htChosenElements.contains(KEYWORDS_LABEL)) {
@@ -496,8 +495,8 @@ public class FlashMeetingXMLImport extends Thread {
 
 				// set size of main map window based on extent of node positions.
 				view.initializeMembers();
-				
-				Dimension size = alignCenter(view);			
+
+				Dimension size = alignCenter(view);
 				String sUserID = oModel.getUserProfile().getId();
 				ViewPropertyService viewserv = (ViewPropertyService)oModel.getViewPropertyService();
 				int width = size.width+35;
@@ -521,12 +520,12 @@ public class FlashMeetingXMLImport extends Thread {
 				}
 				catch(Exception io) {
 					io.printStackTrace();
-				}				
-			}			
+				}
+			}
 
 			ProjectCompendium.APP.refreshIconIndicators();
 			ProjectCompendium.APP.setDefaultCursor();
-			
+
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -536,9 +535,9 @@ public class FlashMeetingXMLImport extends Thread {
 	 * To perform center align
 	 */
 	private Dimension alignCenter(View view) {
-		
+
 		Dimension maindim = new Dimension(0,0);
-		
+
 		double sXPos = 0;
 		double lXPos = 0;
 		double center = 0;
@@ -556,8 +555,8 @@ public class FlashMeetingXMLImport extends Thread {
 			nodePos = (NodePosition) e.nextElement();
 			xPos = nodePos.getXPos();
 			yPos = nodePos.getYPos();
-			
-			dim = (new UINode(nodePos, sAuthor)).getPreferredSize();			
+
+			dim = (new UINode(nodePos, sAuthor)).getPreferredSize();
 			width = xPos+dim.getWidth();
 			height = yPos+dim.getHeight();
             if( width > maxWidth){
@@ -566,40 +565,40 @@ public class FlashMeetingXMLImport extends Thread {
             if( height > maxHeight){
                 maxHeight = height;
             }
- 
+
 			if(i == 0 || sXPos > xPos){
 				sXPos = xPos;
 			}
 			if(i == 0 || lXPos < (xPos +width) ) {
 				lXPos = xPos + width;
 			}
-			
+
 			i++;
 		}
-		
+
 		maindim = new Dimension( new Double(maxWidth).intValue(), new Double(maxHeight).intValue());
 
 		center = (sXPos + lXPos) /2 ;
 		for(Enumeration e = view.getPositions(); e.hasMoreElements();){
 			nodePos = (NodePosition) e.nextElement();
-			dim = (new UINode(nodePos, sAuthor)).getPreferredSize();			
+			dim = (new UINode(nodePos, sAuthor)).getPreferredSize();
 			width = dim.getWidth();
 			Point p = nodePos.getPos();
 			Point pt = new Point();
 			pt.setLocation(center - ( width /2), p.y);
 			nodePos.setPos(pt);
 		}
-		
+
 		return maindim;
 	}
-	
+
 	/**
 	 * Return the count of the current number of elements processed
 	 */
 	private int getCurrentCount() {
  		return (nCurrentKeywordCount+nCurrentPlaylistCount+nCurrentURLCount+nCurrentChatCount+nCurrentAnnotationCount+nCurrentWhiteboardCount+nCurrentFiledataCount+nCurrentVoteCount);
 	}
-	
+
 	/**
 	 * Extra all the people info and store, as other nodes refer to them by id.
 	 * @param items
@@ -608,12 +607,12 @@ public class FlashMeetingXMLImport extends Thread {
 		NamedNodeMap attrs = null;
 		Node item = null;
 		String name = "";
-		String personid = "";		
+		String personid = "";
 		int count = items.getLength();
 		people = new Hashtable(count);
 		for (int i=0; i< count; i++) {
 			item = items.item(i);
-			attrs = item.getAttributes();			
+			attrs = item.getAttributes();
 			personid = ((Attr)attrs.getNamedItem("personid")).getValue();
 			name = ((Attr)attrs.getNamedItem("name")).getValue();
 			people.put(personid, name);
@@ -633,14 +632,14 @@ public class FlashMeetingXMLImport extends Thread {
 		try {
 			NodeSummary nodeSum = null;
 
-			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, KEYWORDS_LABEL, "", X_OFFSET, nMainY);	
+			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, KEYWORDS_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
 			oMap.setFontStyle(Font.BOLD);
 			oMap.setShowSmallIcon(true);
 			View oView = (View)oMap.getNode();
-	
+
 			NodePosition oFolksNode = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, "Flashmeeting Folksonomy", "",  0, ((oView.getNumberOfNodes() + 1) * 10));
-			nodeSum = oFolksNode.getNode();			
+			nodeSum = oFolksNode.getNode();
 			nodeSum.initialize(oSession, oModel);
 			nodeSum.setSource(sMeetingFolksonomyURLSTUB, "", sAuthor);
 
@@ -649,13 +648,13 @@ public class FlashMeetingXMLImport extends Thread {
 			String jumpurl = "";
 			String sKeyword = "";
 			String sLabel = "";
-			
+
 			int counti = items.getLength();
 			Vector nodes = new Vector(counti);
 
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
-				
+
 				first = item.getFirstChild();
 				if (first != null) {
 					sKeyword = first.getNodeValue();
@@ -666,29 +665,29 @@ public class FlashMeetingXMLImport extends Thread {
 				} catch (Exception e) {}
 
 				jumpurl = sMeetingFolksonomyURLSTUB+"/key/"+sKeyword;
-								
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, "",  0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(jumpurl, "", sAuthor);
-				
+
 				nodes.addElement(nodePos);
-				
+
 				nCurrentKeywordCount++;
 				oProgressBar.setValue(getCurrentCount());
 				oProgressDialog.setStatus(getCurrentCount());
 			}
-			
-			nMainY += Y_SPACER;			
-			oView.initializeMembers();			
+
+			nMainY += Y_SPACER;
+			oView.initializeMembers();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
 	}
-	
+
 	/**
 	 * Process attendees data and create nodes.
 	 * @param items the attendees xml items
@@ -702,47 +701,47 @@ public class FlashMeetingXMLImport extends Thread {
 		try {
 			NodeSummary nodeSum = null;
 
-			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, ATTENDEE_LABEL, "", X_OFFSET, nMainY);	
+			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, ATTENDEE_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
 			oMap.setFontStyle(Font.BOLD);
 			oMap.setShowSmallIcon(true);
 			View oView = (View)oMap.getNode();
-	
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			Node first = null;
 			String jumpurl = "";
 			String sKeyword = "";
 			String sLabel = "";
-			
+
 			int counti = items.getLength();
 			Vector nodes = new Vector(counti);
 
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
-				attrs = item.getAttributes();				
+				attrs = item.getAttributes();
 				sLabel = ((Attr)attrs.getNamedItem("name")).getValue();
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.NOTE, "", "", sAuthor, sLabel, "", 0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 
 				nodeSum = nodePos.getNode();
 				nodes.addElement(nodePos);
-				
+
 				nCurrentKeywordCount++;
 				oProgressBar.setValue(getCurrentCount());
 				oProgressDialog.setStatus(getCurrentCount());
 			}
-			
+
 			nMainY += Y_SPACER;
-			oView.initializeMembers();			
+			oView.initializeMembers();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
 	}
-	
+
 	/**
 	 * Process PlayList data and create nodes.
 	 * @param items the playlist xml items
@@ -757,7 +756,7 @@ public class FlashMeetingXMLImport extends Thread {
 			oMap.setFontStyle(Font.BOLD);
 			oMap.setShowSmallIcon(true);
 			View oView = (View)oMap.getNode();
-	
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			String timestamp = "";
@@ -776,43 +775,43 @@ public class FlashMeetingXMLImport extends Thread {
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
 				attrs = item.getAttributes();
-				
+
 				//file CDATA #REQUIRED
 				//duration CDATA #REQUIRED
-				
+
 				timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
 				personid = ((Attr)attrs.getNamedItem("personid")).getValue();
 				jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
-					
+
 				name = (String)people.get(personid);
 				jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;
-				
-				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
+
+				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
 				sLabel = sTime+": "+name;
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, "",  0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(jumpurl, "", sAuthor);
-				
+
 				nodes.addElement(nodePos);
-								
+
 				nCurrentPlaylistCount++;
 				oProgressBar.setValue(getCurrentCount());
 				oProgressDialog.setStatus(getCurrentCount());
 			}
-			
+
 			nMainY += Y_SPACER;
 			oView.initializeMembers();
 		} catch (Exception e) {
 			System.out.println("FAILING = "+e.getMessage());
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
 	}
-	
+
 	/**
 	 * Process PlayList data and create nodes.
 	 * @param items the playlist xml items
@@ -829,9 +828,9 @@ public class FlashMeetingXMLImport extends Thread {
 			NodePosition oMap = view.addMemberNode(ICoreConstants.MAPVIEW, "", "", sAuthor, URL_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
 			oMap.setFontStyle(Font.BOLD);
-			oMap.setShowSmallIcon(true);		
+			oMap.setShowSmallIcon(true);
 			View oView = (View)oMap.getNode();
-	
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			String timestamp = "";
@@ -844,19 +843,19 @@ public class FlashMeetingXMLImport extends Thread {
 			NodeSummary nodeSum2 = null;
 			Vector nodes = new Vector(51);
 			Vector nodes2 = new Vector(51);
-			
+
 			int counti = items.getLength();
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
 				attrs = item.getAttributes();
-				
+
 				sURL = ((Attr)attrs.getNamedItem("url")).getValue();
 				timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
-				jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();					
-				jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;				
-				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
+				jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
+				jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;
+				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
 				sLabel = sTime+": "+sURL;
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, "", X_OFFSET, y);
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
@@ -868,16 +867,16 @@ public class FlashMeetingXMLImport extends Thread {
 				nodeSum2.initialize(oSession, oModel);
 				nodeSum2.setSource(jumpurl, "", sAuthor);
 				nodes2.addElement(nodePos2);
-					
+
 				oView.addMemberLink(ICoreConstants.DEFAULT_LINK, "0", sAuthor, nodeSum2, nodeSum, ICoreConstants.ARROW_TO);
 
 				y+=70;
-				
+
 				nCurrentURLCount++;
 				oProgressBar.setValue(getCurrentCount());
-				oProgressDialog.setStatus(getCurrentCount());				
+				oProgressDialog.setStatus(getCurrentCount());
 			}
-			
+
 			y+=70;
 
 			// SEARCH CHATS FOR URLS
@@ -893,14 +892,14 @@ public class FlashMeetingXMLImport extends Thread {
 				if (first != null) {
 					sMessage = first.getNodeValue();
 				}
-				
+
 				if (sMessage != null && sMessage != "") {
-					
+
 					attrs = item.getAttributes();
 					timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
-					jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();					
-					jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;				
-					sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
+					jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
+					jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;
+					sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
 
 					results = findURLs(sMessage);
 					countj = results.size();
@@ -913,22 +912,22 @@ public class FlashMeetingXMLImport extends Thread {
 						nodeSum.initialize(oSession, oModel);
 						nodeSum.setSource(sURL, "", sAuthor);
 						nodes.addElement(nodePos);
-			
+
 						nodePos2 = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, "Jump to the moment when this was discussed", "", X_OFFSET+100, y);
 						nodeSum2 = nodePos2.getNode();
 						nodeSum2.initialize(oSession, oModel);
 						nodeSum2.setSource(jumpurl, "", sAuthor);
 						nodes2.addElement(nodePos2);
-																		
+
 						oView.addMemberLink(ICoreConstants.DEFAULT_LINK, "0", sAuthor, nodeSum2, nodeSum, ICoreConstants.ARROW_TO);
-				
-						y+=70;	
+
+						y+=70;
 					}
 				}
-			}		
-			
+			}
+
 			y+=70;
-			
+
 			// SEARCH ANNOTATIONS
 			counti = notes.getLength();
 			first = null;
@@ -941,20 +940,20 @@ public class FlashMeetingXMLImport extends Thread {
 				first = item.getFirstChild();
 				if (first != null) {
 					sMessage = first.getNodeValue();
-				}				
-				if (sMessage != null && sMessage != "") {	
-					
+				}
+				if (sMessage != null && sMessage != "") {
+
 					attrs = item.getAttributes();
 					timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
-					jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();					
-					jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;				
-					sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
-					
+					jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
+					jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;
+					sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
+
 					results = findURLs(sMessage);
 					countj = results.size();
 					for (int j=0; j<countj; j++) {
 						sURL = (String)results.elementAt(j);
-						
+
 						sLabel = sTime+": "+sURL;
 
 						nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, "", X_OFFSET, y);
@@ -962,39 +961,39 @@ public class FlashMeetingXMLImport extends Thread {
 						nodeSum.initialize(oSession, oModel);
 						nodeSum.setSource(sURL, "", sAuthor);
 						nodes.addElement(nodePos);
-			
+
 						nodePos2 = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, "Jump to the moment when this was annotated", "", X_OFFSET+100, y);
 						nodeSum2 = nodePos2.getNode();
 						nodeSum2.initialize(oSession, oModel);
 						nodeSum2.setSource(jumpurl, "", sAuthor);
 						nodes2.addElement(nodePos2);
-						
+
 						oView.addMemberLink(ICoreConstants.DEFAULT_LINK, "0", sAuthor, nodeSum2, nodeSum, ICoreConstants.ARROW_TO);
-				
-						y+=70;	
+
+						y+=70;
 					}
 				}
-			}		
-			
+			}
+
 			nMainY += Y_SPACER;
-			
-			oView.initializeMembers();			
+
+			oView.initializeMembers();
 			UIArrangeLeftRight arrange = new UIArrangeLeftRight();
 			arrange.arrangeView(oView, new UIMapViewFrame(oView));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
 	}
-	
+
 	private Vector findURLs(String sSearchString) {
-		Vector results = new Vector(10);	
+		Vector results = new Vector(10);
 		String sString = sSearchString;
 		String sNext = "";
 		String sCheck = "";
-		if (sString != null && sString != "") {					
-			if (sString.indexOf("http://") != -1 || 
+		if (sString != null && sString != "") {
+			if (sString.indexOf("http://") != -1 ||
 					sString.indexOf("https://") != -1 ||
 					sString.indexOf("www.") != -1) {
 
@@ -1011,16 +1010,16 @@ public class FlashMeetingXMLImport extends Thread {
 							sNext = cleanURL(sNext);
 							results.addElement(sNext);
 							sString = sString.substring(0, index) + sString.substring(index2);
-						} else { 
+						} else {
 							sNext = sString.substring(index);
 							sNext = cleanURL(sNext);
 							results.addElement(sNext);
 							sString = sString.substring(0, index);
-						}						
+						}
 						bFound = true;
 					}
-				}			
-				
+				}
+
 				bFound = true;
 				while(bFound) {
 					bFound = false;
@@ -1032,7 +1031,7 @@ public class FlashMeetingXMLImport extends Thread {
 							sNext = cleanURL(sNext);
 							results.addElement(sNext);
 							sString = sString.substring(0, index) + sString.substring(index2);
-						} else { 
+						} else {
 							sNext = sString.substring(index);
 							sNext = cleanURL(sNext);
 							results.addElement(sNext);
@@ -1040,8 +1039,8 @@ public class FlashMeetingXMLImport extends Thread {
 						}
 						bFound = true;
 					}
-				}	
-				
+				}
+
 				bFound = true;
 				while(bFound) {
 					bFound = false;
@@ -1053,30 +1052,30 @@ public class FlashMeetingXMLImport extends Thread {
 							sNext = cleanURL(sNext);
 							results.addElement(sNext);
 							sString = sString.substring(0, index) + sString.substring(index2);
-						} else { 
+						} else {
 							sNext = sString.substring(index);
 							sNext = cleanURL(sNext);
 							results.addElement(sNext);
 							sString = sString.substring(0, index);
-						}						
+						}
 						bFound = true;
 					}
-				}								
+				}
 			}
 		}
 		return results;
 	}
-	
+
 	private String cleanURL(String sNext) {
 		String sCheck = sNext.substring(sNext.length()-1, sNext.length());
-		if (sCheck.equals(")") || sCheck.equals("]") || sCheck.equals(",") 
+		if (sCheck.equals(")") || sCheck.equals("]") || sCheck.equals(",")
 				|| sCheck.equals(".") || sCheck.equals(";") || sCheck.equals(".")) {
 			return sNext.substring(0, sNext.length()-1);
 		} else {
 			return sNext;
 		}
 	}
-	
+
 	/**
 	 * Process Chat data and create nodes.
 	 * @param items the chat xml items
@@ -1091,9 +1090,9 @@ public class FlashMeetingXMLImport extends Thread {
 			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, CHAT_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
 			oMap.setFontStyle(Font.BOLD);
-			oMap.setShowSmallIcon(true);		
+			oMap.setShowSmallIcon(true);
 			View oView = (View)oMap.getNode();
-	
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			Node first = null;
@@ -1112,44 +1111,44 @@ public class FlashMeetingXMLImport extends Thread {
 
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
-				
+
 				first = item.getFirstChild();
 				if (first != null) {
 					sMessage = first.getNodeValue();
 				}
 
-				attrs = item.getAttributes();				
+				attrs = item.getAttributes();
 				timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
 				personid = ((Attr)attrs.getNamedItem("personid")).getValue();
 				jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
-					
+
 				name = (String)people.get(personid);
 				jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;
-				
-				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
+
+				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
 				sLabel = sTime+": "+name+": "+sMessage;
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, "", 0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(jumpurl, "", sAuthor);
-				
+
 				nodes.addElement(nodePos);
-								
+
 				nCurrentChatCount++;
 				oProgressBar.setValue(getCurrentCount());
-				oProgressDialog.setStatus(getCurrentCount());				
+				oProgressDialog.setStatus(getCurrentCount());
 			}
 			nMainY += Y_SPACER;
-			oView.initializeMembers();			
+			oView.initializeMembers();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
 	}
-	
+
 	/**
 	 * Process Chat data and create nodes.
 	 * @param items the chat xml items
@@ -1164,9 +1163,9 @@ public class FlashMeetingXMLImport extends Thread {
 			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, WHITEBOARD_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
 			oMap.setFontStyle(Font.BOLD);
-			oMap.setShowSmallIcon(true);		
+			oMap.setShowSmallIcon(true);
 			View oView = (View)oMap.getNode();
-	
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			Node first = null;
@@ -1186,42 +1185,42 @@ public class FlashMeetingXMLImport extends Thread {
 
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
-				
-				attrs = item.getAttributes();				
+
+				attrs = item.getAttributes();
 				timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
 				jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
 				title = ((Attr)attrs.getNamedItem("title")).getValue();
 
 				//id CDATA #REQUIRED
 				//auto ('Y' | 'N') #REQUIRED
-				
+
 				name = (String)people.get(personid);
 				jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime+"&fb=1";
-				
-				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
+
+				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
 				sLabel = sTime+": "+title;
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, sMessage, 0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(jumpurl, "", sAuthor);
-				
+
 				nodes.addElement(nodePos);
 
 				nCurrentWhiteboardCount++;
 				oProgressBar.setValue(getCurrentCount());
-				oProgressDialog.setStatus(getCurrentCount());				
+				oProgressDialog.setStatus(getCurrentCount());
 			}
 			nMainY += Y_SPACER;
-			oView.initializeMembers();			
+			oView.initializeMembers();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
 	}
-	
+
 	/**
 	 * Process notes data and create nodes.
 	 * @param items the notes xml items
@@ -1236,9 +1235,9 @@ public class FlashMeetingXMLImport extends Thread {
 			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, ANNOTATIONS_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
 			oMap.setFontStyle(Font.BOLD);
-			oMap.setShowSmallIcon(true);		
-			View oView = (View)oMap.getNode();		
-	
+			oMap.setShowSmallIcon(true);
+			View oView = (View)oMap.getNode();
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			Node first = null;
@@ -1257,41 +1256,41 @@ public class FlashMeetingXMLImport extends Thread {
 
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
-				
+
 				first = item.getFirstChild();
 				if (first != null) {
 					sMessage = first.getNodeValue();
 				}
 
-				attrs = item.getAttributes();				
+				attrs = item.getAttributes();
 				timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
 				jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
 				jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;
-				
-				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
+
+				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
 				sLabel = sTime+": "+sMessage;
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, "", 0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(jumpurl, "", sAuthor);
-				
+
 				nodes.addElement(nodePos);
-				
+
 				nCurrentAnnotationCount++;
 				oProgressBar.setValue(getCurrentCount());
-				oProgressDialog.setStatus(getCurrentCount());				
+				oProgressDialog.setStatus(getCurrentCount());
 			}
-			nMainY += Y_SPACER;			
+			nMainY += Y_SPACER;
 			oView.initializeMembers();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
 	}
-	
+
 	/**
 	 * Process file data and create nodes.
 	 * @param items the file data xml items
@@ -1306,9 +1305,9 @@ public class FlashMeetingXMLImport extends Thread {
 			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, FILEDATA_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
 			oMap.setFontStyle(Font.BOLD);
-			oMap.setShowSmallIcon(true);		
+			oMap.setShowSmallIcon(true);
 			View oView = (View)oMap.getNode();
-	
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			String name = "";
@@ -1324,32 +1323,32 @@ public class FlashMeetingXMLImport extends Thread {
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
 				attrs = item.getAttributes();
-				
+
 				name = ((Attr)attrs.getNamedItem("name")).getValue();
-				size = ((Attr)attrs.getNamedItem("size")).getValue();				
+				size = ((Attr)attrs.getNamedItem("size")).getValue();
 				jumpurl = sMeetingMediaURLSTUB+"/uploads/"+name;
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, name, "", 0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(jumpurl, "", sAuthor);
-				
+
 				nodes.addElement(nodePos);
-				
+
 				nCurrentFiledataCount++;
 				oProgressBar.setValue(getCurrentCount());
-				oProgressDialog.setStatus(getCurrentCount());				
+				oProgressDialog.setStatus(getCurrentCount());
 			}
 			nMainY += Y_SPACER;
-			oView.initializeMembers();			
+			oView.initializeMembers();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
-	}	
-	
+	}
+
 	/**
 	 * Process Vote data and create nodes.
 	 * @param items the vote xml items
@@ -1363,10 +1362,10 @@ public class FlashMeetingXMLImport extends Thread {
 		try {
 			NodePosition oMap = view.addMemberNode(ICoreConstants.LISTVIEW, "", "", sAuthor, VOTING_LABEL, "", X_OFFSET, nMainY);
 			oMap.setForeground(LABEL_COLOUR.getRGB());
-			oMap.setShowSmallIcon(true);	
+			oMap.setShowSmallIcon(true);
 			oMap.setFontStyle(Font.BOLD);
 			View oView = (View)oMap.getNode();
-	
+
 			NamedNodeMap attrs = null;
 			Node item = null;
 			String timestamp = "";
@@ -1385,38 +1384,38 @@ public class FlashMeetingXMLImport extends Thread {
 			for (int i=0; i< counti; i++) {
 				item = items.item(i);
 				attrs = item.getAttributes();
-				
+
 				timestamp = ((Attr)attrs.getNamedItem("timestamp")).getValue();
 				personid = ((Attr)attrs.getNamedItem("personid")).getValue();
 				action = ((Attr)attrs.getNamedItem("action")).getValue();
 				jumptime = ((Attr)attrs.getNamedItem("jumptime")).getValue();
-				
-				//tally 
-	
+
+				//tally
+
 				name = (String)people.get(personid);
 				jumpurl = sMeetingReplayURLSTUB+"&jt="+jumptime;
-				
-				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");			
+
+				sTime = CoreCalendar.getDateString(CoreCalendar.getDateFromTime(new Long(timestamp).longValue()), "HH:mm:ss");
 				sLabel = sTime+": "+name+" - "+action;
-				
+
 				nodePos = oView.addMemberNode( ICoreConstants.REFERENCE, "", "", sAuthor, sLabel, "", 0,
 						 ((oView.getNumberOfNodes() + 1) * 10));
 				nodeSum = nodePos.getNode();
 				nodeSum.initialize(oSession, oModel);
 				nodeSum.setSource(jumpurl, "", sAuthor);
-				
+
 				nodes.addElement(nodePos);
-				
+
 				nCurrentVoteCount++;
 				oProgressBar.setValue(getCurrentCount());
-				oProgressDialog.setStatus(getCurrentCount());				
+				oProgressDialog.setStatus(getCurrentCount());
 			}
 			nMainY += Y_SPACER;
-			oView.initializeMembers();			
+			oView.initializeMembers();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return nMainY;
-	}	
+	}
 }

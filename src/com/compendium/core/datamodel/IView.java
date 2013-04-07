@@ -22,13 +22,10 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.awt.Point;
 import java.util.*;
-import java.util.Date;
-import java.util.NoSuchElementException;
 import java.sql.SQLException;
 
 /**
@@ -244,7 +241,7 @@ public interface IView extends INodeSummary {
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 * 
+	 *
 	 * @exception java.sql.SQLException
 	 * @exception ModelSessionException
 	 */
@@ -262,19 +259,19 @@ public interface IView extends INodeSummary {
 										Date transCreationDate,
 										Date transModDate,
 										String sLastModAuthor,
-										boolean bShowTags, 
-										boolean bShowText, 
-										boolean bShowTrans, 
-										boolean bShowWeight, 
-										boolean bSmallIcon, 
-										boolean bHideIcon, 
-										int 	nWrapWidth, 
-										int 	nFontSize, 
-										String 	sFontFace, 
-										int 	nFontStyle, 
-										int 	nForeground, 
+										boolean bShowTags,
+										boolean bShowText,
+										boolean bShowTrans,
+										boolean bShowWeight,
+										boolean bSmallIcon,
+										boolean bHideIcon,
+										int 	nWrapWidth,
+										int 	nFontSize,
+										String 	sFontFace,
+										int 	nFontStyle,
+										int 	nForeground,
 										int 	nBackground) throws SQLException, ModelSessionException;
-	
+
 	/**
 	 * Adds a new node with the given properties to this view at
 	 * the given x and y coordinate, both locally and in the DATABASE.
@@ -306,7 +303,7 @@ public interface IView extends INodeSummary {
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 * 
+	 *
 	 * @exception java.sql.SQLException
 	 * @exception ModelSessionException
 	 */
@@ -324,20 +321,20 @@ public interface IView extends INodeSummary {
 										Date transCreationDate,
 										Date transModDate,
 										String sLastModAuthor,
-										boolean bShowTags, 
-										boolean bShowText, 
-										boolean bShowTrans, 
-										boolean bShowWeight, 
-										boolean bSmallIcon, 
-										boolean bHideIcon, 
-										int 	nWrapWidth, 
-										int 	nFontSize, 
-										String 	sFontFace, 
-										int 	nFontStyle, 
-										int 	nForeground, 
+										boolean bShowTags,
+										boolean bShowText,
+										boolean bShowTrans,
+										boolean bShowWeight,
+										boolean bSmallIcon,
+										boolean bHideIcon,
+										int 	nWrapWidth,
+										int 	nFontSize,
+										String 	sFontFace,
+										int 	nFontStyle,
+										int 	nForeground,
 										int 	nBackground) throws SQLException, ModelSessionException;
 
-	
+
 	/**
 	 * Replace a node in this view.
 	 *
@@ -432,7 +429,7 @@ public interface IView extends INodeSummary {
 	 * @see com.compendium.core.datamodel.Link
 	 * @see com.compendium.core.datamodel.INodeSummary
 	 */
-	public ILink addMemberLink(String type, String sOriginalID, String author, 
+	public ILink addMemberLink(String type, String sOriginalID, String author,
 									INodeSummary from, INodeSummary to, int arrow)
 						throws SQLException, ModelSessionException;
 
@@ -473,7 +470,7 @@ public interface IView extends INodeSummary {
 	 * @see com.compendium.core.datamodel.Link
 	 * @see com.compendium.core.datamodel.INodeSummary
 	 */
-	public ILink addMemberLink(String type, String sImportedID, String sOriginalID, String author, 
+	public ILink addMemberLink(String type, String sImportedID, String sOriginalID, String author,
 					INodeSummary from, INodeSummary to, String sLabel, int arrow)
 						throws SQLException, ModelSessionException;
 
@@ -550,4 +547,12 @@ public interface IView extends INodeSummary {
 	 * @see ILink
 	 */
 	public Enumeration getLinks();
+
+	/**
+	 * Updates the LastModifiedByOther property.  This is used by XML import to prevent the user from being
+	 * prompted to refresh the view.
+	 *
+	 * @param NodeSumary node, The node being added to the view.
+	 */
+	public void UpdateLastModifiedByOther(NodeSummary node);
 }

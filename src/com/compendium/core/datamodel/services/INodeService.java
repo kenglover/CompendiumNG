@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -21,7 +21,6 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 
 package com.compendium.core.datamodel.services;
 
@@ -106,7 +105,7 @@ public interface INodeService extends IService {
 	 * @return NodeSummary, the node summary object representing the node created successfully, null otherwise
 	 * @exception java.sql.SQLException
 	 */
-	
+
 	public NodeSummary createNode(PCSession session, String sNodeID, int nType, String sXNodeType,
 			String sImportedID, String sOriginalID, int nPermission, int nState, String sAuthor, String sLabel, String sDetail,
 			java.util.Date dCreationDate, java.util.Date dModificationDate, String sLastModAuthor)
@@ -241,38 +240,38 @@ public interface INodeService extends IService {
 	 * Returns an Enumeration of all nodes for the given view ID.
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String viewID, the id of the view 
+	 * @param String viewID, the id of the view
 	 * @return Enumeration, of all active nodes in given view ID (ones not marked for deletion).
 	 * @exception java.sql.SQLException
 	 * @author Lakshmi Prabhakaran
 	 * @date 1/31/06
 	 */
 	public Enumeration getChildNodes(PCSession session, String viewID) throws SQLException;
-	
+
 	/**
 	 * Returns an Vector of all view nodes in the given view ID.
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String viewID, the id of the view 
+	 * @param String viewID, the id of the view
 	 * @return Vector, of all active nodes in given view ID (ones not marked for deletion).
 	 * @exception java.sql.SQLException
 	 * @author Lakshmi Prabhakaran
 	 * @date 10/24/06
 	 */
 	public Vector getChildViews(PCSession session, String viewID) throws SQLException;
-	
+
 	/**
 	 * Returns an Enumeration of all child view nodes to full depth for the given view ID.
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String viewID, the id of the view 
+	 * @param String viewID, the id of the view
 	 * @return Vector, of all active views in given view ID (ones not marked for deletion).
 	 * @exception java.sql.SQLException
 	 * @author Lakshmi Prabhakaran
 	 * @date 10/19/06
 	 */
 	public Vector getAllChildViews(PCSession session, String viewID) throws SQLException;
-	
+
 	/**
 	 * Returns deleted ViewNode entries for the given node id from the database
 	 *
@@ -352,6 +351,15 @@ public interface INodeService extends IService {
 	public Vector getDeletedNodeSummary(PCSession session) throws SQLException;
 
 	/**
+	 * Returns a count of all deleted nodes from the database.
+	 *
+	 * @param PCSession session, the session object for the database to use.
+	 * @return int, Count of Nodes which have been marked for deletion.
+	 * @exception java.sql.SQLException
+	 */
+	public int iGetDeletedNodeCount(PCSession session) throws SQLException;
+
+	/**
 	 * Returns a Vector of nodes given a keyword
 	 *
 	 * @param PCSession session, the session object for the database to use.
@@ -379,11 +387,11 @@ public interface INodeService extends IService {
 	 * @param oldValue the original original id of the node.
 	 * @param newValue the new original id of the node.
 	 * @param dModificationDate the date this node is being modified.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @exception java.sql.SQLException
 	 */
-	public void setOriginalID(PCSession session, String sNodeID, String oldValue, 
+	public void setOriginalID(PCSession session, String sNodeID, String oldValue,
 			String newValue, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -404,11 +412,11 @@ public interface INodeService extends IService {
 	 * @param int oldValue, the old value for the node type.
 	 * @param int newValue, the new value for the node type.
 	 * @param java.util.Date modificationDate, the modification date of the type change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @exception java.sql.SQLException
 	 */
-	public void setType(PCSession session, String sNodeID, int oldValue, int newValue, 
+	public void setType(PCSession session, String sNodeID, int oldValue, int newValue,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -431,10 +439,10 @@ public interface INodeService extends IService {
 	 * @param int oldValue, the old value for the extended node type.
 	 * @param int newValue, the new value for the extended node type.
 	 * @param java.util.Date modificationDate, the modification date of the extended node type change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public void setExtendedNodeType(PCSession session, String sNodeID, String oldValue, 
+	public void setExtendedNodeType(PCSession session, String sNodeID, String oldValue,
 			String newValue, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -443,14 +451,14 @@ public interface INodeService extends IService {
 	 * @param PCSession session, the session object for the database to use.
 	 * @param String sNodeID, the id of the node to set the creation date for.
 	 * @param java.util.Date dCreationDate, the creation date for the node.
-	 * @param java.util.Date dModificationDate, the modification date for this change. 
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param java.util.Date dModificationDate, the modification date for this change.
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @return boolean, true if the creation date was successfuly set, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setCreationDate(PCSession session, String sNodeID, 
-			java.util.Date dCreationDate, java.util.Date dModificationDate, 
+	public boolean setCreationDate(PCSession session, String sNodeID,
+			java.util.Date dCreationDate, java.util.Date dModificationDate,
 			String sLastModAuthor) throws SQLException;
 
 	/**
@@ -460,11 +468,11 @@ public interface INodeService extends IService {
 	 * @param String sNodeID, the id of the node to set the author for.
 	 * @param String sAuthor, the author to set for the node.
 	 * @param java.util.Date dModificationDate, the modification date for the author change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @return boolean, true if the author was successfuly set, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setAuthor(PCSession session, String sNodeID, String sAuthor, 
+	public boolean setAuthor(PCSession session, String sNodeID, String sAuthor,
 			java.util.Date modificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -488,7 +496,7 @@ public interface INodeService extends IService {
 	 * @param java.util.Date modificationDate, the modification date of the state change.
 	 * @exception java.sql.SQLException
 	 */
-	public void setState(PCSession session, String sNodeID, int oldValue, int newValue, 
+	public void setState(PCSession session, String sNodeID, int oldValue, int newValue,
 			java.util.Date dModificationDate) throws SQLException;
 
 	/**
@@ -508,13 +516,13 @@ public interface INodeService extends IService {
 	 * @param String sNodeID, the id of the node whose label to change
 	 * @param String sLabel, the label of this node.
 	 * @param java.util.Date dModificationDate, the modification date for the label change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * 
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 *
 	 * @exception java.sql.SQLException
 	 */
-	public void setLabel(PCSession session, String sNodeID, String sLabel, 
+	public void setLabel(PCSession session, String sNodeID, String sLabel,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
-	
+
 	/**
 	 * Gets the last modification author of this node.
 	 *
@@ -523,7 +531,7 @@ public interface INodeService extends IService {
 	 * @exception java.sql.SQLException
 	 */
 	public String getLastModificationAuthor(PCSession session, String sNodeID) throws SQLException;
-	
+
 	/**
 	 * Adds the reference to the given code.
 	 *
@@ -611,11 +619,11 @@ public interface INodeService extends IService {
 	 * @param String newValue, the new value of the node detail (page 1).
 	 * @param String sAuthor, the author of the change.
 	 * @param java.util.Date dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public void setDetail(PCSession session, String sNodeID, String oldValue, 
-			String newValue, String sAuthor, java.util.Date dModificationDate, 
+	public void setDetail(PCSession session, String sNodeID, String oldValue,
+			String newValue, String sAuthor, java.util.Date dModificationDate,
 			String sLastModAuthor) throws SQLException;
 
 	/**
@@ -625,11 +633,11 @@ public interface INodeService extends IService {
 	 * @param String sAuthor, the author of the change.
 	 * @param NodeDetailPage oDetail, the node detail page to set.
 	 * @param java.util.Date dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @return boolean, inidcating whether the update was successful.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setDetailPage(PCSession session, String sAuthor, NodeDetailPage oDetail, 
+	public boolean setDetailPage(PCSession session, String sAuthor, NodeDetailPage oDetail,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -651,11 +659,11 @@ public interface INodeService extends IService {
 	 * @param Vector oldDetails, a vector of all the current detail pages.
 	 * @param Vector newDetails, a vector of the new details pages for the given nodeid.
 	 * @param java.util.Date dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @return boolean inidcating whether the update was successful.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setAllDetailPages(PCSession session, String sNodeID, String sAuthor, 
+	public boolean setAllDetailPages(PCSession session, String sNodeID, String sAuthor,
 			Vector oldDetails, Vector newDetails, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -676,10 +684,10 @@ public interface INodeService extends IService {
 	 * @param String sPath, the path of the external reference.
 	 * @param Vector sImage, the path of the external image.
 	 * @param java.util.Date dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setReference(PCSession session, String sNodeID, String sPath, 
+	public boolean setReference(PCSession session, String sNodeID, String sPath,
 			String sImage, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -689,12 +697,12 @@ public interface INodeService extends IService {
 	 * @param sNodeID the node id of the node whose reference and image to set.
 	 * @param sPath the path of the external reference.
 	 * @param sImage the path of the external image.
-	 * @param oImageSize the size to draw the image. 
+	 * @param oImageSize the size to draw the image.
 	 * @param dModificationDate the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setReference(PCSession session, String sNodeID, String sPath, 
+	public boolean setReference(PCSession session, String sNodeID, String sPath,
 			String sImage, Dimension oImageSize, java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
 
 	/**
@@ -711,15 +719,15 @@ public interface INodeService extends IService {
 	 * Sets the image width and height.
 	 *
 	 * @param session the current session object.
-	 * @param sNodeID the id of the node whose image size to change.	 * 
+	 * @param sNodeID the id of the node whose image size to change.	 *
 	 * @param oSize the new size for the image.
 	 * @param dModificationDate, the modification date for the change.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 */
-	public boolean setImageSize(PCSession session, String sNodeID, Dimension oSize,	
+	public boolean setImageSize(PCSession session, String sNodeID, Dimension oSize,
 			java.util.Date dModificationDate, String sLastModAuthor) throws SQLException;
-	
+
 	/**
 	 * Gets the image widht and height for the given node.
 	 *
@@ -727,8 +735,8 @@ public interface INodeService extends IService {
 	 * @param sNodeID the id of the node whose image size to change.
 	 * @exception java.sql.SQLException
 	 */
-	public Dimension getImageSize(PCSession session, String sNodeID) throws SQLException;	
-	
+	public Dimension getImageSize(PCSession session, String sNodeID) throws SQLException;
+
 	/**
 	 * Gets the Reference Node Image
 	 *
@@ -748,13 +756,91 @@ public interface INodeService extends IService {
 	 * @exception java.sql.SQLException
 	 */
 	public Vector getAllSources(PCSession session) throws SQLException;
-	
-	/** Gets the list of user names for the given nodeId 
-	 * 
+
+	/** Gets the list of user names for the given nodeId
+	 *
 	 * @param PCSession session, the current session object.
 	 * @param String sNodeID, the node id of the node whose readers to get.
 	 * @return Vector, the list of readers for the node
 	 * @exception java.sql.SQLException
 	 */
-	public Vector getReaders(PCSession session, String nodeID) throws SQLException;
+//	public Vector getReaders(PCSession session, String nodeID) throws SQLException;
+
+	/** Gets the list of user ID's for the readers of the given nodeId
+	 *
+	 * @param PCSession session, the current session object.
+	 * @param String sNodeID, the node id of the node whose readers to get.
+	 * @return Vector, the list of IDs of readers for the node
+	 * @exception java.sql.SQLException
+	 */
+	public Vector getReaderIDs(PCSession session, String nodeID) throws SQLException;
+
+	/** Gets the count of nodes in the Node table
+	 *
+	 * @param PCSession session, the current session object.
+	 * @return long, the number of nodes in the Node table
+	 * @exception java.sql.SQLException
+	 */
+	public long lGetNodeCount(PCSession session) throws SQLException;
+
+	/** Gets the count of Views (maps & lists) in the Node table
+	 *
+	 * @param PCSession session, the current session object.
+	 * @return long, the number of nodes in the Node table
+	 * @exception java.sql.SQLException
+	 */
+	public long lGetViewCount(PCSession session) throws SQLException;
+
+	/** Gets the number of records for the current user from the NodeUserState table
+	 *
+	 * @param PCSession session, the current session object.
+	 * @return long, the number of nodes in the Node table
+	 * @exception java.sql.SQLException
+	 */
+	public long lGetStateCount(PCSession session) throws SQLException;
+
+	/** Gets the number of parents the given node has
+	 *
+	 * @param PCSession session, the current session object.
+	 * @param String sNodeID, the node id of the node whose parents to get.
+	 * @return int, the number of parents this node has
+	 * @exception java.sql.SQLException
+	 */
+	public int iGetParentCount(PCSession session, String ModeID) throws SQLException;
+
+	/** Marks all nodes in the database as "Seen" by the current user
+	 *
+	 * @param PCSession session, the current session object.
+	 * @throws SQLException
+	 */
+	public void vMarkProjectSeen(PCSession session) throws SQLException;
+	
+	/**
+	 * 
+	 * @param session
+	 * @param sOwnerID
+	 * @param sNodeID
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean bLockNode(PCSession session, String sOwnerID, String sNodeID) throws SQLException;
+	
+	/**
+	 * 
+	 * @param session
+	 * @param iLockID
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean bUnLockNode(PCSession session, int iLockID) throws SQLException;
+	
+	/**
+	 * 
+	 * @param session
+	 * @param sNodeID
+	 * @return
+	 * @throws SQLException
+	 */
+	
+	public int iCheckNodeLock(PCSession session, String sNodeID) throws SQLException;
 }

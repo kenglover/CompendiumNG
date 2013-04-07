@@ -23,7 +23,6 @@
  ********************************************************************************/
 
 
-
 package com.compendium.ui;
 
 import java.awt.BorderLayout;
@@ -90,7 +89,7 @@ import com.compendium.ui.popups.UIViewUnreadPopupMenu;
  */
 
 public class UIViewUnread extends JPanel implements IUIConstants , TreeSelectionListener , PropertyChangeListener {
-	
+
 	/** The serial version id	 */
 	private static final long serialVersionUID 					= 4469006144090220368L;
 
@@ -99,93 +98,94 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 
 	/** The name of the project in the outline view.*/
 	private String 				sProject 						= "";
-	
+
 	/** The cache model for the currently open database.*/
 	private IModel				oModel							= ProjectCompendium.APP.getModel();
 
 	/** The session for this model.*/
 	private PCSession 			oSession 						= null;
-		
+
 	/** The user Id of the current user */
 	private String 				userID 							= "";
-	
+
 	/** Has this panel been drawn yet?*/
 	private boolean 			drawn 							= false;
-	
+
 	/** The JTree to display unread view */
 	private JTree 				tree 							= null;
-	
+
 	/** The root Node of the tree */
 	protected DefaultMutableTreeNode	rootNode				= null;
-	
+
 	/** Hashtable containing vector of unread nodes against the view */
 	private Hashtable 			htViewsNodes 					= new Hashtable();
-	
+
 	/** Vector of the unread view nodes */
 	private Vector 				vtUnreadViews					= new Vector();
-	
+
 	/** Vector of the view nodes */
 	private Vector 				vtViews							= new Vector();
-	
+
 	/** node id against a list of tree nodes  */
 	private  Hashtable 			htTreeNodes   					= new Hashtable();
-	
+
 	/** Node summary against their views */
 	private  Hashtable 			htNodeAndViews   				= new Hashtable();
-		
+
 	/** Currently selected node */
 	private UIViewOutlineTreeNode selectedNode   				= null;
-	
+
 	/** Total unread nodes */
 	private int 					nUnread						= 0;
-	
+
 	/** Label to display number of unread nodes */
 	private JLabel 					lblUnread					= new JLabel();
-	
-	/** 
-	
+
 	/**
-	 * Constructor. 
+
+	/**
+	 * Constructor.
 	 * @param sProject, The name of the database in the unread view.
 	 */
 	public UIViewUnread(String sProject) {
+
 		this.sProject 	= sProject;
 		this.userID 	= oModel.getUserProfile().getId();
 		oSession 		= oModel.getSession();
-		
+
 	}
-	
+
 	/**
 	 * Draws the contents of this panel.
 	 */
 	public void draw() {
-		
+
 		ProjectCompendium.APP.setWaitCursor();
 		setLayout(new BorderLayout());
-		
+
 		UIViewOutlineTreeNode node = new UIViewOutlineTreeNode(sProject, -1);
 		rootNode = new DefaultMutableTreeNode(node);
-		
+
 		DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
 		tree = new JTree(treeModel);
 		tree.setFont(ProjectCompendiumFrame.labelFont);
-		
+
 		createTree();
-		// Create a tree that allows one selection at a time.	
+		// Create a tree that allows one selection at a time.
 		tree.getSelectionModel().setSelectionMode
           						(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		tree.setEditable(false);
 		tree.setShowsRootHandles(true);
 		tree.setToggleClickCount(4);
-        
+
 		// Set the icon for nodes.
 		TreeNodeRenderer renderer = new TreeNodeRenderer();
         tree.setCellRenderer(renderer);
-       
+
         // Enable tool tips.
         ToolTipManager.sharedInstance().registerComponent(tree);
-       
-         
+
+
        // Listen for the changes.
         tree.addTreeSelectionListener(this);
         tree.addFocusListener(new FocusAdapter(){
@@ -204,8 +204,8 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			public void focusLost(FocusEvent arg0) {
 				ProjectCompendium.APP.setStatus("");
 			}
-		}); 
-		
+		});
+
 		 tree.addKeyListener(new KeyAdapter(){
 			public void keyPressed(KeyEvent e){
 		 		if(tree.isFocusOwner() && selectedNode != null){
@@ -213,22 +213,22 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 		 				if((e.getKeyCode() == KeyEvent.VK_F12 && e.getModifiers() == 0)){
 			 				onMarkSeenUnseen(selectedNode.getObject(), ICoreConstants.READSTATE);
 							e.consume();
-						} else if((e.getModifiers() == Event.SHIFT_MASK && e.getKeyCode() == KeyEvent.VK_F12)){ 
+						} else if((e.getModifiers() == Event.SHIFT_MASK && e.getKeyCode() == KeyEvent.VK_F12)){
 			 				onMarkSeenUnseen(selectedNode.getObject(), ICoreConstants.UNREADSTATE);
 			 				e.consume();
 						}
 		 			}
 		 		}
-			} 
-		}); 	
-		
+			}
+		});
+
 		tree.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(MouseEvent evt) {
 				TreePath selPath = tree.getPathForLocation(evt.getX(), evt.getY());
 				UIViewOutlineTreeNode  parentNode = null;
 				UIViewOutlineTreeNode  childNode = null;
 				DefaultMutableTreeNode  treeNode = null;
-				
+
     			boolean isRightMouse = SwingUtilities.isRightMouseButton(evt);
     			boolean isLeftMouse = SwingUtilities.isLeftMouseButton(evt);
     			if (ProjectCompendium.isMac &&
@@ -238,17 +238,17 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
     				isRightMouse = true;
     				isLeftMouse = false;
     			}
- 				
+
 				if(selPath != null ) {
 					treeNode = (((DefaultMutableTreeNode) selPath.getLastPathComponent()));
 					childNode =(UIViewOutlineTreeNode)treeNode.getUserObject();
-					
+
 					if(!treeNode.equals(rootNode)){
-						
+
 						if(tree.isFocusOwner() && isLeftMouse){
-        				
+
         					NodeSummary node = childNode.getObject();
-        	
+
         					//setStatus
         					setStatus(node);
 	    					if (evt.getClickCount() == 2){
@@ -258,33 +258,33 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 		        				} else {
 		        					DefaultMutableTreeNode parent = null;
 		        					Object[] nodes = (Object[]) selPath.getPath();
-		            					
+
 		        					// parent view is the node at level 1
 		        					parent = (DefaultMutableTreeNode)nodes[1];
 		        					parentNode = (UIViewOutlineTreeNode) parent.getUserObject();
-		        					
+
 		        				}
 		    					View parentView = View.getView(parentNode.getId());
 		    					NodeSummary child = (NodeSummary)childNode.getObject();
 		    					openView(parentView, child);
 		    				}
-	    				
+
 		    			} else if(tree.isFocusOwner() && isRightMouse){
 		    				tree.setSelectionPath(selPath);
 		    				NodeSummary node = (NodeSummary)childNode.getObject();
 		    				if ((node.getId()).equals(ProjectCompendium.APP.getInBoxID())){
 		    					return ;
 		    				}
-		    				
+
 		    				UIViewUnreadPopupMenu popup = new UIViewUnreadPopupMenu (" Popup Menu", node, UIViewUnread.this);
 		    				popup.show(tree, evt.getX(),evt.getY());
 		    			}
 	   				}
     				tree.requestFocus();
     				evt.consume();
-    			} 
+    			}
         	}
-        }); 
+        });
 
 		 //keep all nodes expanded
 		tree.expandPath(tree.getPathForRow(0));
@@ -298,47 +298,47 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 
         JScrollPane oScrollPane = new JScrollPane(tree);
 		oScrollPane.setBackground(Color.white);
-		
+
 		oScrollPane.setPreferredSize(new Dimension(300, size.height));
 		add(oScrollPane, BorderLayout.CENTER);
 
 		JPanel panel = new JPanel();
 		GridBagLayout grid = new GridBagLayout();
 		panel.setLayout(grid);
-		
+
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.insets = new Insets(5,5,5,5);
 		gc.anchor = GridBagConstraints.WEST;
-		
+
 		int y = 0;
-		
-		JLabel label = new JLabel("Total Unread ="); 
+
+		JLabel label = new JLabel("Total Unread =");
 		label.setBounds(10,10,10,10);
 		gc.gridy = y;
 		gc.gridx = 0;
 		grid.setConstraints(label, gc);
 		panel.add(label);
-		
+
 		gc.gridx = 1;
 		grid.setConstraints(lblUnread, gc);
 		panel.add(lblUnread);
 		lblUnread.setText(String.valueOf(nUnread));
-		
+
 		gc.gridx 		= 2;
 		gc.gridheight	= 2;
 		gc.weightx		= 1;
 		gc.anchor 		= GridBagConstraints.EAST;
 		JPanel oButtonPanel = createButtonPanel();
 		grid.setConstraints(oButtonPanel, gc);
-		
+
 		panel.add(oButtonPanel);
-		
+
 		add(panel, BorderLayout.SOUTH);
-		
+
 		drawn = true;
 		ProjectCompendium.APP.setDefaultCursor();
 	}
-	
+
 	/**
 	 * Create and return the button panel.
 	 */
@@ -355,7 +355,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			}
 		});
 		oButtonPanel.add(pbRefresh);
-		
+
 		UIButton pbCancel = new UIButton("Close");
 		pbCancel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -366,51 +366,51 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 
 		return oButtonPanel;
 	}
-	
+
 	/**
 	 * Return the font size to its default and then appliy the passed text zoom.
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextAndZoom(int zoom) {
 		Font font = ProjectCompendiumFrame.labelFont;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());								
+		tree.setRowHeight(metrics.getHeight());
 	}
 
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextToActual() {
 		tree.setFont(ProjectCompendiumFrame.labelFont);
 		FontMetrics metrics = tree.getFontMetrics(ProjectCompendiumFrame.labelFont);
-		tree.setRowHeight(metrics.getHeight());						
+		tree.setRowHeight(metrics.getHeight());
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 */
 	public void onIncreaseTextSize() {
 		Font font = tree.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());								
+		tree.setRowHeight(metrics.getHeight());
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 */
 	public void onReduceTextSize() {
 		Font font = tree.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());								
-	}	
-	
+		tree.setRowHeight(metrics.getHeight());
+	}
+
 	/**
 	 * returns true if the panel is drawn.
 	 * @return Returns the drawn.
@@ -418,58 +418,58 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 	public boolean isDrawn() {
 		return drawn;
 	}
-	
+
 	/**
 	 * adds nodes to the tree depending on the option selected
 	 *
 	 */
 	public void createTree(){
-		
+
 		rootNode.removeAllChildren();
 		nUnread = 0;
-		
+
 		try {
 			View homeView = oModel.getUserProfile().getHomeView();
 			homeView.initialize(oSession, oModel);
 			vtViews.add(homeView);
 			getAllNodes(homeView);
-			
-			
+
+
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} 
-		
+		}
+
 		for(int i = 0; i< vtViews.size(); i++){
 			View view = (View) vtViews.get(i);
 			view.initialize(oSession, oModel);
 			if(htViewsNodes.containsKey(view)){
 				UIViewOutlineTreeNode treeNode = new UIViewOutlineTreeNode(view);
 				DefaultMutableTreeNode oTreeNode = new DefaultMutableTreeNode(treeNode);
-				
+
 	        	// add to listeners
 				if(!view.getListenerList().contains(this)){
 					view.addPropertyChangeListener(this);
 				}
-				
+
 				if(view.getState() == ICoreConstants.UNREADSTATE)
 					nUnread ++ ;
-				
+
 				Vector nodes = new Vector();
 				nodes.add(oTreeNode);
 				htTreeNodes.put(view.getId(), nodes);
-				
+
 				UIArrangeLeftRight arrange = new UIArrangeLeftRight();
 				if (view != null)
 					arrange.processView(view);
-				
-				Vector vtNodes = (Vector) htViewsNodes.get(view); 
+
+				Vector vtNodes = (Vector) htViewsNodes.get(view);
 				for(int j = 0;j < vtNodes.size(); j++){
 					NodeSummary node = (NodeSummary) vtNodes.get(j);
 					node.initialize(oSession, oModel);
 					UIViewOutlineTreeNode childNode = new UIViewOutlineTreeNode(node);
 					DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(childNode);
-					
-					
+
+
 		        	// add to listeners
 					if(!node.getListenerList().contains(this)){
 						node.addPropertyChangeListener(this);
@@ -499,17 +499,17 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 		}
 		lblUnread.setText(String.valueOf(nUnread));
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param view
 	 * @return
 	 * @throws SQLException
 	 */
  	public Hashtable getAllNodes(NodeSummary view) throws SQLException{
-		
+
 		String viewID = view.getId();
-		
+
 		Vector viewNodes = new Vector();
 		Enumeration nodes = oModel.getNodeService().getChildNodes(oSession, viewID);
 		 int count = 0;
@@ -534,7 +534,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 					if(!vtNodes.contains(view))
 						vtNodes.add(view);
 				}//end if
-				
+
 				//it is used for populating the tree
 				if(!htViewsNodes.containsKey(view)){
 					Vector vtNodes = new Vector();
@@ -546,20 +546,20 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				}//end if
 			}// end else
 		 } //end for
-		 
+
 		 for(int i = 0; i < viewNodes.size(); i++){
 			 NodeSummary childView = (View) viewNodes.get(i);
 			 getAllNodes(childView);
 		 }
 		return htViewsNodes;
 	}
-	
+
 	/**
-	 * Opens the given view and highlights the given node 
+	 * Opens the given view and highlights the given node
 	 * @param viewSum, View to be opened
 	 * @param ns, NodeSummary of the node to be highlighted
 	 */
-	
+
 	public void openView(View viewSum, NodeSummary  ns) {
 		 try {
 			View view = viewSum;
@@ -567,9 +567,9 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			view.initializeMembers();
 			UIViewFrame viewFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 			viewFrame.setNavigationHistory(viewFrame.getChildNavigationHistory());
-			
+
 			if(!viewSum.equals(ns)){
-				
+
 				if(viewFrame instanceof UIMapViewFrame) {
 					UIMapViewFrame mapViewFrame = (UIMapViewFrame) viewFrame;
 					UIViewPane viewPane = mapViewFrame.getViewPane();
@@ -579,15 +579,15 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 					while(i < nodearray.length) {
 						uinode = (UINode)nodearray[i++];
 						if(uinode.getNode().equals(ns)){
-							
+
 							viewPane.setSelectedNode(uinode, ICoreConstants.SINGLESELECT);
 							if(uinode.isFocusOwner() == false) {
 								uinode.setFocusable(true);
 							}
 							if(uinode.isSelected() == false)
 								uinode.setSelected(true);
-							
-							
+
+
 							JViewport port = mapViewFrame.getViewport();
 							Point nodePos = uinode.getNodePosition().getPos();
 
@@ -610,22 +610,22 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 							break;
 						}
 					}
-					
+
 				} else if(viewFrame instanceof UIListViewFrame){
 					UIListViewFrame listViewFrame = (UIListViewFrame) viewFrame;
 					int rowIndex = listViewFrame.getUIList().getIndexOf(ns);
-					
+
 					listViewFrame.getUIList().selectNode(rowIndex, ICoreConstants.SINGLESELECT);
-					
+
 					JTable table = listViewFrame.list;
 					JScrollPane scrollPane = listViewFrame.getScrollPane();
 					JViewport port = listViewFrame.getViewport();
-					
+
 					Dimension dim = scrollPane.getSize();
-					
+
 					int x = 0 ;
 					int y = (rowIndex * table.getRowHeight())-(dim.height/2);
-					
+
 					if (y < 0){
 						y = 0;
 					}
@@ -633,7 +633,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 					port.setViewPosition(nodePos);
 				}
 			}
-			
+
 			Vector history = new Vector();
 			history.addElement(view.getLabel());
 			viewFrame.setNavigationHistory(history);
@@ -641,19 +641,19 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			e.printStackTrace();
 		} catch (ModelSessionException e) {
 			e.printStackTrace();
-		} 
-		
+		}
+
 	}
 	/**
-	 * Displays the author, creation date and detail in the status bar 
-	 * @param oNode NodeSummary of the node 
+	 * Displays the author, creation date and detail in the status bar
+	 * @param oNode NodeSummary of the node
 	 */
 	private void setStatus(NodeSummary oNode){
 		String sStatus = "";
 		String author = oNode.getAuthor();
 		String creationDate = (UIUtilities.getSimpleDateFormat("dd, MMMM, yyyy h:mm a").format(oNode.getCreationDate()).toString());
-		
-		
+
+
 		String showtext = author + " " + creationDate +", " +
 						 oNode.getDetail();
 
@@ -666,12 +666,12 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 
 		ProjectCompendium.APP.setStatus(sStatus);
 	}
-	
+
 	/**
 	 * Returns to the list of nodes associated with the given id
-	 * @return Vector, list of nodes 
+	 * @return Vector, list of nodes
 	 */
-	
+
 	public Vector getTreeNode(String id) {
 		Vector v = new Vector();
 		if(htTreeNodes.containsKey(id)){
@@ -692,17 +692,17 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			if(!(nodeID.equals(homeID) || nodeID.equals(inboxID))) {
 				node.setState(state);
 			}
-			
+
 		} catch(Exception io) {
 			if(state == ICoreConstants.READSTATE)
 				System.out.println("Unable to mark as seen");
-			else 
+			else
 				System.out.println("Unable to mark as un-seen");
 		}
-		
-		
+
+
 	}
-	
+
 	/**
 	 * Marks seen/unseen for whole view
 	 * @param view com.compendium.code.datamodel.View, the view associated with this menu.
@@ -730,25 +730,25 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 		} catch(Exception io) {
 			if(state == ICoreConstants.READSTATE)
 				System.out.println("Unable to mark as seen");
-			else 
+			else
 				System.out.println("Unable to mark as un-seen");
 		}
 	}
-	
+
 	/**
 	 * Repaints the view frames.
 	 * @param views , The views to be refreshed
 	 */
-	
+
 	private void reopenViews(Vector views) {
-		
+
 		for(int i = 0; i < views.size(); i++){
 			View view = (View)views.get(i);
 			UIViewFrame internalFrame = ProjectCompendium.APP.getInternalFrame(view);
 	    	if(internalFrame != null){
 	    		ProjectCompendium.APP.getAllFrames().remove(internalFrame);
 	    		internalFrame.dispose();
-	    		
+
 	    		internalFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 	    		try {
 					internalFrame.setClosed(false);
@@ -759,22 +759,22 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 	    			String label = "  " +oModel.getUserProfile().getUserName() + "\'s " + view.getLabel();
 	    			internalFrame.setTitle(label);
 	    			internalFrame.setClosable(false);
-	    		} 
+	    		}
 	    		// internalFrame.setNavigationHistory(internalFrame.getChildNavigationHistory());
 	    	}
 		}
 	}//end of reopenViews
-	
-	
+
+
 	/**
 	 * Refreshes the unread view
 	 *
 	 */
-	
+
 	public void refresh(){
-		
+
 		int nCount = rootNode.getChildCount();
-		
+
 		for(int i = nCount-1; i >= 0; i--) {
 			DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) rootNode.getChildAt(i);
 			int nChild = treeNode.getChildCount();
@@ -784,33 +784,33 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				if(childNode.getState() == ICoreConstants.READSTATE ||
 						childNode.getState() == ICoreConstants.MODIFIEDSTATE){
 					child.removeFromParent();
-				} 
+				}
 			}
 			if(treeNode.getChildCount() <= 0){
 				UIViewOutlineTreeNode  node = (UIViewOutlineTreeNode) treeNode.getUserObject();
 				if(node.getState() == ICoreConstants.READSTATE ||
 						node.getState() == ICoreConstants.MODIFIEDSTATE){
 					treeNode.removeFromParent();
-				}	
+				}
 			}
 		}
-/*		
+/*
 		for (Enumeration e = htTreeNodes.keys(); e.hasMoreElements();){
 			NodeSummary node = NodeSummary.getNodeSummary((String)e.nextElement());
 			node.removePropertyChangeListener(this);
 		}
-		
+
 		rootNode.removeAllChildren();
 		htViewsNodes.clear();
 		htTreeNodes.clear();
 		vtViews.clear();
 		vtUnreadViews.clear();
-		
+
 		createTree();
-*/		
+*/
 		((DefaultTreeModel)tree.getModel()).reload(rootNode);
 		tree.repaint();
-		
+
 		//keep all nodes expanded
 		tree.expandPath(tree.getPathForRow(0));
 		int count = rootNode.getChildCount();
@@ -819,16 +819,16 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				tree.expandPath(tree.getPathForRow(i));
 			}
 		}
-		
+
 	}//end of refresh
-	
+
 	/**
 	 * To remove the given node from the given View in the unread view
 	 * @param view the View in which node is present
 	 * @param ns the nodesummary of the node
 	 */
 	public void removeNode(View view, NodeSummary ns){
-		
+
 		if(ns instanceof View){
 			Vector vtNodes = (Vector) getTreeNode(ns.getId());
 			for(int i = 0; i < vtNodes.size(); i++) {
@@ -861,7 +861,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			for(int i = 0; i < vtNodes.size(); i++) {
 				DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) vtNodes.get(i);
 				UIViewOutlineTreeNode node = (UIViewOutlineTreeNode) treeNode.getUserObject();
-				
+
 				if (!treeNode.isLeaf()){
 					int count = treeNode.getChildCount();
 					for(int j = 0; j < count; j++){
@@ -889,7 +889,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			lblUnread.setText(String.valueOf(nUnread));
 		}
 	}
-	
+
 	public void addNode(DefaultMutableTreeNode treeNode, NodeSummary ns, View oView){
 		if(ns instanceof View){
 			int index = rootNode.getIndex(treeNode);
@@ -904,7 +904,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 					tree.expandPath(new TreePath(treeNode.getPath()));
 			}
 		} else {
-			
+
 			Vector viewNodes = getTreeNode(oView.getId());
 			for(int j =0; j < viewNodes.size(); j ++){
 				DefaultMutableTreeNode viewNode = (DefaultMutableTreeNode) viewNodes.get(j);
@@ -921,10 +921,10 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				((DefaultTreeModel)tree.getModel()).reload(viewNode);
 				tree.expandPath(new TreePath(viewNode.getPath()));
 			}
-			
+
 		}
 	}
-	
+
 	/**
 	 * Called whenever the value of the selection changes to update status
 	 */
@@ -932,15 +932,15 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 		TreePath path = arg0.getPath();
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
 		selectedNode = ((UIViewOutlineTreeNode) node.getUserObject());
-		
+
 		UIViewOutlineTreeNode treeNode = (UIViewOutlineTreeNode)(node.getUserObject());
-		if(treeNode.getObject() != null )	
+		if(treeNode.getObject() != null )
 			setStatus(treeNode.getObject());
-    	else 
+    	else
 	       	ProjectCompendium.APP.setStatus("");
-	  	
+
 	}
-	
+
 	/**
 	 * Handles property change events.
 	 * @param evt, the associated PropertyChangeEvent object.
@@ -950,25 +950,25 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 		String prop = evt.getPropertyName();
 		Object oldvalue = evt.getOldValue();
 		Object newvalue = evt.getNewValue();
-		
+
 		// get the expanded tree descendants.
 		Enumeration e = tree.getExpandedDescendants(new TreePath(rootNode.getPath()));
-		
+
 		if(prop.equals(NodeSummary.IMAGE_PROPERTY)){
 			NodeSummary ns = (NodeSummary) obj;
-			
+
 			Vector nodes = getTreeNode(ns.getId());
 			for(int i =0; i < nodes.size(); i++){
 				DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) nodes.get(i);
 				UIViewOutlineTreeNode node = (UIViewOutlineTreeNode) treeNode.getUserObject();
 				node.setReference(ns.getSource());
 			}
-		} 
+		}
 		else if(prop.equals(NodeSummary.STATE_PROPERTY)){
 			NodeSummary ns = (NodeSummary) obj;
 			int newState = ((Integer) newvalue).intValue();
 			int oldState = ((Integer) oldvalue).intValue();
-						
+
 			Vector nodes = getTreeNode(ns.getId());
 			for(int i =0; i < nodes.size(); i++){
 				DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) nodes.get(i);
@@ -1003,7 +1003,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			View oView = (View) obj;
 			NodeSummary ns = (NodeSummary) newvalue;
 			removeNode(oView, ns);
-			
+
 		} else if(prop.equals(NodeSummary.LABEL_PROPERTY)){
 			NodeSummary ns = (NodeSummary) obj;
 			String newLabel = newvalue.toString();
@@ -1013,21 +1013,21 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				UIViewOutlineTreeNode node = (UIViewOutlineTreeNode)treeNode.getUserObject();
 				node.setLabel(newLabel);
 				((DefaultTreeModel)tree.getModel()).reload(treeNode);
-			
+
 			}
 		} else if((prop.equals(View.NODE_ADDED)) || (prop.equals(View.NODE_TRANSCLUDED))){
 			NodePosition np = (NodePosition) newvalue;
 			View oView = np.getView();
 			NodeSummary ns = np.getNode();
 			ns.initialize(oSession, oModel);
-			
+
 			UIArrangeLeftRight arrange = new UIArrangeLeftRight();
 			if (oView != null)
 				arrange.processView(oView);
-			
+
 			UIViewOutlineTreeNode node = new UIViewOutlineTreeNode(ns);
 			DefaultMutableTreeNode treeNode = new DefaultMutableTreeNode(node);
-			
+
 			boolean isAlreadyAdded = true;
 			//store all views against the nodes. It is used when adding a node in the unread view due to state change
 			if(!htNodeAndViews.containsKey(ns)){
@@ -1038,10 +1038,10 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				Vector vtNodes = (Vector) htNodeAndViews.get(ns);
 				if(!vtNodes.contains(oView)){
 					vtNodes.add(oView);
-					isAlreadyAdded = false;  //if the node is already for the view don't add to vtTreeNodes 
+					isAlreadyAdded = false;  //if the node is already for the view don't add to vtTreeNodes
 				}
 			}//end if
-			
+
 			if(htTreeNodes.containsKey(ns.getId())){
 				Vector vtTreeNodes = (Vector) htTreeNodes.get(ns.getId());
 				if(!vtTreeNodes.contains(treeNode) && !isAlreadyAdded) {
@@ -1057,13 +1057,13 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				Vector vtTreeNodes = new Vector();
 				vtTreeNodes.add(treeNode);
 				htTreeNodes.put(ns.getId(), vtTreeNodes);
-				
+
 				if(ns.getState() == ICoreConstants.UNREADSTATE && treeNode.getParent() == null){
 					addNode(treeNode, ns, oView);
 					((DefaultTreeModel)tree.getModel()).reload(treeNode);
 				}
 			}
-			
+
 			// add to listeners
 			if(!ns.getListenerList().contains(this)){
 				ns.addPropertyChangeListener(this);
@@ -1072,7 +1072,7 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			NodeSummary ns = (NodeSummary) obj;
 			int newType = Integer.parseInt(newvalue.toString());
 			int oldType = Integer.parseInt(oldvalue.toString());
-			
+
 			Vector vtNodes = (Vector) getTreeNode(ns.getId());
 			for(int i = 0; i < vtNodes.size(); i++){
 				DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) vtNodes.get(i);
@@ -1089,9 +1089,9 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 			}
 		}
 		tree.repaint();
-		
+
 	}
-	
+
 	/**
 	 * Create and show the right-click node popup menu for the given node.
 	 * @param node com.compendium.core.datamodel.NodeSummary, the node to create the popup for.
@@ -1099,25 +1099,25 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 	 * @param y, the y position of the mouse event that triggered this request.
 	 */
 	public UIViewUnreadPopupMenu showPopupMenu(NodeSummary node,  int x, int y) {
-	
+
 		UIViewUnreadPopupMenu popup = new UIViewUnreadPopupMenu (" Popup Menu", node, this);
-				
+
 	    Point point = new Point (x, y);
-	    
+
 	    int realX = Math.abs(point.x - getX())+ 50;
 	    int realY = Math.abs(point.y - getY()) + 20;
-	    
+
 	    if(realX > this.getWidth()){
-	    	realX = this.getWidth() - 20; 
-	    } 
-	    
+	    	realX = this.getWidth() - 20;
+	    }
+
 	    popup.setCoordinates(realX, realY);
 	    popup.show(tree, realX, realY);
-	   
+
 	    return popup;
 	}
-	
-	/** 
+
+	/**
 	 * Remove all listeners before closing view
 	 *
 	 */
@@ -1132,24 +1132,24 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 					node.removePropertyChangeListener(this);
 				}
 			}
-			
+
 		}
 	}
-	
+
 	/**
 	 * The inner class that defines the requirements for an object that displays a tree node
 	 * @author Lakshmi Prabhakaran
 	 *
 	 */
 	private class TreeNodeRenderer extends DefaultTreeCellRenderer {
-        
+
 		private static final long serialVersionUID = 7969295074672629921L;
-		
+
 		Icon imageIcon ;
 		UIViewOutlineTreeNode treeNode = null;
-		
-        /** Sets the value of the current tree cell to value. 
-         *  
+
+        /** Sets the value of the current tree cell to value.
+         *
          *  @return the Component that the renderer uses to draw the value
          */
         public Component getTreeCellRendererComponent( JTree tree, Object value, boolean sel,
@@ -1157,27 +1157,27 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 
         	Component c =  super.getTreeCellRendererComponent(tree, value, sel,
                             expanded, leaf, row, hasFocus);
-            
+
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-            
+
             treeNode = (UIViewOutlineTreeNode)(node.getUserObject());
-	            
+
 	        String  toolTip = treeNode.getLabel();
 	        int type = treeNode.getType();
 	        int state = treeNode.getState();
-	     
+
 	        //set the font
         	setFont(tree.getFont());
         	setForeground(SELECTED_TEXT_COLOR);
-        	
+
         	if (type == ICoreConstants.REFERENCE) {
         		imageIcon = UINode.getReferenceImageSmall(treeNode.getReference());
 		   } else if (type == -1) {
-		    	imageIcon = getOpenIcon();			    				    	
+		    	imageIcon = getOpenIcon();
 		    } else {
 		    	imageIcon = UINode.getNodeImageSmall(type);
         	}
-            
+
         	if (treeNode.getObject() != null) {
         		if(treeNode.getObject().getId().equals(ProjectCompendium.APP.getInBoxID())) {
         			imageIcon = UIImages.get(IUIConstants.INBOX_SM);
@@ -1185,14 +1185,14 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
         	}
         	setIcon(imageIcon);
             setToolTipText(toolTip);
-            
-            // set border color	
+
+            // set border color
 	        setBorder(new NodeBorder(state, imageIcon));
          return this;
 	}
-        
+
 	public String getToolTipText(MouseEvent e){
-	       if(treeNode.getObject() != null ){	
+	       if(treeNode.getObject() != null ){
 				// set status info
 				setStatus(treeNode.getObject());
     		} else {
@@ -1202,15 +1202,15 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
         }
 
 	}
-	
+
 	/**
 	 * This border class paints the border for this node.
 	 */
 	private class NodeBorder extends AbstractBorder {
-		
+
 		int state;
 		Icon imageIcon;
-		
+
 		public NodeBorder(int state, Icon icon){
 			this.state = state;
 			imageIcon = icon;
@@ -1224,10 +1224,11 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				int iconWidth = imageIcon.getIconWidth();
 				g.draw3DRect(x + (iconWidth + 3) , y + 1, width - (iconWidth + 5), height-2, true);
 				g.setColor(oldColor);
-				
+
 			}
 			else if (state == ICoreConstants.MODIFIEDSTATE) {
 				Color oldColor = g.getColor();
+				System.out.println("UIViewUnread 1230 setColor modified border color");
 				g.setColor(MODIFIED_BORDER_COLOR);
 				int iconWidth = imageIcon.getIconWidth();
 				g.draw3DRect(x + (iconWidth +3) , y + 1, width - (iconWidth + 5), height-2, true);
@@ -1236,10 +1237,10 @@ public class UIViewUnread extends JPanel implements IUIConstants , TreeSelection
 				Color oldColor = g.getColor();
 				g.setColor(oldColor);
 			}
-			
+
 		}
 	}
 
-	
+
 
 }

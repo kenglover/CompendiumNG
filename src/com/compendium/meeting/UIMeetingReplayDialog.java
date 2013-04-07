@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting;
 
 import javax.swing.JTable;
@@ -84,7 +83,7 @@ import com.compendium.core.db.management.DBProgressListener;
  */
 public class UIMeetingReplayDialog extends UIDialog implements ActionListener, DBProgressListener {
 
-	/** The name of the file holding the meeting replay jabber properties.*/
+	/** The name of the file holding the meeting replay properties.*/
 	public static final String 		PROPERTY_FILE 		= "MeetingReplay.properties";
 
 	/** The button to open a connction.*/
@@ -216,7 +215,7 @@ public class UIMeetingReplayDialog extends UIDialog implements ActionListener, D
 		oTable.clearSelection();
 		sorter.addMouseListenerToHeaderInTable(oTable);
 		setRenderers();
-		
+
 		oScrollpane = new JScrollPane(oTable);
 		oScrollpane.setPreferredSize(new Dimension(350,150));
 		gc.gridy = 1;
@@ -369,14 +368,14 @@ public class UIMeetingReplayDialog extends UIDialog implements ActionListener, D
 		pbDisConnect.addActionListener(this);
 		oButtonPanel.addButton(pbDisConnect);
 
-		if (oMeetingManager.isMeetingReplayConnected()) {
+/*		if (oMeetingManager.isMeetingReplayConnected()) {
 			pbConnect.setEnabled(false);
 			getRootPane().setDefaultButton(pbDisConnect);
 		} else {
 			pbDisConnect.setEnabled(false);
 			getRootPane().setDefaultButton(pbConnect);
 		}
-
+*/
 		pbClose = new UIButton("Close");
 		pbClose.setMnemonic(KeyEvent.VK_C);
 		pbClose.addActionListener(this);
@@ -519,7 +518,7 @@ public class UIMeetingReplayDialog extends UIDialog implements ActionListener, D
 
 			oMeetingManager.setMapDataFile(filename);
             oMeetingManager.setupMeetingForReplay();
-			oMeetingManager.openMeetingReplayConnection(server, username, password, resource, roomServer);
+//			oMeetingManager.openMeetingReplayConnection(server, username, password, resource, roomServer);
 			onCancel();
 		} else {
 			ProjectCompendium.APP.displayError("Please enter all the required connection details.");
@@ -555,12 +554,13 @@ public class UIMeetingReplayDialog extends UIDialog implements ActionListener, D
 	 */
 	private void loadProperties() {
 
-		File optionsFile = new File("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+PROPERTY_FILE);
+		String file_name = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+PROPERTY_FILE;
+		File optionsFile = new File(file_name);
 		connectionProperties = new Properties();
 
 		if (optionsFile.exists()) {
 			try {
-				connectionProperties.load(new FileInputStream("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+PROPERTY_FILE));
+				connectionProperties.load(new FileInputStream(file_name));
 
 				String value = connectionProperties.getProperty("mediacompserver");
 				if (value != null)
@@ -612,7 +612,7 @@ public class UIMeetingReplayDialog extends UIDialog implements ActionListener, D
 			if (!(new String(oRoomServerField.getText())).equals(""))
 				connectionProperties.put("mediaroomserver", oRoomServerField.getText());
 
-			connectionProperties.store(new FileOutputStream("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+PROPERTY_FILE), "Media Replay Details");
+			connectionProperties.store(new FileOutputStream(ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+PROPERTY_FILE), "Media Replay Details");
 		} catch (IOException e) {
 			ProjectCompendium.APP.displayError("IO error occured while saving connection details.");
 		}

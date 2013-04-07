@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -275,7 +274,7 @@ public class UIDropFileDialog extends UIDialog implements ActionListener {
 
 		String s = file.getAbsolutePath();
 		String sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName() ;
-		
+
 		file = UIUtilities.checkCopyLinkedFile(file);
 		if (file != null)
 			s = file.getPath();
@@ -341,6 +340,7 @@ public class UIDropFileDialog extends UIDialog implements ActionListener {
 	private void processAsZippedXML() {
 		setVisible(false);
 		try {
+			System.out.println("343 UIDropFileDialog file abs path returns " + file.getAbsolutePath());
 			UIUtilities.unzipXMLZipFile(file.getAbsolutePath(), true);
 		} catch(IOException io) {
 			ProjectCompendium.APP.displayError("Unable to process zip file due to:\n\n"+io.getMessage());

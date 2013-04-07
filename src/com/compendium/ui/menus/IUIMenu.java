@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.menus;
 
 import javax.swing.JMenu;
@@ -39,19 +38,19 @@ public interface IUIMenu {
 	/**
 	 * Updates the menu when a new database project is opened.
 	 */
-	public void onDatabaseOpen(); 
+	public void onDatabaseOpen();
 
 	/**
 	 * Updates the menu when the current database project is closed.
 	 */
-	public void onDatabaseClose(); 
-	
+	public void onDatabaseClose();
+
 	/**
  	 * Does Nothing
  	 * @param selected, true to enable, false to disable.
 	 */
 	public void setNodeOrLinkSelected(boolean selected);
-	
+
 	/**
 	 * Return the toolbar object.
 	 * @return the toolbar object.

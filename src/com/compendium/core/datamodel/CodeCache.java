@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.util.*;
@@ -335,7 +334,7 @@ public class CodeCache {
 					}
 				}
 			}
-			
+
 			if (!bFound1) {
 				boolean found = false;
 				for (Enumeration e = htUngroupedCodes.elements(); e.hasMoreElements();) {
@@ -388,7 +387,7 @@ public class CodeCache {
 	}
 
 	/**
-	 * Checks if a code with the passed name already exists in the data 
+	 * Checks if a code with the passed name already exists in the data
 	 * and does not have the the given code id.
 	 * @param sCodeID the code id to ignore
 	 * @param sName the code name to check.
@@ -406,8 +405,8 @@ public class CodeCache {
 		}
 
 		return false;
-	}		
-	
+	}
+
 	/**
 	 *	Clear and null hashtables to help with garbarge collection.
 	 */

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting;
 
 import java.awt.Point;
@@ -63,7 +62,6 @@ import com.compendium.io.xml.XMLExport;
 
 import com.compendium.meeting.io.ArenaConnection;
 import com.compendium.meeting.io.TripleStoreConnection;
-import com.compendium.meeting.io.JabberConnection;
 import com.compendium.meeting.remote.RecordListener;
 
 /**
@@ -80,9 +78,6 @@ public class MeetingManager {
 
 	/** A reference to a meeting replay session.*/
 	public final static int REPLAY						= 1;
-
-	/** A reference to the Jabber handler for the Meeting Replay connection.*/
-	public static JabberConnection oJabberConnection 	= null;
 
 	/** The default directory to save to.*/
 	public static String 	sDirectory 		= ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"Meetings";
@@ -196,8 +191,8 @@ public class MeetingManager {
 	private boolean			bStopOffsetUpdate = false;
 
     // The connection properties for the replay
-    private Properties connectionProperties = null; 
-  
+    private Properties connectionProperties = null;
+
 	/** The author name of the current user */
 	private String sAuthor = "";
 
@@ -221,10 +216,7 @@ public class MeetingManager {
 	public MeetingManager(int nType) throws AccessGridDataException {
 		this.nMeetingType = nType;
 		progressListeners = new Vector();
-
-		if (nMeetingType == MeetingManager.REPLAY) {
-			oJabberConnection = new JabberConnection(this);
-		}
+		
 		oConnectionData = new AccessGridData();
 
 		/*if (!oConnectionData.canDoXML()) {
@@ -1361,9 +1353,9 @@ public class MeetingManager {
 	 public boolean stopRecording() {
 
 		if (!bIsRecording) {
-			return true;			
+			return true;
 		}
-		 
+
 		setCaptureEvents(false);
 		bIsRecording = false;
 
@@ -1818,7 +1810,7 @@ public class MeetingManager {
 										 sMeetingMapID+"\n\nMeeting was scheduled for: "+UIUtilities.getSimpleDateFormat("d MMM, yyyy HH:mm").format(dMeetingStartDate).toString(),
 										 0,
 										 ((oUIList.getNumberOfNodes() + 1) * 10)
-										 
+
 										 );
 
 			// GIVE IT THE SPECIAL MEETING MAP IMAGE
@@ -1948,7 +1940,7 @@ public class MeetingManager {
                                          sMeetingName,
                                          sMeetingMapID+"\n\nMeeting was scheduled for: "+UIUtilities.getSimpleDateFormat("d MMM, yyyy HH:mm").format(dMeetingStartDate).toString(),
                                          0,
-                                         ((oUIList.getNumberOfNodes() + 1) * 10)                                    
+                                         ((oUIList.getNumberOfNodes() + 1) * 10)
                                          );
 
             // GIVE IT THE SPECIAL MEETING MAP IMAGE
@@ -2043,13 +2035,13 @@ public class MeetingManager {
 			NodeSummary nodeSum = null;
 
 			// check if already have node for this person, if so, transclude.
-			
+
 			String sCleanName = CoreUtilities.replace(sName, '\'', "\\'");
 			Vector searchResults = searchExactNodeLabel(sCleanName, ICoreConstants.REFERENCE);
 
 			// Java 1.5 code
 			//Vector searchResults = searchExactNodeLabel(sName.replace("'", "\\'"), ICoreConstants.REFERENCE);
-						
+
 			if (searchResults.size() >0) {
 				nodePos = oAttendeeView.addNodeToView((NodeSummary)searchResults.elementAt(0), x, y);
 				nodeSum = nodePos.getNode();
@@ -2589,8 +2581,7 @@ public class MeetingManager {
 
 	/**
 	 * Process the passed string as a Meeting Replay setup string.
-	 * Open the passed meeting map if found,
-	 * and connect to the jabber meeting with the given info.
+	 * Open the passed meeting map if found.
 	 *
 	 * @param s the string to process.
 	 */
@@ -2611,7 +2602,7 @@ public class MeetingManager {
 		if (ind > -1 && ind2 > 1) {
 			sMeetingURI = sSetupData.substring(ind+1, ind2);
 			sSetupData = sSetupData.substring(ind2+1);
-            //System.out.println(sMeetingURI);
+       
 
 			StringTokenizer oTokenizer = new StringTokenizer(sSetupData, "&");
 			StringTokenizer oInnerTokenizer = null;
@@ -2651,7 +2642,7 @@ public class MeetingManager {
             Properties connectionProperties = new Properties();
 
             try {
-                File optionsFile = new File("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+UIMeetingReplayDialog.PROPERTY_FILE);
+                File optionsFile = new File(ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+UIMeetingReplayDialog.PROPERTY_FILE);
                 if (optionsFile.exists()) {
                     connectionProperties.load(new FileInputStream(optionsFile));
                 }
@@ -2676,14 +2667,14 @@ public class MeetingManager {
      */
     public void setupMeetingForReplay() {
         nMeetingType = REPLAY;
-        
+
 
         // CHECK THAT THE MEETING HAS NOT ALREADY BEEN ENTERED AND A MAP CREATED
         try {
             TripleStoreConnection connection = new TripleStoreConnection(oConnectionData);
             connection.loadNodes(this, sMeetingID);
             sSessionID = connection.getSessionID(sMeetingID);
-            
+
             IModel model = ProjectCompendium.APP.getModel();
             while (model == null) {
                 try {
@@ -2740,9 +2731,9 @@ public class MeetingManager {
 		if (!bIsRecording) {
 			return true;
 		}
-		 
-		bIsRecording = false;		 
-		oJabberConnection.closeMeetingReplayConnection();
+
+		bIsRecording = false;
+		
 		setCaptureEvents(false);
 		ProjectCompendium.APP.getToolBarManager().setMeetingToolBarEnabled(false);
 		ProjectCompendium.APP.getStatusBar().resetColors();
@@ -2767,12 +2758,13 @@ public class MeetingManager {
      */
     private void openReplay() {
 
-        File optionsFile = new File("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+UIMeetingReplayDialog.PROPERTY_FILE);
+		String file_name = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+UIMeetingReplayDialog.PROPERTY_FILE;
+        File optionsFile = new File(file_name);
         connectionProperties = new Properties();
 
         if (optionsFile.exists()) {
             try {
-                connectionProperties.load(new FileInputStream("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+UIMeetingReplayDialog.PROPERTY_FILE));
+                connectionProperties.load(new FileInputStream(file_name));
                 String sServer = null;
                 String sUsername = null;
                 String sPassword = null;
@@ -2797,11 +2789,6 @@ public class MeetingManager {
                 value = connectionProperties.getProperty("mediaroomserver");
                 if (value != null)
                     sRoomServer = value;
-
-                if (oJabberConnection == null) {
-                    oJabberConnection = new JabberConnection(this);
-                }
-                openMeetingReplayConnection(sServer, sUsername, sPassword, sResource, sRoomServer);
 
             } catch (IOException e) {
                 System.out.println("Unable to load MeetingReplay.properties file");
@@ -2864,71 +2851,15 @@ public class MeetingManager {
 		return bSuccess;
 	}
 
-// JABBER CONNECTION METHODS
-
-	public void processJabberMessage(String sMessage){
-		oJabberConnection.processJabberMessage(sMessage);
-	}
-
 	/**
-	 * Process the passed string as a Meeting Replay index string.
-	 * Create a new answer node with the given video index timestamp.
-	 *
-	 * @param s the string to process.
-	 * @param nX the x position on the current view to create the new node.
-	 * @param nY the y position on the current view to create the new node.
-	 */
-	public void processAsMeetingReplayIndex(String s, int nX, int nY) {
-		oJabberConnection.processAsMeetingReplayIndex(s, nX, nY, sMeetingID);
-	}
-
-	/**
-	 * Open a Jabber Meeting Replay connection for the given details.
-	 *
-	 * @param server the jabber server to connect to.
-	 * @param username the username of the account to connect to.
-	 * @param password the password to use to connect.
-	 * @param sResource the resource to use to connect.
-	 * @param roomJIDString the conecference room identifier to use.
-	 */
-	public void openMeetingReplayConnection(String sServer, String sUsername, String sPassword, String sResource,
-												String roomJIDString	) {
-		oJabberConnection.openMeetingReplayConnection(sServer, sUsername, sPassword, sResource, roomJIDString);
-	}
-
-	/**
-	 * Close the Jabber Meeting Replay connection if open.
-	 */
-	public void closeMeetingReplayConnection() {
-		oJabberConnection.closeMeetingReplayConnection();
-		setCaptureEvents(false);
-	}
-
-	/**
-	 * Return if an Jabber Media connection is open.
+	 * Return if an Media connection is open.
 	 * @return boolean, true if the connection if open, else false.
 	 */
 	public void meetingReplayConnectionOpened() {
 		startActualReplay();
 	}
 
-	/**
-	 * Return if an Jabber Meeting Replay connection is open.
-	 * @return true if the connection if open, else false.
-	 */
-	public boolean isMeetingReplayConnected() {
-		return oJabberConnection.isMeetingReplayConnected();
-	}
-
-	/**
-	 * Send the given node in the current view to the Meeting Replay Jabber account.
-	 *
-	 * @param jid the jabber id of the Jabber account to send the nodes to.
-	 */
-	public void sendMeetingReplay(NodeUI nodeui) {
-		oJabberConnection.sendMeetingReplay(nodeui, sMeetingID);
-	}
-
+	
 // PROGRESS LISTENER METHODS
 
     /**

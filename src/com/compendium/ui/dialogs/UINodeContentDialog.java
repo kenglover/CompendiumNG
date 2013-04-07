@@ -22,13 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 
 import java.awt.*;
-import java.awt.Container;
 import java.awt.event.*;
+import java.sql.SQLException;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -60,7 +59,7 @@ public class UINodeContentDialog extends UIDialog {
 
 	/** Represents the content parent views panel tab.*/
 	public final static int VIEW_TAB						= 2;
-		
+
 	/** The pane to add the contents for the dialog to.*/
 	private Container		oContentPane					= null;
 
@@ -125,7 +124,7 @@ public class UINodeContentDialog extends UIDialog {
 	 * @param selectedTab the tabbed panel to initially select when opening this dialog.
 	 */
 	public UINodeContentDialog(JFrame parent, View view, NodePosition node, int selectedTab) {
-		// This has been made non model to enable tagging while it is open.		
+		// This has been made non model to enable tagging while it is open.
 		super(parent, false);
 		oParent = parent;
 		oView = view;
@@ -211,11 +210,11 @@ public class UINodeContentDialog extends UIDialog {
 			oSelectViewPane = new UINodeViewPanel(ProjectCompendium.APP, oUINode, this);
 		else
 			oSelectViewPane = new UINodeViewPanel(ProjectCompendium.APP, node, this);
-		
+
 		TabbedPane.add(oNodeEditPane, "Contents");
 		TabbedPane.add(oNodePropertiesPane, "Properties");
 		TabbedPane.add(oSelectViewPane, "Views");
-		
+
 		oNodeEditPane.setDefaultButton();
 
 		oContentPane.add(TabbedPane, BorderLayout.CENTER);
@@ -276,7 +275,7 @@ public class UINodeContentDialog extends UIDialog {
 	public void refreshFont() {
 		oNodeEditPane.refreshFont();
 	}
-	
+
 	/**
 	 * Return detail text area.
 	 * @return JTextArea, the textarea of the UINodeEditPanel.
@@ -299,6 +298,11 @@ public class UINodeContentDialog extends UIDialog {
 	 */
 	public void onUpdate() {
 		oNodeEditPane.onUpdate();
-		oNodePropertiesPane.onUpdate();
+		try {
+			oNodePropertiesPane.onUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

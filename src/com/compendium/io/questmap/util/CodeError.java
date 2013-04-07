@@ -30,7 +30,7 @@ package com.compendium.io.questmap.util;
  * @author ?
  */
 public class CodeError extends CodeProblem {
-
+/*
     public String toString() {
         return "Error: " + super.toString();
     }
@@ -45,5 +45,5 @@ public class CodeError extends CodeProblem {
 
     public CodeError(String e, int line, int pos, String file) {
         super(e, line, pos, file);
-    }
+    }  */
 }

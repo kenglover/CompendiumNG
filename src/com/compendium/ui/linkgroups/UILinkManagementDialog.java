@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.linkgroups;
 
 import java.util.*;
@@ -52,7 +51,8 @@ import com.compendium.ui.dialogs.*;
 public class UILinkManagementDialog extends UIDialog implements ActionListener, IUIConstants {
 
 	/**A reference to the system file path separator*/
-	private final static String	sFS					= System.getProperty("file.separator");
+	private final static String	sFS			= System.getProperty("file.separator");
+	private final static String sSYSPATH	= System.getenv("CompendiumSysPath");
 
 	/** The current pane to put the dialog contents in.*/
 	private Container				oContentPane 	= null;
@@ -312,7 +312,7 @@ public class UILinkManagementDialog extends UIDialog implements ActionListener, 
 	public void loadFile(UILinkGroup oLinkGroup) {
 		String sFileName = oLinkGroup.getFileName();
 		try {
-			oManager.loadFile("System"+ProjectCompendium.sFS+"resources"+sFS+"LinkGroups"+sFS+sFileName, sFileName);
+			oManager.loadFile(sSYSPATH+sFS+"System"+ProjectCompendium.sFS+"resources"+sFS+"LinkGroups"+sFS+sFileName, sFileName);
 			refreshLinkGroups();
 		}
 		catch(Exception ex) {

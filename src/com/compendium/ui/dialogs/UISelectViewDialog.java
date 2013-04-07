@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -253,7 +252,7 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 			Enumeration views = ProjectCompendium.APP.getModel().getNodeService().getAllActiveViews(ProjectCompendium.APP.getModel().getSession());
 
 			htUserViews = ProjectCompendium.APP.getModel().getUserViews();
-			
+
 			for(Enumeration e = views;e.hasMoreElements();) {
 				View view = (View)e.nextElement();
 				vtSort.addElement(view);
@@ -267,7 +266,7 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 				View view = (View)e.nextElement();
 				id = view.getId();
 				view.initialize(ProjectCompendium.APP.getModel().getSession(), ProjectCompendium.APP.getModel());
-				
+
 				ImageIcon img = null;
 				if (view.getType() == ICoreConstants.LISTVIEW)
 					img = UIImages.getNodeIcon(IUIConstants.LIST_SM_ICON);
@@ -282,17 +281,17 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 				}
 
 				JLabel label = new JLabel(img, SwingConstants.LEFT);
-				
-				if (htUserViews.containsKey(id)) {					
+
+				if (htUserViews.containsKey(id)) {
 					label.setText( text + " - " + ((String)htUserViews.get(id)) );
 					label.setFont(new Font("Helvetica", Font.ITALIC, 12));
 					label.setForeground(Color.gray);
-					label.validate();					
+					label.validate();
 				} else {
-					label.setFont(new Font("Helvetica", Font.PLAIN, 12));					
+					label.setFont(new Font("Helvetica", Font.PLAIN, 12));
 					label.setText(text);
 				}
-								
+
 				label.setToolTipText(text);
 
 				((DefaultListModel)lstViews.getModel()).addElement(label);
@@ -315,14 +314,14 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 		int selection = lstViews.getSelectedIndex();
 		NodeSummary node = (NodeSummary)vtViews.elementAt(selection);
 		String sNodeID = node.getId();
-		
-		if (!htUserViews.containsKey(sNodeID)) { 
+
+		if (!htUserViews.containsKey(sNodeID)) {
 			UINodeContentDialog contentDialog = new UINodeContentDialog(this, node, UINodeContentDialog.CONTENTS_TAB);
 			UIUtilities.centerComponent(contentDialog, ProjectCompendium.APP);
 			contentDialog.setVisible(true);
 		}
 	}
-	
+
 	/**
 	 * Select All the views in the list.
 	 */
@@ -356,14 +355,14 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 			list.deselectAll();
 			int [] selection = lstViews.getSelectedIndices();
 			NodePosition[] nps = new NodePosition[selection.length];
-			View listview = list.getView();			
+			View listview = list.getView();
 			int nodeCount = listview.getNumberOfNodes();;
 
 			for(i=0;i<selection.length;i++) {
 
 				NodeSummary node = (NodeSummary)vtViews.elementAt(selection[i]);
 				String sNodeID = node.getId();
-				if (!htUserViews.containsKey(sNodeID)) { 
+				if (!htUserViews.containsKey(sNodeID)) {
 					node.initialize(session,model);
 
 					// CHECK IF NODE WAS DELETED
@@ -381,7 +380,7 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 							Date date = new Date();
 							NodePosition np = new NodePosition(listview, node, xpos, ypos, date, date);
 							nps[i]=np;
-								
+
 							try {
 								listview.addNodeToView(node, xpos, ypos);
 							}
@@ -390,10 +389,10 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 								ProjectCompendium.APP.displayError("Exception: (UISearchResultsDialog.onInsert) \n" + e.getMessage());
 								System.out.flush();
 							}
-							
+
 							/*Date date = new Date();
 							NodePosition np = new NodePosition(list.getView(), node, xpos, ypos, date, date);
-	
+
 							try {
 								list.getView().addNodeToView(np.getNode(), np.getXPos(), (list.getNumberOfNodes() + 1) * 10);
 							   	list.insertNode(np, list.getNumberOfNodes());
@@ -409,7 +408,7 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 					}
 				}
 			}
-		   	list.insertNodes(nps, listview.getNumberOfNodes());				
+		   	list.insertNodes(nps, listview.getNumberOfNodes());
 		}
 		else {
 			UIViewPane uiviewpane = ((UIMapViewFrame)activeFrame).getViewPane();
@@ -425,26 +424,26 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 
 				NodeSummary node = (NodeSummary)vtViews.elementAt(selection[i]);
 				String sNodeID = node.getId();
-				if (!htUserViews.containsKey(sNodeID)) {				
+				if (!htUserViews.containsKey(sNodeID)) {
 					node.initialize(session,model);
 
 					// CHECK IF NODE WAS DELETED
 					boolean deleted = model.getNodeService().isMarkedForDeletion(session, sNodeID);
-	
+
 					UINode uiNodeInView = null;
 					if (!deleted) {
 						//add the node to the view if it isn't already in there
 						uiNodeInView = (UINode)uiviewpane.get(sNodeID);
 					}
-	
+
 					if(uiNodeInView == null) {
 						// GET CURRENT SCROLL POSITION AND ADD THIS TO POSITIONING INFO
 						int hPos = activeFrame.getHorizontalScrollBarPosition();
 						int vPos = activeFrame.getVerticalScrollBarPosition();
-	
+
 						int xpos = hPos + ViewPaneUI.LEFTOFFSET;
 						int ypos = vPos + ((i+1)*ViewPaneUI.INTERNODE_DISTANCE);
-	
+
 						// IF NODE WAS DELETED, RESTORE IT
 						if (deleted) {
 							ProjectCompendium.APP.restoreNode(node, view);
@@ -482,7 +481,7 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 		for(int i=0;i<selection.length;i++) {
 			View view = (View)vtViews.elementAt(selection[i]);
 			sViewID = view.getId();
-			if (!htUserViews.containsKey(sViewID)) { 			
+			if (!htUserViews.containsKey(sViewID)) {
 				UIViewFrame viewFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 				Vector history = new Vector();
 				history.addElement(new String(sTitle));
@@ -492,7 +491,7 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 
 		onCancel();
 	}
-	
+
 	/**
 	 * Helper class the render the parent views list.
 	 */
@@ -535,5 +534,5 @@ public class UISelectViewDialog extends UIDialog implements ActionListener {
 
 			return this;
 		}
-	}	
+	}
 }

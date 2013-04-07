@@ -22,15 +22,19 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
-import java.util.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Enumeration;
+import java.util.Vector;
 
-import com.compendium.core.datamodel.*;
-import com.compendium.core.db.*;
-import com.compendium.core.db.management.*;
+import com.compendium.core.SearchParams;
+import com.compendium.core.datamodel.NodeSummary;
+import com.compendium.core.datamodel.PCSession;
+import com.compendium.core.db.DBSearch;
+import com.compendium.core.db.management.DBConnection;
+import com.compendium.core.db.management.DBDatabaseManager;
 
 /**
  *	The QueryService class provides services to run general node search queries of the database.
@@ -70,43 +74,22 @@ public class QueryService extends ClientService implements IQueryService, java.i
 	 * Returns a Vector of nodes given a keyword
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String sContextCondition, context of the search (just the given view, all views, deleted views)
-	 * @param String sViewID, the id of the curernt view.
-	 * @param Vector vtSelectedNodeTypes, a vector of the selected node type to run the search against.
-	 * @param Vector vtSelectedAuthors, a vector of author to run the search against.
-	 * @param Vector vtSelectedCodes, a vector of codes to run the search against.
-	 * @param Vector vKeywords, a vector of keywords to run the search against.
-	 * @param int nMatchKeywordCondition, match all or any keywords.
-	 * @param Vector attrib, match the keywords in the label, detail or both as specified.
-	 * @param java.util.Date beforeCreationDate, the end creation date to run the search against.
-	 * @param java.util.Date afterCreationDate, the start creation date to run the search against.
-	 * @param java.util.Date beforeModificationDate, the end modification date to run the search against.
-	 * @param java.util.Date afterModificationDate, the start modification date to run the search against.
+	 * @param SearchParams searchParams, the parameters of the user search.
 	 *
 	 * @return Vector, of NodeSummary objects resulting from executing the search.
 	 * @exception java.sql.SQLException
 	 */
-	public Vector searchNode(PCSession session, String sContextCondition,
-							 String sViewID, Vector vtSelectedNodeTypes, Vector vtSelectedAuthors,
-							 Vector vtSelectedCodes, int sMatchCodesCondition, Vector vKeywords,
-							 int nMatchKeywordCondition, Vector attrib,
-							 java.util.Date dBeforeCreationDate, java.util.Date dAfterCreationDate,
-							 java.util.Date dBeforeModificationDate,
-							 java.util.Date dAfterModificationDate 
-							 ) throws SQLException
+	public Vector searchNode(PCSession session, SearchParams searchParams) throws SQLException
 	{
-		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+		createDerbyFunctionsIfDerbyDB(session);
 
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
 		Vector vtNodes = new Vector(51);
 		NodeSummary node = null;
 
-	 	for(Enumeration e = DBSearch.searchAttribute(dbcon, sContextCondition,
-									sViewID, vtSelectedNodeTypes, vtSelectedAuthors,
-									vtSelectedCodes, sMatchCodesCondition, vKeywords,
-									nMatchKeywordCondition, attrib,
-									dBeforeCreationDate, dAfterCreationDate,
-									dBeforeModificationDate,
-									dAfterModificationDate, session.getUserID()); e.hasMoreElements();)
+	 	Enumeration searchResults = 
+	 		DBSearch.searchAttribute(dbcon, searchParams, session.getUserID());
+		for(Enumeration e = searchResults; e.hasMoreElements();)
 		{
 			 node = (NodeSummary)e.nextElement();
 			 vtNodes.addElement(node);
@@ -239,4 +222,27 @@ public class QueryService extends ClientService implements IQueryService, java.i
 
 		return vtNodes;
 	}
+	
+	private void createDerbyFunctionsIfDerbyDB(PCSession session) {
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+		if(dbcon.isDerby()) {
+			createDerbyFunctions(dbcon);
+		}
+		getDatabaseManager().releaseConnection(session.getModelName(), dbcon);
+		
+	}
+
+	private void createDerbyFunctions(DBConnection dbcon) {
+		Connection connection = dbcon.getConnection();
+		try {
+			connection.createStatement().execute(
+				"CREATE FUNCTION RLIKE( REGEX VARCHAR(255), TEXT VARCHAR(32000) ) "
+						+ "RETURNS INTEGER PARAMETER STYLE JAVA NO SQL LANGUAGE "
+						+ "JAVA EXTERNAL NAME 'com.compendium.core.db.DBSearch.rlike'");
+		} catch (SQLException e) {
+			//if the function already exists just ignore the exception
+		}
+
+	}
+
 }

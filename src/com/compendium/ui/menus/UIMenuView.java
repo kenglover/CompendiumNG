@@ -22,10 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.menus;
 
+import static com.compendium.ProjectCompendium.*;
+
 import java.awt.event.*;
+import java.sql.SQLException;
 
 import javax.help.*;
 import javax.swing.*;
@@ -79,7 +81,7 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 
 	/** The menu item to reset the toolbars to thier default position.*/
 	private JMenuItem			miResetToolbars			= null;
-	
+
 	/** The menu item to hide/show the format toolbar.*/
 	private JMenuItem			miToolbarFormat		= null;
 
@@ -154,21 +156,24 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 
 	/** The JMenu to open outline view of views.*/
 	private JMenu    		mnuViewOutline				= null;
-	
+
 	/** The JMenuItem to perform a right align operation.*/
 	private JMenuItem		miViewsOnly					= null;
 
 	/** The JMenuItem to perform a left align operation.*/
 	private JMenuItem    	miViewsAndNodes				= null;
-	
+
 	/** The JMenuItem to perform a left align operation.*/
 	private JMenuItem    		miNone					= null;
-	
+
 	/** The JMenuItem to open unread view.  */
-	private JMenuItem    		miViewUnread				= null;
+	private JMenuItem    		miViewUnread			= null;
 
 	/** The JMenuItem to open tags view.  */
 	private JMenuItem    		miViewTags				= null;
+
+	/** The JMenuItem to open "Go To internal ID" dialog.  */
+	private JMenuItem    		gotoMenuItem			= null;
 
 	/** Idicates is a toolbar checkbox was checked/unchecked externally. Prevents loop.*/
 	private boolean bExternalActivation					= false;
@@ -178,42 +183,40 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 
 	/** To display unread View */
 	private UIViewUnread 		unreadView				= null	;
-	
+
 	/** The tags tree view.*/
-	private UITagTreePanel 		tagsTree				= null;
-	
+	private static UITagTreePanel 		tagsTree		= null;
+
 	//private boolean				externalActivation		= false;
-	
+
 	/**Indicates whether this menu is draw as a Simple interface or a advance user inteerface.*/
-	private boolean bSimpleInterface					= false;	
-	
+	private boolean bSimpleInterface					= false;
+
 	/**
 	 * Constructor.
-	 * @param bSimple true if the simple interface should be draw, false if the advanced. 	 * 
+	 * @param bSimple true if the simple interface should be draw, false if the advanced. 	 *
 	 */
 	public UIMenuView(boolean bSimple) {
-		
-		this.bSimpleInterface = bSimple;		
-		
-		mnuMainMenu	= new JMenu("View");  //$NON-NLS-1$
+
+		this.bSimpleInterface = bSimple;
+
+		mnuMainMenu	= new JMenu(Messages.getString("UIMenuManager.43")); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuMainMenu,"menus.map"); //$NON-NLS-1$
 		mnuMainMenu.setMnemonic(KeyEvent.VK_V);
-		
+
 		createMenuItems();
 	}
+
 
 	/**
 	 * If true, redraw the simple form of this menu, else redraw the complex form.
 	 * @param isSimple true for the simple menu, false for the advanced.
 	 */public void setIsSimple(boolean isSimple) {
 		bSimpleInterface = isSimple;
-		
+
 		// SET THE VIEW HISTORY BAR ACTIVE - BUT IT WILL NOT BE ON THIS MENU
 		if (bSimpleInterface) {
-            FormatProperties.displayViewHistoryBar = true;
-			FormatProperties.setFormatProp( "displayViewHistoryBar", "true" );  
-			FormatProperties.saveFormatProps();
-			
+            APP_PROPERTIES.setDisplayViewHistoryBar(true);
 		}
 		recreateMenu();
 	}
@@ -224,9 +227,9 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 	private void recreateMenu() {
 		mnuMainMenu.removeAll();
 		createMenuItems();
-		onDatabaseOpen();				
+		onDatabaseOpen();
 	}
-	
+
 	/**
 	 * Create and return the View menu.
 	 * @return JMenu the Map menu.
@@ -234,47 +237,47 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 	private JMenu createMenuItems() {
 
 		// Lakshmi 4/3/05 - Add the outline view options to View menu.
-		mnuViewOutline = new JMenu("Outline View"); 
+		mnuViewOutline = new JMenu("Outline View");
 		mnuViewOutline.setMnemonic(KeyEvent.VK_O);
 		mnuViewOutline.addActionListener(this);
-		
+
 		miViewsOnly = new JRadioButtonMenuItem(IUIConstants.DISPLAY_VIEWS_ONLY);
 		miViewsOnly.setMnemonic(KeyEvent.VK_V);
 		miViewsOnly.addActionListener(this);
 		mnuViewOutline.add(miViewsOnly);
-		
+
 		miViewsAndNodes = new JRadioButtonMenuItem(IUIConstants.DISPLAY_VIEWS_AND_NODES);
 		miViewsAndNodes.setMnemonic(KeyEvent.VK_N);
 		miViewsAndNodes.addActionListener(this);
 		mnuViewOutline.add(miViewsAndNodes);
-		
+
 		miNone = new JRadioButtonMenuItem(IUIConstants.DISPLAY_NONE);
 		miNone.setMnemonic(KeyEvent.VK_D);
 		miNone.addActionListener(this);
 		mnuViewOutline.add(miNone);
-		
-		if (FormatProperties.displayOutlineView.equals(DISPLAY_VIEWS_ONLY)){
+
+		if (APP_PROPERTIES.getDisplayOutlineView().equals(DISPLAY_VIEWS_ONLY)){
 			miViewsOnly.setSelected(true);
 			miViewsAndNodes.setSelected(false);
 			miNone.setSelected(false);
-			
+
 			miViewsOnly.setEnabled(false);
 			miViewsAndNodes.setEnabled(true);
 			miNone.setEnabled(true);
-		
-		} else if(FormatProperties.displayOutlineView.equals(DISPLAY_VIEWS_AND_NODES)) {
+
+		} else if(APP_PROPERTIES.getDisplayOutlineView().equals(DISPLAY_VIEWS_AND_NODES)) {
 			miViewsOnly.setSelected(false);
 			miViewsAndNodes.setSelected(true);
-			miNone.setSelected(false);	
-			
+			miNone.setSelected(false);
+
 			miViewsOnly.setEnabled(true);
 			miViewsAndNodes.setEnabled(false);
 			miNone.setEnabled(true);
-		} else { 
+		} else {
 			miViewsOnly.setSelected(false);
 			miViewsAndNodes.setSelected(false);
 			miNone.setSelected(true);
-			
+
 			miViewsOnly.setEnabled(true);
 			miViewsAndNodes.setEnabled(true);
 			miNone.setEnabled(false);
@@ -282,28 +285,28 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		mnuMainMenu.add(mnuViewOutline);
 
 		mnuMainMenu.addSeparator();
-		
-		miViewUnread = new JCheckBoxMenuItem("Unread View"); 
+
+		miViewUnread = new JCheckBoxMenuItem("Unread View");
 		miViewUnread.setMnemonic(KeyEvent.VK_U);
 		miViewUnread.addActionListener(this);
-		
-		if(FormatProperties.displayUnreadView){
+
+		if(APP_PROPERTIES.isDisplayUnreadView()){
 			miViewUnread.setSelected(true);
 		} else {
 			miViewUnread.setSelected(false);
 		}
-		
+
 		mnuMainMenu.add(miViewUnread);
 		mnuMainMenu.addSeparator();
-		
-		miViewTags = new JCheckBoxMenuItem("Tag View"); 
+
+		miViewTags = new JCheckBoxMenuItem("Tag View");
 		miViewTags.setMnemonic(KeyEvent.VK_G);
-		miViewTags.addActionListener(this);		
-		
+		miViewTags.addActionListener(this);
+
 		mnuMainMenu.add(miViewTags);
 		mnuMainMenu.addSeparator();
 
-		miViewMap = new JMenuItem("Find a Map/List...");  //$NON-NLS-1$
+		miViewMap = new JMenuItem(Messages.getString("UIMenuManager.45")); //$NON-NLS-1$
 		miViewMap.setMnemonic(KeyEvent.VK_F);
 		miViewMap.addActionListener(this);
 		mnuMainMenu.add(miViewMap);
@@ -311,73 +314,73 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		mnuMainMenu.addSeparator();
 
 		// TOOLBAR MENU
-		mnuToolbars	= new JMenu("Toolbars");  //$NON-NLS-1$
+		mnuToolbars	= new JMenu(Messages.getString("UIMenuManager.46")); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuToolbars,"menus.map"); //$NON-NLS-1$
 		mnuToolbars.setMnemonic(KeyEvent.VK_T);
-		
-		miToolbarMain = new JCheckBoxMenuItem("Main Toolbar");  //$NON-NLS-1$
+
+		miToolbarMain = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.48")); //$NON-NLS-1$
 		miToolbarMain.setMnemonic(KeyEvent.VK_M);
 		miToolbarMain.addActionListener(this);
 		mnuToolbars.add(miToolbarMain);
 
-		miToolbarData = new JCheckBoxMenuItem("Data Source Toolbar");  //$NON-NLS-1$
+		miToolbarData = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.53")); //$NON-NLS-1$
 		miToolbarData.setMnemonic(KeyEvent.VK_D);
 		miToolbarData.addActionListener(this);
 		mnuToolbars.add(miToolbarData);
 
-		miToolbarNode = new JCheckBoxMenuItem("Node Creation Toolbar");  //$NON-NLS-1$
+		miToolbarNode = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.50")); //$NON-NLS-1$
 		miToolbarNode.setMnemonic(KeyEvent.VK_N);
 		miToolbarNode.addActionListener(this);
 		mnuToolbars.add(miToolbarNode);
 
-		miToolbarFormat = new JCheckBoxMenuItem("Node Format Toolbar"); 
+		miToolbarFormat = new JCheckBoxMenuItem("Node Format Toolbar");
 		miToolbarFormat.setMnemonic(KeyEvent.VK_F);
 		miToolbarFormat.addActionListener(this);
 		mnuToolbars.add(miToolbarFormat);
-				
-		miToolbarDraw = new JCheckBoxMenuItem("Scribble Toolbar");  //$NON-NLS-1$
+
+		miToolbarDraw = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.51")); //$NON-NLS-1$
 		miToolbarDraw.setMnemonic(KeyEvent.VK_S);
 		miToolbarDraw.addActionListener(this);
 		mnuToolbars.add(miToolbarDraw);
-				
-		miToolbarTags = new JCheckBoxMenuItem("Tags Toolbar");  //$NON-NLS-1$
+
+		miToolbarTags = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.49")); //$NON-NLS-1$
 		miToolbarTags.setMnemonic(KeyEvent.VK_T);
 		miToolbarTags.addActionListener(this);
 		mnuToolbars.add(miToolbarTags);
 
-		miToolbarZoom = new JCheckBoxMenuItem("Zoom Toolbar");  //$NON-NLS-1$
+		miToolbarZoom = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.52")); //$NON-NLS-1$
 		miToolbarZoom.setMnemonic(KeyEvent.VK_Z);
 		miToolbarZoom.addActionListener(this);
 		mnuToolbars.add(miToolbarZoom);
-		
+
 		//miToolbarMeeting = new JCheckBoxMenuItem("Meeting Toolbar");
 		//miToolbarMeeting.setMnemonic(KeyEvent.VK_E);
 		//miToolbarMeeting.addActionListener(this);
 		//mnuToolbars.add(miToolbarMeeting);
 
 		mnuToolbars.addSeparator();
-		
-		miResetToolbars = new JMenuItem("Reset ToolBars to Default");  //$NON-NLS-1$
+
+		miResetToolbars = new JMenuItem(Messages.getString("UIMenuManager.114")); //$NON-NLS-1$
 		miResetToolbars.setMnemonic(KeyEvent.VK_R);
  		miResetToolbars.addActionListener(this);
  		mnuToolbars.add(miResetToolbars);
-		
+
 		mnuMainMenu.add(mnuToolbars);
 
-		miStatusBar = new JCheckBoxMenuItem("Status Bar");  //$NON-NLS-1$
+		miStatusBar = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.54")); //$NON-NLS-1$
 		miStatusBar.setMnemonic(KeyEvent.VK_S);
 		miStatusBar.addActionListener(this);
 		mnuMainMenu.add(miStatusBar);
-		if (FormatProperties.displayStatusBar)
+		if (APP_PROPERTIES.isDisplayStatusBar())
        		miStatusBar.setSelected(true);
 		else
 			miStatusBar.setSelected(false);
-	
-		miViewHistoryBar = new JCheckBoxMenuItem("View History Bar");  //$NON-NLS-1$
+
+		miViewHistoryBar = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.55")); //$NON-NLS-1$
 		miViewHistoryBar.setMnemonic(KeyEvent.VK_B);
 		miViewHistoryBar.addActionListener(this);
 		mnuMainMenu.add(miViewHistoryBar);
-		if (FormatProperties.displayViewHistoryBar)
+		if (APP_PROPERTIES.isDisplayViewHistoryBar())
        		miViewHistoryBar.setSelected(true);
 		else
 			miViewHistoryBar.setSelected(false);
@@ -385,10 +388,10 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		mnuMainMenu.addSeparator();
 
 		// TICK BOX FOR ACTIVATING AERIAL VIEW
-		miAerialView = new JCheckBoxMenuItem("Aerial View");  //$NON-NLS-1$
+		miAerialView = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.56")); //$NON-NLS-1$
 		miAerialView.setMnemonic(KeyEvent.VK_V);
 
-		if (FormatProperties.aerialView)
+		if (APP_PROPERTIES.isAerialView())
         	miAerialView.setSelected(true);
 		else
 			miAerialView.setSelected(false);
@@ -399,36 +402,36 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		mnuMainMenu.addSeparator();
 
 		// ZOOM MENU
-		mnuZoom	= new JMenu("Zoom");  //$NON-NLS-1$
+		mnuZoom	= new JMenu(Messages.getString("UIMenuManager.57")); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuZoom,"menus.map"); //$NON-NLS-1$
 		mnuZoom.setMnemonic(KeyEvent.VK_Z);
 
-		miZoomNormal = new JMenuItem("Zoom 100%");  //$NON-NLS-1$
+		miZoomNormal = new JMenuItem(Messages.getString("UIMenuManager.59")); //$NON-NLS-1$
 		miZoomNormal.setMnemonic(KeyEvent.VK_Z);
 		miZoomNormal.addActionListener(this);
 		mnuZoom.add(miZoomNormal);
 
-		miZoom75 = new JMenuItem("Zoom 75%");  //$NON-NLS-1$
+		miZoom75 = new JMenuItem(Messages.getString("UIMenuManager.60")); //$NON-NLS-1$
 		miZoom75.setMnemonic(KeyEvent.VK_7);
 		miZoom75.addActionListener(this);
 		mnuZoom.add(miZoom75);
 
-		miZoom50 = new JMenuItem("Zoom 50%");  //$NON-NLS-1$
+		miZoom50 = new JMenuItem(Messages.getString("UIMenuManager.61")); //$NON-NLS-1$
 		miZoom50.setMnemonic(KeyEvent.VK_5);
 		miZoom50.addActionListener(this);
 		mnuZoom.add(miZoom50);
 
-		miZoom25 = new JMenuItem("Zoom 25%");  //$NON-NLS-1$
+		miZoom25 = new JMenuItem(Messages.getString("UIMenuManager.62")); //$NON-NLS-1$
 		miZoom25.setMnemonic(KeyEvent.VK_2);
 		miZoom25.addActionListener(this);
 		mnuZoom.add(miZoom25);
 
-		miZoomFit = new JMenuItem("Fit to Page");  //$NON-NLS-1$
+		miZoomFit = new JMenuItem(Messages.getString("UIMenuManager.63")); //$NON-NLS-1$
 		miZoomFit.setMnemonic(KeyEvent.VK_F);
 		miZoomFit.addActionListener(this);
 		mnuZoom.add(miZoomFit);
 
-		miZoomFocus = new JMenuItem("Focus Node");  //$NON-NLS-1$
+		miZoomFocus = new JMenuItem(Messages.getString("UIMenuManager.64")); //$NON-NLS-1$
 		miZoomFocus.setMnemonic(KeyEvent.VK_N);
 		miZoomFocus.addActionListener(this);
 		mnuZoom.add(miZoomFocus);
@@ -436,10 +439,10 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		mnuMainMenu.add(mnuZoom);
 
 		// TICK BOX FOR ACTIVATING IMAGE ROLLOVER
-		miImageRollover = new JCheckBoxMenuItem("Image Rollover");  //$NON-NLS-1$
+		miImageRollover = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.65")); //$NON-NLS-1$
 		miImageRollover.setMnemonic(KeyEvent.VK_I);
 
-		if (FormatProperties.imageRollover)
+		if (APP_PROPERTIES.isImageRollover())
         	miImageRollover.setSelected(true);
 		else
 			miImageRollover.setSelected(false);
@@ -449,76 +452,82 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 
 		mnuMainMenu.addSeparator();
 
-		miSearchLabel = new JCheckBoxMenuItem("Auto Label Searching");  //$NON-NLS-1$
+		miSearchLabel = new JCheckBoxMenuItem(Messages.getString("UIMenuManager.66")); //$NON-NLS-1$
 		miSearchLabel.setMnemonic(KeyEvent.VK_L);
-	
-		if (FormatProperties.autoSearchLabel)
+
+		if (APP_PROPERTIES.isAutoSearchLabel())
        		miSearchLabel.setSelected(true);
 		else
 			miSearchLabel.setSelected(false);
 
 		miSearchLabel.addActionListener(this);
 		mnuMainMenu.add(miSearchLabel);
-		
+
 		mnuMainMenu.addSeparator();
 
 		//Begin edit, Lakshmi (11/3/05)
 		//include Top - Down and Left - Right Option in Arrange Menu.
-		mnuViewArrange = new JMenu("Arrange");  //$NON-NLS-1$
+		mnuViewArrange = new JMenu(Messages.getString("UIMenuManager.74")); //$NON-NLS-1$
 		mnuViewArrange.setMnemonic(KeyEvent.VK_R);
 		mnuViewArrange.addActionListener(this);
 
-		miMenuItemLeftRightArrange = new JMenuItem("Left to Right");  //$NON-NLS-1$
+		miMenuItemLeftRightArrange = new JMenuItem(Messages.getString("UIMenuManager.75")); //$NON-NLS-1$
 		miMenuItemLeftRightArrange.addActionListener(this);
 		miMenuItemLeftRightArrange.setMnemonic(KeyEvent.VK_R);
 		mnuViewArrange.add(miMenuItemLeftRightArrange);
 
 		mnuViewArrange.addSeparator();
 
-		miMenuItemTopDownArrange = new JMenuItem("Top-Down");  //$NON-NLS-1$
+		miMenuItemTopDownArrange = new JMenuItem(Messages.getString("UIMenuManager.76")); //$NON-NLS-1$
 		miMenuItemTopDownArrange.addActionListener(this);
 		miMenuItemTopDownArrange.setMnemonic(KeyEvent.VK_W);
 		mnuViewArrange.add(miMenuItemTopDownArrange);
 
 		mnuMainMenu.add(mnuViewArrange);
 
-		mnuViewAlign = new JMenu("Align");  //$NON-NLS-1$
+		mnuViewAlign = new JMenu(Messages.getString("UIMenuManager.77")); //$NON-NLS-1$
 		mnuViewAlign.setMnemonic(KeyEvent.VK_A);
 		mnuViewAlign.setEnabled(false);
 
-		miMenuItemAlignLeft = new JMenuItem("Left");  //$NON-NLS-1$
+		miMenuItemAlignLeft = new JMenuItem(Messages.getString("UIMenuManager.78")); //$NON-NLS-1$
 		miMenuItemAlignLeft.addActionListener(this);
 		miMenuItemAlignLeft.setMnemonic(KeyEvent.VK_L);
 		mnuViewAlign.add(miMenuItemAlignLeft);
 
-		miMenuItemAlignCenter = new JMenuItem("Center");  //$NON-NLS-1$
+		miMenuItemAlignCenter = new JMenuItem(Messages.getString("UIMenuManager.79")); //$NON-NLS-1$
 		miMenuItemAlignCenter.addActionListener(this);
 		miMenuItemAlignCenter.setMnemonic(KeyEvent.VK_C);
 		mnuViewAlign.add(miMenuItemAlignCenter);
 
-		miMenuItemAlignRight = new JMenuItem("Right");  //$NON-NLS-1$
+		miMenuItemAlignRight = new JMenuItem(Messages.getString("UIMenuManager.80")); //$NON-NLS-1$
 		miMenuItemAlignRight.addActionListener(this);
 		miMenuItemAlignRight.setMnemonic(KeyEvent.VK_R);
 		mnuViewAlign.add(miMenuItemAlignRight);
 
 		mnuViewAlign.addSeparator();
 
-		miMenuItemAlignTop = new JMenuItem("Top");  //$NON-NLS-1$
+		miMenuItemAlignTop = new JMenuItem(Messages.getString("UIMenuManager.81")); //$NON-NLS-1$
 		miMenuItemAlignTop.addActionListener(this);
 		miMenuItemAlignTop.setMnemonic(KeyEvent.VK_T);
 		mnuViewAlign.add(miMenuItemAlignTop);
 
-		miMenuItemAlignMiddle = new JMenuItem("Middle");  //$NON-NLS-1$
+		miMenuItemAlignMiddle = new JMenuItem(Messages.getString("UIMenuManager.82")); //$NON-NLS-1$
 		miMenuItemAlignMiddle.addActionListener(this);
 		miMenuItemAlignMiddle.setMnemonic(KeyEvent.VK_M);
 		mnuViewAlign.add(miMenuItemAlignMiddle);
 
-		miMenuItemAlignBottom = new JMenuItem("Bottom");  //$NON-NLS-1$
+		miMenuItemAlignBottom = new JMenuItem(Messages.getString("UIMenuManager.83")); //$NON-NLS-1$
 		miMenuItemAlignBottom.addActionListener(this);
 		miMenuItemAlignBottom.setMnemonic(KeyEvent.VK_B);
 		mnuViewAlign.add(miMenuItemAlignBottom);
 
 		mnuMainMenu.add(mnuViewAlign);
+
+		gotoMenuItem =
+		    new JMenuItem(Messages.getString("UIMenuManager.88")); //$NON-NLS-1$
+		gotoMenuItem.addActionListener(this);
+		gotoMenuItem.setMnemonic(KeyEvent.VK_G);
+        mnuMainMenu.add(gotoMenuItem);
 
 		return mnuMainMenu;
 	}
@@ -527,6 +536,7 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 	 * Handles most menu action event for this application.
 	 *
 	 * @param evt the generated action event to be handled.
+	 * @throws SQLException
 	 */
 	public void actionPerformed(ActionEvent evt) {
 
@@ -538,23 +548,48 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 			onImageRollover();
 		else if (source.equals(miSearchLabel))
 			onSearchLabel();
-		else if (source.equals(miViewMap))
-			ProjectCompendium.APP.onViewMap();
+		else if (source.equals(miViewMap)) {
+			long lViewCount = 0;
+			try {
+				lViewCount = ProjectCompendium.APP.getModel().getNodeService().lGetViewCount(ProjectCompendium.APP.getModel().getSession());
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+	        if (lViewCount > 250) {		// Note that 250 is a completely arbitrary threshold to set
+	        	if (JOptionPane.showConfirmDialog(null,
+	                "The list of views you are asking to create \n " +
+	                "will contain approximately "+Long.toString(lViewCount)+" items\n "  +
+	                "and may take a long time to build.\n" +
+	                "This operation cannot be canceled once started.\n\n" +
+	                "Do you really want to build this view?",
+	                "Confirm Find a Map/List...",
+	                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+	        			ProjectCompendium.APP.onViewMap();
+
+	        	}
+	        } else {
+	        	ProjectCompendium.APP.onViewMap();
+	        }
+		}
 		else if (source.equals(miLimboNode))
 			ProjectCompendium.APP.onLimboNode();
 //		 begin edit, Lakshmi (30/1/06)
 		else if (source.equals (miViewsAndNodes)) {
-			addOutlineView(DISPLAY_VIEWS_AND_NODES, true);			
+			addOutlineView(DISPLAY_VIEWS_AND_NODES, true);
 		}
-		else if (source.equals (miViewsOnly)) {	
+		else if (source.equals (miViewsOnly)) {
 			addOutlineView(DISPLAY_VIEWS_ONLY, true);
 		}
 		else if (source.equals (miNone)){
-			removeOutlineView(true);	
+			removeOutlineView(true);
 		}
 		else if(source.equals(miViewUnread)){
 			if(miViewUnread.isSelected()){
-				addUnreadView(true);
+				try {
+					addUnreadView(true);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			} else {
 				removeUnreadView(true);
 			}
@@ -566,10 +601,10 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 				addTagsView(true);
 			} else {
 				removeTagsView(true);
-			}			
+			}
 		}
 		else if (source.equals(miResetToolbars))
-			ProjectCompendium.APP.onResetToolBars();		
+			ProjectCompendium.APP.onResetToolBars();
 		else if(source.equals(miMenuItemTopDownArrange))
 			ProjectCompendium.APP.onViewArrange(IUIArrange.TOPDOWN);
 		else if(source.equals(miMenuItemLeftRightArrange))
@@ -700,34 +735,30 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 			};
 			thread.start();
 			bExternalActivation = false;
-		}	
+		}
 		else if (source.equals(miStatusBar)) {
-			if (((JCheckBoxMenuItem)miStatusBar).isSelected()) {
-				FormatProperties.displayStatusBar = true;
-				FormatProperties.setFormatProp( "displayStatusBar", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			else {
-				FormatProperties.displayStatusBar = false;
-				FormatProperties.setFormatProp( "displayStatusBar", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			FormatProperties.saveFormatProps();
+		    APP_PROPERTIES.setDisplayStatusBar(miStatusBar.isSelected());
 			ProjectCompendium.APP.displayStatusBar(miStatusBar.isSelected());
 		}
 		else if (source.equals(miViewHistoryBar)) {
-			if (((JCheckBoxMenuItem)miViewHistoryBar).isSelected()) {
-				FormatProperties.displayViewHistoryBar = true;
-				FormatProperties.setFormatProp( "displayViewHistoryBar", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			else {
-				FormatProperties.displayViewHistoryBar = false;
-				FormatProperties.setFormatProp( "displayViewHistoryBar", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			FormatProperties.saveFormatProps();
-
+		    APP_PROPERTIES.setDisplayViewHistoryBar(miViewHistoryBar.isSelected());
 			ProjectCompendium.APP.displayViewHistoryBar(miViewHistoryBar.isSelected());
+		} else if (source.equals(gotoMenuItem)) {
+		    ProjectCompendium.APP.openGotoDialog();
 		}
 
 		ProjectCompendium.APP.setDefaultCursor();
+	}
+
+	/**
+	 * Toggle the Tags view on and off
+	 */
+	public void toggleTagView() {
+		if(miViewTags.isSelected()){
+			removeTagsView(true);
+		} else {
+			addTagsView(true);
+		}
 	}
 
 	/**
@@ -738,77 +769,40 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 
 		if (outlineView != null) {
 			outlineView.cleanUp();
-			
+
 			ProjectCompendium.APP.oTabbedPane.remove(outlineView);
-			outlineView = null;				
-		
+			outlineView = null;
+
 			miViewsOnly.setSelected(false);
 			miViewsAndNodes.setSelected(false);
 			miNone.setSelected(true);
-				
+
 			miViewsOnly.setEnabled(true);
 			miViewsAndNodes.setEnabled(true);
 			miNone.setEnabled(false);
-    				
-			if (store) {			
-				FormatProperties.displayOutlineView = DISPLAY_NONE;
-				FormatProperties.setFormatProp( "displayOutlineView", DISPLAY_NONE );					 
-				FormatProperties.saveFormatProps();
+
+			if (store) {
+				APP_PROPERTIES.setDisplayOutlineView(DISPLAY_NONE);
 			}
-		
+
 			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 		}
 	}
-	
+
 	/**
 	 * open the outline view of the type specified.
 	 * @param sType the type of outline view to open
 	 * @param store indicates whether to store the change to the properties file.
 	 */
 	public void addOutlineView(String sType, boolean store) {
-		
+
 		if (sType.equals(DISPLAY_VIEWS_AND_NODES)) {
 			miViewsOnly.setSelected(false);
 			miViewsAndNodes.setSelected(true);
 			miNone.setSelected(false);
-			
+
 			if(outlineView != null) {
 				JTabbedPane tabPane = ProjectCompendium.APP.oTabbedPane;
-				int index = tabPane.indexOfComponent(outlineView);
-				outlineView.setObjectName(sType);
-				outlineView.addNodesToTree();
-				tabPane.setTitleAt(index,IUIConstants.OUTLINE_VIEW+sType);
-				tabPane.setToolTipTextAt(index,IUIConstants.OUTLINE_VIEW+sType);				
-			} else {
-				String sProjectName = ProjectCompendium.APP.getProjectName();
-				outlineView = new UIViewOutline(sProjectName, sType);					
-				if (!outlineView.isDrawn()) {
-					outlineView.draw();
-				}
-				ProjectCompendium.APP.oTabbedPane.addTab(OUTLINE_VIEW+ sType, null, outlineView, OUTLINE_VIEW+sType);
-				ProjectCompendium.APP.oTabbedPane.setSelectedComponent(outlineView); 
-			}
-			miViewsOnly.setEnabled(true);
-			miViewsAndNodes.setEnabled(false);
-			miNone.setEnabled(true);
-				
-			if (store) {				
-				FormatProperties.displayOutlineView = sType;
-				FormatProperties.setFormatProp( "displayOutlineView", sType );				 
-				FormatProperties.saveFormatProps();
-			}
-			
-			int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();			
-			ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);			
-			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
-			
-		} else if (sType.equals(DISPLAY_VIEWS_ONLY)) {
-			miViewsOnly.setSelected(true);
-			miViewsAndNodes.setSelected(false);
-			miNone.setSelected(false);
-						
-			if(outlineView != null) {
-				JTabbedPane tabPane = ProjectCompendium.APP.oTabbedPane;				
 				int index = tabPane.indexOfComponent(outlineView);
 				outlineView.setObjectName(sType);
 				outlineView.addNodesToTree();
@@ -816,136 +810,197 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 				tabPane.setToolTipTextAt(index,IUIConstants.OUTLINE_VIEW+sType);
 			} else {
 				String sProjectName = ProjectCompendium.APP.getProjectName();
-				outlineView = new UIViewOutline(sProjectName, sType);					
+				outlineView = new UIViewOutline(sProjectName, sType);
+				if (!outlineView.isDrawn()) {
+					outlineView.draw();
+				}
+				ProjectCompendium.APP.oTabbedPane.addTab(OUTLINE_VIEW+ sType, null, outlineView, OUTLINE_VIEW+sType);
+				ProjectCompendium.APP.oTabbedPane.setSelectedComponent(outlineView);
+			}
+			miViewsOnly.setEnabled(true);
+			miViewsAndNodes.setEnabled(false);
+			miNone.setEnabled(true);
+
+			if (store) {
+				APP_PROPERTIES.setDisplayOutlineView(sType);
+			}
+
+			int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();
+			ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);
+			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
+
+		} else if (sType.equals(DISPLAY_VIEWS_ONLY)) {
+			miViewsOnly.setSelected(true);
+			miViewsAndNodes.setSelected(false);
+			miNone.setSelected(false);
+
+			if(outlineView != null) {
+				JTabbedPane tabPane = ProjectCompendium.APP.oTabbedPane;
+				int index = tabPane.indexOfComponent(outlineView);
+				outlineView.setObjectName(sType);
+				outlineView.addNodesToTree();
+				tabPane.setTitleAt(index,IUIConstants.OUTLINE_VIEW+sType);
+				tabPane.setToolTipTextAt(index,IUIConstants.OUTLINE_VIEW+sType);
+			} else {
+				String sProjectName = ProjectCompendium.APP.getProjectName();
+				outlineView = new UIViewOutline(sProjectName, sType);
 				if (!outlineView.isDrawn())
 					outlineView.draw();
-						
+
 				ProjectCompendium.APP.oTabbedPane.addTab(OUTLINE_VIEW+ sType, null, outlineView, OUTLINE_VIEW+sType);
-				ProjectCompendium.APP.oTabbedPane.setSelectedComponent(outlineView); 					
+				ProjectCompendium.APP.oTabbedPane.setSelectedComponent(outlineView);
 			}
 			miViewsOnly.setEnabled(false);
 			miViewsAndNodes.setEnabled(true);
 			miNone.setEnabled(true);
-		
+
 			if (store) {
-				FormatProperties.displayOutlineView = sType;
-				FormatProperties.setFormatProp( "displayOutlineView", sType );			 
-				FormatProperties.saveFormatProps();
+				APP_PROPERTIES.setDisplayOutlineView(sType);
 			}
-			
-			int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();			
-			ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);						
+
+			int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();
+			ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);
 			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 		}
 	}
-	
+
 	/**
 	 * Remove the unread View from the tabbed pane.
 	 * @param store indicates whether to store the change to the properties file.
 	 */
 	public void removeUnreadView(boolean store){
-		
+
 		if (miViewUnread.isSelected()) {
 			miViewUnread.setSelected(false);
 		}
 		if(unreadView != null){
 			unreadView.cleanUp();
-			
 			ProjectCompendium.APP.oTabbedPane.remove(unreadView);
-			unreadView = null;	
+			unreadView = null;
 			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
-			if (store) {			
-				FormatProperties.displayUnreadView = false;
-				FormatProperties.setFormatProp( "displayUnreadView", "false" );  
-				FormatProperties.saveFormatProps();
-			}
+			miViewUnread.setSelected(false);
+		}
+
+		if (store) {
+			APP_PROPERTIES.setDisplayUnreadView(false);
 		}
 	}
-	
+
 	/**
 	 * open the unread view.
 	 * @param store indicates whether to store the change to the properties file.
 	 */
-	public void addUnreadView(boolean store){
-		
+	public void addUnreadView(boolean store) throws SQLException {
+
 		if (miViewUnread == null) {
 			return;
 		}
-		
+
+		// Query the database to find out how big the UnreadView will be.  Warn the user if it's big.
+
+		long lNodeCount = ProjectCompendium.APP.getModel().getNodeService().lGetNodeCount(ProjectCompendium.APP.getModel().getSession());
+		long lReadCount = ProjectCompendium.APP.getModel().getNodeService().lGetStateCount(ProjectCompendium.APP.getModel().getSession());
+		long lUnreadCount = lNodeCount - lReadCount;
+
+        if (lUnreadCount > 250) {		// Note that 250 is a completely arbitrary threshold to set
+        	if (JOptionPane.showConfirmDialog(null,
+                "WARNING!  The Unread View you are asking to create \n " +
+                "could contain as many as "+Long.toString(lUnreadCount)+" nodes\n "  +
+                "and may take a very long time to build.\n" +
+                "This operation cannot be canceled once started.\n\n" +
+                "Do you really want to build this view?",
+                "Confirm Unread View",
+                JOptionPane.YES_NO_OPTION)
+                != JOptionPane.YES_OPTION) {
+        		if (miViewUnread.isSelected()) {		// They said 'no'.  Make sure menu item appears
+        			miViewUnread.setSelected(false);	// unselected, and then return
+        		}
+        		APP_PROPERTIES.setDisplayUnreadView(false);
+        		return;
+        	}
+        }
+
+        // Go ahead and build the Unread View
+
 		String sProjectName = ProjectCompendium.APP.getProjectName();
-		unreadView = new UIViewUnread(sProjectName);					
+		unreadView = new UIViewUnread(sProjectName);
 		if (!unreadView.isDrawn())
 			unreadView.draw();
-				
+
 		ProjectCompendium.APP.oTabbedPane.addTab(UNREAD_VIEW, null, unreadView, UNREAD_VIEW);
 		ProjectCompendium.APP.oTabbedPane.setSelectedComponent(unreadView);
-		
-		if(store){
-			FormatProperties.displayUnreadView = true;
-			FormatProperties.setFormatProp( "displayUnreadView", "true" );  
-			FormatProperties.saveFormatProps();
+
+		if (!miViewUnread.isSelected()) {
+			miViewUnread.setSelected(true);
 		}
-		
-		int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();			
-		ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);	
-		ProjectCompendium.APP.oSplitter.resetToPreferredSizes();		
+		if(store){
+			APP_PROPERTIES.setDisplayUnreadView(true);
+		}
+
+		int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();
+		ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);
+		ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 	}
-	
+
 	/**
 	 * Remove the tags View from the tabbed pane.
 	 * @param store indicates whether to store the change to the properties file.
 	 */
 	public void removeTagsView(boolean store){
-		
+
 		if (miViewTags.isSelected()) {
 			miViewTags.setSelected(false);
-		}		
-		
+		}
+
 		if(tagsTree != null){
 			ProjectCompendium.APP.oTabbedPane.remove(tagsTree);
-			tagsTree = null;	
+			tagsTree = null;
 			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 			miViewTags.setSelected(false);
 		}
-		
-		if (store) {			
-			FormatProperties.displayUnreadView = false;
-			FormatProperties.setFormatProp( "displayTagsView", "false" );  
-			FormatProperties.saveFormatProps();
-		}		
+
+		if (store) {
+			APP_PROPERTIES.setDisplayUnreadView(false);
+		}
 	}
-	
+
 	/**
 	 * open the tags view.
 	 * @param store indicates whether to store the change to the properties file.
 	 */
-	public void addTagsView(boolean store){		
+	public void addTagsView(boolean store){
 		if (!miViewTags.isSelected()) {
 			miViewTags.setSelected(true);
 		}
-		
+
 		if (tagsTree != null) {
 			//Check it is visible. Not hidden by split pane.
 			ProjectCompendium.APP.oTabbedPane.setSelectedComponent(tagsTree);
 			ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 			return;
 		}
-		
-		tagsTree = new UITagTreePanel();					
+
+		tagsTree = new UITagTreePanel();
 		ProjectCompendium.APP.oTabbedPane.addTab(TAGS_VIEW, null, tagsTree, TAGS_VIEW);
 		ProjectCompendium.APP.oTabbedPane.setSelectedComponent(tagsTree);
-		
+
 		if(store){
-			FormatProperties.displayUnreadView = true;
-			FormatProperties.setFormatProp( "displayTagsView", "true" );  
-			FormatProperties.saveFormatProps();
+			APP_PROPERTIES.setDisplayUnreadView(true);
 		}
-		
-		int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();			
-		ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);			
-		ProjectCompendium.APP.oSplitter.resetToPreferredSizes();			
+
+		int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();
+		ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);
+		ProjectCompendium.APP.oSplitter.resetToPreferredSizes();
 	}
-	
+
+	/**
+	 * Returns the handle for the Tags Tree Panel, if it exists
+	 * @return tagsTree - the handle for the Tags window
+	 */
+	public static UITagTreePanel getTagTreePanel() {
+		return tagsTree;
+	}
+
 // ZOOM METHODS
 
 	/**
@@ -959,6 +1014,12 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 				mapframe.onZoomNext();
 				ProjectCompendium.APP.resetZoom();
 			}
+		}
+
+		if (ProjectCompendium.APP.isScribblePadOn())
+		{
+			ProjectCompendium.APP.onHideScribblePad();
+			ProjectCompendium.APP.onShowScribblePad();
 		}
 	}
 
@@ -975,6 +1036,12 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 				ProjectCompendium.APP.resetZoom();
 			}
 		}
+
+		if (ProjectCompendium.APP.isScribblePadOn())
+		{
+			ProjectCompendium.APP.onHideScribblePad();
+			ProjectCompendium.APP.onShowScribblePad();
+		}
 	}
 
 	/**
@@ -988,6 +1055,12 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 				mapframe.onZoomToFit();
 				ProjectCompendium.APP.resetZoom();
 			}
+		}
+
+		if (ProjectCompendium.APP.isScribblePadOn())
+		{
+			ProjectCompendium.APP.onHideScribblePad();
+			ProjectCompendium.APP.onShowScribblePad();
 		}
 	}
 
@@ -1003,10 +1076,16 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 				ProjectCompendium.APP.resetZoom();
 			}
 		}
+
+		if (ProjectCompendium.APP.isScribblePadOn())
+		{
+			ProjectCompendium.APP.onHideScribblePad();
+			ProjectCompendium.APP.onShowScribblePad();
+		}
 	}
 
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextToActual() {
@@ -1017,10 +1096,10 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 			this.outlineView.onReturnTextToActual();
 		}
 		if (this.unreadView != null) {
-			this.unreadView.onReturnTextToActual();			
+			this.unreadView.onReturnTextToActual();
 		}
 	}
-	
+
 	/**
 	 * Return the font size to its default and then appliy the passed text zoom.
 	 * (To the default specificed by the user in the Project Options)
@@ -1033,10 +1112,10 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 			this.outlineView.onReturnTextAndZoom(zoom);
 		}
 		if (this.unreadView != null) {
-			this.unreadView.onReturnTextAndZoom(zoom);			
+			this.unreadView.onReturnTextAndZoom(zoom);
 		}
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 */
@@ -1048,10 +1127,10 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 			this.outlineView.onIncreaseTextSize();
 		}
 		if (this.unreadView != null) {
-			this.unreadView.onIncreaseTextSize();			
+			this.unreadView.onIncreaseTextSize();
 		}
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 */
@@ -1063,10 +1142,10 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 			this.outlineView.onReduceTextSize();
 		}
 		if (this.unreadView != null) {
-			this.unreadView.onReduceTextSize();			
+			this.unreadView.onReduceTextSize();
 		}
 	}
-	
+
 	/**
 	 * Updates the menus when a database project is closed.
 	 */
@@ -1077,7 +1156,7 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		}
 		catch (Exception ex) {
 			ex.printStackTrace();
-			ProjectCompendium.APP.displayError("" + ex.getMessage());  //$NON-NLS-1$
+			ProjectCompendium.APP.displayError(Messages.getString("UIMenuManager.175") + ex.getMessage()); //$NON-NLS-1$
 		}
 
 		removeTagsView(false);
@@ -1093,7 +1172,7 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 			mnuMainMenu.setEnabled(true);
 		}
 	}
-	
+
 	/**
  	 * Indicates when nodes and link are selected and deselected
   	 * @param selected true for selected false for deselected.
@@ -1120,13 +1199,13 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		}
 		if (tagsTree != null) {
 			tagsTree.setNodeSelected(selected);
-		}	
+		}
 		if (outlineView != null) {
 			outlineView.setNodeSelected(selected);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Record the state of the image rollover option.
 	 */
@@ -1153,16 +1232,7 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 	public void onSearchLabel() {
 		if (miSearchLabel != null) {
 			JCheckBoxMenuItem cb = (JCheckBoxMenuItem)miSearchLabel;
-	
-	        if (cb.isSelected()) {
-	            FormatProperties.autoSearchLabel = true;
-				FormatProperties.setFormatProp( "autoSearchLabel", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-	    	else {
-	           	FormatProperties.autoSearchLabel = false;
-				FormatProperties.setFormatProp( "autoSearchLabel", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			FormatProperties.saveFormatProps();
+			APP_PROPERTIES.setAutoSearchLabel(cb.isSelected());
 		}
 	}
 
@@ -1215,7 +1285,7 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 	 */
 	public void setToolbar(int nToolbar, boolean selected) {
 		bExternalActivation = true;
-		
+
 		switch (nToolbar) {
 		case UIToolBarManager.MAIN_TOOLBAR: {
 			if (miToolbarMain != null)
@@ -1224,35 +1294,35 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		}
 		case UIToolBarManager.DRAW_TOOLBAR: {
 			if (miToolbarDraw != null)
-				miToolbarDraw.setSelected(selected);			
+				miToolbarDraw.setSelected(selected);
 			break;
 		}
 		case UIToolBarManager.NODE_TOOLBAR: {
 			if (miToolbarNode != null)
-				miToolbarNode.setSelected(selected);			
+				miToolbarNode.setSelected(selected);
 			break;
 		}
 		case UIToolBarManager.DATA_TOOLBAR: {
 			if (miToolbarData != null)
-				miToolbarData.setSelected(selected);			
+				miToolbarData.setSelected(selected);
 			break;
 		}
 		case UIToolBarManager.TAGS_TOOLBAR: {
 			if (miToolbarTags != null)
-				miToolbarTags.setSelected(selected);			
+				miToolbarTags.setSelected(selected);
 			break;
 		}
 		case UIToolBarManager.ZOOM_TOOLBAR: {
 			if (miToolbarZoom != null)
-				miToolbarZoom.setSelected(selected);			
+				miToolbarZoom.setSelected(selected);
 			break;
 		}
 		case UIToolBarManager.FORMAT_TOOLBAR: {
 			if (miToolbarFormat != null)
-				miToolbarFormat.setSelected(selected);			
+				miToolbarFormat.setSelected(selected);
 			break;
-		}	
-		
+		}
+
 		//case UIToolBarManager.MEETING_TOOLBAR: {
 		//	if (miToolbarMeeting != null)
 		//		miToolbarMeeting.setSelected(selected);
@@ -1260,25 +1330,25 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 		//}
 		}
 	}
-	
+
 	/**
 	 * Update the look and feel of the menu.
 	 */
 	public void updateLAF() {
 		if (mnuMainMenu != null) {
 			SwingUtilities.updateComponentTreeUI(mnuMainMenu);
-		}		
+		}
 		if (outlineView != null) {
 			SwingUtilities.updateComponentTreeUI(outlineView);
 		}
 		if (unreadView != null) {
 			SwingUtilities.updateComponentTreeUI(unreadView);
-		}		
+		}
 		if (tagsTree != null) {
 			SwingUtilities.updateComponentTreeUI(tagsTree);
 		}
 	}
-	
+
 	/**
 	 * Gets the outline view object
 	 * @return UIViewOutline the UIViewOutline object
@@ -1306,13 +1376,13 @@ public class UIMenuView implements IUIMenu, ActionListener, IUIConstants, ICoreC
 	 */
 	public void setUnreadView(UIViewUnread unreadView) {
 		this.unreadView = unreadView;
-	}		
-	
+	}
+
 	/**
 	 * Return a reference to the main menu.
 	 * @return JMenu a reference to the main menu.
 	 */
 	public JMenu getMenu() {
 		return mnuMainMenu;
-	}		
+	}
 }

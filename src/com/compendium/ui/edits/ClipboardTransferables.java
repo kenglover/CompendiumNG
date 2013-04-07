@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.edits;
 
 import java.awt.datatransfer.Transferable;

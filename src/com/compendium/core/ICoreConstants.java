@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core;
 
 /*
@@ -36,7 +35,7 @@ public interface ICoreConstants extends java.io.Serializable {
 	public final static String	sPARSERVERSION				= "1.03.000";
 
 	/** The current version number of the Compendium release */
-	public final static String	sAPPVERSION					= "1.5.3 Alpha 5";
+	public final static String	sAPPVERSION					= "1.7.1 Build 1370 ";
 
 	/** Reference to the Name of this whole Application */
 	public final static String	sAPPNAME 					= "Compendium";
@@ -84,13 +83,13 @@ public interface ICoreConstants extends java.io.Serializable {
 	public final static String	NODETAIL_STRING				= "(No Detail)";
 
 
-	/** Indicates that a node has not been read (1) yet  */
+	/** Indicated that a node has not beed read (1) yet  */
 	public final static int UNREADSTATE 					= 1 ;
 
-	/** Indicates that a node has been read (2) */
+	/** Indicated that a node has been read (2) */
 	public final static int READSTATE 						= 2 ;
 
-	/** Indicates that a node was modified since last read(3) */
+	/** Indicated that a node was modified since last read(3) */
 	public final static int MODIFIEDSTATE 					= 3;
 
 
@@ -188,14 +187,14 @@ public interface ICoreConstants extends java.io.Serializable {
 	 */
 	public static final int			PARENT_SHORTCUT_DISPLACEMENT = 10;
 
-	
+
 	/** This node type is used for the Trashbin */
 	public static final int			TRASHBIN					= 51;
-	
+
 	/** This node type is used for the inbox*/
 	//public static final int			INBOX					= 52;
 
-	
+
 	// NODE NAMES
 	/** Holds a string representation of the ISSUE Node type*/
 	public final static String		sISSUE					= "IssueNode";
@@ -232,7 +231,7 @@ public interface ICoreConstants extends java.io.Serializable {
 
 	// REFERRENCE NODE PROCESSING CONSTANTS
 	/** The Internal reference string starter.*/
-	public final static String		sINTERNAL_REFERENCE		= "comp://"; 
+	public final static String		sINTERNAL_REFERENCE		= "comp://";
 
 	// SELECTION STATES
 	/** Indicates a single node / link should be selected */
@@ -385,9 +384,12 @@ public interface ICoreConstants extends java.io.Serializable {
 	public final static int 	ARROW_TO_AND_FROM		= 3;
 
 
-	// DATABASE RECORD STATUS TYPES FOR NODES/LINKS/VIEWS AND THEIR RELATED RECORDS
-	/** Node / Link / View are active */
+	// DATABASE RECORD STATUS TYPES FOR NODES/LINKS/VIEWS/USERS AND THEIR RELATED RECORDS
+	/** Node / Link / View /User are active */
 	public final static int 	STATUS_ACTIVE			=	0;
+
+	/** User is inactive */
+	public final static int		STATUS_INACTIVE			=	1;
 
 	/** Node / Link / View have been marked for deletion */
 	public final static int 	STATUS_DELETE			=	3;
@@ -401,7 +403,7 @@ public interface ICoreConstants extends java.io.Serializable {
 
 	// CONNECTION TYPES
 	/** Indicates a MySQL connection type.*/
-	public final static int		MYSQL_CONNECITON		=	0;
+	public final static int		MYSQL_CONNECTION		=	0;
 
 	/** Indicates a Jabber connection type.*/
 	public final static int 	JABBER_CONNECTION		=	1;

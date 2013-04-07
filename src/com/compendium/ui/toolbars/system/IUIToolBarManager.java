@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars.system;
 
 import javax.swing.JFrame;

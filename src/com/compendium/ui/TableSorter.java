@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.util.*;
@@ -369,18 +368,18 @@ public class TableSorter extends TableMap {
 	 * @param aRow the row to get the real row for
 	 * @return int the real row for the given row.
 	 */
-	public int getRealRow(int aRow) {		
+	public int getRealRow(int aRow) {
 		checkModel();
 		int ind = -1;
 		try {
 			ind = indexes[aRow];
 		} catch (ArrayIndexOutOfBoundsException e) {
 			//e.printStackTrace();
-		} 
+		}
 
 		return ind;
-	}	
-	
+	}
+
 	/**
 	 * Get the value at the given row and column cell.
 	 * @param aRow, the row for the cell address.
@@ -434,7 +433,7 @@ public class TableSorter extends TableMap {
 		selectedColumn = column;
 		sortByColumn(column, true);
 	}
-	
+
 	public boolean getAscending() {
 		return ascending;
 	}

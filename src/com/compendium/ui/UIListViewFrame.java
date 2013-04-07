@@ -23,7 +23,6 @@
  ********************************************************************************/
 
 
-
 package com.compendium.ui;
 
 import java.beans.*;
@@ -77,9 +76,9 @@ public class UIListViewFrame extends UIViewFrame {
 	 */
 	public UIListViewFrame (View view, String title) {
 		super(view, title);
-		setTitle(title);		
+		setTitle(title);
 		init(view);
-		
+
 	}
 
 	/**
@@ -144,7 +143,7 @@ public class UIListViewFrame extends UIViewFrame {
 				}
 			}
 		});
-		
+
 		label = new JLabel("");
 		updateCountLabel();
 		label.setFont( new Font("Dialog", Font.PLAIN, 12) );
@@ -168,15 +167,15 @@ public class UIListViewFrame extends UIViewFrame {
 			public void mouseClicked(MouseEvent e) {
 				uiList.hideHint();
 			}
-			
+
 			public void mouseExited(MouseEvent e) {
 				uiList.hideHint();
-			}			
+			}
 		});
-		
+
 		this.setVisible(true);
 	}
-	
+
 	/**
 	 * Update the count of nodes in this list displayed.
 	 */
@@ -228,6 +227,8 @@ public class UIListViewFrame extends UIViewFrame {
 	 */
 	public void deleteChildren(View childView) {
 
+		long start_time = System.currentTimeMillis();
+
 		UIList childUIList = getUIList();
 
 		// BUG WITH SELECT ALL AND JTable.boundRow function which sometimes throws
@@ -243,11 +244,16 @@ public class UIListViewFrame extends UIViewFrame {
 			childView.addDeletedNode((NodePosition)e.nextElement());
 		}
 		childUIList.getListUI().onDelete();
+
+		long end_time = System.currentTimeMillis();
+
+		System.out.println("251 UIListViewFrame exiting for loop time is " + (end_time - start_time) + " msec");
+
 	}
 
 	/**
 	 * Set the current frame selected/deselected and if selected, focus the list.
-	 * @param selected, true if the frame should be selected, else false.
+	 * @param selected, ture if the frame should be selected, else false.
 	 */
 	public void setSelected(boolean selected) {
 		boolean wasSelected = isSelected();

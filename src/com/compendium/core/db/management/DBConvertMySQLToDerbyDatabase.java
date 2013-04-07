@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
@@ -37,6 +36,7 @@ import java.util.Hashtable;
 import java.net.InetAddress;
 
 import com.compendium.core.*;
+import com.compendium.core.db.*;
 
 /*
  * Handles Converting/Importing a MySQL Compendium Database to your default Derby database.
@@ -126,6 +126,21 @@ public class DBConvertMySQLToDerbyDatabase extends DBCopyData {
 		copyTables(inCon, outCon);
 
 		adminDatabase.addNewDatabase(this.sFriendlyName, this.sToName);
+
+		DBSystem sys = new DBSystem();
+		DBConnection dbcon = new DBConnection(outCon, false, -1);
+
+		sys.insertProperty(dbcon, "mysql_sourced", "true");
+
+		sys.insertProperty(dbcon, "mysql_source_db", sFromName);
+		sys.insertProperty(dbcon, "mysql_source_ip", sDatabaseIP);
+		sys.insertProperty(dbcon, "mysql_source_user", sDatabaseUserName);
+		sys.insertProperty(dbcon, "mysql_source_password", sDatabasePassword);
+
+		java.util.Date now = new java.util.Date();
+		long lnow = now.getTime();
+
+		sys.insertProperty(dbcon, "last_sync_time", String.valueOf(lnow));
 
 		fireProgressUpdate(increment, "Finished");
 		fireProgressComplete();

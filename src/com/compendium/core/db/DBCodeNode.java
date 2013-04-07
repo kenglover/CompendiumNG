@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.util.*;
@@ -50,8 +49,8 @@ public class DBCodeNode {
 
 	/** SQL statement to insert a new CodeNode record (CodeID, NodeID).*/
 	public final static String INSERT_NODECODE_QUERY =
-		"INSERT INTO NodeCode (NodeID, CodeID) "+
-		"VALUES (?, ?) ";
+		"INSERT INTO NodeCode (NodeID, CodeID, ModificationDate) "+
+		"VALUES (?, ?, ?) ";
 
 	/** SQL statement to delete all entries with the given CodeID.*/
 	public final static String DELETE_CODE_QUERY =
@@ -134,6 +133,7 @@ public class DBCodeNode {
 
  		pstmt.setString(1, sNodeID);
 		pstmt.setString(2, sCodeID) ;
+		pstmt.setDouble(3, new Long((new java.util.Date()).getTime()).doubleValue());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();

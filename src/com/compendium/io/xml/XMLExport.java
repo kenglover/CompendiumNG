@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.io.xml;
 
 import java.util.*;
@@ -148,7 +147,9 @@ public class XMLExport extends Thread implements IUIConstants {
 	private String 		sResourcePath 		= "";
 
 	/** The platform specific file separator to use.*/
-	private String		sFS 				= System.getProperty("file.separator");
+	private String		sFS 		= System.getProperty("file.separator");
+	private String 		sSYSPATH	= System.getenv("CompendiumSysPath");
+	private String 		sHOMEPATH	= System.getenv("CompendiumUserPath");
 
 	/** Indicated if one or more external resource files could not be found.*/
 	private boolean 	bNotFound 			= false;
@@ -160,7 +161,7 @@ public class XMLExport extends Thread implements IUIConstants {
 
 	/** Has this export failed or been stopped for some reason before completing.*/
 	private boolean		bExportComplete		= false;
-		
+
 	/**
 	 * Constructor.
 	 *
@@ -170,9 +171,13 @@ public class XMLExport extends Thread implements IUIConstants {
 	 * @param boolean selectedOnly, indicates whether to export the selected nodes only.
 	 * @param boolean bWithResources, indicates whether to also export external resource files and store everything to a zip file
 	 */
-	public XMLExport(UIViewFrame frame, String path, boolean allDepths, boolean selectedOnly,
-					boolean bWithResources, boolean bWithStencilAndLinkGroups, boolean bWithMeetings, 
+	public XMLExport(UIViewFrame frame, String path,
+					boolean allDepths, boolean selectedOnly,
+					boolean bWithResources, boolean bWithStencilAndLinkGroups, boolean bWithMeetings,
 					boolean bShowFinalMessage) {
+
+		System.out.println("XMLExport.java 179 input path is " + path);
+
 		sFilePath = path;
 		this.bWithResources = bWithResources;
 		this.bWithStencilAndLinkGroups = bWithStencilAndLinkGroups;
@@ -192,11 +197,12 @@ public class XMLExport extends Thread implements IUIConstants {
 			int index = path.lastIndexOf(sFS);
 			if (index != -1) {
 				sResourcePath = sPath.substring(0, index+1);
-				
-				String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);						
-				UserProfile oUser = ProjectCompendium.APP.getModel().getUserProfile();
-				String sUserDir = CoreUtilities.cleanFileName(oUser.getUserName())+"_"+oUser.getId();
-				sBackupPath = "Linked Files/"+sDatabaseName+"/"+sUserDir;			
+
+//				String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);
+//				UserProfile oUser = ProjectCompendium.APP.getModel().getUserProfile();
+//				String sUserDir = CoreUtilities.cleanFileName(oUser.getUserName())+"_"+oUser.getId();
+//				sBackupPath = "Linked Files/"+sDatabaseName+"/"+sUserDir;
+				sBackupPath = sHOMEPATH + sFS + "Linked Files";
 			}
 		}
 
@@ -358,7 +364,7 @@ public class XMLExport extends Thread implements IUIConstants {
 		}
 		catch(Exception ex) {
 			ex.printStackTrace();
-			ProjectCompendium.APP.displayError("Exception: (XMLExport.convertToXML) " + ex.getMessage());
+			ProjectCompendium.APP.displayError("Exception: (XMLExport.convertToXML line 367) " + ex.getMessage());
 			oProgressDialog.setVisible(false);
 			oProgressDialog.dispose();
 			ProjectCompendium.APP.setStatus("");
@@ -413,15 +419,20 @@ public class XMLExport extends Thread implements IUIConstants {
 				BufferedInputStream origin = null;
 				FileInputStream fi = null;
 
+				System.out.println("XMLExport 422 oZipfile.getAbsolutePath() reports " + oZipfile.getAbsolutePath());
+
 				FileOutputStream dest = new FileOutputStream(oZipfile.getAbsolutePath());
 				ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
 				out.setMethod(ZipOutputStream.DEFLATED);
 				byte data2[] = new byte[BUFFER];
 
 				ZipEntry entry = null;
-				
+
 				//ADD SQL FILE
-				String sXMLFilePath = "Exports/"+sBackupName+".xml";
+				String sXMLFilePath = sHOMEPATH + "/Exports/"+sBackupName+".xml";
+
+				System.out.println("XMLExport 433 sXMLFilePath reports " + sHOMEPATH + "/Exports/"+sBackupName+".xml");
+
 				String sqlFile = root.toString();
 				// NEED TO WRITE MAIN XML FILE OUT TO FILE FIRST AS NEED TO ENCODE IT TO UTF16
 				try {
@@ -429,25 +440,30 @@ public class XMLExport extends Thread implements IUIConstants {
 					Writer out2 = new OutputStreamWriter(fos, "UTF16");
 					out2.write(sqlFile);
 					out2.close();
-					
+					fos.close();
+
 					fi = new FileInputStream(sXMLFilePath);
 					origin = new BufferedInputStream(fi, BUFFER);
-					entry = new ZipEntry(sXMLFilePath);
+					//entry = new ZipEntry(sXMLFilePath);
+					//entry = new ZipEntry(sXMLFilePath.substring(3).replace('\\','/'));
+					entry = new ZipEntry("Exports/"+sBackupName+".xml");
 					out.putNextEntry(entry);
 
 					int count = 0;
 					while((count = origin.read(data2, 0, BUFFER)) != -1) {
+						System.out.println("XMLExport 451 writing 2k of data");
 						out.write(data2, 0, count);
 					}
 					origin.close();
 
 					CoreUtilities.deleteFile(new File(sXMLFilePath));
-					
+
 					nCount +=1;
 					oProgressBar.setValue(nCount);
-					oProgressDialog.setStatus(nCount);					
+					oProgressDialog.setStatus(nCount);
 				}
 				catch (IOException e) {
+					System.out.println("XMLExport 462 error\n" + e.getMessage());
 					ProjectCompendium.APP.displayError("Exception:" + e.getMessage());
 				}
 
@@ -456,6 +472,14 @@ public class XMLExport extends Thread implements IUIConstants {
 				for (Enumeration e = htResources.keys(); e.hasMoreElements() ;) {
 					String sOldFilePath = (String)e.nextElement();
 					String sNewFilePath = (String)htResources.get(sOldFilePath);
+					System.out.println("473 XMLExport sOldFilePath is " + sOldFilePath);
+					System.out.println("474 XMLExport sNewFilePath is " + sNewFilePath);
+
+					//sNewFilePath = sNewFilePath.substring(3).replace('\\','/');
+					sNewFilePath = sNewFilePath.substring(37).replace('\\','/');
+
+					System.out.println("479 XMLExport sNewFilePath is now " + sNewFilePath);
+
 					try {
 						fi = new FileInputStream(sOldFilePath);
 						origin = new BufferedInputStream(fi, BUFFER);
@@ -476,7 +500,32 @@ public class XMLExport extends Thread implements IUIConstants {
 						System.out.println("Unable to backup database resource: \n\n"+sOldFilePath+"\n\n"+ex.getMessage());
 					}
 				}
+
+				out.flush();
 				out.close();
+
+				dest.flush();
+				dest.close();
+				//--------------------------------------------
+
+				try
+				{
+				    // Open the ZIP file
+				    ZipFile zf = new ZipFile(oZipfile.getAbsolutePath());
+
+				    // Enumerate each entry
+				    for (Enumeration entries = zf.entries(); entries.hasMoreElements();) {
+				        // Get the entry name
+				        String zipEntryName = ((ZipEntry)entries.nextElement()).getName();
+
+				        System.out.println("XMLExport 505 zip entry is " + zipEntryName);
+				    }
+				}
+				catch (IOException e)
+				{
+					System.out.println("XMLExport 509 zip error on examination");
+				}
+
 			}
 			catch(Exception e) {
 				e.printStackTrace();
@@ -485,7 +534,9 @@ public class XMLExport extends Thread implements IUIConstants {
 			oProgressDialog.setVisible(false);
 			oProgressDialog.dispose();
 
-			if (sFilePath != null && bShowFinalMessage) {
+			if (sFilePath != null && bShowFinalMessage)
+			{
+				System.out.println("528 XMLExport  sFilePath not null and bShowFinalMessage");
 				Thread thread = new Thread("XMLExport.convertToXML") {
 					public void run() {
 						String sMessage = "Finished exporting into " + sFilePath;
@@ -495,6 +546,7 @@ public class XMLExport extends Thread implements IUIConstants {
 						ProjectCompendium.APP.displayMessage(sMessage, "Export Finished");
 					}
 				};
+				System.out.println("538 XMLExport calling thread.start()");
 				thread.start();
 			}
 		}
@@ -514,6 +566,7 @@ public class XMLExport extends Thread implements IUIConstants {
 				nCount += 3;
 				oProgressBar.setValue(nCount);
 				oProgressDialog.setStatus(nCount);
+
 			}
 			catch (IOException e) {
 				ProjectCompendium.APP.displayError("Exception:" + e.getMessage());
@@ -540,7 +593,8 @@ public class XMLExport extends Thread implements IUIConstants {
 	 */
 	public void addLinkGroupsToResources() {
 
-		File main = new File("System"+sFS+"resources"+sFS+"LinkGroups");
+		String dir = sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"LinkGroups"+sFS;
+		File main = new File(dir);
 		File oLinkGroups[] = main.listFiles();
 		String sOldLinkGroupPath = "";
 		String sNewLinkGroupPath = "";
@@ -550,7 +604,7 @@ public class XMLExport extends Thread implements IUIConstants {
 			nextLinkGroup = oLinkGroups[i];
 			sOldLinkGroupPath = nextLinkGroup.getAbsolutePath();
 			if (!htResources.containsKey(sOldLinkGroupPath)) {
-				sNewLinkGroupPath = "System"+sFS+"resources"+sFS+"LinkGroups"+sFS+ nextLinkGroup.getName();
+				sNewLinkGroupPath = dir+ nextLinkGroup.getName();
 				htResources.put(sOldLinkGroupPath, sNewLinkGroupPath);
 			}
 		}
@@ -561,8 +615,9 @@ public class XMLExport extends Thread implements IUIConstants {
 	 */
 	public void addStencilsToResources() {
 
-		String sStencilPath = "System"+sFS+"resources"+sFS+"Stencils/";
-		File main = new File("System"+sFS+"resources"+sFS+"Stencils");
+		String sStencilPath = sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"Stencils"+sFS;
+
+		File main = new File(sStencilPath);
 		File oStencils[] = main.listFiles();
 
 		String sOldStencilName = "";
@@ -715,7 +770,7 @@ public class XMLExport extends Thread implements IUIConstants {
 				nodePos = (NodePosition)e.nextElement();
 
 			NodeSummary node = nodePos.getNode();
-			
+
 			View nodeView = nodePos.getView();
 			Date creationDate = nodePos.getCreationDate();
 			long creationDateSecs = creationDate.getTime();
@@ -730,21 +785,21 @@ public class XMLExport extends Thread implements IUIConstants {
 			viewData.add((Object) new Integer(nodePos.getXPos()));
 			viewData.add((Object) new Integer(nodePos.getYPos()));
 			viewData.add((Object) new Long(creationDateSecs) );
-			viewData.add((Object) new Long(modificationDateSecs) );			
+			viewData.add((Object) new Long(modificationDateSecs) );
 
 			viewData.add((Object) new Boolean(nodePos.getShowTags()));
 			viewData.add((Object) new Boolean(nodePos.getShowText()) );
 			viewData.add((Object) new Boolean(nodePos.getShowTrans()) );
 			viewData.add((Object) new Boolean(nodePos.getShowWeight()) );
 			viewData.add((Object) new Boolean(nodePos.getShowSmallIcon()) );
-			viewData.add((Object) new Boolean(nodePos.getHideIcon()) );		
+			viewData.add((Object) new Boolean(nodePos.getHideIcon()) );
 			viewData.add((Object) new Integer(nodePos.getLabelWrapWidth()) );
 			viewData.add((Object) new Integer(nodePos.getFontSize()) );
 			viewData.add((Object) nodePos.getFontFace());
 			viewData.add((Object) new Integer(nodePos.getFontStyle()) );
 			viewData.add((Object) new Integer(nodePos.getForeground()) );
 			viewData.add((Object) new Integer(nodePos.getBackground()) );
-			
+
 			vtViews.add((Object) viewData);
 			htViewsCheck.put(sViewID, sViewID);
 
@@ -822,18 +877,18 @@ public class XMLExport extends Thread implements IUIConstants {
 					viewData.add((Object) new Boolean(nodePos.getShowTrans()) );
 					viewData.add((Object) new Boolean(nodePos.getShowWeight()) );
 					viewData.add((Object) new Boolean(nodePos.getShowSmallIcon()) );
-					viewData.add((Object) new Boolean(nodePos.getHideIcon()) );		
+					viewData.add((Object) new Boolean(nodePos.getHideIcon()) );
 					viewData.add((Object) new Integer(nodePos.getLabelWrapWidth()) );
 					viewData.add((Object) new Integer(nodePos.getFontSize()) );
 					viewData.add((Object) nodePos.getFontFace());
 					viewData.add((Object) new Integer(nodePos.getFontStyle()) );
 					viewData.add((Object) new Integer(nodePos.getForeground()) );
-					
+
 					viewData.add((Object) new Integer(nodePos.getBackground()) );
-					
+
 					vtViews.add((Object) viewData);
 					htViewsCheck.put(sViewID, sViewID);
-					
+
 					processNodeForExport(nodeSummary, nodeView);
 				}
 			}
@@ -873,10 +928,10 @@ public class XMLExport extends Thread implements IUIConstants {
 
 		String label = nodeSummary.getLabel();
 		label = CoreUtilities.cleanXMLText(label);
-		
+
 		String sLastModAuthor = nodeSummary.getLastModificationAuthor();
 		sLastModAuthor = CoreUtilities.cleanXMLText(sLastModAuthor);
-				
+
 		Vector details = null;
 		try {
 			details = nodeSummary.getDetailPages(author);
@@ -923,8 +978,8 @@ public class XMLExport extends Thread implements IUIConstants {
 					File file = new File(sSource);
 					if (file.exists()) {
 						String sOldSource = sSource;
+						sSource = sBackupPath + "/" + file.getName();
 						if (!htResources.containsKey(sOldSource)) {
-							sSource = sBackupPath + "/" + file.getName();
 							htResources.put(sOldSource, sSource);
 						}
 					}
@@ -937,8 +992,8 @@ public class XMLExport extends Thread implements IUIConstants {
 					File file2 = new File(sSourceImage);
 					if (file2.exists()) {
 						String sOldSourceImage = sSourceImage;
+						sSourceImage = sBackupPath + "/" + file2.getName();
 						if (!htResources.containsKey(sOldSourceImage)) {
-							sSourceImage = sBackupPath + "/" + file2.getName();
 							htResources.put(sOldSourceImage, sSourceImage);
 						}
 					}
@@ -990,7 +1045,7 @@ public class XMLExport extends Thread implements IUIConstants {
 			nodeData.add((Object) sSource );
 			nodeData.add((Object) sSourceImage );
 			nodeData.add((Object) new Integer(nImageWidth) );
-			nodeData.add((Object) new Integer(nImageHeight) );			
+			nodeData.add((Object) new Integer(nImageHeight) );
 			nodeData.add((Object) sBackground );
 			nodeData.add((Object) sLastModAuthor );
 
@@ -1194,13 +1249,13 @@ public class XMLExport extends Thread implements IUIConstants {
 
 		Vector nextView= null;
 		int count = vtViews.size();
-		
+
 		for (int i = 0; i < count; i++) {
-	
+
 			nextView = (Vector)vtViews.elementAt(i);
-				
+
 			xmlViews.append("\t\t<view ");
-			
+
 			xmlViews.append("viewref=\""+ (String)nextView.elementAt(0) +"\" ");
 			xmlViews.append("noderef=\""+ (String)nextView.elementAt(1) +"\" ");
 			xmlViews.append("XPosition=\""+ ((Integer)nextView.elementAt(2)).toString() +"\" ");
@@ -1213,7 +1268,7 @@ public class XMLExport extends Thread implements IUIConstants {
 			xmlViews.append("showWeight=\""+ ((Boolean)nextView.elementAt(9)).toString() +"\" ");
 			xmlViews.append("smallIcon=\""+ ((Boolean)nextView.elementAt(10)).toString() +"\" ");
 			xmlViews.append("hideIcon=\""+ ((Boolean)nextView.elementAt(11)).toString() +"\" ");
-			xmlViews.append("labelWrapWidth=\""+ ((Integer)nextView.elementAt(12)).toString() +"\" ");	
+			xmlViews.append("labelWrapWidth=\""+ ((Integer)nextView.elementAt(12)).toString() +"\" ");
 			xmlViews.append("fontsize=\""+ ((Integer)nextView.elementAt(13)).toString() +"\" ");
 			xmlViews.append("fontface=\""+ ((String)nextView.elementAt(14)) +"\" ");
 			xmlViews.append("fontstyle=\""+ ((Integer)nextView.elementAt(15)).toString() +"\" ");
@@ -1316,11 +1371,11 @@ public class XMLExport extends Thread implements IUIConstants {
 			xmlNodes.append("author=\""+ (String)nextNode.elementAt(4) +"\" ");
 			xmlNodes.append("created=\""+ ((Long)nextNode.elementAt(5)).toString() +"\" ");
 			xmlNodes.append("lastModified=\""+ ((Long)nextNode.elementAt(6)).toString() +"\" ");
-			xmlNodes.append("label=\"");			
+			xmlNodes.append("label=\"");
 			String label = (String)nextNode.elementAt(7);
-			xmlNodes.append(label+"\" ");			
+			xmlNodes.append(label+"\" ");
 			xmlNodes.append("state=\""+ ((Integer)nextNode.elementAt(9)).toString() +"\" ");
-			xmlNodes.append("lastModificationAuthor=\""+ ((String)nextNode.elementAt(15)) +"\"");			
+			xmlNodes.append("lastModificationAuthor=\""+ ((String)nextNode.elementAt(15)) +"\"");
 			xmlNodes.append(">\n");
 
 			xmlNodes.append("\t\t\t<details>\n");

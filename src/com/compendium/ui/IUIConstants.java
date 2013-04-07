@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.awt.*;
@@ -46,11 +45,8 @@ public interface IUIConstants  {
 	/** Tool tip text to display if the projects data schema is unknown.*/
 	public static final String PROJECT_SCHEMA_UNKNOWN 				= "Compendium cannot determine the state of this project's data structure";
 
-	/** The character that are recognised when typing into a node label */
-	//public static final StringBuffer KEYCHARS 					= new StringBuffer(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ‡¿·¡‰ƒÂ≈‚¬„√Ë»È…Í ÎÀÏÃÌÕÔœÓŒÚ“Û”ˆ÷Ù‘ı’˘Ÿ˙⁄¸‹˚€˝›ˇÁ«Ò—™∫0123456789<>.?:;,{[}]|=+~-_'\"#@£/!$%^&*()+\\°ø®∑`¥^¨\u00B4");
-
 	/** Check characters for list navigation */
-	public static final StringBuffer NAVKEYCHARS 					= new StringBuffer(" <>.?:;,{[}]|=+~-_'\"#@£/!$%^&*()+\\°ø®∑`¥^¨\u00B4\u00A7");
+	public static final StringBuffer NAVKEYCHARS 					= new StringBuffer(" <>.?:;,{[}]|=+~-_'\"#@/!$%^&*()+");
 
 
 	/** Width of the project compendium application frame */
@@ -64,22 +60,22 @@ public interface IUIConstants  {
 
 	/** The value for display none option in outline view.*/
 	public static final String DISPLAY_NONE 						= "None";
-	
+
 	/** The value for display none option in outline view.*/
 	public static final String DISPLAY_VIEWS_ONLY 					= "Views Only";
-	
+
 	/** The value for display views and nodes option in outline view.*/
 	public static final String DISPLAY_VIEWS_AND_NODES 				= "Views and Nodes";
 
 	/** The outline view display text. */
 	public final static String OUTLINE_VIEW							= "Outline View - ";
-	
+
 	/** The unread view display text. */
 	public final static String UNREAD_VIEW							= "Unread View";
 
 	/** The tags view display text. */
 	public final static String TAGS_VIEW							= "Tags View";
-	
+
 	/** The colour to use for node border for unread nodes.*/
 	public static final Color 	UNREAD_BORDER_COLOR					= Color.red;
 
@@ -100,7 +96,7 @@ public interface IUIConstants  {
 		"shortcut-to-list.png",		"shortcut-to-map.png",		"shortcut-to-issue.png",
 		"shortcut-to-position.png",	"shortcut-to-argument.png",	"shortcut-to-plus.png",
 		"shortcut-to-minus.png",	"shortcut-to-decision.png",	"shortcut-to-reference.png",
-		"shortcut-to-note.png", "icon_16x16.jpg", 
+		"shortcut-to-note.png", "icon_16x16.jpg",
 		"issue_sm.png", "position_sm.png", "argument_sm.png", "plus_sm.png",
 		"minus_sm.png", "decision_sm.png", "reference_sm.png", "note_sm.png", "trashbin.png" , "trashbinfull.png",
 		"close.png", "undo.png", "redo.png", "delete.png", "back.png",
@@ -122,17 +118,18 @@ public interface IUIConstants  {
 		"no_tool_select.png", "circle_tool_select.png", "line_tool_select.png", "square_tool_select.png", "pencil_tool_select.png",
 		"scribble_on.png", "scribble_off.png", "erase_tool.png", "memetic_logo.jpg", "connect.png", "help2.gif",
 		"play.png", "pause.png", "stop.png", "reset.gif", "upload.png", "resume.png", "record.png",
-		"meeting_map_big.gif", "meeting_map_small.gif", "movefront.png", "moveback.png", "refresh.png", 
+		"meeting_map_big.gif", "meeting_map_small.gif", "movefront.png", "moveback.png", "refresh.png",
 		"udig16.gif",
 		"format_italic.png", "format_italic_selected.png", "format_bold.png", "format_bold_selected.png",
-		"showtags.png", "showtags_selected.png", "showtext.png", "showtext_selected.png", 
+		"showtags.png", "showtags_selected.png", "showtext.png", "showtext_selected.png",
 		"showtrans.png", "showtrans_selected.png", "showweight.png", "showweight_selected.png",
 		"smallicons.png",  "largeicons.png", "hideicons.png", "showicons.png",
 		"wrapwidth.png", "inbox.png", "inbox_sm.png", "reference-internal.png", "reference-internal_sm.png",
 		"textplus.png", "textminus.png", "textfull.png", "background-colour.png", "foreground-colour.png", "broken-image.png",
-		"flashmeeting-logo.png"
+		"flashmeeting-logo.png",
+		"inactive-user.png"
 	};
-	
+
 
 	/** This array holds all the names of the images files used by the application for nodes, toolbar icons etc..*/
 	public static final String IMG_NAMES[] = {
@@ -167,16 +164,17 @@ public interface IUIConstants  {
 		"play.png", "pause.png", "stop.png", "reset.gif", "upload.png", "resume.png", "record.png",
 		"meeting_map_big.gif", "meeting_map_small.gif", "movefront.png", "moveback.png", "refresh.png", "udig16.gif",
 		"format_italic.png", "format_italic_selected.png", "format_bold.png", "format_bold_selected.png",
-		"showtags.png", "showtags_selected.png", "showtext.png", "showtext_selected.png", 
+		"showtags.png", "showtags_selected.png", "showtext.png", "showtext_selected.png",
 		"showtrans.png", "showtrans_selected.png", "showweight.png", "showweight_selected.png",
 		"smallicons.png",  "largeicons.png", "hideicons.png", "showicons.png",
 		"wrapwidth.png", "inbox.png", "inbox_sm.png", "reference-internal.png", "reference-internal_sm.png",
 		"textplus.png", "textminus.png", "textfull.png", "background-colour.png", "foreground-colour.png", "broken-image.png",
-		"flashmeeting-logo.png"
+		"flashmeeting-logo.png",
+		"inactive-user.png"
 	};
 
 	/** The total number of system images.*/
-	public static final int NUM_IMAGES					= 159;
+	public static final int NUM_IMAGES					= 160;
 
 	/** Reference to the position in the array of the 'new' item icon image.*/
 	public static final int NEW_ICON					= 0;
@@ -591,7 +589,7 @@ public interface IUIConstants  {
 
 	/** Reference to the icon for opening a udig map.*/
 	public static final int UDIG_ICON					= 130;
-	
+
 
 	/** Reference to the icon for formatting text bold.*/
 	public static final int FORMAT_ITALIC				= 131;
@@ -634,7 +632,7 @@ public interface IUIConstants  {
 
 	/** Reference to the icon for showing small icons.*/
 	public static final int SMALL_ICONS_SELECTED		= 144;
-	
+
 	/** Reference to the icon for hiding node icons.*/
 	public static final int HIDE_ICONS					= 145;
 
@@ -655,7 +653,7 @@ public interface IUIConstants  {
 
 	/** Reference to the icon for internal reference node.*/
 	public static final int REFERENCE_INTERNAL_SM_ICON	= 151;
-	
+
 	/** Reference to the position in the array of the Text Plus icon image.*/
 	public static final int TEXT_PLUS_ICON				= 152;
 
@@ -663,18 +661,21 @@ public interface IUIConstants  {
 	public static final int TEXT_MINUS_ICON				= 153;
 
 	/** Reference to the position in the array of the Text Full icon image.*/
-	public static final int TEXT_FULL_ICON				= 154;	
-	
+	public static final int TEXT_FULL_ICON				= 154;
+
 	/** Reference to the position in the array of the background colour icon image.*/
 	public static final int BACKGROUND_COLOUR			= 155;
-	
+
 	/** Reference to the position in the array of the foreground colour icon image.*/
-	public static final int FOREGROUND_COLOUR			= 156;	
-	
+	public static final int FOREGROUND_COLOUR			= 156;
+
 	/** Reference to the image to draw when an external image ref is wrong and the image can't be loaded.*/
 	public static final int BROKEN_IMAGE_ICON			= 157;
-	
+
 	/** Reference to the icon to use for meeting maps.*/
-	public static final int FLASHMEETING_ICON			= 158;	
+	public static final int FLASHMEETING_ICON			= 158;
+
+	/** Reference to the icon for inactive users */
+	public static final int INACTIVE_USER				= 159;
 }
 

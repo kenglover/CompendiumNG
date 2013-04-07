@@ -21,7 +21,6 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 package com.compendium.io.udig;
 
 import java.io.*;
@@ -92,7 +91,7 @@ public class LaunchUDig {
             	isWindows = true;
                 File[] roots = File.listRoots();
                 for (int i = 0; i < roots.length; i++) {
-                    if (!roots[i].getAbsolutePath().equals("A:\\")) {                	
+                    if (!roots[i].getAbsolutePath().equals("A:\\")) {
 	                    File dir = new File(roots[i], WINDOWS_DEFAULT);
 	                    if (dir.exists()) {
 	                        while ((dir.getParentFile() != null) && (udigRoot == null)) {

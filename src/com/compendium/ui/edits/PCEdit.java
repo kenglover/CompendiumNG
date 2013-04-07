@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.edits;
 
 import java.util.*;
@@ -73,7 +72,7 @@ public abstract class PCEdit extends AbstractUndoableEdit {
 			oViewPane = ((UIMapViewFrame)viewFrame).getViewPane();
 		}
 	}
-	
+
 
 	/**
 	 * Add a <code>UINode</code> object to the list of nodes for this edit.
@@ -84,7 +83,7 @@ public abstract class PCEdit extends AbstractUndoableEdit {
 			vtUndoNodes.addElement(uinode);
 		}
 	}
-	
+
 	/**
 	 * Add a <code>NodePosition</code> object to the list of nodes, and the the undoNodeIndexes Vector.
 	 * @param uinode com.compendium.core.datamodel.NodePosition, the <code>NodePosition</code> object to add.
@@ -507,7 +506,7 @@ public abstract class PCEdit extends AbstractUndoableEdit {
 						}
 					}
 					// DON'T ADD THE SAME NODE TWICE TO THE SAME LIST
-					if (uilist.getIndexOf(np.getNode()) == -1) { 
+					if (uilist.getIndexOf(np.getNode()) == -1) {
 						uilist.insertNode(np, np.getYPos()/10 - 1);
 					}
 				}

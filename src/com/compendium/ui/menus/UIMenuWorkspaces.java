@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.menus;
 
 import java.awt.event.*;
@@ -58,7 +57,7 @@ public class UIMenuWorkspaces implements IUIMenu, ActionListener {
 	 * @return JMenu the Workspaces menu.
 	 */
 	private JMenu createMenu() {
-		mnuMainMenu = new UIScrollableMenu("Workspaces", 3); 
+		mnuMainMenu = new UIScrollableMenu(Messages.getString("UIMenuManager.121"), 3); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuMainMenu,"menus.workspace"); //$NON-NLS-1$
 		mnuMainMenu.setMnemonic(KeyEvent.VK_K);
 		return mnuMainMenu;
@@ -109,7 +108,7 @@ public class UIMenuWorkspaces implements IUIMenu, ActionListener {
 
 		mnuMainMenu.removeAll();
 
-		miWorkspaceMaint = new JMenuItem("Manage Workspaces..."); 
+		miWorkspaceMaint = new JMenuItem(Messages.getString("UIMenuManager.176")); //$NON-NLS-1$
 		miWorkspaceMaint.setMnemonic('O');
 		miWorkspaceMaint.addActionListener(this);
 		mnuMainMenu.add(miWorkspaceMaint);
@@ -163,20 +162,20 @@ public class UIMenuWorkspaces implements IUIMenu, ActionListener {
   	 * @param selected true for selected false for deselected.
 	 */
 	public void setNodeSelected(boolean selected) {}
-	
+
 	/**
 	 * Update the look and feel of the menu.
 	 */
 	public void updateLAF() {
 		if (mnuMainMenu != null)
 			SwingUtilities.updateComponentTreeUI(mnuMainMenu);
-	}		
-	
+	}
+
 	/**
 	 * Return a reference to the main menu.
 	 * @return JMenu a reference to the main menu.
 	 */
 	public JMenu getMenu() {
 		return mnuMainMenu;
-	}	
+	}
 }

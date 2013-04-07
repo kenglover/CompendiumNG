@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.io.http;
 
 import java.io.FileOutputStream;
@@ -91,13 +90,13 @@ public class HttpFileDownloadInputStream extends InputStream {
     public void downloadToFile(String sOutputName) throws IOException {
 
         FileOutputStream output = new FileOutputStream(sOutputName);
-        
+
         byte[] buffer = new byte[8096];
         int bytesRead = 0;
         while ((bytesRead = read(buffer)) != -1) {
             output.write(buffer, 0, bytesRead);
         }
-        
+
         output.close();
     }
 }

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.awt.print.*;
@@ -66,7 +65,10 @@ import com.compendium.core.ICoreConstants;
 public class UIAerialViewPane extends UIViewPane {
 
 	/** The parent frame for this aerial view.*/
-	private UIMapViewFrame	 oMapFrame				= null;
+	private UIMapViewFrame	oMapFrame		= null;
+	private WireFrame		wireFrame		= null;
+	private AdjustmentListener listener		= null;
+	public final static Integer WIRE_LAYER	= new Integer(490);
 
 
 	/**
@@ -78,8 +80,16 @@ public class UIAerialViewPane extends UIViewPane {
 
 		super(view, viewframe);
 		oMapFrame = viewframe;
+		wireFrame = new WireFrame();
+        wireFrame.setLocation(0,0);
+        wireFrame.setSize(1000, 1000);
+        add(wireFrame, WIRE_LAYER);
+        listener = new wfScrollAdjustmentListener();
+        oMapFrame.getHorizontalScrollBar().addAdjustmentListener(listener);
+        oMapFrame.getVerticalScrollBar().addAdjustmentListener(listener);
+        oMapFrame.addComponentListener(new wfResizeAdjustmentListener());
 
-		//CSH.setHelpIDString(this,"node.views");
+        //CSH.setHelpIDString(this,"node.views");
 	}
 
 	/**
@@ -89,9 +99,10 @@ public class UIAerialViewPane extends UIViewPane {
 	public void propertyChange(PropertyChangeEvent evt) {
 
 	    String prop = evt.getPropertyName();
+//	    System.out.println("propertyChangeEvent: "+prop);
+//	    System.out.flush();
 
 		Object source = evt.getSource();
-	    Object oldvalue = evt.getOldValue();
 	    Object newvalue = evt.getNewValue();
 
 		if (source instanceof View) {
@@ -128,11 +139,11 @@ public class UIAerialViewPane extends UIViewPane {
 		  	else if (prop.equals(NodePosition.POSITION_PROPERTY)) {
 				UINode uinode = (UINode)source;
 				Point oPoint = (Point)newvalue;
-				Point transPoint = UIUtilities.scalePoint(oPoint.x, oPoint.y, getScale());
+				Point transPoint = UIUtilities.transformPoint(oPoint.x, oPoint.y, getScale());
 
 				// CHECK THAT THIS NODE WAS NOT THE ONE ORIGINATING THE EVENT
 				Point location = uinode.getLocation();
-				if (location.x != transPoint.x && location.y != transPoint.y) {
+				if (location.x != transPoint.x || location.y != transPoint.y) {
 					uinode.setBounds(transPoint.x, transPoint.y, uinode.getWidth(), uinode.getHeight());
 					uinode.updateLinks();
 
@@ -140,6 +151,71 @@ public class UIAerialViewPane extends UIViewPane {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Added as a listener to the oMapFrame's scrollbar adjustment events.  Causes the wireframe to be
+	 * moved if the oMapFrame is scrolled or resized. 
+	 *
+	 */
+	class wfScrollAdjustmentListener implements AdjustmentListener {
+        public void adjustmentValueChanged(AdjustmentEvent evt) {
+        	oMapFrame.rescaleAerial();	// MLB - Check here...do not do the rescale unless we're moving wireframe off the edge *******************************
+        	wireFrame.repaint();
+        }
+    }
+	
+	class wfResizeAdjustmentListener implements ComponentListener {
+		public void componentResized(ComponentEvent e) {
+			oMapFrame.rescaleAerial();
+			wireFrame.repaint();            
+	    }
+		public void componentShown(ComponentEvent e) {}
+		public void componentHidden(ComponentEvent e) {}
+		public void componentMoved(ComponentEvent e) {}	  
+	}
+
+	public class WireFrame extends JComponent {
+
+        /**
+         * This method was overridden.
+         */
+        @Override public void paintComponent(Graphics graphics) {                      
+                    int frameX = oMapFrame.getHorizontalScrollBarPosition();
+                    int frameY = oMapFrame.getVerticalScrollBarPosition();
+                    int frameWidth= oMapFrame.getViewport().getWidth();
+                    int frameHeight= oMapFrame.getViewport().getHeight();
+                    
+                    Point newLocation = UIUtilities.scalePoint(frameX, frameY, oMapFrame.getViewPane().currentScale);                      
+                    frameX = newLocation.x;
+                    frameY = newLocation.y;
+                    Point newSize = UIUtilities.scalePoint(frameWidth, frameHeight, oMapFrame.getViewPane().currentScale);
+                    frameWidth = newSize.x;
+                    frameHeight =  newSize.y;
+
+                    //scale the values of the visible area to the current aerial view.
+                    double currentScale = getZoom();
+                    newLocation = UIUtilities.transformPoint(frameX, frameY, currentScale);                 
+                    frameX = newLocation.x;
+                    frameY = newLocation.y;
+                    newSize = UIUtilities.transformPoint(frameWidth, frameHeight, currentScale);
+                    frameWidth = newSize.x -1;
+                    frameHeight =  newSize.y -1;
+                    
+                    // then draw frame
+                    graphics.setColor(Color.MAGENTA);
+                    graphics.drawRect(frameX, frameY, frameWidth, frameHeight);
+// Rescale Aerial contents if the wireframe is no longer completely visible
+//                    Point p = new Point(frameX+frameWidth, frameY+frameHeight);
+//                    oMapFrame.rescaleAerial(p);
+        }
+}
+
+	/**
+	 * Returns the UIMapFrame that this Aerial is rendering
+	 */
+	public UIMapViewFrame getMapFrame() {
+		return oMapFrame;
 	}
 
 	/**
@@ -168,9 +244,10 @@ public class UIAerialViewPane extends UIViewPane {
 
 	/**
 	 * Clean up variable in this object.
-	 * Just calls super.cleanUp.
 	 */
 	public void cleanUp() {
+		oMapFrame.getHorizontalScrollBar().removeAdjustmentListener(listener);
+		oMapFrame.getVerticalScrollBar().removeAdjustmentListener(listener);
 		super.cleanUp();
 	}
 }

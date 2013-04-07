@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -22,13 +22,13 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.awt.Point;
 import java.util.*;
 import java.sql.SQLException;
 
+import com.compendium.ProjectCompendium;
 import com.compendium.core.datamodel.services.*;
 import com.compendium.core.db.*;
 import com.compendium.core.ICoreConstants;
@@ -37,7 +37,7 @@ import com.compendium.core.ICoreConstants;
  * The View object is a node that represents a collection of nodes and links.
  * The visual representation of the nodes and links depends on the type of the view.
  *
- * @author	Rema Natarajan / Michelle Bachler 
+ * @author	Rema Natarajan / Michelle Bachler
  */
 public class View extends NodeSummary implements IView, java.io.Serializable {
 
@@ -83,6 +83,9 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	/** Holds the view layer data such as background, grid, shapes and scribbles.*/
 	private ViewLayer		oViewLayer = null;
 
+	/** Holds the greatest ModifiedDate for members nodes modified by someone else */
+	private Date			LastModifiedByOther = null;
+
 	/**
 	 *	Constructor, takes in only the id value.
 	 *
@@ -104,7 +107,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	 *	@param dModificationDate Date, the date the node was last modified.
 	 */
 	protected View(String sViewID, int nType, String sXNodeType, String sOriginalID,
-					int nState, String sAuthor, Date dCreationDate, Date dModificationDate, 
+					int nState, String sAuthor, Date dCreationDate, Date dModificationDate,
 					String sLabel, String sDetail)
 	{
 		super( sViewID,  nType,  sXNodeType,  sOriginalID, nState, sAuthor,  dCreationDate,  dModificationDate,  sLabel, sDetail);
@@ -129,10 +132,10 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 							int nState, String sAuthor, Date dCreationDate, Date dModificationDate,
 							String sLabel, String sDetail) {
 
-		super(sViewID,  nType,  sXNodeType,  sOriginalID, nPermission, nState, sAuthor,  
+		super(sViewID,  nType,  sXNodeType,  sOriginalID, nPermission, nState, sAuthor,
 				dCreationDate,  dModificationDate,  sLabel, sDetail);
 	}
-	
+
 	/**
 	 *	Constructor, creates a View object.
 	 *
@@ -146,13 +149,13 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	 *	@param sLastModAuthor the author who last modified this object.*
 	 */
 	protected View(String sViewID, int nType, String sXNodeType, String sOriginalID,
-					int nState, String sAuthor, Date dCreationDate, Date dModificationDate, 
+					int nState, String sAuthor, Date dCreationDate, Date dModificationDate,
 					String sLabel, String sDetail, String sLastModAuthor)
 	{
-		super( sViewID,  nType,  sXNodeType,  sOriginalID, nState, sAuthor,  dCreationDate,  
+		super( sViewID,  nType,  sXNodeType,  sOriginalID, nState, sAuthor,  dCreationDate,
 				dModificationDate,  sLabel, sDetail, sLastModAuthor);
 	}
-	
+
 	/**
 	 *	Constructor, creates a View object.
 	 *
@@ -173,9 +176,9 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 							int nState, String sAuthor, Date dCreationDate, Date dModificationDate,
 							String sLabel, String sDetail, String sLastModAuthor) {
 
-		super(sViewID,  nType,  sXNodeType,  sOriginalID, nPermission, nState, sAuthor,  dCreationDate,  
+		super(sViewID,  nType,  sXNodeType,  sOriginalID, nPermission, nState, sAuthor,  dCreationDate,
 				dModificationDate, sLabel, sDetail, sLastModAuthor);
-	}	
+	}
 
 	/**
 	 *	Creates a new View object.
@@ -265,7 +268,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	 *  @return View, a view node object with the given id.
 	 */
 	public static View getView(String sViewID, int nType, String sXNodeType, String sOriginalID,
-				int nState, String sAuthor, Date dCreationDate, Date dModificationDate, 
+				int nState, String sAuthor, Date dCreationDate, Date dModificationDate,
 				String sLabel, String sDetail)
 	{
 		int i = 0;
@@ -290,7 +293,9 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 				ns = (View)obj;
 
 				// UPDATE THE DETAILS
-				ns.setLabelLocal(sLabel);
+				if (!ns.bLabelDirty) {
+					ns.setLabelLocal(sLabel);
+				}
 				ns.setDetailLocal(sDetail);
 				ns.setTypeLocal(nType);
 				ns.setStateLocal(nState);
@@ -329,7 +334,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	 *  @return View, a view node object with the given id.
 	 */
 	public static View getView(String sViewID, int nType, String sXNodeType, String sOriginalID,
-				int nState, String sAuthor, Date dCreationDate, Date dModificationDate, 
+				int nState, String sAuthor, Date dCreationDate, Date dModificationDate,
 				String sLabel, String sDetail, String sLastModAuthor)
 	{
 		int i = 0;
@@ -354,7 +359,9 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 				ns = (View)obj;
 
 				// UPDATE THE DETAILS
-				ns.setLabelLocal(sLabel);
+				if (!ns.bLabelDirty) {
+					ns.setLabelLocal(sLabel);
+				}
 				ns.setDetailLocal(sDetail);
 				ns.setTypeLocal(nType);
 				ns.setStateLocal(nState);
@@ -363,7 +370,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 				ns.setModificationDateLocal(dModificationDate);
 				ns.setOriginalIdLocal(sOriginalID);
 				ns.setExtendedNodeTypeLocal(sXNodeType);
-				ns.setLastModificationAuthorLocal(sLastModAuthor);				
+				ns.setLastModificationAuthorLocal(sLastModAuthor);
 			}
 			else {
 				nodeSummaryList.removeElement(obj);
@@ -375,7 +382,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 		}
 		return ns;
 	}
-	
+
 	/**
 	 * Return a node summary object with the given id and details.
 	 * If a view node with the given id has already been created in this session, update its data and return that,
@@ -419,7 +426,9 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 				ns = (View)obj;
 
 				// UPDATE THE DETAILS
-				ns.setLabelLocal(sLabel);
+				if (!ns.bLabelDirty) {
+					ns.setLabelLocal(sLabel);
+				}
 				ns.setDetailLocal(sDetail);
 				ns.setTypeLocal(nType);
 				ns.setAuthorLocal(sAuthor);
@@ -512,11 +521,18 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 		if (!bMembersInitialized) {
 
 			if (oModel == null)
+			{
+				showTrace("throwing ModelSessionException");
 				throw new ModelSessionException("Model is null in View.initializeMembers");
+			}
+
 			if (oSession == null) {
 				oSession = oModel.getSession();
 				if (oSession == null)
+				{
+					showTrace("throwing ModelSessionException");
 					throw new ModelSessionException("Session is null in View.initializeMembers");
+				}
 			}
 
 			Vector vtNodePos = oModel.getViewService().getNodePositions(oModel.getSession(), this.getId());
@@ -525,14 +541,13 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 				NodePosition nodePos = (NodePosition)e.nextElement();
 				nodePos.initialize(oModel.getSession(), oModel);
 				NodeSummary node1 = nodePos.getNode();
-				int xPos = nodePos.getXPos();
-				int yPos = nodePos.getYPos();
 				nodePos.setView(this);
-
 				addMemberNode(nodePos);
 
 				node1.initialize(oModel.getSession(), oModel);
+				UpdateLastModifiedByOther(node1);
 			}
+
 
 			//Get Links DO AFTER GET NODES SO APPROPRIATE NodeSummary entries created.
 			Vector vtLinks = oModel.getViewService().getLinks(oModel.getSession(),this.getId());
@@ -563,6 +578,173 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 			loadViewLayer();
 		}
 		bMembersInitialized = true;
+	}
+
+	/**
+	 * Returns TRUE if other users have modified this view in the DATABASE.
+	 *
+	 * @exception java.sql.SQLException
+	 * @exception ModelSessionException
+	 */
+	public Boolean isViewDirty() throws SQLException, ModelSessionException
+	{
+		//System.out.println("584 View.java entered isViewDirty");
+
+		Boolean bViewChanged = false;
+
+		if (oModel == null)
+		{
+			showTrace("oModel is null, returning false");
+			return bViewChanged;
+			//showTrace("throwing ModelSessionException");
+			//throw new ModelSessionException("Model is null in View.isViewDirty");
+		}
+
+		if (oSession == null) {
+			oSession = oModel.getSession();
+			if (oSession == null)
+			{
+				showTrace("oSession is null, returning false");
+				return bViewChanged;
+				//showTrace("throwing ModelSessionException");
+				//throw new ModelSessionException("Session is null in View.isViewDirty");
+			}
+		}
+		if (bMembersInitialized) {
+			// Get a summary from the database of nodes currently in this view and see if there are any
+			// new nodes, moved nodes, edited nodes, or nodes that have been deleted
+			Vector vtNPS = oModel.getViewService().getNodePositionsSummary(oModel.getSession(), this.getId());
+
+			for(Enumeration e = vtNPS.elements(); e.hasMoreElements();) {
+				NodePositionSummary nps = (NodePositionSummary)e.nextElement();
+				// Do we know about this node?  If not, get new node and add it to the view
+				if (!htMemberNodes.containsKey(nps.getNodeID())) {
+					NodePosition newNode = oModel.getViewService().getNodePosition(oModel.getSession(), this.getId(), nps.getNodeID());
+					newNode.initialize(oModel.getSession(), oModel);
+					newNode.setView(this);
+					addMemberNode(newNode);
+					newNode.getNode().initialize(oModel.getSession(), oModel);
+					showTrace("607 ProjectCompendiumFrame view is dirty - new node");
+					bViewChanged = true;
+				} else {
+					NodePosition localNodePos = (NodePosition)htMemberNodes.get(nps.getNodeID());
+					if (localNodePos.getXPos() != nps.getXPos()) {
+						localNodePos.setXPos(nps.getXPos());				// The node has been moved
+						showTrace("613 ProjectCompendiumFrame view is dirty - node moved XPOS");
+						bViewChanged = true;
+					}
+					if (localNodePos.getYPos() != nps.getYPos()) {
+						localNodePos.setYPos(nps.getYPos());				// The node has been moved
+						showTrace("619 ProjectCompendiumFrame view is dirty - node moved YPOS");
+						bViewChanged = true;
+					}
+					if (!localNodePos.getNode().getModificationDate().equals(nps.getModificationDate())) {	 // The node has been modified
+						//First delete our local version of the node
+						String NodeID = localNodePos.getNode().getId();
+						htMemberNodes.remove(NodeID);
+						// Then fetch an updated version of it from the DB
+						NodePosition newNode = oModel.getViewService().getNodePosition(oModel.getSession(), this.getId(), NodeID);
+						newNode.initialize(oModel.getSession(), oModel);
+						newNode.setView(this);
+						addMemberNode(newNode);
+						newNode.getNode().initialize(oModel.getSession(), oModel);
+						showTrace("631 View.java view is dirty - node mod date changed");
+						bViewChanged = true;
+					}
+				}
+			}
+
+			// Now check to see if this view object contains any nodes not in the summary list we just
+			// got from the database.  This would indicate that someone else has deleted a node.
+			for (Enumeration e1 = htMemberNodes.elements(); e1.hasMoreElements(); ) {
+				NodePosition localNodePos = (NodePosition) e1.nextElement();
+				String NodeID = localNodePos.getNode().getId();
+				Boolean bFound = false;
+				for(Enumeration e2 = vtNPS.elements(); e2.hasMoreElements();) {
+					NodePositionSummary nps = (NodePositionSummary)e2.nextElement();
+					if (NodeID.equals(nps.getNodeID())) {
+						bFound = true;
+						break;
+					}
+				}
+				if (!bFound) {
+					int oldChildCount = htMemberNodes.size();
+					htMemberNodes.remove(NodeID);
+					localNodePos.getNode().updateMultipleViews();
+					firePropertyChange(CHILDREN_PROPERTY, oldChildCount, htMemberNodes.size());
+					firePropertyChange(NODE_REMOVED, localNodePos.getNode(), localNodePos.getNode());
+					showTrace("656 View view is dirty - node deleted by other");
+					bViewChanged = true;
+				}
+			}
+
+			// Get list of links currently in this view from the database and see if any of these
+			// are not already known to this view
+			Vector vtLinks = oModel.getViewService().getLinkIDs(oModel.getSession(), this.getId());
+			for(Enumeration e = vtLinks.elements(); e.hasMoreElements();) {
+				String sLinkID = (String)e.nextElement();
+				if (!htMemberLinks.containsKey(sLinkID)) {
+					Link newLink = oModel.getViewService().getLink(oModel.getSession(),this.getId(), sLinkID);
+					addMemberLink(newLink);
+					newLink.initialize(oModel.getSession(), oModel);
+					showTrace("670 Viewt6 view is dirty - new link?");
+					bViewChanged = true;
+				}
+			}
+
+			// Now check to see if this view object contains any links not in the list we just
+			// got from the database.  This would indicate someone has deleted a link.
+			for (Enumeration e1 = htMemberLinks.elements(); e1.hasMoreElements(); ) {
+				Link link = (Link) e1.nextElement();
+				String LinkID = link.getId();
+				Boolean bFound = false;
+				for(Enumeration e2 = vtLinks.elements(); e2.hasMoreElements();) {
+					if (LinkID.equals(e2.nextElement())) {
+						bFound = true;
+						break;
+					}
+				}
+				if (!bFound) {
+					htMemberLinks.remove(LinkID);
+					firePropertyChange(LINK_REMOVED, link, link);
+					showTrace("607 ProjectCompendiumFrame view is dirty - deleted link");
+					bViewChanged = true;
+				}
+			}
+		}
+
+		//showTrace("712 View.java exiting isViewDirty returning " + bViewChanged);
+
+		return bViewChanged;
+	}
+
+	/**
+	 * Clear all data associated with this View and reloads it from scratch from the database.
+	 *
+	 * @exception java.sql.SQLException
+	 * @exception ModelSessionException
+	 * */
+	public void reloadViewData() throws SQLException, ModelSessionException {
+
+		// Clear this view's cache of links and nodes
+		htMemberLinks.clear();
+		htMemberNodes.clear();
+
+		// Clear other view-related data to reinitialize to a 'clean' state
+		bMembersInitialized = false;
+		preInitializedNodeCount = -1;
+		LastModifiedByOther = null;
+		deletedLinks.clear();
+		deletedNodes.clear();
+
+		initializeMembers();	// Finally, load things fresh from the database
+	}
+
+	/**
+	 * Returns the last-modified-by-other value
+	 */
+	public Date getLastModifiedByOther() {
+		return LastModifiedByOther;
 	}
 
 	/**
@@ -752,11 +934,11 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 		String sNodeID = getModel().getUniqueID() ;
 		Date date = new Date();
 
-		return addMemberNode( sNodeID, nType, sXNodeType, sImportedId, sOriginalID, sAuthor, date, 
+		return addMemberNode( sNodeID, nType, sXNodeType, sImportedId, sOriginalID, sAuthor, date,
 				date, sLabel, sDetail, x, y, date, date);
 	}
 
-	
+
 	/**
 	 * Adds a new node with the given properties to this view at
 	 * the given x and y coordinate, both locally and in the DATABASE.
@@ -887,11 +1069,11 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 			if (oSession == null)
 				throw new ModelSessionException("Session is null in View.addMemberNode-2");
 		}
-		
+
 		Model model = (Model)oModel;
-		
-		return addMemberNode( sNodeID, nType, sXNodeType, sImportedId, sOriginalID, sAuthor, creationDate, 
-				modDate, sLabel, sDetail, x, y, transCreationDate, transModDate, sAuthor, 
+
+		return addMemberNode( sNodeID, nType, sXNodeType, sImportedId, sOriginalID, sAuthor, creationDate,
+				modDate, sLabel, sDetail, x, y, transCreationDate, transModDate, sAuthor,
 				model.showTagsNodeIndicator, model.showTextNodeIndicator, model.showTransNodeIndicator,
 				model.showWeightNodeIndicator, model.smallIcons, model.hideIcons,
 				model.labelWrapWidth, model.fontsize, model.fontface, model.fontstyle,
@@ -928,7 +1110,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 * 
+	 *
 	 * @exception java.sql.SQLException
 	 * @exception ModelSessionException
 	 */
@@ -946,28 +1128,28 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 										Date transCreationDate,
 										Date transModDate,
 										String sLastModAuthor,
-										boolean bShowTags, 
-										boolean bShowText, 
-										boolean bShowTrans, 
-										boolean bShowWeight, 
-										boolean bSmallIcon, 
-										boolean bHideIcon, 
-										int 	nWrapWidth, 
-										int 	nFontSize, 
-										String 	sFontFace, 
-										int 	nFontStyle, 
-										int 	nForeground, 
-										int 	nBackground) throws SQLException, ModelSessionException {	
-				
+										boolean bShowTags,
+										boolean bShowText,
+										boolean bShowTrans,
+										boolean bShowWeight,
+										boolean bSmallIcon,
+										boolean bHideIcon,
+										int 	nWrapWidth,
+										int 	nFontSize,
+										String 	sFontFace,
+										int 	nFontStyle,
+										int 	nForeground,
+										int 	nBackground) throws SQLException, ModelSessionException {
+
 		String sNodeID = getModel().getUniqueID() ;
-		
-		return addMemberNode( sNodeID, nType, sXNodeType, sImportedId, sOriginalID, sAuthor, creationDate, 
-				modDate, sLabel, sDetail, x, y, transCreationDate, transModDate, sAuthor, 
+
+		return addMemberNode( sNodeID, nType, sXNodeType, sImportedId, sOriginalID, sAuthor, creationDate,
+				modDate, sLabel, sDetail, x, y, transCreationDate, transModDate, sAuthor,
 				bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
-				nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);			
+				nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 	}
-	
-	
+
+
 	/**
 	 * Adds a new node with the given properties to this view at
 	 * the given x and y coordinate, both locally and in the DATABASE.
@@ -999,7 +1181,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 * 
+	 *
 	 * @exception java.sql.SQLException
 	 * @exception ModelSessionException
 	 */
@@ -1017,19 +1199,19 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 										Date transCreationDate,
 										Date transModDate,
 										String sLastModAuthor,
-										boolean bShowTags, 
-										boolean bShowText, 
-										boolean bShowTrans, 
-										boolean bShowWeight, 
-										boolean bSmallIcon, 
-										boolean bHideIcon, 
-										int 	nWrapWidth, 
-										int 	nFontSize, 
-										String 	sFontFace, 
-										int 	nFontStyle, 
-										int 	nForeground, 
+										boolean bShowTags,
+										boolean bShowText,
+										boolean bShowTrans,
+										boolean bShowWeight,
+										boolean bSmallIcon,
+										boolean bHideIcon,
+										int 	nWrapWidth,
+										int 	nFontSize,
+										String 	sFontFace,
+										int 	nFontStyle,
+										int 	nForeground,
 										int 	nBackground) throws SQLException, ModelSessionException {
-		
+
 		if (oModel == null)
 			throw new ModelSessionException("Model is null in View.addMemberNode-2");
 		if (oSession == null) {
@@ -1049,30 +1231,30 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 		// set state property for node summary object
 		int state = 0 ;
 
-  		INodeService ns = oModel.getNodeService();
+  		INodeService ns = getModel().getNodeService() ;
 		INodeSummary node = null ;
-		
+
 		if (oModel == null) {
-			throw new ModelSessionException("oModel is null in View.addMemberNode-2b");			
+			throw new ModelSessionException("oModel is null in View.addMemberNode-2b");
 		} else if (ns == null) {
-			throw new ModelSessionException("NodeService is null in View.addMemberNode-2c");						
+			throw new ModelSessionException("NodeService is null in View.addMemberNode-2c");
 		}
-		
+
 		node = ns.createNode(oModel.getSession(), sNodeID, type, sXNodeType, sImportedId, sOriginalID,
 								 permission, state, sAuthor, sLabel, sDetail,
 								 creationDate, modDate, sLastModAuthor);
 
-		node.setModel(oModel);
+		node.setModel(getModel());
 
 		//Create the NodePosition in the View Node table
-  		IViewService vs = oModel.getViewService() ;
- 		NodePosition nodePos = vs.addMemberNode(oModel.getSession(), this, (NodeSummary)node, x , y, 
-							transCreationDate, transModDate, bShowTags, bShowText, bShowTrans, bShowWeight, 
-							bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, nFontStyle, 
+  		IViewService vs = getModel().getViewService() ;
+ 		NodePosition nodePos = vs.addMemberNode(oModel.getSession(), this, (NodeSummary)node, x , y,
+							transCreationDate, transModDate, bShowTags, bShowText, bShowTrans, bShowWeight,
+							bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, nFontStyle,
 							nForeground, nBackground);
 
 		int oldChildCount = htMemberNodes.size();
-		
+
 		//Local Hashtable update
 		htMemberNodes.put(node.getId(),nodePos);
 
@@ -1084,7 +1266,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 
 		return nodePos;
 	}
-	
+
 	/**
 	 * Replace a node in this view.
 	 *
@@ -1140,7 +1322,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 *  
+	 *
 	 * @return NodePosition, the node if the node was successfully added, null otherwise.
 	 * @exception java.sql.SQLException
 	 * @exception ModelSessionException
@@ -1149,17 +1331,17 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 	public NodePosition addNodeToView(NodeSummary node,
 										int x,
 										int y,
-										boolean bShowTags, 
-										boolean bShowText, 
-										boolean bShowTrans, 
-										boolean bShowWeight, 
-										boolean bSmallIcon, 
-										boolean bHideIcon, 
-										int 	nWrapWidth, 
-										int 	nFontSize, 
-										String 	sFontFace, 
-										int 	nFontStyle, 
-										int 	nForeground, 
+										boolean bShowTags,
+										boolean bShowText,
+										boolean bShowTrans,
+										boolean bShowWeight,
+										boolean bSmallIcon,
+										boolean bHideIcon,
+										int 	nWrapWidth,
+										int 	nFontSize,
+										String 	sFontFace,
+										int 	nFontStyle,
+										int 	nForeground,
 										int 	nBackground) throws SQLException, ModelSessionException {
 
 		if (oModel == null)
@@ -1173,12 +1355,12 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
   		IViewService vs = oModel.getViewService();
 		Date creationDate = new Date();
 		Date lastModified = creationDate;
-		
+
 		Model model = (Model)oModel;
-				
-		INodePosition nodePos = vs.addMemberNode(oSession, this, node, x , y, creationDate, lastModified, 
-				bShowTags, bShowText, bShowTrans, bShowWeight, 
-				bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, nFontStyle, 
+
+		INodePosition nodePos = vs.addMemberNode(oSession, this, node, x , y, creationDate, lastModified,
+				bShowTags, bShowText, bShowTrans, bShowWeight,
+				bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, nFontStyle,
 				nForeground, nBackground);
 
 		if (nodePos != null) {
@@ -1191,13 +1373,42 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 			//update the view count for this NodeSumary object
 			node.updateMultipleViews();
 
+			UpdateLastModifiedByOther(node);
+
 			firePropertyChange(CHILDREN_PROPERTY, oldChildCount, htMemberNodes.size());
 			firePropertyChange(NODE_TRANSCLUDED, nodePos, nodePos);
 		}
 
 		return (NodePosition)nodePos ;
 	}
-	
+
+	/**
+	 * Updates the LastModifiedByOther property.  This is used by XML import to prevent the user from being
+	 * prompted to refresh the view.
+	 *
+	 * @param NodeSumary node, The node being added to the view.
+	 */
+	public void UpdateLastModifiedByOther(NodeSummary node) {
+
+		String sMe = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
+		try {
+			if (!node.getLastModificationAuthor().equals(sMe)) {
+				if (LastModifiedByOther == null) {
+					LastModifiedByOther = node.getLastModifiedDate();
+				} else {
+					if (LastModifiedByOther.compareTo(node.getLastModifiedDate()) < 0) {
+						LastModifiedByOther = node.getLastModifiedDate();
+					}
+				}
+			}
+		} catch (Exception ex){
+			ex.printStackTrace();
+		}
+		if (LastModifiedByOther == null) {
+			LastModifiedByOther = new Date(0);
+		}
+	}
+
 	/**
 	 * Adds a node with the given properties to this view at
 	 * the given x and y coordinate, both locally and in the DATABASE.
@@ -1225,10 +1436,10 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
   		IViewService vs = oModel.getViewService();
 		Date creationDate = new Date();
 		Date lastModified = creationDate;
-		
+
 		Model model = (Model)oModel;
-		
-		INodePosition nodePos = vs.addMemberNode(oSession, this, node, x , y, creationDate, lastModified, 
+
+		INodePosition nodePos = vs.addMemberNode(oSession, this, node, x , y, creationDate, lastModified,
 				model.showTagsNodeIndicator, model.showTextNodeIndicator, model.showTransNodeIndicator,
 				model.showWeightNodeIndicator, model.smallIcons, model.hideIcons,
 				model.labelWrapWidth, model.fontsize, model.fontface, model.fontstyle,
@@ -1243,6 +1454,8 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 
 			//update the view count for this NodeSumary object
 			node.updateMultipleViews();
+
+			UpdateLastModifiedByOther(node);
 
 			firePropertyChange(CHILDREN_PROPERTY, oldChildCount, htMemberNodes.size());
 			firePropertyChange(NODE_TRANSCLUDED, nodePos, nodePos);
@@ -1275,26 +1488,38 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 
   		//try and remove the node from the DB
 		boolean deleted = false;
-		deleted = ns.deleteNode(getSession(), node, this.getId()) ;
-		
-		if (deleted) {
-			int oldChildCount = htMemberNodes.size();
-	
-			//remove the node from the hashtable
-			if(htMemberNodes.containsKey(node.getId())) {
-				htMemberNodes.remove(node.getId());
+
+		int iNodeLock = ns.iCheckNodeLock(getSession(), node.getId());
+
+		if (0 == iNodeLock) {
+
+			deleted = ns.deleteNode(getSession(), node, this.getId());
+			if (deleted) {
+				int oldChildCount = htMemberNodes.size();
+
+				//remove the node from the hashtable
+				if(htMemberNodes.containsKey(node.getId())) {
+					htMemberNodes.remove(node.getId());
+				}
+
+				//update the view count for this NodeSumary object
+				node.updateMultipleViews();
+
+				firePropertyChange(CHILDREN_PROPERTY, oldChildCount, htMemberNodes.size());
+				firePropertyChange(NODE_REMOVED, node, node);
 			}
-	
-			//update the view count for this NodeSumary object
-			node.updateMultipleViews();
-	
-			firePropertyChange(CHILDREN_PROPERTY, oldChildCount, htMemberNodes.size());
-			firePropertyChange(NODE_REMOVED, node, node);
+
+			//removeFromDatamodel() in NodeUI uses the return value to set the trashbin full/empty icon.
+			//deleted is set to true if the node is actually deleted and not just removed from a single view.
+			return deleted;
+
+		} else {
+
+			ProjectCompendium.APP.displayError("Sorry, but you may not delete that node. It is locked.");
+			return false;
+
 		}
 
-		//removeFromDatamodel() in NodeUI uses the return value to set the trashbin full/empty icon.
-		//deleted is set to true if the node is actually deleted and not just removed from a single view.
-		return deleted;
 	}
 
 	/**
@@ -1629,7 +1854,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 		if (link == null) {
 			return false;
 		}
-		
+
 		if (oModel == null)
 			throw new ModelSessionException("Model is null in View.addLinkToView");
 		if (oSession == null) {
@@ -1723,7 +1948,7 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 			}
 		}
 
-		firePropertyChange(LINK_ADDED, link, link);
+		firePropertyChange(LINK_REMOVED, link, link);
 
 		return deleted;
 	}
@@ -2005,5 +2230,15 @@ public class View extends NodeSummary implements IView, java.io.Serializable {
 			vtMembers.add(node);
 		}
 		return vtMembers;
+	}
+
+	public static void showTrace(String msg)
+	{
+			  //if (msg.length() > 0) showTrace(msg);
+			  System.out.println(
+			  	       new Throwable().getStackTrace()[1].getLineNumber() +
+			           " " + new Throwable().getStackTrace()[1].getFileName() +
+			           " " + new Throwable().getStackTrace()[1].getMethodName() +
+			           " " + msg);
 	}
 }

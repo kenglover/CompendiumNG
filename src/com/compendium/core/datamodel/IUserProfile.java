@@ -120,7 +120,7 @@ public interface IUserProfile {
 	 *	@exception java.sql.SQLException
 	 */
 	public void setLinkView(View oLinkView) throws SQLException, ModelSessionException;
-	
+
 	/**
 	 *	Returns true if this user has administrator previledges
 	 *

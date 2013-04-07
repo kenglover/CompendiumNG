@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.io.*;
 import java.awt.*;
@@ -37,6 +38,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import com.compendium.*;
+import com.compendium.core.datamodel.IModel;
 import com.compendium.ui.linkgroups.UILinkGroup;
 import com.compendium.ui.plaf.*;
 import com.compendium.core.*;
@@ -44,12 +46,18 @@ import com.compendium.core.datamodel.*;
 import com.compendium.core.db.*;
 import com.compendium.ui.tags.*;
 
+
+
+
 /**
  * UIUtilities contains methods to help ui classes
  *
  * @author	Michelle Bachler
  */
 public class UIUtilities {
+
+	public static String 		sHOMEPATH	= System.getenv("CompendiumUserPath");
+	public static String 		sSYSPATH	= System.getenv("CompendiumSysPath");
 
 	/**
 	 * Center the given child component on the given parent component.
@@ -85,7 +93,9 @@ public class UIUtilities {
 	 * @return true if completely successful.
 	 * @exception IOException if there is an IO or Zip error.
 	 */
-    public static boolean unzipXMLZipFile(String sFilePath, boolean bGiveUserXMLDialog) throws IOException {
+    public static boolean unzipXMLZipFile(String sFilePath, boolean bGiveUserXMLDialog) throws IOException
+    {
+		showTrace("sFilePath sent in is " + sFilePath);
 
 		ZipFile zipFile = new ZipFile(sFilePath);
 		Enumeration entries = zipFile.entries();
@@ -97,11 +107,12 @@ public class UIUtilities {
 
 			entry = (ZipEntry)entries.nextElement();
 			sTemp = entry.getName();
-			if (sTemp.endsWith(".xml") && sTemp.startsWith("Exports")) {
-				sXMLFile = sTemp;
-			}
+			showTrace("sTemp is: "+sTemp);
 
-			//System.out.println("Extracting file: "+sTemp);
+			if (sTemp.endsWith(".xml") && sTemp.startsWith("Exports")) {
+				sXMLFile = sHOMEPATH + "/Temp/" + sTemp;
+			}
+			showTrace("sXMLFile is now " + sXMLFile);
 
 			// AVOID Thumbs.db files
 			if (sTemp.endsWith(".db")) {
@@ -111,28 +122,67 @@ public class UIUtilities {
 			int len = 0;
 			byte[] buffer = new byte[1024];
 			InputStream in = zipFile.getInputStream(entry);
-            File file = new File(entry.getName());
-            
-            if (file.getParentFile() != null) {
-            	file.getParentFile().mkdirs();
+
+			String sFileName = "";
+
+			showTrace("linked files location is " + sGetLinkedFilesLocation());
+
+			//was in the sender's default linked files location?
+			if (sTemp.startsWith("Linked Files/"))
+			{
+				if (sGetLinkedFilesLocation().startsWith("c:") || sGetLinkedFilesLocation().startsWith("C:"))
+				{
+					sFileName = sGetLinkedFilesLocation() + sTemp.substring(13);
+				}
+				else
+				{
+					//incoming file was from default linked files location, set to linked files location for this project
+					//sFileName = sHOMEPATH + sGetLinkedFilesLocation() + sTemp.substring(13);
+					sFileName = sHOMEPATH + "/" + sTemp;
+				}
+			}
+			else
+			//where to put it?
+			{
+				sFileName = sHOMEPATH + "/Temp/" + entry.getName();
+			}
+
+			showTrace("sFileName is now " + sFileName);
+			File file = new File(sFileName);
+			showTrace("File.getParentFile returns " + file.getParentFile());
+
+            if (file.getParentFile() != null)
+            {
+				showTrace("file.getParentFile() returns " + file.getParentFile().toString());
+            	boolean result = file.getParentFile().mkdirs();
+            	showTrace("result is " + result);
             }
-            
-			OutputStream out = new BufferedOutputStream(new FileOutputStream(entry.getName()));
+
+			showTrace("");
+
+			OutputStream out = new BufferedOutputStream(new FileOutputStream(sFileName));
 			while((len = in.read(buffer)) >=0) {
 				out.write(buffer, 0, len);
 			}
+
+			showTrace("");
+
 			in.close();
 			out.close();
 		}
 
 		zipFile.close();
 
+		showTrace("");
+
 		// IMPORT THE XML
 		if (!sXMLFile.equals("")) {
 			File oXMLFile = new File(sXMLFile);
-			if (oXMLFile.exists()) {
+			if (oXMLFile.exists())
+			{
 				if (bGiveUserXMLDialog) {
 					ProjectCompendium.APP.onFileXMLImport(oXMLFile);
+					showTrace("exiting returning true");
 					return true;
 				} else {
 					boolean importAuthorAndDate = true;
@@ -142,7 +192,8 @@ public class UIUtilities {
 					boolean updateTranscludedNodes = true;
 
 					File oXMLFile2 = new File(sXMLFile);
-					if (oXMLFile2.exists()) {
+					if (oXMLFile2.exists())
+					{
 						DBNode.setImportAsTranscluded(transclude);
 						DBNode.setPreserveImportedIds(preserveIDs);
 						DBNode.setUpdateTranscludedNodes(updateTranscludedNodes);
@@ -164,11 +215,22 @@ public class UIUtilities {
 								uiList.getListUI().onImportXMLFile(sXMLFile, includeOriginalAuthorDate);
 							}
 						}
+						showTrace("exiting returning true");
+
 						return true;
+					}
+					else
+					{
+						showTrace("oXMLFile2 does not exist");
 					}
 				}
 			}
+			else
+			{
+				showTrace("file not exist: " + sXMLFile);
+			}
 		}
+		showTrace("exiting returning false");
 		return false;
 	}
 
@@ -185,12 +247,12 @@ public class UIUtilities {
 		if (path.startsWith("www.") || path.startsWith("http:") || path.startsWith("https:"))
 			return null;
 
-		if (FormatProperties.dndFiles.equals("on")) {
+		if (APP_PROPERTIES.getDndFiles().equals("on")) {
 			return copyDnDFile(file);
 		}
-		else if (FormatProperties.dndFiles.equals("prompt")) {
+		else if (APP_PROPERTIES.getDndFiles().equals("prompt")) {
 
-			int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "Do you want to copy\n\n"+file.getAbsolutePath()+"\n\ninto the 'Linked Files' directory?\n\n",
+			int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "Do you want Compendium to copy\n\n"+file.getAbsolutePath()+"\n\ninto the 'Linked Files' directory?\n\n",
 														"External Drag and Drop", JOptionPane.YES_NO_OPTION);
 
 			if (response == JOptionPane.YES_OPTION)
@@ -201,36 +263,80 @@ public class UIUtilities {
 	}
 
 	/**
+	 * Return the location to store DnD files.  Create the directory if necessary.
+	 *
+	 *  @return string - The PATH
+	 */
+	public static String sGetLinkedFilesLocation() {
+
+		String sDatabaseName = ProjectCompendium.APP.sFriendlyName;
+		UserProfile oUser = ProjectCompendium.APP.getModel().getUserProfile();
+		String sUserDir = CoreUtilities.cleanFileName(oUser.getUserName())+"_"+oUser.getId();
+
+		String sLinkedFilesPath = ProjectCompendium.APP.getModel().getlinkedFilesPath();
+		showTrace("sLinkedFilesPath from APP is " + sLinkedFilesPath);
+
+		Boolean bLinkedFilesFlat = ProjectCompendium.APP.getModel().getlinkedFilesFlat();
+
+		if (sLinkedFilesPath == "")
+		{
+			showTrace("sLinkedFilesPath is ZLS, overriding");
+			sLinkedFilesPath = "Linked Files";
+		}
+
+		String sFullPath = sLinkedFilesPath;
+
+		if (!bLinkedFilesFlat)
+		{
+			sFullPath = sFullPath + ProjectCompendium.sFS+CoreUtilities.cleanFileName(sDatabaseName)+ProjectCompendium.sFS+sUserDir;
+		}
+
+		File directory = new File(sFullPath);
+		if (!directory.isDirectory())
+		{
+			directory.mkdirs();
+		}
+		int len = sFullPath.length();
+		if (!sFullPath.substring(len-1).equals(ProjectCompendium.sFS))
+		{
+			sFullPath = sFullPath + ProjectCompendium.sFS;
+		}
+
+		showTrace("returning linked file location sFullPath) of " + sFullPath);
+
+		return sFullPath;
+	}
+
+	/**
 	 * Copy the given file to the Linked Files folder, into a subfolder with the current database name.
 	 *
 	 * @param File file, the file to copy to the Linked Files folder.
 	 */
+
 	private static File copyDnDFile(File file) {
 
 		File newFile = null;
 
-		String sDatabaseName = ProjectCompendium.APP.sFriendlyName;		
-		UserProfile oUser = ProjectCompendium.APP.getModel().getUserProfile();
-		String sUserDir = CoreUtilities.cleanFileName(oUser.getUserName())+"_"+oUser.getId();
-		
+		showTrace("newFile is " + newFile);
+
+		String sPATH = sGetLinkedFilesLocation();
+
+		showTrace("sPATH linked files location is " + sPATH);
+
 		try {
-			String sFullPath = "Linked Files"+ProjectCompendium.sFS+CoreUtilities.cleanFileName(sDatabaseName)+ProjectCompendium.sFS+sUserDir;			
-			File directory = new File(sFullPath);
-			if (!directory.isDirectory()) {
-				directory.mkdirs();
-			}
-			
-			String sPATH = sFullPath+ProjectCompendium.sFS;
 
 			FileInputStream stream = new FileInputStream(file);
 			byte b[] = new byte[stream.available()];
 			stream.read(b);
 			stream.close();
 
-			newFile = new File(sPATH+file.getName());
+			String sTargetName = file.getName();
+			sTargetName = sTargetName.replace("#", "");			// Windows ref node launch fails of target filename
+			sTargetName = sTargetName.replaceAll("  *", " ");		// has double spaces or a pound sign
+			newFile = new File(sPATH+sTargetName);
 			if (newFile.exists()) {
 
-				int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "A file with this name already exists in the 'Linked Files' directory.\nDo you wish to rename it before saving?\n\n(if you do not rename it, the existing file will be replaced)\n\n",
+				int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "A file with this name already exists in the \n'"+sPATH+"' directory.\nDo you wish to rename it before saving?\n\n(if you do not rename it, the existing file will be replaced)\n\n",
 														"External Drag and Drop", JOptionPane.YES_NO_OPTION);
 
 				if (response == JOptionPane.YES_OPTION) {
@@ -293,15 +399,15 @@ public class UIUtilities {
 					DefaultMutableTreeNode node = (DefaultMutableTreeNode)e.nextElement();
 					Object obj = node.getUserObject();
 					if (obj instanceof CheckNode) {
-						CheckNode check = (CheckNode)obj;					
+						CheckNode check = (CheckNode)obj;
 						Object data = check.getData();
 						if (data instanceof Code)
 							unsortedVector2.addElement( ((Code)data).getName() );
 						else if (data instanceof Vector) {
 							Vector checkdata = (Vector)data;
-							unsortedVector2.addElement((String)checkdata.elementAt(1));						
+							unsortedVector2.addElement((String)checkdata.elementAt(1));
 						}
-					} 
+					}
 				}
 			}
 			else {
@@ -355,8 +461,8 @@ public class UIUtilities {
 							text =  ((Code)data).getName();
 						else if (data instanceof Vector) {
 							Vector checkdata = (Vector)data;
-							text = (String)checkdata.elementAt(1);						
-						}												
+							text = (String)checkdata.elementAt(1);
+						}
 					}
 				}
 				if (text.equals(sortedElement)) {
@@ -385,7 +491,7 @@ public class UIUtilities {
 		Vector sortedRefs = new Vector(51);
 		Vector group = null;
 		Hashtable groups = new Hashtable(51);
-		
+
 		int count = refNodes.size();
 		int i=0;
 		for (i=0; i<count; i++) {
@@ -410,7 +516,7 @@ public class UIUtilities {
 								int ind = sPath.indexOf("/");
 								if (ind != -1) {
 									String sGoToViewID = sPath.substring(0, ind);
-									String sGoToNodeID = sPath.substring(ind+1);	
+									String sGoToNodeID = sPath.substring(ind+1);
 									UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();
 									Vector history = frame.getNavigationHistory();
 									UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID, history);
@@ -506,7 +612,7 @@ public class UIUtilities {
 	public static UINode createNodeAndLinkRight(UINode uinode, int nType, int offSet, String sText, String sAuthor) {
 		return createNodeAndLinkRight(uinode, nType, offSet, sText, sAuthor, getLinkType(uinode));
 	}
-		
+
 	/**
 	 * Create a new node of the given type, offset to the right of the given node.
 	 *
@@ -586,17 +692,17 @@ public class UIUtilities {
 				}
 
 				oViewPaneUI.createLink(newNode, uinode, sLinkType, ICoreConstants.ARROW_TO);
-			}			
+			}
 
 			if (scale != 1.0) {
 				oViewPane.scaleNode(uinode, scale);
-			}			
+			}
 		}
 
 		return newNode;
-	}	
-	
-	
+	}
+
+
 	/**
 	 * Work out the link type from the node type (and for Argument nodes the drag start position->type).
 	 * @param uinode com.compendium.ui.UINode, the node to work out the link type for.
@@ -622,7 +728,7 @@ public class UIUtilities {
 						if (!sDefaultLinkType.equals("")) {
 							return sDefaultLinkType;
 						}
-					} 
+					}
 				}
 			} else {
 				if (group != null) {
@@ -630,7 +736,7 @@ public class UIUtilities {
 					if (!sDefaultLinkType.equals("")) {
 						return sDefaultLinkType;
 					}
-				} 		
+				}
 			}
 		}
 		else {
@@ -642,7 +748,7 @@ public class UIUtilities {
 
 		return ICoreConstants.DEFAULT_LINK;
 	}
-	
+
 	/**
 	 * Transform the given x and y positions to the given scale and return them as a Point.
 	 * @param x the x position to scale.
@@ -709,7 +815,7 @@ public class UIUtilities {
 		history.addElement(sNavigationHistory);
 		jumpToNode(sViewID, sNodeID, history);
 	}
-	
+
 	/**
 	 * Jump to the Given Node in the Given View and focus it.
 	 *
@@ -717,7 +823,7 @@ public class UIUtilities {
 	 * @param sNodeID the id of the node to focus on.
 	 */
 	public static void jumpToNode(String sViewID, String sNodeID, Vector vtNavigationHistory) {
-		
+
 		IModel model = ProjectCompendium.APP.getModel();
 		View view = null;
 		try {
@@ -733,6 +839,8 @@ public class UIUtilities {
 		UIViewFrame oViewFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 		oViewFrame.setNavigationHistory(vtNavigationHistory);
 
+		if ("0".equals(sNodeID)) return;
+
 		NodeSummary node = null;
 		if (oViewFrame instanceof UIMapViewFrame) {
 			UINode uinode = (UINode)((UIMapViewFrame)oViewFrame).getViewPane().get(sNodeID);
@@ -741,9 +849,9 @@ public class UIUtilities {
 				focusNodeAndScroll(node, oViewFrame);
 				//if(UIViewOutline.me != null){
 					//UIViewOutline.me.expandPath(view, node);
-				//}											
+				//}
 			} else {
-				ProjectCompendium.APP.displayError("Could not find the requested node in this view.\nIt may have been moved or deleted from the view since the reference was created.\n\nSearch may find the node in its new location.\n");				
+				ProjectCompendium.APP.displayError("Could not find the requested node in this view.\nIt may have been moved or deleted from the view since the reference was created.\n\nSearch may find the node in its new location.\n");
 			}
 		} else {
 			UIListViewFrame oListViewFrame = (UIListViewFrame)oViewFrame;
@@ -754,13 +862,13 @@ public class UIUtilities {
 				focusNodeAndScroll(node, oViewFrame);
 				//if(UIViewOutline.me != null) {
 					//UIViewOutline.me.expandPath(view, node);
-				//}											
+				//}
 			} else {
 				ProjectCompendium.APP.displayError("Could not find the requested Node in this view.\nIt may have been moved or deleted from the view since the reference was created.\n\nSearch may find the node in its new location.\n");
-			}			
-		}						
+			}
+		}
 	}
-	
+
 	/**
 	 * Focus the given node in the given view and scroll so it is visible
 	 * @param oNode the node to focus in the view.
@@ -776,9 +884,9 @@ public class UIUtilities {
 				Point parentPos = SwingUtilities.convertPoint((Component)oPane, nodeBounds.x, nodeBounds.y, viewport);
 				viewport.scrollRectToVisible( new Rectangle( parentPos.x, parentPos.y, nodeBounds.width, nodeBounds.height ) );
 
+				oPane.setSelectedNode(null, ICoreConstants.DESELECTALL);
 				oUINode.setRollover(false);
 				oUINode.setSelected(true);
-				oPane.setSelectedNode(null, ICoreConstants.DESELECTALL);
 				oPane.setSelectedNode(oUINode,ICoreConstants.SINGLESELECT);
 				oUINode.moveToFront();
 			}
@@ -787,5 +895,15 @@ public class UIUtilities {
 			UIList oUIList = oListViewFrame.getUIList();
 			oUIList.selectNode(oUIList.getIndexOf(oNode), ICoreConstants.SINGLESELECT);
 		}
+	}
+
+	public static void showTrace(String msg)
+	{
+	  //if (msg.length() > 0) System.out.println(msg);
+	  System.out.println(
+	  	       new Throwable().getStackTrace()[1].getLineNumber() +
+	           " " + new Throwable().getStackTrace()[1].getFileName() +
+	           " " + new Throwable().getStackTrace()[1].getMethodName() +
+	           " " + msg);
 	}
 }

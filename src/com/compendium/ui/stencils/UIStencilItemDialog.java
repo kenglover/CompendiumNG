@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.stencils;
 
 import java.util.*;
@@ -120,7 +119,7 @@ public class UIStencilItemDialog extends UIDialog implements ActionListener, Ite
 
 	/** The label for the background text field.*/
 	private JLabel					lblBackgroundLabel	= null;
-	
+
 	/** The label for the template text field.*/
 	private JLabel					lblTemplateLabel = null;
 
@@ -285,7 +284,7 @@ public class UIStencilItemDialog extends UIDialog implements ActionListener, Ite
 		gc.gridx = 0;
 		gb.setConstraints(lblTemplateLabel, gc);
 		oContentPane.add(lblTemplateLabel);
-		
+
 		String sTemplate = oItem.getTemplate();
 
 		txtTemplate = new JTextField(sTemplate);
@@ -614,26 +613,26 @@ public class UIStencilItemDialog extends UIDialog implements ActionListener, Ite
 				txtBackgroundImage.setEnabled(true);
 				lblBackgroundLabel.setEnabled(true);
 				pbBrowse3.setEnabled(true);
-				
+
 				txtTemplate.setEnabled(true);
 				lblTemplateLabel.setEnabled(true);
-				pbBrowse4.setEnabled(true);				
+				pbBrowse4.setEnabled(true);
 			}
 			else if (index == 2) {
 				txtTemplate.setEnabled(true);
 				lblTemplateLabel.setEnabled(true);
-				pbBrowse4.setEnabled(true);	
+				pbBrowse4.setEnabled(true);
 			}
 			else {
 				txtBackgroundImage.setText("");
 				txtBackgroundImage.setEnabled(false);
 				lblBackgroundLabel.setEnabled(false);
 				pbBrowse3.setEnabled(false);
-				
+
 				txtTemplate.setEnabled(false);
 				lblTemplateLabel.setEnabled(false);
-				pbBrowse4.setEnabled(false);				
-				
+				pbBrowse4.setEnabled(false);
+
 			}
 		}
 	}
@@ -819,7 +818,7 @@ public class UIStencilItemDialog extends UIDialog implements ActionListener, Ite
 				String dir = fileDir.getPath();
 
 				if (fileName != null) {
-					String sFileCheckName = fileName.toLowerCase(); 
+					String sFileCheckName = fileName.toLowerCase();
 					if ( sFileCheckName.endsWith(".xml")) {
 						UIStencilItemDialog.lastFileDialogDir = dir;
 						txtTemplate.setText(fileName);
@@ -848,7 +847,7 @@ public class UIStencilItemDialog extends UIDialog implements ActionListener, Ite
 
 		String sPaletteImage = txtPaletteImage.getText();
 		String sBackgroundImage = txtBackgroundImage.getText();
-		String sTemplate = txtTemplate.getText();		
+		String sTemplate = txtTemplate.getText();
 		String sType = (String)cbTypes.getSelectedItem();
 		String sShortcut = (String)cbShortcut.getSelectedItem();
 
@@ -887,15 +886,15 @@ public class UIStencilItemDialog extends UIDialog implements ActionListener, Ite
 		oItem.setNodeType(nType);
 		oItem.setImage(sImage);
 		oItem.setPaletteImage(sPaletteImage);
-		
+
 		//CHECK IF A BACKGROUND IMAGE HAS BEEN REMOVED AND THE FILE NEEDS REMOVING
 		//String sOldBackgroundImage = oItem.getBackgroundImage();
 		//if (sBackgroundImage.equals("") && !sOldBackgroundImage.equals("")) {
-		//	
+		//
 		//}
-		
+
 		oItem.setBackgroundImage(sBackgroundImage);
-		oItem.setTemplate(sTemplate);		
+		oItem.setTemplate(sTemplate);
 		oItem.setTags(codes);
 
 		if (sPaletteImage.equals("")) {

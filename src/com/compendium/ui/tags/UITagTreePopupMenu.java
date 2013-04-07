@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import java.awt.event.*;
@@ -82,7 +81,7 @@ public class UITagTreePopupMenu extends JPopupMenu implements ActionListener {
 		add(miMenuItemNewTag);
 
 		pack();
-		
+
 		setSize(nWidth,nHeight);
 	}
 
@@ -101,13 +100,13 @@ public class UITagTreePopupMenu extends JPopupMenu implements ActionListener {
 			onAddTag();
 		}
 	}
-	
+
 	/**
 	 * Process the adding of a new code group.
 	 */
-	private void onAddTag() {	
- 		
-		IModel model = ProjectCompendium.APP.getModel();		
+	private void onAddTag() {
+
+		IModel model = ProjectCompendium.APP.getModel();
 		PCSession session = ProjectCompendium.APP.getModel().getSession();
 		String author = model.getUserProfile().getUserName();
 		Date creationDate = new Date();
@@ -120,7 +119,7 @@ public class UITagTreePopupMenu extends JPopupMenu implements ActionListener {
 
 	 		String sNewName = JOptionPane.showInputDialog("Enter the new tag name", "");
 			sNewName = sNewName.trim();
-			
+
 			if (ProjectCompendium.APP.getModel().codeNameExists(sCodeID, sNewName)) {
 				ProjectCompendium.APP.displayMessage("You already have a tag called "+sNewName+"\n\n", "Tag Maintenance");
 			}
@@ -130,21 +129,21 @@ public class UITagTreePopupMenu extends JPopupMenu implements ActionListener {
 												 modificationDate, sNewName, description, behavior);
 				// UPDATE MODEL
 				model.addCode(code);
-				oParent.updateTreeData();					
+				oParent.updateTreeData();
 			}
 		}
 		catch(SQLException ex) {
 			ProjectCompendium.APP.displayError("Exception: (UITagTreePopupMenu.onAddTag) " + ex.getMessage());
 		}
-	}	
-	
+	}
+
 	/**
 	 * Process the adding of a new code group.
 	 */
-	private void onAddGroup() {	
+	private void onAddGroup() {
    		String sNewName = JOptionPane.showInputDialog("Enter the new tag group name", "");
 		sNewName = sNewName.trim();
-		
+
 		IModel model = ProjectCompendium.APP.getModel();
 		try {
 			String sCodeGroupID = model.getUniqueID();
@@ -159,14 +158,14 @@ public class UITagTreePopupMenu extends JPopupMenu implements ActionListener {
 			group.addElement(sCodeGroupID);
 			group.addElement(sNewName);
 			model.addCodeGroup(sCodeGroupID, group);
-			
-			oParent.updateTreeData();			
+
+			oParent.updateTreeData();
 		}
 		catch(Exception ex) {
 			ProjectCompendium.APP.displayError("Exception: (UITagTreePopupMenu.onAddGroup) " + ex.getMessage());
 		}
-	}	
-	
+	}
+
 	/**
 	 * Handle the cancelleing of this popup. Set is to invisible.
 	 */

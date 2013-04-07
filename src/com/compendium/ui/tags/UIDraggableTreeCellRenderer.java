@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import java.awt.*;
@@ -50,32 +49,32 @@ import com.compendium.ui.UIViewFrame;
  *
  * @author	Michelle Bachler
  */
-public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer 
+public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 								implements DragSourceListener, DragGestureListener, DropTargetListener,
 											Transferable, MouseListener {
 
 	private Icon leafIcon = null;
 	private Icon openIcon = null;
 	private Icon closedIcon = null;
-	
+
 	/** The DragSource object associated with this draggable item.*/
 	private DragSource 			dragSource;
 
 	/** The drop target object associated with this draggable item.*/
 	private DropTarget dropTarget = null;
-	
+
 	/** The tooltip text.*/
 	private String 				sTip 			= "";
 
 	private Code				oCode			= null;
-		
+
 	private IModel model = null;
 	private PCSession session = null;
-	
+
 	private JTree	tree = null;
 	private DefaultMutableTreeNode oTreeNode = null;
 	private Vector  vtGroupItem = null;
-	
+
 	private boolean				isGroup			= false;
 
 	/** The data flavors supported by this class.*/
@@ -89,22 +88,22 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 	 * The Constructor.
 	 */
   	public UIDraggableTreeCellRenderer() {
-  		
+
   		model = ProjectCompendium.APP.getModel();
   		session = model.getSession();
-  		
+
 		dragSource = new DragSource();
 		dragSource.createDefaultDragGestureRecognizer((Component)this, DnDConstants.ACTION_COPY, this);
-		
+
 	    dropTarget = new DropTarget((JComponent)this, this);
-		
+
 		// GET ICONS
 		DefaultTreeCellRenderer check = new DefaultTreeCellRenderer();
 		leafIcon = check.getLeafIcon();
 		openIcon = check.getOpenIcon();
 		closedIcon = check.getClosedIcon();
   	}
-  	
+
   	/**
   	 * Update the code in the database with the new label
   	 */
@@ -115,20 +114,20 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
   			// message
   		}
   	}*/
-  	
+
 	public Component getTreeCellRendererComponent(JTree tree, Object value,
 			boolean selected, boolean expanded, boolean leaf, int row,
-			boolean hasFocus) {				
-		
+			boolean hasFocus) {
+
 		oTreeNode = (DefaultMutableTreeNode) value;
-		
+
        	super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-		
+
  		String text = "";
 		this.tree = tree;
 
 		isGroup = false;
-		
+
  		if (oTreeNode.getUserObject() instanceof Vector) {
 			Vector item = (Vector)oTreeNode.getUserObject();
 			String sCodeGroupID = (String)item.elementAt(0);
@@ -143,12 +142,12 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 			text = oCode.getName();
 			try {
 				int count = (model.getCodeService()).getNodeCount(model.getSession(), oCode.getId());
-				setText(text+" ("+count+")");					
+				setText(text+" ("+count+")");
 			}
 			catch(Exception ex) {
 				ex.printStackTrace();
 				//ProjectCompendium.APP.displayError("Exception: (UICodeMaintPanel.getListCellRendererComponent) \nUnable to calculate usage for "+code.getName() +"\n"+ex.getMessage());
-			}				
+			}
 		}
 
 		// YOU CAN'T SELECT A GROUP HEADING!
@@ -162,7 +161,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 			if (expanded)
 				icon = openIcon;
 			else
-				icon = closedIcon;			
+				icon = closedIcon;
 		} else if (leaf) {
 			icon = leafIcon;
 		}
@@ -172,7 +171,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 
 		return this;
 	}
-  	
+
 	/**
 	 * Return the code associated with this draggable item.
 	 * @return Code the code associated with this draggable item.
@@ -230,7 +229,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 					}
 				}
 				else {
-					ProjectCompendium.APP.displayMessage("You must give this new tag a name", "Save Tags");									
+					ProjectCompendium.APP.displayMessage("You must give this new tag a name", "Save Tags");
 					txtField.requestFocus();
 				}
 			}
@@ -267,18 +266,18 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 		}
 	}*/
 
-	
+
 	// CODE GROUP METHODS
-	
+
 	/**
 	 * Add the given code to the current code group
 	 */
 	private void onAddToGroup(Code code) {
 
 		if (vtGroupItem == null) {
-			return;			
+			return;
 		}
-		
+
 		String sCodeGroupID = "";
 		Vector group = vtGroupItem;
 		sCodeGroupID = (String)group.elementAt(0);
@@ -303,13 +302,13 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 
 	private void onRemoveFromGroup(Code code) {
 		if (vtGroupItem == null) {
-			return;			
+			return;
 		}
 
 		String sCodeGroupID = "";
 		Vector group = vtGroupItem;
 		sCodeGroupID = (String)group.elementAt(0);
-		
+
 		try {
 			// ONLY REMOVE, IF IT WAS AN EXISTING CODE
 			// CHECK MODEL
@@ -333,7 +332,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 
 		//oParentDialog.updateTreeData();
 	}
-	
+
 	/**
 	 * Set the current code group as the active group.
 	 */
@@ -349,8 +348,8 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 		else if (ProjectCompendium.APP.setActiveCodeGroup(newActive)) {
 			//oParentDialog.updateTreeData();
 		}
-	}	
-	
+	}
+
 	/**
 	 * Process the adding of a new code group.
 	 */
@@ -388,7 +387,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 			String sName = txtField.getText();
 			String sCodeGroupID = (String)vtGroupItem.elementAt(0);
 			String sUserID = model.getUserProfile().getId();
-			
+
 			// UPDATE DATABASE
 			(model.getCodeGroupService()).setName(session, sCodeGroupID, sName, new Date(), sUserID);
 
@@ -435,7 +434,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 			ProjectCompendium.APP.displayError("Exception: (UICodeGroupMaintPanel.onDeleteGroup) " + ex.getMessage());
 		}
 	}*/
-	
+
 	// MOUSE LISTENER METHODS
 	/**
 	 * Handles the single and double click events.
@@ -460,43 +459,43 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 			}
 		}*/
   	}
-  	
+
   	/**
   	 * Open right-click menu for this item.
   	 */
   	private void showPopupMenu(int x, int y) {
-  		
+
   	}
-  	
+
 	/**
 	 * Handles mouse pressed events
 	 * @param evt, the associated MouseEvent.
 	 */
   	public void mousePressed(MouseEvent evt) {}
-  	
+
 	/**
 	 * Handles mouse released events
 	 * @param evt the associated MouseEvent.
 	 */
   	public void mouseReleased(MouseEvent evt) {}
-  	  	
+
 	/**
 	 * Visualizes when a mouse enters the node.
 	 * Also, display any detail text for the node in the status bar.
 	 * @param evt, the associated MouseEvent.
 	 */
   	public void mouseEntered(MouseEvent evt) {}
-  	
+
 	/**
 	 * Visualizes when a mouse exits the node.
 	 * @param evt the associated MouseEvent.
 	 */
   	public void mouseExited(MouseEvent evt) {}
-	
-	
+
+
 // DRAG AND DROP METHODS
-  	
-  	//  TRANSFERABLE  	
+
+  	//  TRANSFERABLE
    /**
      * Returns an array of DataFlavor objects indicating the flavors the data
      * can be provided in.
@@ -531,7 +530,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 		else return null;
 	}
 
-	
+
 	//	SOURCE
     /**
      * A <code>DragGestureRecognizer</code> has detected
@@ -633,7 +632,7 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
      * @param e the <code>DragSourceDragEvent</code>
      */
 	public void dropActionChanged(DragSourceDragEvent e) {}
-	
+
 	//TARGET
 	   /**
      * Called if the user has modified
@@ -701,15 +700,15 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 				/*try {
 					Transferable trans = e.getTransferable();
 					Object obj = trans.getTransferData(DataFlavor.javaJVMLocalObjectMimeType);
-	
+
 					if (obj != null && (obj instanceof UIDraggableTagItem)) {
-						
+
 					}
 					    String path = (String)obj;
 					    int index = path.indexOf("/");
 					    String sViewID = path.substring(0, index);
 					    sNodeID = path.substring(index+1);
-	
+
 						View view  = oNode.getModel().getView(sViewID);
 						if (view != null) {
 							oViewFrame = ProjectCompendium.APP.getViewFrame(view, view.getLabel());
@@ -731,5 +730,5 @@ public class UIDraggableTreeCellRenderer extends DefaultTreeCellRenderer
 				}*/
 		    }
 		}
-	}	
+	}
 }

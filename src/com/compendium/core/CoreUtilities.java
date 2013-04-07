@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core;
 
 import java.awt.Component;
@@ -51,7 +50,8 @@ import com.compendium.core.datamodel.PCSession;
 //NOTE: NEED TO REWITE TEXT REPLACMENT CODE WITH NEW JAVA 1.4 REGEX STUFF
 public class CoreUtilities {
 
-	private static String sFS	= System.getProperty("file.separator");
+	private static String sFS		= System.getProperty("file.separator");
+	private static String sHOMEPATH	= System.getenv("CompendiumUserPath");
 
 	/**
 	 * Check if the code with the given name exists, and if node create.
@@ -73,8 +73,8 @@ public class CoreUtilities {
 			oModel.addCode(oCode);
 		}
 		return oCode;
-	}	
-	
+	}
+
 	/**
 	 * Return true if the given schema reference is newer than this application expects.
 	 *
@@ -101,32 +101,32 @@ public class CoreUtilities {
 		}
 
 		int length2 = ICoreConstants.sDATABASEVERSION.length();
-		
+
 		int lastBit2 = 0;
 		if (length2 > 4) {
 			lastBit2 = new Integer(ICoreConstants.sDATABASEVERSION.substring(4,5)).intValue();
 		}
-		
+
 		int middleBit2 = 0;
 		if (length2 > 2) {
 			middleBit2 = new Integer(ICoreConstants.sDATABASEVERSION.substring(2,3)).intValue();
-		}		
-		
+		}
+
 		int firstBit2 = 0;
 		if (length2 > 0) {
 			firstBit2 = new Integer(ICoreConstants.sDATABASEVERSION.substring(0,1)).intValue();
 		}
-		
+
 		if (firstBit > firstBit2) {
 			return true;
 		} else if (firstBit == firstBit2) {
-			if (middleBit > middleBit2) {			
+			if (middleBit > middleBit2) {
 				return true;
 			} else if ((middleBit == middleBit2) && lastBit > lastBit2) {
 				return true;
 			}
-		} 
-		
+		}
+
 		/*if (lastBit > lastBit2) {
 			if (middleBit >= middleBit2) {
 				if (firstBit >= firstBit2) {
@@ -164,32 +164,32 @@ public class CoreUtilities {
 		}
 
 		int length2 = ICoreConstants.sDATABASEVERSION.length();
-		
+
 		int lastBit2 = 0;
 		if (length2 > 4) {
 			lastBit2 = new Integer(ICoreConstants.sDATABASEVERSION.substring(4,5)).intValue();
 		}
-		
+
 		int middleBit2 = 0;
 		if (length2 > 2) {
 			middleBit2 = new Integer(ICoreConstants.sDATABASEVERSION.substring(2,3)).intValue();
-		}		
-		
+		}
+
 		int firstBit2 = 0;
 		if (length2 > 0) {
 			firstBit2 = new Integer(ICoreConstants.sDATABASEVERSION.substring(0,1)).intValue();
 		}
-		
+
 		if (firstBit < firstBit2) {
 			return true;
 		} else if (firstBit == firstBit2) {
-			if (middleBit < middleBit2) {			
+			if (middleBit < middleBit2) {
 				return true;
 			} else if ((middleBit == middleBit2) && lastBit < lastBit2) {
 				return true;
 			}
-		} 
-		
+		}
+
 		/*if (lastBit < lastBit2) {
 			if (middleBit <= middleBit2) {
 				if (firstBit <= firstBit2) {
@@ -309,7 +309,7 @@ public class CoreUtilities {
 	 */
 	public static void writeToDeleted(String path) {
 
-		File file = new File("System"+sFS+"resources"+sFS+"filesToDelete.dat");
+		File file = new File(sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"filesToDelete.dat");
 
 		BufferedWriter writer = null;
 		try {
@@ -340,7 +340,7 @@ public class CoreUtilities {
 	 */
 	public static void checkFilesToDeleted() {
 
-		File file = new File("System"+sFS+"resources"+sFS+"filesToDelete.dat");
+		File file = new File(sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"filesToDelete.dat");
 		if (!file.exists())
 			return;
 
@@ -451,7 +451,7 @@ public class CoreUtilities {
 			if ( ref.startsWith("www.") ||
 					ref.startsWith("http:") ||
 					ref.startsWith("https:") ||
-					ref.startsWith("feed:") ||					
+					ref.startsWith("feed:") ||
 					ref.startsWith(ICoreConstants.sINTERNAL_REFERENCE) ||
 					(ref.indexOf("\n") == -1 &&
 		    		  ref.indexOf("\r") == -1 &&
@@ -479,6 +479,9 @@ public class CoreUtilities {
 
 		if (sText == null || sText.equals(""))
 			return "";
+
+		if (sText.startsWith("http://") || sText.startsWith("https://"))
+			return sText;
 
 		String sFS	= System.getProperty("file.separator");
 
@@ -533,10 +536,10 @@ public class CoreUtilities {
 		sText = replace(sText, ':', "");
 
 		// Linux did not like ... in a file name
-		sText = replace(sText, "....", "");		
+		sText = replace(sText, "....", "");
 		sText = replace(sText, "...", "");
 		sText = replace(sText, "..", "");
-		
+
 		return sText;
 	}
 
@@ -597,19 +600,19 @@ public class CoreUtilities {
 
 		if (sText == null || sText.equals(""))
 			return "";
-		
+
 		sText = replace(sText, '\n', "\\n");
-		sText = replace(sText, '\r', "\\r");		
+		sText = replace(sText, '\r', "\\r");
 
 		if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-			sText = replace(sText, '\'', "\'\'");			
+			sText = replace(sText, '\'', "\'\'");
 		}
 		else {
-			sText = replace(sText, '\\', "\\\\");			
+			sText = replace(sText, '\\', "\\\\");
 			sText = replace(sText, '"', "\\\"");
 			sText = replace(sText, '\'', "\\'");
 		}
-		
+
 		return sText;
 	}
 
@@ -619,7 +622,7 @@ public class CoreUtilities {
 	 * @param sText String, the text to clean
 	 * @return String the clean text
 	 */
-	public static String cleanURLText( String sText ) throws UnsupportedEncodingException {		
+	public static String cleanURLText( String sText ) throws UnsupportedEncodingException {
 		return URLEncoder.encode(sText, "UTF-8");
 	}
 
@@ -713,9 +716,9 @@ public class CoreUtilities {
 			if (gofrom > length)
 				goon = false;
 		}
-		return text;		
-	}	
-	
+		return text;
+	}
+
 	/**
 	 * Replace char a, in the given text with String b
 	 *
@@ -751,7 +754,7 @@ public class CoreUtilities {
 				goon = false;
 		}
 		return text;
-	}	
+	}
 
 	/**
 	 * Sort the given Vector of objects, depending on the object type.
@@ -835,7 +838,7 @@ public class CoreUtilities {
 					else if (obj instanceof Vector) {
 						Vector data = (Vector)node.getUserObject();
 						unsortedVector2.addElement((String)data.elementAt(1));
-					} 
+					}
 				}
 			}
 			else if (unsortedVector.elementAt(0) instanceof Component) {
@@ -1129,4 +1132,80 @@ public class CoreUtilities {
       		return sign * 0.1 * 0.1 * Float.MAX_VALUE;
     	}
   	}
+
+  	/**
+  	 * Converts the date to double value.
+  	 *
+  	 * @param Date date
+  	 * @return double, double value of date in millis
+  	 */
+  	public static double doubleValue(Date date) {
+  		return new Long(date.getTime()).doubleValue();
+  	}
+
+    /**
+     * <p>Joins the elements of the provided <code>Iterator</code> into
+     * a single String containing the provided elements.</p>
+     *
+     * <p>No delimiter is added before or after the list.
+     * A <code>null</code> separator is the same as an empty String ("").</p>
+     *
+     * <p>See the examples here: {@link #join(Object[],String)}. </p>
+     *
+     * @param iterator  the <code>Iterator</code> of values to join together, may be null
+     * @param separator  the separator character to use, null treated as ""
+     * @return the joined String, <code>null</code> if null iterator input
+     */
+    public static String join(Iterator iterator, String separator) {
+
+        // handle null, zero and one elements before building a buffer
+        if (iterator == null) {
+            return null;
+        }
+        if (!iterator.hasNext()) {
+            return "";
+        }
+        Object first = iterator.next();
+        if (!iterator.hasNext()) {
+            return "" + first;
+        }
+
+        // two or more elements
+        StringBuffer buf = new StringBuffer(256); // Java default is 16, probably too small
+        if (first != null) {
+            buf.append(first);
+        }
+
+        while (iterator.hasNext()) {
+            if (separator != null) {
+                buf.append(separator);
+            }
+            Object obj = iterator.next();
+            if (obj != null) {
+                buf.append(obj);
+            }
+        }
+        return buf.toString();
+    }
+
+
+    /**
+     * <p>Joins the elements of the provided <code>Collection</code> into
+     * a single String containing the provided elements.</p>
+     *
+     * <p>No delimiter is added before or after the list.
+     * A <code>null</code> separator is the same as an empty String ("").</p>
+     *
+     * @param collection  the <code>Collection</code> of values to join together, may be null
+     * @param separator  the separator character to use, null treated as ""
+     * @return the joined String, <code>null</code> if null iterator input
+     */
+    public static String join(Collection collection, String separator) {
+        if (collection == null) {
+            return null;
+        }
+        return join(collection.iterator(), separator);
+    }
+
+
 }

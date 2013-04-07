@@ -22,16 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.io.xml;
 
 import java.util.*;
-import java.net.*;
-import java.lang.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.applet.*;
 import java.io.*;
+
 import javax.swing.*;
 
 
@@ -55,6 +51,8 @@ import org.w3c.dom.*;
  * @version	1.0
  */
 public class XMLImport extends Thread {
+
+	private static final String LINKED_FILES_FOLDER_NAME = "Linked Files";
 
 	// FOR PROGRESS BAR
 	/** A count of the total number of nodes being imported for use with the progress bar counter.*/
@@ -173,7 +171,7 @@ public class XMLImport extends Thread {
 
 	/** The Thread class which runs the progress bar.*/
 	private ProgressThread		oThread 			= null;
-	
+
 	/** The user Id of the current user */
 	private String sUserID = "";
 
@@ -200,7 +198,7 @@ public class XMLImport extends Thread {
 		this.sCurrentAuthor = oModel.getUserProfile().getUserName();
 		this.oSession = oModel.getSession();
 		this.sUserID = oModel.getUserProfile().getId();
-		
+
 		this.oView = view;
 		this.bIsSmartImport = isSmartImport;
 
@@ -289,11 +287,11 @@ public class XMLImport extends Thread {
 
         try {
 			XMLReader reader = new XMLReader();
-			Document document = reader.read(uri, true);			
+			Document document = reader.read(uri, true);
 			if (document != null) {
 				processDocument( document );
 			} else {
-				ProjectCompendium.APP.displayError("Exception: Your document cannot be imported.\n");	
+				ProjectCompendium.APP.displayError("Exception: Your document cannot be imported.\n");
 			}
 			document = null;
         }
@@ -359,9 +357,9 @@ public class XMLImport extends Thread {
 			if (oLastModified != null) {
 				lastModified = new Long(oLastModified.getValue());
 			}
-			
+
 			Model model = (Model)oModel;
-						
+
 			Attr oShowTags = (Attr)attrs.getNamedItem("showTags");
 			Boolean bShowTags = null;
 			if (oShowTags != null) {
@@ -409,7 +407,7 @@ public class XMLImport extends Thread {
 			} else {
 				bHideIcon = new Boolean(model.hideIcons);
 			}
-			
+
 			Attr oWrapWidth = (Attr)attrs.getNamedItem("labelWrapWidth");
 			Integer nWrapWidth = null;
 			if (oWrapWidth != null) {
@@ -417,7 +415,7 @@ public class XMLImport extends Thread {
 			} else {
 				nWrapWidth = new Integer(model.labelWrapWidth);
 			}
-			
+
 			Attr oFontSize = (Attr)attrs.getNamedItem("fontsize");
 			Integer nFontSize = null;
 			if (oFontSize != null) {
@@ -427,13 +425,13 @@ public class XMLImport extends Thread {
 			}
 
 			Attr oFontFace = (Attr)attrs.getNamedItem("fontface");
-			String sFontFace = "";			
+			String sFontFace = "";
 			if (oFontFace != null) {
-				sFontFace = oFontFace.getValue();	
+				sFontFace = oFontFace.getValue();
 			} else {
 				sFontFace = model.fontface;
 			}
-			
+
 			Attr oFontStyle = (Attr)attrs.getNamedItem("fontstyle");
 			Integer nFontStyle = null;
 			if (oFontStyle != null) {
@@ -441,7 +439,7 @@ public class XMLImport extends Thread {
 			} else {
 				nFontStyle = new Integer(model.fontstyle);
 			}
-			
+
 			Attr oForeground = (Attr)attrs.getNamedItem("foreground");
 			Integer nForeground = null;
 			if (oForeground != null) {
@@ -449,15 +447,15 @@ public class XMLImport extends Thread {
 			} else {
 				nForeground = new Integer(Model.FOREGROUND_DEFAULT.getRGB());
 			}
-			
+
 			Attr oBackground = (Attr)attrs.getNamedItem("background");
 			Integer nBackground = null;
 			if (oBackground != null) {
 				nBackground = new Integer(oBackground.getValue());
 			} else {
 				nBackground = new Integer(Model.BACKGROUND_DEFAULT.getRGB());
-			}				
-			
+			}
+
 			Vector nodePos = new Vector(18);
 			nodePos.add(viewid);
 			nodePos.add(nodeid);
@@ -470,7 +468,7 @@ public class XMLImport extends Thread {
 			nodePos.add(bShowText);
 			nodePos.add(bShowTrans);
 			nodePos.add(bShowWeight);
-			nodePos.add(bSmallIcon);								
+			nodePos.add(bSmallIcon);
 			nodePos.add(bHideIcon);
 			nodePos.add(nWrapWidth);
 			nodePos.add(nFontSize);
@@ -478,7 +476,7 @@ public class XMLImport extends Thread {
 			nodePos.add(nFontStyle);
 			nodePos.add(nForeground);
 			nodePos.add(nBackground);
-			
+
 			if (!htViews.containsKey((Object) viewid))
 				htViews.put((Object) viewid, (Object) new Vector(51));
 
@@ -721,7 +719,7 @@ public class XMLImport extends Thread {
 
 			Vector node = (Vector)nodes.elementAt(i);
 			Object nodeid = node.elementAt(1);
-			
+
 			int xPos = new Integer((String)node.elementAt(2)).intValue();
 			int yPos = new Integer((String)node.elementAt(3)).intValue();
 			long lCreationDate = ((Long)node.elementAt(4)).longValue();
@@ -743,8 +741,8 @@ public class XMLImport extends Thread {
 			String sFontFace = (String)node.elementAt(14);
 			int nFontStyle = ((Integer)node.elementAt(15)).intValue();
 			int nForeground = ((Integer)node.elementAt(16)).intValue();
-			int nBackground = ((Integer)node.elementAt(17)).intValue();			
-			
+			int nBackground = ((Integer)node.elementAt(17)).intValue();
+
 			//ProjectCompendium.APP.displayError("Processing node = "+nodeid);
 
 			// IF THIS NODE HAS ALREADY BEEN ADDED OR IT IS AN INNER REFERENCE TO THE ROOT VIEW
@@ -752,8 +750,8 @@ public class XMLImport extends Thread {
 
 				Node nextnode = (Node)htNodes.get(nodeid);
 				if (nextnode != null) {
-					
-					processNode( model, view, nextnode, xPos, yPos, viewid, creationDate, modificationDate, 
+
+					processNode( model, view, nextnode, xPos, yPos, viewid, creationDate, modificationDate,
 							bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
 							nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 
@@ -776,7 +774,7 @@ public class XMLImport extends Thread {
 				oProgressDialog.setStatus(getCurrentCount());
 			}
 			else {
-				processNodeView( viewid, (String)nodeid, xPos, yPos, creationDate, modificationDate, 
+				processNodeView( viewid, (String)nodeid, xPos, yPos, creationDate, modificationDate,
 						bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
 						nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 			}
@@ -817,11 +815,11 @@ public class XMLImport extends Thread {
 	 * @param sFontFace the font face used for this node in this view
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
-	 * @param nBackground the background color used for this node in this view. 
+	 * @param nBackground the background color used for this node in this view.
 	 */
-	private void processNodeView( String viewid, String nodeid, int xPos, int yPos, Date transCreationDate, 
-			Date transModDate, boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight, 
-			boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace, 
+	private void processNodeView( String viewid, String nodeid, int xPos, int yPos, Date transCreationDate,
+			Date transModDate, boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight,
+			boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 			int nFontStyle, int nForeground, int nBackground) {
 
 		NodeSummary thisnode = null;
@@ -842,12 +840,12 @@ public class XMLImport extends Thread {
 		IModel thismodel = thisview.getModel();
 		if (thismodel != null)
   			vs = thisview.getModel().getViewService();
-				
+
 		NodePosition nodePos = null;
 		try {
-			nodePos = vs.addMemberNode(thismodel.getSession(), thisview, thisnode, xPos, 
-					yPos, transCreationDate, transModDate, bShowTags, bShowText, bShowTrans, 
-					bShowWeight, bSmallIcon, bHideIcon,	nWrapWidth, nFontSize, sFontFace, 
+			nodePos = vs.addMemberNode(thismodel.getSession(), thisview, thisnode, xPos,
+					yPos, transCreationDate, transModDate, bShowTags, bShowText, bShowTrans,
+					bShowWeight, bSmallIcon, bHideIcon,	nWrapWidth, nFontSize, sFontFace,
 					nFontStyle, nForeground, nBackground);
 			nodePos.initialize(oSession, oModel);
 		}
@@ -888,9 +886,9 @@ public class XMLImport extends Thread {
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
 	 */
-	private void processNode( IModel model, IView view, Node node, int xPos, int yPos, String currentViewId, 
-			Date transCreationDate, Date transModDate, boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight, 
-			boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace, 
+	private void processNode( IModel model, IView view, Node node, int xPos, int yPos, String currentViewId,
+			Date transCreationDate, Date transModDate, boolean bShowTags, boolean bShowText, boolean bShowTrans, boolean bShowWeight,
+			boolean bSmallIcon, boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 			int nFontStyle, int nForeground, int nBackground) {
 
 		NodeService nodeService = (NodeService)model.getNodeService();
@@ -911,13 +909,17 @@ public class XMLImport extends Thread {
 		}
 
 		String author = ((Attr)attrs.getNamedItem("author")).getValue();
+
+		System.out.println("913 XMLImport Author is " + author);
+		System.out.flush();
+
 		long created = new Long( ((Attr)attrs.getNamedItem("created")).getValue() ).longValue();
 		long lastModified = new Long( ((Attr)attrs.getNamedItem("lastModified")).getValue() ).longValue();
 		String label = ((Attr)attrs.getNamedItem("label")).getValue();
 		String state = ((Attr)attrs.getNamedItem("state")).getValue();
 		Point position = new Point( xPos, yPos );
-		
-		String sLastModAuthor = "";		
+
+		String sLastModAuthor = "";
 		if ((Attr)attrs.getNamedItem("lastModAuthor") != null) {
 			sLastModAuthor = ((Attr)attrs.getNamedItem("lastModAuthor")).getValue();
 		}
@@ -972,7 +974,7 @@ public class XMLImport extends Thread {
 					Attr oHeight = (Attr)imageattrs.getNamedItem("height");
 					if (oHeight != null) {
 						imageheight = new Integer(oHeight.getValue()).intValue();
-					}					
+					}
 				}
 			}
 			else if ( myname.equals("background" )) {
@@ -980,6 +982,10 @@ public class XMLImport extends Thread {
 				if (first != null) {
 					background = first.getNodeValue();
 					background = CoreUtilities.cleanPath( background );
+					String sLinkedFiles = "Linked Files";
+					if (background.startsWith(sLinkedFiles)) {
+						background = UIUtilities.sGetLinkedFilesLocation() + background.substring(sLinkedFiles.length()+1);
+					}
 				}
 			}
 			else if ( myname.equals("coderefs") )
@@ -1010,15 +1016,15 @@ public class XMLImport extends Thread {
 			// CHECK TO SEE IF WANT TO DRAW NODE OR JUST ADD TO DATA STRUCTURE
 			if (currentViewId.equals(sRootView)) {
 				if (bIsListImport) {
-					newNode = (NodeSummary) createListNode(model, view, currentViewId, type, id, sOriginalID, 
-							author, created, lastModified, label, detail, source, image, imagewidth, imageheight, background, position, 
+					newNode = (NodeSummary) createListNode(model, view, currentViewId, type, id, sOriginalID,
+							author, created, lastModified, label, detail, source, image, imagewidth, imageheight, background, position,
 							transCreationDate, transModDate, sLastModAuthor,
 							bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
 							nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 				}
 				else {
-					newNode = (NodeSummary) createNode(model, view, currentViewId, type, id, sOriginalID, 
-							author, created, lastModified, label, detail, source, image, imagewidth, imageheight, background, 
+					newNode = (NodeSummary) createNode(model, view, currentViewId, type, id, sOriginalID,
+							author, created, lastModified, label, detail, source, image, imagewidth, imageheight, background,
 							position, transCreationDate, transModDate, sLastModAuthor,
 							bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
 							nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
@@ -1026,7 +1032,7 @@ public class XMLImport extends Thread {
 			}
 			else {
 				newNode = (NodeSummary) addNode(model, view, currentViewId, type, id, sOriginalID,
-						author, created, lastModified, label, detail, source, image, imagewidth, imageheight, background, 
+						author, created, lastModified, label, detail, source, image, imagewidth, imageheight, background,
 						position, transCreationDate, transModDate, sLastModAuthor,
 						bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
 						nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
@@ -1037,8 +1043,11 @@ public class XMLImport extends Thread {
 			ProjectCompendium.APP.displayError("Exception: (XMLImport.processNode) ("+id+") "+e.getMessage());
 		}
 
-		if (newNode == null)
+		if (newNode != null) {
+			view.UpdateLastModifiedByOther(newNode);
+		} else {
 			return;
+		}
 
 		if ( codes != null )
 			processCodeRefs( codes, newNode, didExist );
@@ -1355,7 +1364,7 @@ public class XMLImport extends Thread {
 
 								IModel thismodel = thisview.getModel();
 
-								if (!bIsListImport) {								
+								if (!bIsListImport) {
 									if (viewid.equals(sRootView)) {
 										createLink(thismodel, thisview, viewid, type, id, sOriginalID, from, to, sLabel, arrow);
 									} else {
@@ -1460,7 +1469,7 @@ public class XMLImport extends Thread {
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 * 
+	 *
 	 * @exception Exception, if something goes wrong.
 	 */
 	private INodeSummary createNode( IModel oModel, IView  view, String currentViewId,
@@ -1481,23 +1490,23 @@ public class XMLImport extends Thread {
 													 Date 		transCreationDate,
 													 Date 		transModDate,
 													 String 	sLastModAuthor,
-													 boolean 	bShowTags, 
-													 boolean 	bShowText, 
-													 boolean 	bShowTrans, 
-													 boolean 	bShowWeight, 
-													 boolean 	bSmallIcon, 
-													 boolean 	bHideIcon, 
-													 int 		nWrapWidth, 
-													 int 		nFontSize, 
-													 String 	sFontFace, 
-													 int 		nFontStyle, 
-													 int 		nForeground, 
+													 boolean 	bShowTags,
+													 boolean 	bShowText,
+													 boolean 	bShowTrans,
+													 boolean 	bShowWeight,
+													 boolean 	bSmallIcon,
+													 boolean 	bHideIcon,
+													 int 		nWrapWidth,
+													 int 		nFontSize,
+													 String 	sFontFace,
+													 int 		nFontStyle,
+													 int 		nForeground,
 													 int 		nBackground) throws Exception {
 
 
 		//Adjust the x and y coordinates so node close to the border can be fully seen
 		//ptPos = adjustPosition( ptPos );
-		
+
 		//include the details only if import profile says so..
 		if(bIncludeInDetail) {
 			detail += includeInDetails(detail, author, lCreationDate, lModDate);
@@ -1507,7 +1516,8 @@ public class XMLImport extends Thread {
 			sOriginalID = "";
 
 		Date oCreationDate = new Date(lCreationDate);
-		Date oModfificationDate = new Date(lModDate);
+		//Date oModfificationDate = new Date(lModDate);
+		Date oModfificationDate = new Date();
 		if (!bIsSmartImport) {
 			Date date = new Date();
 			oCreationDate = date;
@@ -1518,12 +1528,22 @@ public class XMLImport extends Thread {
 			sLastModAuthor = sCurrentAuthor;
 		}
 
-		UINode uinode = oViewPaneUI.createNode(nType, importedId, sOriginalID, author, oCreationDate, 
-				oModfificationDate, label, detail, ptPos.x, ptPos.y, transCreationDate, 
-				transModDate, sLastModAuthor, bShowTags, bShowText, bShowTrans, bShowWeight, 
+		UINode uinode = oViewPaneUI.createNode(nType, importedId, sOriginalID, author, oCreationDate,
+				oModfificationDate, label, detail, ptPos.x, ptPos.y, transCreationDate,
+				transModDate, sLastModAuthor, bShowTags, bShowText, bShowTrans, bShowWeight,
 				bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 
-		if(nType == ICoreConstants.REFERENCE || nType == ICoreConstants.REFERENCE_SHORTCUT) {
+		sSource = getResourcePath(sSource);
+		sImage = getResourcePath(sImage);
+
+		if(nType == ICoreConstants.REFERENCE) {
+			uinode.getNode().setSource(sSource, sImage, author);
+			uinode.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);
+			if (sImage == null || sImage.equals(""))
+				uinode.setReferenceIcon(sSource);
+			else
+				uinode.setReferenceIcon(sImage);
+		} else if (nType == ICoreConstants.REFERENCE_SHORTCUT) {
 			uinode.getNode().setSource(sSource, sImage, author);
 			uinode.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);
 			if (sImage == null || sImage.equals(""))
@@ -1535,7 +1555,7 @@ public class XMLImport extends Thread {
 				nType == ICoreConstants.LISTVIEW || nType == ICoreConstants.LIST_SHORTCUT) {
 
 			uinode.getNode().setSource("", sImage, author);
-			uinode.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);			
+			uinode.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);
 			if (sImage != null && !sImage.equals(""))
 				uinode.setReferenceIcon(sImage);
 		}
@@ -1597,7 +1617,7 @@ public class XMLImport extends Thread {
 	 * @param sFontFace the font face used for this node in this view
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
-	 * @param nBackground the background color used for this node in this view. 
+	 * @param nBackground the background color used for this node in this view.
 	 * @exception Exception, if something goes wrong.
 	 */
 	private INodeSummary createListNode( IModel oModel, IView  view, String currentViewId,
@@ -1612,23 +1632,23 @@ public class XMLImport extends Thread {
 													 String		sSource,
 													 String 	sImage,
 													 int		imagewidth,
-													 int		imageheight,													 
+													 int		imageheight,
 													 String		background,
 													 Point		ptPos,
 													 Date 		transCreationDate,
 													 Date 		transModDate,
 													 String 	sLastModAuthor,
-													 boolean 	bShowTags, 
-													 boolean 	bShowText, 
-													 boolean 	bShowTrans, 
-													 boolean 	bShowWeight, 
-													 boolean 	bSmallIcon, 
-													 boolean 	bHideIcon, 
-													 int 		nWrapWidth, 
-													 int 		nFontSize, 
-													 String 	sFontFace, 
-													 int 		nFontStyle, 
-													 int 		nForeground, 
+													 boolean 	bShowTags,
+													 boolean 	bShowText,
+													 boolean 	bShowTrans,
+													 boolean 	bShowWeight,
+													 boolean 	bSmallIcon,
+													 boolean 	bHideIcon,
+													 int 		nWrapWidth,
+													 int 		nFontSize,
+													 String 	sFontFace,
+													 int 		nFontStyle,
+													 int 		nForeground,
 													 int 		nBackground) throws Exception {
 
 		//ptPos = adjustPosition( ptPos );
@@ -1642,7 +1662,8 @@ public class XMLImport extends Thread {
 			sOriginalID = "QM"+sOriginalID;
 
 		Date oCreationDate = new Date(lCreationDate);
-		Date oModfificationDate = new Date(lModDate);
+		//Date oModfificationDate = new Date(lModDate);
+		Date oModfificationDate = new Date();
 		if (!bIsSmartImport) {
 			Date date = new Date();
 			oCreationDate = date;
@@ -1653,23 +1674,29 @@ public class XMLImport extends Thread {
 			sLastModAuthor = sCurrentAuthor;
 		}
 
-		NodePosition npTemp = oUIList.getListUI().createNode (nType, importedId, sOriginalID, author, oCreationDate, 
+		NodePosition npTemp = oUIList.getListUI().createNode (nType, importedId, sOriginalID, author, oCreationDate,
 											oModfificationDate, label, detail, ptPos.x,
 											(oUIList.getNumberOfNodes() + vtNodeList.size() + 1) * 10,
-											transCreationDate, transModDate, sLastModAuthor, bShowTags, 
-											bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon, 
+											transCreationDate, transModDate, sLastModAuthor, bShowTags,
+											bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
 											nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 
 		INodeSummary node = npTemp.getNode();
 
-		if(nType == ICoreConstants.REFERENCE || nType == ICoreConstants.REFERENCE_SHORTCUT) {
+		sSource = getResourcePath(sSource);
+		sImage = getResourcePath(sImage);
+
+		if(nType == ICoreConstants.REFERENCE) {
 			node.setSource(sSource, sImage, author);
-			node.setImageSize(new Dimension(imagewidth, imageheight), author);			
+			node.setImageSize(new Dimension(imagewidth, imageheight), author);
+		} else if (nType == ICoreConstants.REFERENCE_SHORTCUT) {
+			node.setSource(sSource, sImage, author);
+			node.setImageSize(new Dimension(imagewidth, imageheight), author);
 		}
 		else if(nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT ||
 				nType == ICoreConstants.LISTVIEW || nType == ICoreConstants.LIST_SHORTCUT) {
 			node.setSource("", sImage, author);
-			node.setImageSize(new Dimension(imagewidth, imageheight), author);			
+			node.setImageSize(new Dimension(imagewidth, imageheight), author);
 		}
 
 		if (!background.equals("") && (nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT)) {
@@ -1706,7 +1733,7 @@ public class XMLImport extends Thread {
 	 * @param sSource the path for external reference / url this node point to.
 	 * @param sImage a path to any image file this node references.
 	 * @param imagewidth the width to draw the node image.
-	 * @param imageheight the height to draw the node image. 
+	 * @param imageheight the height to draw the node image.
 	 * @param ptPos the position in the given view to add to node at.
 	 * @param transCreationDate the date the node was put into the view.
 	 * @param transModDate the date the view-node data was last modified.
@@ -1723,7 +1750,7 @@ public class XMLImport extends Thread {
 	 * @param nFontStyle the font style used for this node in this view
 	 * @param nForeground the foreground color used for this node in this view
 	 * @param nBackground the background color used for this node in this view.
-	 * 
+	 *
 	 * @exception Exception, if something goes wrong.
 	 */
 	private INodeSummary addNode( IModel oModel, IView  view, String currentViewId,
@@ -1738,23 +1765,23 @@ public class XMLImport extends Thread {
 													 String		source,
 													 String 	image,
 													 int		imagewidth,
-													 int		imageheight,													 
+													 int		imageheight,
 													 String		background,
 													 Point		ptPos,
 													 Date 		transCreationDate,
 													 Date 		transModDate,
 													 String 	sLastModAuthor,
-													 boolean 	bShowTags, 
-													 boolean 	bShowText, 
-													 boolean 	bShowTrans, 
-													 boolean 	bShowWeight, 
-													 boolean 	bSmallIcon, 
-													 boolean 	bHideIcon, 
-													 int 		nWrapWidth, 
-													 int 		nFontSize, 
-													 String 	sFontFace, 
-													 int 		nFontStyle, 
-													 int 		nForeground, 
+													 boolean 	bShowTags,
+													 boolean 	bShowText,
+													 boolean 	bShowTrans,
+													 boolean 	bShowWeight,
+													 boolean 	bSmallIcon,
+													 boolean 	bHideIcon,
+													 int 		nWrapWidth,
+													 int 		nFontSize,
+													 String 	sFontFace,
+													 int 		nFontStyle,
+													 int 		nForeground,
 													 int 		nBackground) throws Exception {
 
 		//System.out.println("ADDING NODE "+importedId);
@@ -1773,7 +1800,8 @@ public class XMLImport extends Thread {
 			sOriginalID = "QM"+sOriginalID;
 
 		Date oCreationDate = new Date(lCreationDate);
-		Date oModfificationDate = new Date(lModDate);
+		//Date oModfificationDate = new Date(lModDate);
+		Date oModfificationDate = new Date();
 		if (!bIsSmartImport) {
 			Date date = new Date();
 			oCreationDate = date;
@@ -1784,19 +1812,25 @@ public class XMLImport extends Thread {
 			sLastModAuthor = sCurrentAuthor;
 		}
 
-		NodePosition nodePos = view.addMemberNode(nType, "", importedId, sOriginalID, author, oCreationDate, 
-				oModfificationDate, label, detail, ptPos.x, ptPos.y, transCreationDate, transModDate, 
+		NodePosition nodePos = view.addMemberNode(nType, "", importedId, sOriginalID, author, oCreationDate,
+				oModfificationDate, label, detail, ptPos.x, ptPos.y, transCreationDate, transModDate,
 				sLastModAuthor, bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon,
 				nWrapWidth, nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 
-		if(nType == ICoreConstants.REFERENCE || nType == ICoreConstants.REFERENCE_SHORTCUT) {
+		source = getResourcePath(source);
+		image = getResourcePath(image);
+
+		if(nType == ICoreConstants.REFERENCE) {
 			nodePos.getNode().setSource(source, image, author);
-			nodePos.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);						
+			nodePos.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);
+		} else if (nType == ICoreConstants.REFERENCE_SHORTCUT) {
+			nodePos.getNode().setSource(source, image, author);
+			nodePos.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);
 		}
 		else if(nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT ||
 				nType == ICoreConstants.LISTVIEW || nType == ICoreConstants.LIST_SHORTCUT) {
 			nodePos.getNode().setSource("", image, author);
-			nodePos.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);			
+			nodePos.getNode().setImageSize(new Dimension(imagewidth, imageheight), author);
 		}
 
 		if (!background.equals("") && (nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT)) {
@@ -1923,4 +1957,26 @@ public class XMLImport extends Thread {
 			}
 		}
 	}
+
+	/**
+	 * Returns resource path based on the path from XML.
+	 *
+	 * @param path, the type of arrow heads to draw.
+	 */
+	private String getResourcePath(String path) {
+		if (!path.startsWith(LINKED_FILES_FOLDER_NAME)) {
+			return path;
+		}
+        String absolutePath =
+            UIUtilities.sGetLinkedFilesLocation() +
+            path.substring(LINKED_FILES_FOLDER_NAME.length());
+        if (new File(absolutePath).exists()) {
+            return absolutePath;
+        }
+
+		File exportFolder = new File(sFileName).getParentFile().getParentFile();
+		return new File(exportFolder, path).getAbsolutePath();
+	}
+
+
 }

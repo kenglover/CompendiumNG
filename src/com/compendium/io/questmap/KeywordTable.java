@@ -32,16 +32,16 @@ import java.util.*;
  * @author  Ron van Hoof
  */
 public class KeywordTable extends CodeTable {
-
+/*
 	public KeywordTable() {
 		this(10);
   	}
 
 	public KeywordTable(int size) {
 		super(size);
-	}  
-  
+	}
+
 	public int isKeyword(String key) {
-		return getCode(key);    
-	} 
+		return getCode(key);
+	} */
 }

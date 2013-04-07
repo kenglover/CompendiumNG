@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.awt.*;
@@ -110,7 +109,7 @@ public class DBMediaIndex {
 		pstmt.setString(3, oMediaIndex.getMeetingID());
 		pstmt.setDouble(4, oMediaIndex.getMediaIndex().getTime());
 		pstmt.setDouble(5, oMediaIndex.getCreationDate().getTime());
-		pstmt.setDouble(6, oMediaIndex.getModificationDate().getTime());
+		pstmt.setDouble(6, (new java.util.Date()).getTime());
 
 		int nRowCount = pstmt.executeUpdate();
 
@@ -150,7 +149,7 @@ public class DBMediaIndex {
 		PreparedStatement pstmt = con.prepareStatement(SET_MEDIAINDEX_QUERY);
 
 		pstmt.setDouble(1, oMediaIndex.getMediaIndex().getTime());
-		pstmt.setDouble(2, oMediaIndex.getModificationDate().getTime());
+		pstmt.setDouble(2, (new java.util.Date()).getTime());
 		pstmt.setString(3, oMediaIndex.getViewID());
 		pstmt.setString(4, oMediaIndex.getNodeID());
 		pstmt.setString(5, oMediaIndex.getMeetingID());

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -73,6 +72,11 @@ public class UINewUserDialog extends UIDialog implements ActionListener {
 	/** The UserProfile of the new user.*/
 	private UserProfile		oUserProfileUpdate 	= null;
 
+	/** List of current users. Used to prevent duplicates **/
+	private  ArrayList<String> vtUsers         = null;
+
+	/** List of current logins. Used to prevent duplicates **/
+	private  ArrayList<String> vtLogins         = null;
 
 	/**
 	 * Constructor. Loads the appropriate panel.
@@ -173,8 +177,17 @@ public class UINewUserDialog extends UIDialog implements ActionListener {
 	 * Add a new user to the database.
 	 */
 	public void onUpdate() {
-		if (userPanel.addNewUser()) {
+
+		if (userPanel.addNewUser(vtUsers, vtLogins)) {
 			onCancel();
 		}
+	}
+
+	public void setUserList( ArrayList<String> vtUsers){
+		this.vtUsers = vtUsers;
+	}
+
+	public void setLoginList( ArrayList<String> vtLogins){
+			this.vtLogins = vtLogins;
 	}
 }

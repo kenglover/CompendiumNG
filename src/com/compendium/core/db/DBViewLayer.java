@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.io.*;
@@ -45,13 +44,15 @@ public class DBViewLayer {
 	// AUDITED
 	/** SQL statement to insert a new ViewLayer record into the ViewPeoerty table.*/
 	public final static String INSERT_VIEWLAYER_QUERY =
-		"INSERT INTO ViewLayer (UserID, ViewID, Scribble, Background, Grid, Shapes) "+
-		"VALUES (?, ?, ?, ?, ?, ?)";
+		"INSERT INTO ViewLayer (UserID, ViewID, Scribble, Background, Grid, Shapes, ModificationDate) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 	/** SQL statement to update a ViewLayer recrod for the given UserID and ViewID.*/
 	public final static String UPDATE_VIEWLAYER_QUERY =
-		"UPDATE ViewLayer set Scribble = ?, Background = ?, Grid = ?, Shapes = ? "+
-		"WHERE UserID = ? AND ViewID = ?";
+		"UPDATE ViewLayer set Scribble = ?, Background = ?, Grid = ?, Shapes = ?, ModificationDate = ? " +
+		"WHERE " +
+		//"UserID = ? AND " +
+		"ViewID = ?";
 
 	/** SQL statement to delete a ViewLayer record for the given UserID and ViewID.*/
 	public final static String DELETE_VIEWLAYER_QUERY =
@@ -122,6 +123,8 @@ public class DBViewLayer {
 			pstmt.setString(6, "");
 		}
 
+		pstmt.setDouble(7, new Long((new java.util.Date()).getTime()).doubleValue());
+
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
 
@@ -145,52 +148,75 @@ public class DBViewLayer {
 	 *	@throws java.sql.SQLException
 	 */
 	public static boolean update(DBConnection dbcon, String sUserID, ViewLayer view)
-					throws SQLException {
+					//throws SQLException
+	{
+
+		System.out.println("153 DBViewLayer entered update");
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
+		{
+			System.out.println("158 DBViewLayer error: exiting, con is null");
 			return false;
-
-
-		PreparedStatement pstmt = con.prepareStatement(UPDATE_VIEWLAYER_QUERY);
-
-		String sScribble = view.getScribble();
-		if (!sScribble.equals("")) {
-			StringReader reader = new StringReader(sScribble);
-			pstmt.setCharacterStream(1, reader, sScribble.length());
-
-		}
-		else {
-			pstmt.setString(1, "");
 		}
 
-		pstmt.setString(2, view.getBackground());
-		pstmt.setString(3, view.getGrid());
+		try
+		{
+			PreparedStatement pstmt = con.prepareStatement(UPDATE_VIEWLAYER_QUERY);
 
-		String sShapes = view.getShapes();
-		if (!sShapes.equals("")) {
-			StringReader reader = new StringReader(sShapes);
-			pstmt.setCharacterStream(4, reader, sShapes.length());
+			String sScribble = view.getScribble();
+			if (!sScribble.equals("")) {
+				StringReader reader = new StringReader(sScribble);
+				pstmt.setCharacterStream(1, reader, sScribble.length());
+			}
+			else {
+				pstmt.setString(1, "");
+			}
+
+			System.out.println("176 DBViewLayer view.getBackground() returns " + view.getBackground());
+			pstmt.setString(2, view.getBackground());
+			pstmt.setString(3, view.getGrid());
+
+			String sShapes = view.getShapes();
+			if (!sShapes.equals("")) {
+				StringReader reader = new StringReader(sShapes);
+				pstmt.setCharacterStream(4, reader, sShapes.length());
+
+			}
+			else {
+				pstmt.setString(4, "");
+			}
+			//pstmt.setString(5, sUserID);
+			pstmt.setDouble(5, new Long((new java.util.Date()).getTime()).doubleValue());
+
+			pstmt.setString(6, view.getViewID());
+
+			int nRowCount = pstmt.executeUpdate();
+			pstmt.close();
+
+			if (nRowCount > 0) {
+				if (DBAudit.getAuditOn())
+					DBAudit.auditViewLayer(dbcon, DBAudit.ACTION_EDIT, sUserID, view);
+
+				System.out.println("200 DBViewLayer exiting update, returning true - only place this method");
+
+				return true;
+			}
+			else
+				return false;
+		}
+		catch (SQLException ex)
+		{
+			ex.printStackTrace();
+			System.out.println("Exception: DBViewLayer 209 "+ex.getErrorCode());
+			System.out.println("Exception: DBViewLayer 210 "+ex.getSQLState());
+			System.out.println("Exception: DBViewLayer 211 "+ex.getMessage());
 
 		}
-		else {
-			pstmt.setString(4, "");
-		}
-		pstmt.setString(5, sUserID);
-		pstmt.setString(6, view.getViewID());
 
+		System.out.println("214 DBViewLayer exiting update, returning false");
 
-		int nRowCount = pstmt.executeUpdate();
-		pstmt.close();
-
-		if (nRowCount > 0) {
-			if (DBAudit.getAuditOn())
-				DBAudit.auditViewLayer(dbcon, DBAudit.ACTION_EDIT, sUserID, view);
-
-			return true;
-		}
-		else
-			return false;
+		return false;
 	}
 
 

@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -67,7 +68,7 @@ public class UIHintNodeDetailPanel extends JPanel {
 
 		setBackground(tool.getBackground());
 		area.setBackground(getBackground());
-		
+
 		Font font = tool.getFont();
 		int scale = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+ scale);
@@ -83,8 +84,8 @@ public class UIHintNodeDetailPanel extends JPanel {
 		String detail = node.getDetail();
 		detail = detail.trim();
 
-		if (FormatProperties.detailRolloverLength > 0)
-			len = FormatProperties.detailRolloverLength;
+		if (APP_PROPERTIES.getDetailRolloverLength() > 0)
+			len = APP_PROPERTIES.getDetailRolloverLength();
 
 		if (detail.length() > len)
 			detail = detail.substring(0, len)+"...";

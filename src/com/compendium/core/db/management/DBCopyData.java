@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
@@ -245,7 +244,7 @@ public abstract class DBCopyData implements DBConstants, DBProgressListener {
 				String  admin 		= rs.getString(10);
 				int nCurrentStatus	= rs.getInt(11);
 				String	linkViewId	= rs.getString(12);
-				
+
 				if (linkViewId == null) {
 					linkViewId = "";
 				}
@@ -300,7 +299,7 @@ public abstract class DBCopyData implements DBConstants, DBProgressListener {
 				String	sDetail 	= rs.getString(9);
 				int		nCurrentStatus	= rs.getInt(10);
 				String	sLastModAuthor	= rs.getString(11);
-				
+
 				if (sLastModAuthor == null) {
 					sLastModAuthor = sAuthor;
 				}
@@ -644,7 +643,7 @@ public abstract class DBCopyData implements DBConstants, DBProgressListener {
 				pstmt2.setString(16, sFontFace);
 				pstmt2.setInt(17, nFontStyle);
 				pstmt2.setInt(18, nForeground);
-				pstmt2.setInt(19, nBackground);			
+				pstmt2.setInt(19, nBackground);
 
 				try {
 					pstmt2.executeUpdate();
@@ -825,36 +824,90 @@ public abstract class DBCopyData implements DBConstants, DBProgressListener {
 		if (rs != null) {
 			while (rs.next()) {
 
+				/*
+				mysql> desc Favorite;
+				+------------------+-------------+------+-----+---------+-------+
+				| Field            | Type        | Null | Key | Default | Extra |
+				+------------------+-------------+------+-----+---------+-------+
+				| UserID           | varchar(50) | NO   | PRI | NULL    |       |
+				| NodeID           | varchar(50) | NO   | PRI | NULL    |       |
+				| Label            | longtext    | NO   |     | NULL    |       |
+				| NodeType         | int(11)     | NO   |     | NULL    |       |
+				| CreationDate     | double      | NO   |     | NULL    |       |
+				| ModificationDate | double      | NO   |     | NULL    |       |
+				| ViewID           | varchar(50) | YES  | MUL | NULL    |       |
+				+------------------+-------------+------+-----+---------+-------+
+				*/
+
+				ResultSetMetaData rsmd = rs.getMetaData();
+
+				System.out.println("844 DBCopyData name should be UserID and is " + rsmd.getColumnName(1));
 				String	sUserID		= rs.getString(1);
+				System.out.println("844 DBCopyData name should be NodeID and is " + rsmd.getColumnName(2));
 				String	sNodeID		= rs.getString(2);
+				System.out.println("844 DBCopyData name should be Label and is " + rsmd.getColumnName(3));
 				String	sLabel		= rs.getString(3);
+				System.out.println("845 DBCopyData nType is " + rs.getString(4));
+				System.out.println("844 DBCopyData name should be NodeType and is " + rsmd.getColumnName(4));
 				int		nType		= rs.getInt(4);
+				System.out.println("847 DBCopyData nType is now assigned " + nType);
+				System.out.println("844 DBCopyData name should be CreationDate and is " + rsmd.getColumnName(5));
 				double	dbCDate		= rs.getDouble(5);
+				System.out.println("849 DBCopyData");
+				System.out.println("844 DBCopyData name should be ModificationDate and is " + rsmd.getColumnName(6));
 				double	dbMDate		= rs.getDouble(6);
+				System.out.println("851 DBCopyData");
+				System.out.println("844 DBCopyData name should be ViewID and is " + rsmd.getColumnName(7));
+				String  sViewID     = rs.getString(7);
+				System.out.println("853 DBCopyData");
+
+				//INSERT_FAVORITE_QUERY =
+				//"INSERT INTO Favorite (UserID, NodeID, ViewID, Label, NodeType, CreationDate, ModificationDate) "+
+				//"VALUES (?, ?, ?, ?, ?, ?, ?) ";
+
+				//log reports: INSERT INTO Favorite (UserID, NodeID, Label, NodeType, CreationDate,
+				//ModificationDate, ViewID) VALUES (?, ?, ?, ?, ?, ?, ?)
+
+				//where is this second one defined?
 
 				pstmt2.setString(1, sUserID);
+				System.out.println("860 DBCopyData");
 				pstmt2.setString(2, sNodeID);
+				System.out.println("862 DBCopyData");
+				pstmt2.setString(7, sViewID);
+				System.out.println("864 DBCopyData");
 
+/*
 				if (!sLabel.equals("")) {
 					//ByteArrayInputStream bArrayLabel = new ByteArrayInputStream(sLabel.getBytes());
 					//pstmt2.setAsciiStream(3, bArrayLabel, bArrayLabel.available());
 
 					// ACCOMODATES UNICODE
 					StringReader reader = new StringReader(sLabel);
-					pstmt2.setCharacterStream(3, reader, sLabel.length());
+					pstmt2.setCharacterStream(4, reader, sLabel.length());
 				}
 				else {
-					pstmt2.setString(3, "");
+					pstmt2.setString(4, "");
 				}
+		*/
+				System.out.println("888 DBCopyData query is " + INSERT_FAVORITE_QUERY);
+				System.out.println("889 DBCopyData sLabel is " + sLabel);
+				pstmt2.setString(3, sLabel);
 
+				System.out.println("880 DBCopyData");
 				pstmt2.setInt(4, nType);
+				System.out.println("883 DBCopyData");
 				pstmt2.setDouble(5, dbCDate);
 				pstmt2.setDouble(6, dbMDate);
 
 				try {
+					System.out.println("892 DBCopyData entered try");
+
 					pstmt2.executeUpdate();
 				}
 				catch(SQLException ex) {
+					System.out.println("884 DBCopyData entered exception");
+
 					errorLog.append(ex.getMessage());
 					ex.printStackTrace();
 				}

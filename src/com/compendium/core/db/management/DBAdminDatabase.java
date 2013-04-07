@@ -22,20 +22,15 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
 import java.util.*;
-import java.io.*;
 
-import javax.swing.JOptionPane;
-import javax.swing.JFrame;
-
-import com.compendium.core.datamodel.UserProfile;
+import com.compendium.ProjectCompendium;
 import com.compendium.core.datamodel.services.IServiceManager;
 import com.compendium.core.*;
-import com.compendium.core.db.DBUser;
+
 /**
  * This class is responsible for creating and accessing the administration database
  * that Compendium uses for maintaining the list of user created database and global system properties.
@@ -48,7 +43,7 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 // ON MYSQL ONLY
 	/** The SQL statement to drop all tables if they exists */
 	public final static String MYSQL_DROP_ALL_TABLES			= "DROP TABLE IF EXISTS System, Preference, Connections, NodeProperty, ViewLayer, ShortCutNode, NodeDetail, ViewProperty, Permission, GroupUser, UserGroup, ExtendedTypeCode, Clone, Audit, WorkspaceView, Favorite, GroupCode, NodeCode, ViewLink, NodeUserState, ViewNode, ReferenceNode, ExtendedNodeType, Workspace, CodeGroup, Code, Link, MediaIndex, Meeting, Node, Users";
-	
+
 	/** This variable is not being used yet.*/
 	public static final String COMPENDIUM_USER = "compendiumadmin";
 
@@ -76,8 +71,8 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 	public final static String UPDATE_VERSION = "UPDATE System SET Contents = ? WHERE Property = 'version'";
 
 
-	/**The name of that administration database */
-	protected static final String DATABASE_NAME = "compendium";
+	/** The name of that administration database. This property is initialized in the block beneath. */
+	public static final String DATABASE_NAME;
 
 	/** The SQL statement to insert new database information into the projects table */
 	protected static final String INSERT_PROJECT_QUERY = "INSERT INTO Project "+
@@ -103,7 +98,7 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 
 
 	/** The SQL statement to test for the exisitance of a user's administrative status */
-	protected static final String CHECK_USER_QUERY = "SELECT isAdministrator, UserID FROM Users "+
+	protected static final String CHECK_USER_QUERY = "SELECT isAdministrator FROM Users "+
 														"WHERE Login=? AND Password=?";
 
 // OTHER VARIABLES
@@ -117,7 +112,7 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 	/** A local reference to the DatabaseManager */
 	protected DBDatabaseManager databaseManager = null;
 
-	/** The name to use whn accessing the MySQL database */
+	/** The name to use when accessing the MySQL database */
 	protected String mysqlname = ICoreConstants.sDEFAULT_DATABASE_USER;
 
 	/** The password to use when accessing the MySQL database */
@@ -125,6 +120,10 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 
 	/** The password to use when accessing the MySQL database */
 	protected String mysqlip = ICoreConstants.sDEFAULT_DATABASE_ADDRESS;
+
+	static {
+	    DATABASE_NAME = new DBAdminPropertiesProvider().get().getDatabaseName();
+	}
 
 	/**
 	 * Constructor, which stores the ServiceManager and DatabaseManager references
@@ -240,7 +239,7 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 			if (rs != null) {
 				while (rs.next()) {
 					String name = rs.getString(1);
-					if (name.equals("compendium")) {
+					if (name.equals(DATABASE_NAME)) {
 						// SHOULD CHECK FOR PROPERTIES TABLE HERE, AND ADD IF NECESSARY ?
 						// CHECK FOR COMPENDIUMADMIN USER AND STORE
 				  		//Connection con2 = DBConnectionManager.getPlainConnection("mysql", mysqlname, mysqlpassword, mysqlip);
@@ -412,7 +411,9 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 	 */
 	public int getSchemaStatusForDatabase(String sProject) {
 
-		int status = -1;
+/*		int status = -1;
+
+		System.out.println("418 DBAdminDatabase about to request connection for " + sProject);
 
 		try {
 			DBConnection dbcon = databaseManager.requestConnection(sProject);
@@ -432,10 +433,14 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 			databaseManager.releaseConnection(sProject, dbcon);
 		}
 		catch(Exception ex) {
-			System.out.println("Exception: (DBAdminDatabase.getSchemaStatusForDatabase)\n\n"+ex.getMessage());
+			System.out.println("436 DBAdminDatabase connection exception for Project " + sProject);
+
+			System.out.println("438 Exception: (DBAdminDatabase.getSchemaStatusForDatabase)\n\n"+ex.getMessage());
 		}
 
 		return status;
+	*/
+		return ICoreConstants.CORRECT_DATABASE_SCHEMA;
 	}
 
 	/**
@@ -487,6 +492,9 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 	 */
 	public boolean loadDatabaseProjects() {
 
+		System.out.println("493 DBAdminDatabase DATABASE_NAME is " + DATABASE_NAME);
+		System.out.flush();
+
 		try {
 			DBConnection dbcon = null;
         	dbcon = databaseManager.requestConnection(DATABASE_NAME);
@@ -509,12 +517,21 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 					htDatabases.put(name, database);
 				}
 			}
+
+			System.out.println("519 DBAdminDatabase loadDatabaseProjects htDatabases is " + htDatabases);
+			System.out.flush();
+
 			databaseManager.releaseConnection(DATABASE_NAME, dbcon);
 
 			return true;
 		}
 		catch (SQLException ex) {
-		    System.out.println("SQLException: (DBAdminDatabase.loadDatabaseProjects)\n\n"+ex.getMessage());
+			System.out.println("523 DBAdminDatabase DATABASE_NAME is " + DATABASE_NAME);
+			System.out.println("523 DBAdminDatabase SELECT_PROJECTS_QUERY is " + SELECT_PROJECTS_QUERY);
+			System.out.println("SQLException: (DBAdminDatabase.loadDatabaseProjects): "+ex.getLocalizedMessage());
+			ex.printStackTrace();
+			System.out.flush();
+			ProjectCompendium.APP.displayError("Error fetching list of database connections: " + ex.getLocalizedMessage());
 		}
 
 		return false;
@@ -749,12 +766,10 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 	 * @param String sDatabaseName, the actual database name as it is known in MySQL.
 	 * @param String slogin, the users login name.
 	 * @param String sPassword, the users password.
-	 * @return if the user profile for the user / else null if they are not an administrator.
+	 * @return if the the user is a valid user for the given database and is an administrator of it.
 	 */
-	public UserProfile isAdministrator(String sDatabaseName, String sLogin, String sPassword) {
+	public boolean isAdministrator(String sDatabaseName, String sLogin, String sPassword) {
 
-		UserProfile oUser = null;
-		
 		try {
 			DBConnection dbcon = null;
         	dbcon = databaseManager.requestConnection(sDatabaseName);
@@ -762,8 +777,10 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 			Connection con = dbcon.getConnection();
 			if (con == null) {
 				System.out.println("Connection = false for DBAdminDatabase.isAdministrator");
+				return false;
 			}
 			else {
+
 				PreparedStatement pstmt = con.prepareStatement(CHECK_USER_QUERY);
 				pstmt.setString(1, sLogin);
 				pstmt.setString(2, sPassword);
@@ -773,12 +790,9 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 				if (rs != null) {
 					while (rs.next()) {
 						String admin = rs.getString(1);
-						String sID = rs.getString(2);
-						
 						if (admin.equals("Y")) {
 							pstmt.close();
-							oUser = DBUser.getUser(dbcon, sID);
-							break;
+							return true;
 						}
 					}
 				}
@@ -790,6 +804,6 @@ public class DBAdminDatabase implements DBConstants, DBConstantsMySQL {
 		    System.out.println("SQLException: (DBAdminDatabase.isAdministrator)\n\n"+ex.getMessage());
 		}
 
-		return oUser;
+		return false;
 	}
 }

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.util.*;
@@ -61,7 +60,7 @@ public class ShortCutNodeSummary extends NodeSummary
 
 		super(sNodeID, nType , nXNodeType, sOriginalID, nState, sAuthor, dCreationDate, dModificationDate, sLabel, sDetail, sLastModAuthor);
 		oReferredNode = oNode;
-	}	
+	}
 
 	/**
 	 * Return a node summary object with the given id and details.
@@ -78,11 +77,11 @@ public class ShortCutNodeSummary extends NodeSummary
 	 *	@param String sLabel, the label of this node.
 	 *	@param String sDetail, the first page of detail for this node.
 	 *	@param NodeSummary oNode, the node referenced by this node.
-	 *	@param sLastModAuthor the author who last modified this node.  
+	 *	@param sLastModAuthor the author who last modified this node.
  	 *  @return View, a view node object with the given id.
 	 */
 	public static ShortCutNodeSummary getShortCutNodeSummary(String sNodeID, int nType, String sXNodeType, String sOriginalID,
-				int nState, String sAuthor, Date dCreationDate, Date dModificationDate, 
+				int nState, String sAuthor, Date dCreationDate, Date dModificationDate,
 				String sLabel, String sDetail, NodeSummary oNode, String sLastModAuthor)
 	{
 		int i = 0;
@@ -105,7 +104,9 @@ public class ShortCutNodeSummary extends NodeSummary
 				ns = (ShortCutNodeSummary)obj;
 
 				// UPDATE THE DETAILS
-				ns.setLabelLocal(sLabel);
+				if (!ns.bLabelDirty) {
+					ns.setLabelLocal(sLabel);
+				}
 				ns.setDetailLocal(sDetail);
 				ns.setTypeLocal(nType);
 				ns.setStateLocal(nState);
@@ -123,8 +124,8 @@ public class ShortCutNodeSummary extends NodeSummary
 			}
 		}
 		return ns;
-	}	
-	
+	}
+
 	/**
 	 * Returns whether or not a specific node is a shortcut node.
 	 *

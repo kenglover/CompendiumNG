@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
@@ -33,9 +32,13 @@ import java.sql.SQLException;
 import java.util.*;
 import java.io.*;
 
+import javax.swing.DefaultListModel;
+
+import com.compendium.ProjectCompendium;
 import com.compendium.core.datamodel.*;
 import com.compendium.core.db.management.*;
 import com.compendium.core.ICoreConstants;
+
 
 /**
  * The DBNode class serves as the interface layer between the Node Services objects
@@ -56,7 +59,7 @@ public class DBNode {
 
 	/** Indicates if imported node ids should be preserved.*/
 	private static boolean PRESERVE_IMPORTED_IDS 	= false;
-	
+
 	/** Indicates if node are marked seen/unseen on import.*/
 	private static boolean NODES_MARKED_SEEN 		= false;
 
@@ -66,7 +69,7 @@ public class DBNode {
 	// AUDITED
 
 	/** SQL statement to insert a new Node Record into the Node table.*/
-	public final static String INSERT_NODE_QUERY =
+	private final static String INSERT_NODE_QUERY =
 		"INSERT INTO Node (NodeID, NodeType, ExtendedNodeType, OriginalID, Author, " +
 		"CreationDate, ModificationDate, Label, Detail, CurrentStatus, LastModAuthor) "+
 		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
@@ -78,7 +81,7 @@ public class DBNode {
 		"SET NodeType=?, ExtendedNodeType=?, OriginalID=?, Author=?, " +
 		"CreationDate=?, ModificationDate=?, Label=?, Detail=?, LastModAuthor=? "+
 		"WHERE NodeID=?";
-	
+
 	/** This query physically deletes the node with the given id from the database, if marked for deletion.*/
 	public final static String PURGE_NODE_QUERY =
 		"DELETE "+
@@ -108,13 +111,15 @@ public class DBNode {
 	/** This marks the node entry as deleted, sets the CurrentStatus attribute only, for the given node id.*/
 	public final static String DELETE_NODE_QUERY =
 		"Update Node " +
-		"SET currentStatus = "+ICoreConstants.STATUS_DELETE+" " +
+		"SET currentStatus = "+ICoreConstants.STATUS_DELETE+","+
+		"ModificationDate = ? " +
 		"WHERE NodeID = ? ";
 
 	/** This query restores the selected node by setting its status to active.*/
 	public final static String RESTORE_NODE_QUERY =
 		"UPDATE Node "+
-		"SET CurrentStatus ="+ICoreConstants.STATUS_ACTIVE+" "+
+		"SET CurrentStatus ="+ICoreConstants.STATUS_ACTIVE+","+
+		"ModificationDate = ? " +
 		"WHERE NodeID = ? " ;
 
 	/** SQL statement to set a Node label for a node with the given id.*/
@@ -122,7 +127,7 @@ public class DBNode {
 		"Update Node " +
 		"SET Label = ?, ModificationDate = ?, LastModAuthor = ? " +
 		"WHERE NodeID = ? ";
-	
+
 	/** SQL statement to set a Node original id for a node with the given id.*/
 	public final static String SET_NODE_ORIGINALID_QUERY =
 		"Update Node " +
@@ -134,7 +139,7 @@ public class DBNode {
 		"Update Node " +
 		"SET ModificationDate = ?, LastModAuthor = ? " +
 		"WHERE NodeID = ?";
-	
+
 	/** SQL statement to set a Node detail (page 1) for a node with the given id.*/
 	public final static String SET_NODE_DETAIL_QUERY =
 		"Update Node " +
@@ -223,7 +228,7 @@ public class DBNode {
 		" WHERE ViewNode.ViewID = ? " +
 		" AND Node.NodeType != "+ICoreConstants.TRASHBIN +
 		" AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE ;
-	
+
 	/** SQL statement to return all the views to full depth for the given view ID */
 	public final static String  GET_CHILDVIEWS_QUERY =
 		"SELECT Node.NodeID, Node.NodeType, Node.ExtendedNodeType, Node.OriginalID, Node.Author, Node.CreationDate," +
@@ -249,11 +254,20 @@ public class DBNode {
 		"FROM Node "+
 		"WHERE Node.CurrentStatus = "+ICoreConstants.STATUS_DELETE;
 
+	/** SQL statement to return the count of nodes marked for deletion **/
+	public final static String GET_DELETED_NODE_COUNT_QUERY =
+		"SELECT count(*) FROM Node WHERE Node.CurrentStatus = "+ICoreConstants.STATUS_DELETE;
+
 	/** SQL statement to return all node ids for nodes marked for deletion.*/
 	public final static String GET_ALL_DELETED_NODE_ID_QUERY =
 		"SELECT NodeID "+
 		"FROM Node "+
 		"WHERE CurrentStatus = "+ICoreConstants.STATUS_DELETE;
+
+	/** SQL statement to return all node ids.*/
+	public final static String GET_ALL_NODE_ID_QUERY =
+		"SELECT NodeID "+
+		"FROM Node ";
 
 	/** SQL statement to return a node record for the Node with the given id, if its status is deletion.*/
 	public final static String GET_DELETED_NODE_SUMMARY_QUERY_ID =
@@ -269,6 +283,22 @@ public class DBNode {
 		"ModificationDate, Label, Detail  " +
 		"FROM Node " +
 		"WHERE Label LIKE  ? OR Detail LIKE ? ";
+
+	/** SQL statement to count the number of nodes in the node table (mlb 11/07) */
+	public final static String COUNT_NODE_QUERY =
+		"Select Count(*) from Node";
+
+	/** SQL statement to count the number of views in the node table (mlb 11/07) */
+	public final static String COUNT_VIEW_QUERY =
+		"Select Count(*) from Node where NodeType = 1 or Nodetype = 2";
+
+	/** SQL statement to count the number of active parents a node has (mlb 01/08) */
+	public final static String COUNT_PARENTS_QUERY =
+		"Select Count(*) from ViewNode, Node " +
+		"where ViewNode.ViewID = Node.NodeID " +
+		"AND ViewNode.NodeID = ? " +
+		"AND ViewNode.CurrentStatus = " + ICoreConstants.STATUS_ACTIVE + " " +
+		"AND Node.CurrentStatus = " + ICoreConstants.STATUS_ACTIVE;
 
 	/** SQL statement to return all node records for nodes not currently in a view.*/
 	public final static String GET_LIMBO_NODE_QUERY =
@@ -346,17 +376,17 @@ public class DBNode {
 	 * Set importing from questmap.
 	 * @param importing, indicates if a questmap import is currently underway.
 	 */
-	public static void setQuestmapImporting(boolean importing) {
-		QUESTMAP_IMPORTING = importing;
-	}
+	//public static void setQuestmapImporting(boolean importing) {
+//		QUESTMAP_IMPORTING = importing;
+//	}
 
 	/**
 	 * Return if importing mode true on or false.
 	 * @return boolean, true if a questmap import is currently underway, else false.
-	 */
+	 */  /*
 	public static boolean getQuestmapImporting() {
 		return QUESTMAP_IMPORTING;
-	}
+	}*/
 
 	/**
 	 * Set IMPORT_AS_TRANSCLUDED true or false.
@@ -405,7 +435,7 @@ public class DBNode {
 	public static boolean getUpdateTranscludedNodes() {
 		return UPDATE_TRANSLCUDED_NODES;
 	}
-	
+
 	/**
 	 * Return true if the NODES_MARKED_SEEN mode is on or false
 	 * @return true if the NODES_MARKED_SEEN mode is on .
@@ -451,8 +481,8 @@ public class DBNode {
 	 *	@param modificationDate, the date of modification of the node.
 	 *	@return com.compendium.core.datamode.INodeSummary, the node object.
 	 *	@throws java.sql.SQLException
-	 */	
-	// Lakshmi (4/20/06) - Added userID as param to pass to DBNoderUserState for update 
+	 */
+	// Lakshmi (4/20/06) - Added userID as param to pass to DBNoderUserState for update
 	public static NodeSummary insert(DBConnection dbcon, String id, int type, String xNodeType,
 				String importedId, String sOriginalID, String author, String label, String detail,
 				java.util.Date creationDate, java.util.Date modificationDate, String userID )
@@ -480,13 +510,15 @@ public class DBNode {
 	 *	@param sLastMdoAuthor the author who made the last modification to this node.
 	 *	@return com.compendium.core.datamode.INodeSummary, the node object.
 	 *	@throws java.sql.SQLException
-	 */	
-	// Lakshmi (4/20/06) - Added userID as param to pass to DBNoderUserState for update 
+	 */
+	// Lakshmi (4/20/06) - Added userID as param to pass to DBNoderUserState for update
 	// MB (09.June.2006) - Added sLastModAuthor
 	public static NodeSummary insert(DBConnection dbcon, String id, int type, String xNodeType,
 				String importedId, String sOriginalID, String author, String label, String detail,
 				java.util.Date creationDate, java.util.Date modificationDate, String userID, String sLastModAuthor )
 				throws SQLException {
+
+		modificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -495,7 +527,7 @@ public class DBNode {
 		NodeSummary node = null;
 		boolean deleteFlag = false ; // -- the delete flag is automatically set to false.
 		int nState = ICoreConstants.READSTATE;
-		
+
 		// ARE WE IMPORTING THIS NODE?
 		if (COMPENDIUM_IMPORTING || QUESTMAP_IMPORTING) {
 
@@ -506,7 +538,7 @@ public class DBNode {
 					restore(dbcon, node.getId(), userID);
 			}
 
-			// IF IMPORTING FROM COMPENDIUM XML AND YOUR PRESERVING NODE IDS, 
+			// IF IMPORTING FROM COMPENDIUM XML AND YOUR PRESERVING NODE IDS,
 			// SEE IF WE HAVE THE NODE ALREADY BUT DELETED.
 			else if (COMPENDIUM_IMPORTING ) {
 				node = DBNode.getAnyNodeSummary(dbcon, importedId, userID);
@@ -518,8 +550,8 @@ public class DBNode {
 			// IF IMPORTING WITH TRANSCLUSION
 			if ( (node != null) && IMPORT_AS_TRANSCLUDED) {
 				if (UPDATE_TRANSLCUDED_NODES) {
-					NodeSummary updatednode = update(dbcon, node.getId(), type, xNodeType, 
-							importedId, sOriginalID, author, label, detail, 
+					NodeSummary updatednode = update(dbcon, node.getId(), type, xNodeType,
+							importedId, sOriginalID, author, label, detail,
 							creationDate, modificationDate, userID, sLastModAuthor);
 					if (updatednode != null)
 						return updatednode;
@@ -547,6 +579,11 @@ public class DBNode {
 			return node;
 		}*/
 
+		DBUser dbu = new DBUser();
+		UserProfile up = dbu.getUserProfileFromID(dbcon, userID);
+		System.out.println("580 DBNode UserProfile is " + up);
+		String userName = up.getUserName();
+
 		PreparedStatement pstmt = con.prepareStatement(INSERT_NODE_QUERY);
 
 		pstmt.setString(1, id) ;
@@ -554,9 +591,11 @@ public class DBNode {
 		pstmt.setString(3, xNodeType) ;
 		pstmt.setString(4, sOriginalID);
 		pstmt.setString(5, author);
+		//pstmt.setString(5, userName);
 		pstmt.setDouble(6, new Long(creationDate.getTime()).doubleValue());
 		pstmt.setDouble(7, new Long(modificationDate.getTime()).doubleValue());
-		pstmt.setString(8, author);		
+		pstmt.setString(8, author);
+		//pstmt.setString(8, userName);
 
 		if (!label.equals("")) {
 			//ByteArrayInputStream bArrayLabel = new ByteArrayInputStream(label.getBytes());
@@ -583,9 +622,14 @@ public class DBNode {
 		}
 
 		pstmt.setBoolean(10, deleteFlag) ; //-- set the delete flag to false by default
-		pstmt.setString(11, sLastModAuthor);		
+		pstmt.setString(11, sLastModAuthor);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		pstmt.close();
 		node = null ;
@@ -594,25 +638,29 @@ public class DBNode {
 
 			if (View.isViewType(type)) {
 				// include the state information as param to set - as it is newly created node the state is READ
-			  	node = View.getView(id, type, xNodeType, sOriginalID, 
+			  	node = View.getView(id, type, xNodeType, sOriginalID,
 			  			nState, author, creationDate, modificationDate, label, detail, sLastModAuthor);
 			} else if (ShortCutNodeSummary.isShortCutNodeType(type)) {
 				//include the state information as param to set - as it is newly created node the state is READ
-				node = ShortCutNodeSummary.getShortCutNodeSummary(id, type, xNodeType, sOriginalID, 
+				node = ShortCutNodeSummary.getShortCutNodeSummary(id, type, xNodeType, sOriginalID,
 						nState, author, creationDate, modificationDate, label, detail, null, sLastModAuthor);
 			} else {
 				// include the state information as param to set - as it is newly created node the state is READ
-				node = NodeSummary.getNodeSummary(id, type, xNodeType, sOriginalID, 
+				node = NodeSummary.getNodeSummary(id, type, xNodeType, sOriginalID,
 						nState, author, creationDate, modificationDate, label, detail, sLastModAuthor) ;
 			}
-		
-			boolean status = DBNodeUserState.insertStateForAllUsers(dbcon,id, ICoreConstants.UNREADSTATE);
+
+// mlb: Disable creating 'unread' NodeUserState entries for all users.  Rather, just insert an entry for current user
+//		And since .insert() will do an update if the record exists, we don't need the following update.
+
+//			boolean status = DBNodeUserState.insertStateForAllUsers(dbcon,id, ICoreConstants.UNREADSTATE);
+			DBNodeUserState.insert(dbcon, id, userID, nState);
 
 			//UPDATE FOR THE CURRENT USER AS READ - THEY CREATED IT AFTER ALL!
 			//WE NEED TO PASS THE USERID, NOT JUST THE AUTHOR
-			if(nState != ICoreConstants.UNREADSTATE)
-				DBNodeUserState.updateUser(dbcon, id, userID, ICoreConstants.UNREADSTATE, nState);
-			
+//			if(nState != ICoreConstants.UNREADSTATE)
+//				DBNodeUserState.updateUser(dbcon, id, userID, ICoreConstants.UNREADSTATE, nState);
+
 			if (DBAudit.getAuditOn())
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_ADD, node);
 
@@ -621,7 +669,7 @@ public class DBNode {
 
 		return null;
 	}
-	
+
 	/**
 	 *  Updates a node in the database, creates and returns the NodeSummary object.
 	 *
@@ -663,7 +711,7 @@ public class DBNode {
 	 *	@param creationDate, the date of creation of the node.
 	 *	@param modificationDate, the date of modification of the node.
 	 *	@param userID the id of the user making this update.
-	 *	@param sLastModAuthorName the author who last modified this node. 
+	 *	@param sLastModAuthorName the author who last modified this node.
 	 *	@return com.compendium.core.datamode.INodeSummary, the node object.
 	 *	@throws java.sql.SQLException
 	 */
@@ -671,6 +719,8 @@ public class DBNode {
 				String importedId, String sOriginalID, String author, String label, String detail,
 				java.util.Date creationDate, java.util.Date modificationDate, String userID, String sLastModAuthor )
 				throws SQLException {
+
+		modificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -717,7 +767,12 @@ public class DBNode {
 
 		pstmt.setString(10, id);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		pstmt.close();
 		NodeSummary node = null;
@@ -730,16 +785,16 @@ public class DBNode {
 
 			// put read state for the user who has modified
 			DBNodeUserState.updateUser(dbcon, id, userID, ICoreConstants.MODIFIEDSTATE, ICoreConstants.READSTATE);
-			
+
 			//set the state in NodeSummary
 			node.setStateLocal(ICoreConstants.READSTATE);
-			
+
 			if (DBAudit.getAuditOn())
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_ADD, node);
 		}
 		return node;
 	}
-	
+
 	/**
 	 *	Deletes the node with the given id from the database.
 	 *	This function marks the node as deleted in the database.
@@ -755,32 +810,54 @@ public class DBNode {
 	 */
 	public static boolean delete(DBConnection dbcon, NodeSummary node, String sViewID, String userID) throws SQLException {
 
+
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
 
 		String sNodeID = node.getId();
-				
-		// CHECK THAT ITS NOT A HOMEVIEW / INBOX 
+
+		// Check that this is not a HomeView or Inbox being deleted
+		// THESE CANNOT BE MARKED FOR DELETION OR THE USER CAN'T GET IN AGAIN
+		for(Enumeration e = (ProjectCompendium.APP.getModel().getUsers()).elements();e.hasMoreElements();) {
+			UserProfile up = (UserProfile)e.nextElement();
+			if (up.getHomeView() != null) {					// Do this first so next test doesn't fail if no home window
+				if (up.getHomeView().getId() == sNodeID) {
+					DBViewNode.delete(dbcon, sViewID, sNodeID, userID);  // Remove from view but don't delete
+					return false;
+				}
+			}
+			if (up.getLinkView() != null) {					// Do this first so next test doesn't fail if no mailbox
+				if (up.getLinkView().getId() == sNodeID) {
+					return false;
+				}
+			}
+		}
+
+// Note: The above code was added in v1.6 to replace the following code, now commented out.
+//		 The code below requires 2 database calls, the code above uses in-memory data to
+//		 determine the same thing.
+/**
+		// CHECK THAT ITS NOT A HOMEVIEW / INBOX
 		// THESE CANNOT BE MARKED FOR DELETION OR THE USER CAN'T GET IN AGAIN
 		Hashtable homeviews = DBUser.getHomeViews(dbcon);
 		if (homeviews.containsKey(sNodeID)) {
 			// remove from view, but don't delete.
 			DBViewNode.delete(dbcon, sViewID, sNodeID, userID);
 			return false;
-		}		
-		
+		}
+
 		Hashtable linkviews = DBUser.getLinkViews(dbcon);
 		if (linkviews.containsKey(sNodeID)) {
 			return false;
 		}
-
+ */
 		// DELETE THE ASSOCIATED VIEWNODE FOR GIVEN VIEW
 		boolean deleted = DBViewNode.delete(dbcon, sViewID, sNodeID, userID);
-		
+
 		//CHECK IF THIS IS THE LAST INSTANCE AND THEREFORE THE NODE SHOULD BE MARKED FOR DELETION
-		int occurence = DBViewNode.getActiveViewCount(dbcon, sNodeID);		
-		
+		int occurence = DBViewNode.getActiveViewCount(dbcon, sNodeID);
+
 		boolean hasUniqueAncestry = false;
 		if (occurence > 0) {
 			if ( (node.getType() == ICoreConstants.MAPVIEW) || (node.getType() == ICoreConstants.LISTVIEW) ) {
@@ -788,12 +865,18 @@ public class DBNode {
 			}
 		}
 
-		if ( occurence == 0 || hasUniqueAncestry) {			
+		if ( occurence == 0 || hasUniqueAncestry) {
 			//set CurrentStatus to marked for deletion
 			PreparedStatement pstmt = con.prepareStatement(DELETE_NODE_QUERY);
-			pstmt.setString(1, sNodeID) ;
+			pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+			pstmt.setString(2, sNodeID) ;
 
-			int nRowCount = pstmt.executeUpdate();
+			int nRowCount = 0;
+			try {
+				nRowCount = pstmt.executeUpdate();
+			} catch (Exception e){
+				e.printStackTrace();
+			}
 			pstmt.close();
 			if (nRowCount > 0) {
 				if (DBAudit.getAuditOn()) {
@@ -826,8 +909,14 @@ public class DBNode {
 			return false;
 
 		PreparedStatement pstmt = con.prepareStatement(RESTORE_NODE_QUERY);
-		pstmt.setString(1, sNodeID) ;
-		int nRowCount = pstmt.executeUpdate();
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sNodeID) ;
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
@@ -838,6 +927,7 @@ public class DBNode {
 				}
 				catch(Exception ex) {
 					System.out.println("FAILED SAVING AUDIT in DBNODE.RESTORE for NODEID = "+sNodeID);
+					ex.printStackTrace();
 				}
 			}
 			return true;
@@ -868,7 +958,12 @@ public class DBNode {
 
 		PreparedStatement pstmt = con.prepareStatement(PURGE_NODE_QUERY);
 		pstmt.setString(1, sNodeID);
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
@@ -906,7 +1001,12 @@ public class DBNode {
 
 		PreparedStatement pstmt = con.prepareStatement(PURGE_HOMEVIEW_QUERY);
 		pstmt.setString(1, sNodeID);
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
@@ -945,7 +1045,12 @@ public class DBNode {
 
 		PreparedStatement pstmt = con.prepareStatement(PURGEALL_NODE_QUERY);
 		pstmt.setString(1, sAuthor);
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
@@ -971,13 +1076,15 @@ public class DBNode {
 	 *	@param sNodeID, the id of the node to set the label for.
 	 *	@param sLabel, the new label of the node.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setLabel(DBConnection dbcon, String sNodeID, String sLabel, 
+	public static boolean setLabel(DBConnection dbcon, String sNodeID, String sLabel,
 			java.util.Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1003,24 +1110,29 @@ public class DBNode {
 		pstmt.setString(3, sLastModAuthor);
 		pstmt.setString(4, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
 
 			NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeID, sUserID);
-			
+
 			if (DBAudit.getAuditOn()) {
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
 			}
-			
+
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if ( !getImporting() && !getQuestmapImporting() ) {				
+			if ( !getImporting() /*&& !getQuestmapImporting()*/ ) {
 				// at this point update the NodeUserState table with the update
 				// all users that have read the node previously should have their
 				// state changed to 'modified'
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE);
-				
+
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
 					DBNodeUserState.updateUser(dbcon, sNodeID, sUserID, ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE);
@@ -1034,7 +1146,7 @@ public class DBNode {
 		else
 			return false ;
 	}
-	
+
 	/**
 	 *  Sets the detail of the node in the database and returns true.
 	 *
@@ -1043,13 +1155,15 @@ public class DBNode {
 	 *	@param sDetail, the new detail page (page one) of the node.
 	 *	@param sAuthor, the author of the current change.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setDetail(DBConnection dbcon, String sNodeID, String sDetail, 
+	public static boolean setDetail(DBConnection dbcon, String sNodeID, String sDetail,
 			String sAuthor, java.util.Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1084,10 +1198,15 @@ public class DBNode {
 		}
 
 		pstmt.setDouble(2, date);
-		pstmt.setString(3, sLastModAuthor);		
+		pstmt.setString(3, sLastModAuthor);
 		pstmt.setString(4, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount >0) {
@@ -1096,14 +1215,14 @@ public class DBNode {
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
 			}
 
-			
+
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
+			if(!getImporting() /*&& !getQuestmapImporting()*/) {
 				//	 at this point update the NodeUserState table with the update
 				// all users that have read the node previously should have their
 				// state changed to 'modified'
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
-				
+
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
 					DBNodeUserState.updateUser(dbcon, sNodeID, sUserID, ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE);
@@ -1125,13 +1244,15 @@ public class DBNode {
 	 *	@param sAuthor, the author of the current change.
 	 *	@param oDetail com.compendium.core.datamodel.NodeDetailPage, the new page of detail to add to the NodeDetail table.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setDetailPage(DBConnection dbcon, String sAuthor, 
+	public static boolean setDetailPage(DBConnection dbcon, String sAuthor,
 			NodeDetailPage oDetail, java.util.Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1163,7 +1284,12 @@ public class DBNode {
 			pstmt1.setString(3, sLastModAuthor);
 			pstmt1.setString(4, sNodeID);
 
-			int nRowCount = pstmt1.executeUpdate();
+			int nRowCount = 0;
+			try {
+				nRowCount = pstmt1.executeUpdate();
+			} catch (Exception e){
+				e.printStackTrace();
+			}
 			pstmt1.close();
 
 			if (nRowCount >0) {
@@ -1171,13 +1297,13 @@ public class DBNode {
 					DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
 				}
 
-				
+
 				// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-				if(!getImporting() && !getQuestmapImporting()) {
-					
+				if(!getImporting() /*&& !getQuestmapImporting()*/) {
+
 					boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 					int state = node.getState();
-					
+
 					if(state == ICoreConstants.UNREADSTATE){
 						DBNodeUserState.updateUser(dbcon, sNodeID, sUserID, ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE);
 					} else  {
@@ -1194,7 +1320,12 @@ public class DBNode {
 		PreparedStatement pstmt1 = con.prepareStatement(GET_PAGENO_QUERY);
 		pstmt1.setString(1, sNodeID);
 		pstmt1.setInt(2, pageNo);
-		ResultSet rs = pstmt1.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt1.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		int num = 0;
 		if (rs != null) {
@@ -1226,7 +1357,12 @@ public class DBNode {
 			pstmt.setString(4, sNodeID);
 			pstmt.setInt(5, pageNo);
 
-			int nRowCount = pstmt.executeUpdate();
+			int nRowCount = 0;
+			try {
+				nRowCount = pstmt.executeUpdate();
+			} catch (Exception e){
+				e.printStackTrace();
+			}
 			pstmt.close();
 
 			if (nRowCount > 0) {
@@ -1235,9 +1371,9 @@ public class DBNode {
 				}
 
 				// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-				if(!getImporting() && !getQuestmapImporting()) {
+				if(!getImporting() /*&& !getQuestmapImporting()*/) {
 					boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
-					
+
 					int state = node.getState();
 					if(state == ICoreConstants.UNREADSTATE){
 						DBNodeUserState.updateUser(dbcon, sNodeID, sUserID, ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE);
@@ -1274,19 +1410,24 @@ public class DBNode {
 				pstmt.setString(6, "");
 			}
 
-			int nRowCount = pstmt.executeUpdate();
+			int nRowCount = 0;
+			try {
+				nRowCount = pstmt.executeUpdate();
+			} catch (Exception e){
+				e.printStackTrace();
+			}
 			pstmt.close();
 
 			if (nRowCount > 0) {
-				
+
 				if (DBAudit.getAuditOn()) {
 					DBAudit.auditNodeDetail(dbcon, DBAudit.ACTION_EDIT, oDetail, sAuthor);
 				}
 
 				// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-				if(!getImporting() && !getQuestmapImporting()) {
+				if(!getImporting() /*&& !getQuestmapImporting()*/) {
 
-					boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;					
+					boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 					int state = node.getState();
 					if(state == ICoreConstants.UNREADSTATE){
 						DBNodeUserState.updateUser(dbcon, sNodeID, sUserID, ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE);
@@ -1323,20 +1464,25 @@ public class DBNode {
 		pstmt.setString(1, sNodeID);
 		pstmt.setInt(2, sDetail.getPageNo());
 
-		int rowCount = pstmt.executeUpdate();
+		int rowCount = 0;
+		try {
+			rowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		if (rowCount > 0) {
 			NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeID, userID);
-			
+
 			if (DBAudit.getAuditOn()) {
 				DBAudit.auditNodeDetail(dbcon, DBAudit.ACTION_DELETE, sDetail, sAuthor );
 			}
 
 
-			
+
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
+			if(!getImporting() /*&& !getQuestmapImporting()*/) {
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
-				
+
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
 					DBNodeUserState.updateUser(dbcon, sNodeID, userID, ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE);
@@ -1360,14 +1506,16 @@ public class DBNode {
 	 *	@param oldDetails, the old pages of detail.
 	 *	@param details, the new pages of detail to add to the NodeDetail table.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setAllDetailPages(DBConnection dbcon, String sNodeID, String sAuthor, 
-			Vector oldDetails, Vector details, java.util.Date dModificationDate, String sLastModAuthor, 
+	public static boolean setAllDetailPages(DBConnection dbcon, String sNodeID, String sAuthor,
+			Vector oldDetails, Vector details, java.util.Date dModificationDate, String sLastModAuthor,
 			String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1375,7 +1523,12 @@ public class DBNode {
 
 		PreparedStatement pstmt1 = con.prepareStatement(CHECK_PAGENO_QUERY);
 		pstmt1.setString(1, sNodeID);
-		ResultSet rs = pstmt1.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt1.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		int maxPage = 0;
 		if (rs != null) {
@@ -1415,13 +1568,15 @@ public class DBNode {
 	 *	@param sLabel, the new node label.
 	 *	@param sDetail, the new page one of node detail.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setLabelAndDetail(DBConnection dbcon, String sNodeID, 
+	public static boolean setLabelAndDetail(DBConnection dbcon, String sNodeID,
 			String sLabel, String sDetail, java.util.Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1461,22 +1616,27 @@ public class DBNode {
 		pstmt.setString(4, sLastModAuthor);
 		pstmt.setString(5, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
 			NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeID, sUserID);
-			
+
 			if (DBAudit.getAuditOn()) {
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
 			}
 
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
-				
+			if(!getImporting() /*&& !getQuestmapImporting()*/) {
+
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 				int state = node.getState();
-				
+
 				if(state == ICoreConstants.UNREADSTATE){
 					DBNodeUserState.updateUser(dbcon, sNodeID, sUserID, ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE);
 				} else  {
@@ -1499,13 +1659,16 @@ public class DBNode {
 	 *	@param nOldType, the original type of this node.
 	 *	@param nNewType, the new type to set for this node.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setType(DBConnection dbcon, String sNodeID, int nOldType, int nNewType, 
+	public static boolean setType(DBConnection dbcon, String sNodeID, int nOldType, int nNewType,
 			java.util.Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
+
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
@@ -1526,18 +1689,23 @@ public class DBNode {
 		pstmt.setString(3, sLastModAuthor);
 		pstmt.setString(4, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount >0) {
 			NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeID, sUserID);
-			
+
 			if (DBAudit.getAuditOn()) {
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
 			}
 
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
+			if(!getImporting() /*&& !getQuestmapImporting()*/) {
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
@@ -1560,15 +1728,17 @@ public class DBNode {
 	 *	@param sNodeID, the id of the node to set the type for.
 	 *	@param nOriginalID, the original id to set for this node.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setOriginalID(DBConnection dbcon, String sNodeID, String sOriginalID, 
+	public static boolean setOriginalID(DBConnection dbcon, String sNodeID, String sOriginalID,
 			java.util.Date dModificationDate, String sLastModAuthor, String userID) throws SQLException {
-		
+
+		dModificationDate = (new java.util.Date());
+
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
@@ -1579,18 +1749,23 @@ public class DBNode {
 		pstmt.setDouble(2, dModificationDate.getTime());
 		pstmt.setString(3, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount >0) {
 			NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeID, userID);
-			
+
 			if (DBAudit.getAuditOn()) {
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
 			}
 
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
+			if(!getImporting() /*&& !getQuestmapImporting()*/) {
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
@@ -1614,13 +1789,15 @@ public class DBNode {
 	 *	@param sNodeID the id of the node to set the creation date for.
 	 *	@param dCreationDate, the new creation date for the node record.
 	 *	@param dModificationDate the date of this modification.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
-	 *  @param sUserID the id of the current user logged in. 	 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
+	 *  @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setCreationDate(DBConnection dbcon, String sNodeID, 
+	public static boolean setCreationDate(DBConnection dbcon, String sNodeID,
 			Date dCreationDate, Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1636,11 +1813,16 @@ public class DBNode {
 		pstmt.setString(3, sLastModAuthor);
 		pstmt.setString(4, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount >0) {
-			
+
 			NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeID, sUserID);
 			if (DBAudit.getAuditOn()) {
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
@@ -1650,7 +1832,7 @@ public class DBNode {
 
 
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
+			if(!getImporting()/* && !getQuestmapImporting()*/) {
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
@@ -1672,13 +1854,15 @@ public class DBNode {
 	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
 	 *	@param sNodeID, the id of the node to set the modification date for.
 	 *	@param dModificationDate java.util.Date, the new modification date for the node record.
-	 *  @param sLastModAuthor the author name of the person who made this modification. 
+	 *  @param sLastModAuthor the author name of the person who made this modification.
 	 *  @param sUserID the id of the current user logged in. *
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setModified(DBConnection dbcon, String sNodeID, 
+	public static boolean setModified(DBConnection dbcon, String sNodeID,
 			Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1692,7 +1876,12 @@ public class DBNode {
 		pstmt.setString(2, sLastModAuthor);
 		pstmt.setString(3, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount >0) {
@@ -1701,9 +1890,9 @@ public class DBNode {
 				DBAudit.auditNode(dbcon, DBAudit.ACTION_EDIT, node);
 			}
 
-			
+
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
+			if(!getImporting() /*&& !getQuestmapImporting()*/) {
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
@@ -1726,13 +1915,15 @@ public class DBNode {
 	 *	@param sNodeID, the id of the node to set the type for.
 	 *	@param sAuthor, the new author for this node.
 	 *	@param dModificationDate java.util.Date, the date for this modification to the node record.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
-	 * @param sUserID the id of the current user logged in. 	 
+	 * @param sLastModAuthor the author name of the person who made this modification.
+	 * @param sUserID the id of the current user logged in.
 	 *	@return boolean value, the success or failure of the operation.
 	 *	@exception java.sql.SQLException
 	 */
-	public static boolean setAuthor(DBConnection dbcon, String sNodeID, String sAuthor, 
+	public static boolean setAuthor(DBConnection dbcon, String sNodeID, String sAuthor,
 			java.util.Date dModificationDate, String sLastModAuthor, String sUserID) throws SQLException {
+
+		dModificationDate = (new java.util.Date());
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -1746,7 +1937,12 @@ public class DBNode {
 		pstmt.setString(3, sLastModAuthor);
 		pstmt.setString(4, sNodeID);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount >0) {
@@ -1756,7 +1952,7 @@ public class DBNode {
 			}
 
 			// Lakshmi (4/24/06) modify the state info to READ for the current user both in DB and local
-			if(!getImporting() && !getQuestmapImporting()) {
+			if(!getImporting() /*&& !getQuestmapImporting()*/) {
 				boolean updated = DBNodeUserState.updateUsers(dbcon, sNodeID, ICoreConstants.READSTATE, ICoreConstants.MODIFIEDSTATE) ;
 				int state = node.getState();
 				if(state == ICoreConstants.UNREADSTATE){
@@ -1781,7 +1977,7 @@ public class DBNode {
 	 * @param sUserID the id of the current user.
 	 * @return Enumeration, a list of all <code>View</code> objects in the Home window.
 	 * @throws SQLException
-	 */	
+	 */
 	/*
 	 * Lakshmi - 1/31/06
 	 */
@@ -1791,11 +1987,16 @@ public class DBNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
-		
+
 		PreparedStatement pstmt = con.prepareStatement(GET_CHILDNODES_QUERY);
 		pstmt.setString(1, viewID);
-		ResultSet rs = pstmt.executeQuery();
-				
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
 		NodeSummary nodeSummary =  null;
 		try {
 		if (rs != null) {
@@ -1804,21 +2005,21 @@ public class DBNode {
 				vtChildNodes.add(nodeSummary);
 			}
 		}
-		
+
 		} catch (Exception e){
 			e.printStackTrace();
 		}
-		pstmt.close(); 
+		pstmt.close();
 		return vtChildNodes.elements();
 	}
-	
+
 	/**
 	 *  Returns the views in the given view id
 	 * @param dbcon DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
 	 * @param viewID the id of view whose child nodes are required.
 	 * @return Enumeration, a list of all <code>View</code> objects in the Home window.
 	 * @throws SQLException
-	 */	
+	 */
 	/*
 	 * Lakshmi - 10/19/06
 	 */
@@ -1828,11 +2029,16 @@ public class DBNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
-		
+
 		PreparedStatement pstmt = con.prepareStatement(GET_CHILDVIEWS_QUERY);
 		pstmt.setString(1, viewID);
-		ResultSet rs = pstmt.executeQuery();
-		
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
 		try {
 			if (rs != null) {
 				while (rs.next()) {
@@ -1845,37 +2051,37 @@ public class DBNode {
 		} catch (Exception e){
 			e.printStackTrace();
 		}
-		pstmt.close(); 
+		pstmt.close();
 		return vtChildViews;
 	}
-	
+
 	/** Used to check for maps within maps and stop never-ending loop.*/
 	private static Hashtable htCheckViews = null;
-	
+
 	/**
 	 *  Returns all views to full depth from the given view id
 	 * @param dbcon DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
 	 * @param viewID the id of view whose child nodes are required.
 	 * @return Vector, a list of all <code>View</code> objects in the Home window.
 	 * @throws SQLException
-	 */	
+	 */
 	/*
 	 * Lakshmi - 1/31/06
 	 */
 	public static Vector getAllChildViews(DBConnection dbcon, String viewID, String userID) throws SQLException {
-		 
+
 		htCheckViews = new Hashtable(51);
-		
-		Vector views = new Vector();		
+
+		Vector views = new Vector();
 		Vector temp = new Vector();
-		
+
 		temp = getChildViews(dbcon, viewID, userID, temp);
 		views.addAll(temp);
-		
-		htCheckViews.put(viewID, viewID);		
-		
+
+		htCheckViews.put(viewID, viewID);
+
 		boolean stop = false;
-		
+
 		while(!stop) {
 			Vector nextLevel = new Vector();
 			for(int i = 0; i < temp.size(); i++ ){
@@ -1884,9 +2090,9 @@ public class DBNode {
 				if (!htCheckViews.containsKey(viewID)) {
 					nextLevel = getChildViews(dbcon, viewID, userID, nextLevel);
 					htCheckViews.put(viewID, viewID);
-				} 
+				}
 			}
-			
+
 			if(nextLevel.size() <= 0){
 				stop = true;
 			} else {
@@ -1895,16 +2101,16 @@ public class DBNode {
 				for(int i = 0; i < temp.size(); i ++){
 					View view = ((View)temp.get(i));
 					if(!views.contains(view)){
-						views.addElement(view);	
+						views.addElement(view);
 					} else {
 						temp.remove(view);
 					}
-				}				
+				}
 			}
 		}
 		return views;
 	}
-	
+
 	/**
 	 *  Returns all the Nodes not assigned to any View.
 	 *
@@ -1921,13 +2127,18 @@ public class DBNode {
 			return nodes;
 
 		Statement pstmt = con.createStatement();
-		ResultSet rs = pstmt.executeQuery(GET_LIMBO_NODE_QUERY);
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery(GET_LIMBO_NODE_QUERY);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodeSummary node = null;
 		if (rs != null) {
 
 			while (rs.next()) {
-				node = processNode(dbcon, rs, userID);				
+				node = processNode(dbcon, rs, userID);
 				nodes.addElement(node);
 			}
 		}
@@ -1953,16 +2164,21 @@ public class DBNode {
 
 		PreparedStatement pstmt = con.prepareStatement(GET_NODE_SUMMARY_QUERY);
 		pstmt.setString(1, sNodeID);
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodeSummary node = null;
 		if (rs != null) {
 
 			while (rs.next()) {
-				node = processNode(dbcon, rs, userID);				
+				node = processNode(dbcon, rs, userID);
 			}
 		}
-		
+
 
 		if (pstmt != null)
 			pstmt.close();
@@ -1988,16 +2204,21 @@ public class DBNode {
 
 		PreparedStatement pstmt = con.prepareStatement(GET_ANY_NODE_SUMMARY_QUERY);
 		pstmt.setString(1, sNodeID);
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodeSummary node = null;
 		if (rs != null) {
 
 			while (rs.next()) {
-				node = processNode(dbcon, rs, userID);				
+				node = processNode(dbcon, rs, userID);
 			}
 		}
-		
+
 		if (pstmt != null)
 			pstmt.close();
 
@@ -2021,16 +2242,21 @@ public class DBNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_DELETED_NODE_SUMMARY_QUERY_ID);
 		pstmt.setString(1, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodeSummary node = null;
 		if (rs != null) {
 
 			while (rs.next()) {
-				node = processNode(dbcon, rs, userID);				
+				node = processNode(dbcon, rs, userID);
 			}
 		}
-	
+
 		pstmt.close();
 		return node;
 	}
@@ -2051,12 +2277,17 @@ public class DBNode {
 			return null;
 
 		PreparedStatement pstmt = con.prepareStatement(GET_ALLVIEWS_QUERY);
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 	  	View view = null;
 		if (rs != null) {
 			while (rs.next()) {
-				view = (View)processNode(dbcon, rs, userID);				
+				view = (View)processNode(dbcon, rs, userID);
 				views.addElement(view);
 			}
 		}
@@ -2082,12 +2313,17 @@ public class DBNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_VIEW_QUERY);
 		pstmt.setString(1, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 	  	View view = null;
 		if (rs != null) {
 			while (rs.next()) {
-				view = (View)processNode(dbcon, rs, userID);				
+				view = (View)processNode(dbcon, rs, userID);
 			}
 		}
 		pstmt.close();
@@ -2111,7 +2347,12 @@ public class DBNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_IMPORTED_NODE_QUERY);
 		pstmt.setString(1, sOriginalID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodeSummary node = null;
 		if (rs != null) {
@@ -2138,14 +2379,19 @@ public class DBNode {
 			return null;
 
 		PreparedStatement pstmt = con.prepareStatement(GET_DELETED_NODE_SUMMARY_QUERY);
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		Vector vtNodes = new Vector(51);
 		NodeSummary node = null;
 
 		if (rs != null) {
 
 			while (rs.next()) {
-				node = processNode(dbcon, rs, userID);				
+				node = processNode(dbcon, rs, userID);
 				vtNodes.addElement(node);
 			}
 		}
@@ -2172,7 +2418,12 @@ public class DBNode {
 		pstmt.setString(1, sNodeID);
 		pstmt.setInt(2, nPageNo);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodeDetailPage detail = null;
 		if (rs != null) {
@@ -2206,7 +2457,12 @@ public class DBNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_ALL_DETAIL_PAGES_QUERY);
 		pstmt.setString(1, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		Vector details = new Vector();
 		if (rs != null) {
@@ -2246,7 +2502,12 @@ public class DBNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_DELETESTATUS_QUERY);
 		pstmt.setString(1, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		if (rs != null) {
 			if (rs.next()) {
 				int status = rs.getInt(1);
@@ -2277,7 +2538,12 @@ public class DBNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_NODEEXISTS_QUERY);
 		pstmt.setString(1, sNodeID) ;
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		if (rs != null) {
 			while (rs.next()) {
 				String	sId	= rs.getString(1) ;
@@ -2310,14 +2576,18 @@ public class DBNode {
 
 		ResultSet rs = null;
 
-		rs = pstmt.executeQuery();
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		Vector vtNodes = new Vector(51);
 		NodeSummary node = null;
 
 		if (rs != null) {
 			while (rs.next()) {
-				node = processNode(dbcon, rs, userID);				
+				node = processNode(dbcon, rs, userID);
 				vtNodes.addElement(node);
 			}
 		}
@@ -2325,7 +2595,153 @@ public class DBNode {
 
 		return vtNodes.elements();
 	}
-	
+	/**
+	 *  Returns the total number of nodes in the Node table.	// Added by mlb 11/07
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@return long, count of nodes in the nodetable.
+	 *	@exception java.sql.SQLException
+	 */
+	public static long lGetNodeCount(DBConnection dbcon) throws SQLException {
+
+		long	nodecount = 0;
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return 0;
+
+		PreparedStatement pstmt = con.prepareStatement(COUNT_NODE_QUERY);
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+		try {
+			if (rs != null) {
+				rs.next();
+				nodecount = rs.getLong(1);
+			}
+		}
+		catch (Exception e){
+			System.out.println("Node count failed");
+			e.printStackTrace();
+		}
+		pstmt.close();
+		return nodecount;
+	}
+
+	/**
+	 *  Returns the total number of views (Maps/Lists in the Node table.	// Added by mlb 11/07
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@return long, count of nodes in the nodetable.
+	 *	@exception java.sql.SQLException
+	 */
+	public static long lGetViewCount(DBConnection dbcon) throws SQLException {
+
+		long	lViewCount = 0;
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return 0;
+
+		PreparedStatement pstmt = con.prepareStatement(COUNT_VIEW_QUERY);
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+		try {
+			if (rs != null) {
+				rs.next();
+				lViewCount = rs.getLong(1);
+			}
+		}
+		catch (Exception e){
+			System.out.println("View count failed");
+			e.printStackTrace();
+		}
+		pstmt.close();
+		return lViewCount;
+	}
+
+	/**
+	 *  Returns the number of parents the current node has.	// Added by mlb 01/08
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *  @param sNodeID - the node to search for the parents of
+	 *	@return int, count of the number of this node's parents.
+	 *	@exception java.sql.SQLException
+	 */
+	public static int iGetParentCount(DBConnection dbcon, String sNodeID) throws SQLException {
+		int iCount = 0;
+
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return 0;
+
+		PreparedStatement pstmt = con.prepareStatement(COUNT_PARENTS_QUERY);
+		pstmt.setString(1, sNodeID) ;
+
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		if (rs != null) {
+			rs.next();
+			iCount = rs.getInt(1);
+		}
+		pstmt.close();
+		return iCount;
+	}
+
+	/**
+	 *  Returns the number of nodes marked for deletion in the database.	// Added by mlb 01/08
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@return int, count of the number of this node's parents.
+	 *	@exception java.sql.SQLException
+	 */
+	public static int iGetDeletedNodeCount(DBConnection dbcon) throws SQLException {
+		int iCount = 0;
+
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return 0;
+
+		PreparedStatement pstmt = con.prepareStatement(GET_DELETED_NODE_COUNT_QUERY);
+
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		if (rs != null) {
+			rs.next();
+			iCount = rs.getInt(1);
+		}
+		pstmt.close();
+		return iCount;
+	}
+
+	/**
+	 *  Marks all nodes in the current project as Seen by the current user.	// Added by mlb 02/08
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@param sUserID - theUserID of the current user
+	 *	@exception java.sql.SQLException
+	 */
+	public static void vMarkProjectSeen(DBConnection dbcon, String sUserID) throws SQLException {
+		DBNodeUserState.vMarkProjectSeen(dbcon, sUserID);
+	}
+
+
 	/**
 	 * 	Helper method to extract and build a node object from a result set item.
 	 *  the ResultSet item is expected to contains the follow fields in the following order:
@@ -2338,9 +2754,9 @@ public class DBNode {
 	 *	@return com.compendium.core.datamodel.NodeSummary, the NodeSummary object created from the passed data.
 	 */
 	protected static NodeSummary processNode(DBConnection dbcon, ResultSet rs, String sUserID) throws SQLException {
-		
+
 		NodeSummary node = null;
-		
+
 		String	sId			= rs.getString(1);
 		int		nType		= rs.getInt(2);
 		String 	sXNodeType 	= rs.getString(3);
@@ -2348,6 +2764,10 @@ public class DBNode {
 		String	sAuthor		= rs.getString(5);
 		Date	oCDate		= new Date(new Double(rs.getLong(6)).longValue());
 		Date	oMDate		= new Date(new Double(rs.getLong(7)).longValue());
+		// Matt Stucky 8/10/2011 - DO NOT CHANGE MOD DATE
+		//   doing so resulted in loss of current node EDIT label focus on Timed Data Refresh
+		//Date	oMDate		= new java.util.Date();
+
 		String	sLabel		= rs.getString(8);
 		String	sDetail		= rs.getString(9);
 		String	sLastModAuthor = rs.getString(10);
@@ -2355,32 +2775,101 @@ public class DBNode {
 		if (sLastModAuthor == null) {
 			sLastModAuthor=sAuthor;
 		}
-		
+
+// mlb: possible performance improvement here.  Disabled for now because I'm not 100% confident
+// that all changes to a node are reflected in the NodeSummary object before they go to the database
+//		if (NodeSummary.bIsInCache(sId)) {
+//			return NodeSummary.getNodeSummary(sId);
+//		}
+
 		int nState = DBNodeUserState.get(dbcon, sId, sUserID);
-		
+
 		if (View.isViewType(nType)) {
-			node = View.getView(sId, nType, sXNodeType, sOriginalID, 
+			node = View.getView(sId, nType, sXNodeType, sOriginalID,
 					nState, sAuthor, oCDate, oMDate, sLabel, sDetail, sLastModAuthor);
-			node.setLocalImage(DBReferenceNode.getImage(dbcon, sId));
-			node.setLocalSource(DBReferenceNode.getReference(dbcon, sId));
-			node.setLocalImageSize(DBReferenceNode.getImageSize(dbcon, sId));			
+//			node.setLocalImage(DBReferenceNode.getImage(dbcon, sId));
+//			node.setLocalSource(DBReferenceNode.getReference(dbcon, sId));
+//			node.setLocalImageSize(DBReferenceNode.getImageSize(dbcon, sId));
+			DBReferenceNode.getIRIS(dbcon, sId, node);
 		}
 		else if(ShortCutNodeSummary.isShortCutNodeType(nType)) {
 			NodeSummary refNode = DBShortCutNode.getShortCutNode(dbcon, sId, sUserID);
-			node = ShortCutNodeSummary.getShortCutNodeSummary(sId, nType, sXNodeType, sOriginalID, 
+			node = ShortCutNodeSummary.getShortCutNodeSummary(sId, nType, sXNodeType, sOriginalID,
 					nState, sAuthor, oCDate, oMDate, sLabel, sDetail, null, sLastModAuthor);
 			((ShortCutNodeSummary)node).setReferredNode(refNode);
 		}
 		else {
-			node = NodeSummary.getNodeSummary(sId, nType, sXNodeType, sOriginalID, 
+			node = NodeSummary.getNodeSummary(sId, nType, sXNodeType, sOriginalID,
 					nState, sAuthor, oCDate, oMDate, sLabel, sDetail, sLastModAuthor);
 			if (nType == ICoreConstants.REFERENCE) {
-				node.setLocalImage(DBReferenceNode.getImage(dbcon, sId));
-				node.setLocalSource(DBReferenceNode.getReference(dbcon, sId));
-				node.setLocalImageSize(DBReferenceNode.getImageSize(dbcon, sId));
+//				node.setLocalImage(DBReferenceNode.getImage(dbcon, sId));
+//				node.setLocalSource(DBReferenceNode.getReference(dbcon, sId));
+//				node.setLocalImageSize(DBReferenceNode.getImageSize(dbcon, sId));
+				DBReferenceNode.getIRIS(dbcon, sId, node);
 			}
 		}
-		
+
+		return node;
+	}
+
+	/**
+	 * 	Helper method to extract and build a node object from a node id.
+	 *
+	 *	@param dbcon the DBConnection object to access the database with.
+	 *  @param sNodeID the nodeID to search from.
+	 *  @param sUserID the id of the user getting this data.
+	 *	@return com.compendium.core.datamodel.NodeSummary, the NodeSummary object created from the passed data.
+	 */
+	protected static NodeSummary processNode(DBConnection dbcon, String sNodeID, String sUserID) throws SQLException {
+
+		Connection con = dbcon.getConnection();
+		Statement statement = con.createStatement() ;
+		ResultSet rs = statement.executeQuery("select * from Node where NodeID = '" + sNodeID + "'");
+
+		rs.next();
+
+		NodeSummary node = null;
+
+		String	sId			= rs.getString("NodeID");
+		int		nType		= rs.getInt("NodeType");
+		String 	sXNodeType 	= rs.getString("ExtendedNodeType");
+		String	sOriginalID	= rs.getString("OriginalID");
+		String	sAuthor		= rs.getString("Author");
+		Date	oCDate		= new Date(new Double(rs.getLong("CreationDate")).longValue());
+		Date	oMDate		= new Date(new Double(rs.getLong("ModificationDate")).longValue());
+		// Matt Stucky 8/10/2011 - DO NOT CHANGE MOD DATE
+		//   doing so resulted in loss of current node EDIT label focus on Timed Data Refresh
+		//Date	oMDate		= new java.util.Date();
+
+		String	sLabel		= rs.getString("Label");
+		String	sDetail		= rs.getString("Detail");
+		String	sLastModAuthor = rs.getString("LastModAuthor");
+
+		if (sLastModAuthor == null) {
+			sLastModAuthor=sAuthor;
+		}
+
+		int nState = DBNodeUserState.get(dbcon, sId, sUserID);
+
+		if (View.isViewType(nType)) {
+			node = View.getView(sId, nType, sXNodeType, sOriginalID,
+					nState, sAuthor, oCDate, oMDate, sLabel, sDetail, sLastModAuthor);
+			DBReferenceNode.getIRIS(dbcon, sId, node);
+		}
+		else if(ShortCutNodeSummary.isShortCutNodeType(nType)) {
+			NodeSummary refNode = DBShortCutNode.getShortCutNode(dbcon, sId, sUserID);
+			node = ShortCutNodeSummary.getShortCutNodeSummary(sId, nType, sXNodeType, sOriginalID,
+					nState, sAuthor, oCDate, oMDate, sLabel, sDetail, null, sLastModAuthor);
+			((ShortCutNodeSummary)node).setReferredNode(refNode);
+		}
+		else {
+			node = NodeSummary.getNodeSummary(sId, nType, sXNodeType, sOriginalID,
+					nState, sAuthor, oCDate, oMDate, sLabel, sDetail, sLastModAuthor);
+			if (nType == ICoreConstants.REFERENCE) {
+				DBReferenceNode.getIRIS(dbcon, sId, node);
+			}
+		}
+
 		return node;
 	}
 }

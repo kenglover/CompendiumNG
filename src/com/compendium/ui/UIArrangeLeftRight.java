@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.util.*;
 import java.awt.*;
@@ -96,9 +97,9 @@ public class UIArrangeLeftRight implements IUIArrange {
 
 	/** The number of children above the pointer position */
 	private int childSizeAbove 									= 0;
-	
-	/** max number a node can recurse */ 
-	private int recursionCount  								= 3; 
+
+	/** max number a node can recurse */
+	private int recursionCount  								= 3;
 
 	/**
 	 * Constructor. Does nothing.
@@ -127,7 +128,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 	public boolean processView(View view) {
 
 		clearData();
-		
+
 		IModel model = ProjectCompendium.APP.getModel();
 		session = model.getSession();
 		vs = model.getViewService();
@@ -169,7 +170,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 		if (!startLevelCalculation(view)) {
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -224,7 +225,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 				if (level > 0) {
 					int sepLevel = horizontalSep[level-1];
 					if(width > sepLevel)
-						horizontalSep[level-1] = width + FormatProperties.arrangeLeftHorizontalGap;
+						horizontalSep[level-1] = width + APP_PROPERTIES.getArrangeLeftHorizontalGap();
 				}
 			}
 	// begin edit - Lakshmi (10/25/05)
@@ -484,7 +485,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 			}
 			Vector nodeListAtLevel1 = (Vector)nodeLevelList.elementAt(0);
 			secondYPositionForLevel1 = 0;
-			
+
 			// SOME SORT OF NODE ORDERING BY LEVEL AND Y POSITION ?
 			//-- begin sort(upto the current node in for loop) for level one based on y-position
 			//-- find a node's y position > current node's y position in level 1
@@ -523,7 +524,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 						if ( (previousLevel != null) && (previousLevel.intValue() < (nLevel+1))) {
 							htNodesLevel.put(node.getId(),new Integer(nLevel+1));
 						}
-	
+
 						//increment the vector of nodes below this node
 						Vector oldVector = null;
 						if(htNodesBelow.get(levelOneNode.getId()) != null)
@@ -532,7 +533,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 							oldVector = new Vector();
 						int yPosition = ( (NodePosition)nodePositionsCloneHashtable.get(node.getId())).getYPos();
 						int secondYPosition = 0;
-	
+
 						int index = 0;
 						boolean found = false;
 						while ((index < oldVector.size()) && (yPosition > secondYPosition)) {
@@ -543,7 +544,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 							}
 							index++;
 						}
-	
+
 						if (index == oldVector.size()) {
 							if (yPosition > secondYPosition) {
 								oldVector.addElement(node.getId());
@@ -554,13 +555,13 @@ public class UIArrangeLeftRight implements IUIArrange {
 						} else if (!found) {
 							oldVector.insertElementAt(node.getId(), (index == 0)?index:index - 1);
 						}
-	
+
 						NodeSummary mainNode = (NodeSummary)htNodes.get(node.getId());
 						//add the parent
-	
+
 						Vector vtParentNodes = new Vector();
 						if (htNodesAbove.get(node.getId()) != null) {
-	
+
 	//begin edit - Lakshmi (10/25/05)
 	// 				Get all parents for a node. Keeping track of all the parents, helps to sort child nodes and position them around
 	//their parents if possible.
@@ -585,7 +586,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 						} //end else
 						htNodesAbove.put(node.getId(), vtParentNodes);
 						mainNode.setParentNode((NodeSummary)htNodes.get((String) vtParentNodes.lastElement()));
-						
+
 	// end edit	- Lakshmi
 						if ((previousLevel != null) && (previousLevel.intValue() != 0)) {
 							if (previousLevel.intValue() < (nLevel + 1)) {
@@ -594,26 +595,26 @@ public class UIArrangeLeftRight implements IUIArrange {
 							else {
 								//oldVector.addElement(node.getId());
 								htNodesBelow.put(levelOneNode.getId(),oldVector);
-	
+
 								//set the node in the position vector
 								vtNodesLevel.addElement(node.getId());
-	
+
 								if (!startRecursiveCalculations(node,(nLevel+1))) {
 									return false;
 								}
-	
+
 								continue;
 							}
 						}
-	
+
 						while (nodeLevelList.size() < (nLevel + 1)) {
 							nodeLevelList.addElement(new Vector());
 						}
-	
+
 						Vector nodeListAtLevel = (Vector)nodeLevelList.elementAt(nLevel);
 						secondYPosition = 0;
 						index = 0;
-	
+
 						while ((index < nodeListAtLevel.size()) && (yPosition > secondYPosition)) {
 							secondYPosition = ( (NodePosition)nodePositionsCloneHashtable.get(nodeListAtLevel.elementAt(index))).getYPos();
 							index++;
@@ -628,13 +629,13 @@ public class UIArrangeLeftRight implements IUIArrange {
 						else {
 							nodeListAtLevel.insertElementAt(node.getId(), (index == 0)?index:index - 1);
 						}
-	
+
 						//oldVector.addElement(node.getId());
 						htNodesBelow.put(levelOneNode.getId(),oldVector);
-	
+
 						//set the node in the position vector
 						vtNodesLevel.addElement(node.getId());
-	
+
 						if (!startRecursiveCalculations(node,(nLevel+1))) {
 							return false;
 						}
@@ -645,9 +646,9 @@ public class UIArrangeLeftRight implements IUIArrange {
 		return true;
 	}
 
-	
+
 	private Hashtable nodesRecursed = new Hashtable(51);
-	
+
 	/**
 	 * Helper method. This will calculate recursively all the nodes below. the given node.
 	 * @param node com.compendium.core.datamodel.NodeSummary, the node to calculate for.
@@ -668,7 +669,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 		} else {
 			nodesRecursed.put(node.getId(), count);
 		}
-		
+
 		NodeSummary nodeFrom = new NodeSummary();
 
 		String sToNodeID = node.getId();
@@ -777,7 +778,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 				} //end else
 				htNodesAbove.put(sFromNodeID, vtParentNodes);
 				oFromNode.setParentNode((NodeSummary)htNodes.get(vtParentNodes.lastElement()));
-				
+
 // end edit	 - Lakshmi
 
 				if ((previousLevel != null) && (previousLevel.intValue() != 0)) {
@@ -1149,7 +1150,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 	}
 
 	private Hashtable nodesYed = new Hashtable(51);
-	
+
 	/**
 	 * Helper Method. This method is added to enable the child nodes to be positioned at the center relative to the parent.
 	 * @param viewFrame com.compendium.ui.UIViewFrame, the frame of the node to calculate the y positions for.
@@ -1173,7 +1174,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 		}
 	/*	if(recursionCount > htNodes.size() || nodesYed.containsKey(nodeId)){
 			return yPosition;
-		} 
+		}
 		nodesYed.put(nodeId, nodeId);
 		recursionCount ++;
 	*/
@@ -1211,8 +1212,8 @@ public class UIArrangeLeftRight implements IUIArrange {
 				Point p1 = UIUtilities.scalePoint(nodeHeight, nodeHeight, scale);
 				nodeHeight = p1.x;
 
-				if ((previousNodeYPosition + nodeHeight + FormatProperties.arrangeLeftVerticalGap) > newYPosition) {
-					newYPosition = previousNodeYPosition + nodeHeight + (FormatProperties.arrangeLeftVerticalGap);
+				if ((previousNodeYPosition + nodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap()) > newYPosition) {
+					newYPosition = previousNodeYPosition + nodeHeight + (APP_PROPERTIES.getArrangeLeftVerticalGap());
 				}
 			}
 
@@ -1242,7 +1243,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 				double scale = viewPane.getScale();
 
 				if(indexOfPreviousNode > -1) {
-					
+
 					String  sPreviousNodeID = (String)((Vector)nodeLevelList.elementAt(nodeLevel-1)).elementAt(indexOfPreviousNode);
 					UINode previousNode = ((UINode)viewPane.get(sPreviousNodeID));
 					// BUG FIX - Lakshmi 9/15/06 for NullPointerException
@@ -1269,15 +1270,15 @@ public class UIArrangeLeftRight implements IUIArrange {
 							String sPreviousNodeParentId =  previousNodeSum.getParentNode().getId();
 
 							if (!((Vector)htNodesAbove.get(nodeId)).contains(sPreviousNodeParentId)){
-								yPosition = parentPreviousNodePos + parentPreviousNodeHt + FormatProperties.arrangeLeftVerticalGap ;
+								yPosition = parentPreviousNodePos + parentPreviousNodeHt + APP_PROPERTIES.getArrangeLeftVerticalGap() ;
 							}//end if
 						}//end if
 					}//end if
 
 
 //end edit - Lakshmi
-					if ((previousNodeYPosition + nodeHeight +FormatProperties.arrangeLeftVerticalGap) > yPosition) {
-						yPosition = previousNodeYPosition + nodeHeight + (FormatProperties.arrangeLeftVerticalGap);
+					if ((previousNodeYPosition + nodeHeight +APP_PROPERTIES.getArrangeLeftVerticalGap()) > yPosition) {
+						yPosition = previousNodeYPosition + nodeHeight + (APP_PROPERTIES.getArrangeLeftVerticalGap());
 					}
 					node.getNodePosition().setPos(new Point(pos.x, yPosition));
 				} else {
@@ -1296,7 +1297,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 					Point p1 = UIUtilities.scalePoint(nodeHeight, nodeHeight, scale);
 					nodeHeight = p1.x;
 
-					yPosition += (FormatProperties.arrangeLeftVerticalGap + nodeHeight);
+					yPosition += (APP_PROPERTIES.getArrangeLeftVerticalGap() + nodeHeight);
 
 				}
 		    }
@@ -1306,7 +1307,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 	}//end calculateYPosition
 
 	private Hashtable nodesYFinalized = new Hashtable();
-	
+
 	/**
 	 * This method is to enable the child nodes to be positioned at the center relative to the parent after compact.
 	 * @param viewFrame com.compendium.ui.UIViewFrame, the frame of the node to finalize the y positions for.
@@ -1339,7 +1340,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 		Point pos = oNode.getNodePosition().getPos();
 
 		double scale = viewPane.getScale();
-		
+
 		if(vtChildNodes != null){
 			for (int i =0; i< vtChildNodes.size(); i++){
 				finalizeYPos(viewFrame, (String)vtChildNodes.get(i));
@@ -1374,8 +1375,8 @@ public class UIArrangeLeftRight implements IUIArrange {
 					Point p2 = UIUtilities.scalePoint(nodeHeight, nodeHeight, scale);
 					nodeHeight = p2.x;
 
-					if ((previousNodeYPosition + nodeHeight + FormatProperties.arrangeLeftVerticalGap) > nodePosition) {
-						nodePosition = previousNodeYPosition + nodeHeight + (FormatProperties.arrangeLeftVerticalGap);
+					if ((previousNodeYPosition + nodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap()) > nodePosition) {
+						nodePosition = previousNodeYPosition + nodeHeight + (APP_PROPERTIES.getArrangeLeftVerticalGap());
 						oNode.getNodePosition().setPos(new Point (pos.x , nodePosition));
 					}//end if
 				}//end if
@@ -1404,7 +1405,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 			nodeHeight = p1.x;
 
 			if ((previousNodeYPosition + nodeHeight) > nodePosition) {
-				nodePosition = previousNodeYPosition + nodeHeight + (FormatProperties.arrangeLeftVerticalGap);
+				nodePosition = previousNodeYPosition + nodeHeight + (APP_PROPERTIES.getArrangeLeftVerticalGap());
 				oNode.getNodePosition().setPos(new Point(pos.x , nodePosition));
 			}//end if
 		}//end if
@@ -1425,7 +1426,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 			return ;
 		}
 		recursionCount ++;
-	*/	
+	*/
 		UINode oNode = ((UINode)viewPane.get(sNodeID));
 		Point pos = oNode.getNodePosition().getPos();
 		Vector vtChildNodes = (Vector) htNodesBelow.get(sNodeID);
@@ -1456,8 +1457,8 @@ public class UIArrangeLeftRight implements IUIArrange {
 				Point p2 = UIUtilities.scalePoint(nodeHeight, nodeHeight, viewPane.getScale());
 				nodeHeight = p2.x;
 
-				if ((previousNodeYPosition + nodeHeight + FormatProperties.arrangeLeftVerticalGap) > nodePosition) {
-					nodePosition = previousNodeYPosition + nodeHeight + (FormatProperties.arrangeLeftVerticalGap);
+				if ((previousNodeYPosition + nodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap()) > nodePosition) {
+					nodePosition = previousNodeYPosition + nodeHeight + (APP_PROPERTIES.getArrangeLeftVerticalGap());
 					oNode.getNodePosition().setPos(new Point (pos.x , nodePosition));
 				}//end if
 			}//end if
@@ -1489,7 +1490,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 				String sPreviousNodeID = (String)((Vector)nodeLevelList.get(((Integer)htNodesLevel.get(sParentId)).intValue() -1)).get(index - 1);
 				UINode previousNode = (UINode) viewPane.get(sPreviousNodeID);
 				NodePosition nodePosition = previousNode.getNodePosition();
-				yPos = nodePosition.getYPos() + previousNode.getHeight() + FormatProperties.arrangeLeftVerticalGap;
+				yPos = nodePosition.getYPos() + previousNode.getHeight() + APP_PROPERTIES.getArrangeLeftVerticalGap();
 			} else {
 				yPos = findPreviousNodeYPos(viewPane, sParentId);
 			}//end else
@@ -1502,7 +1503,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 	private Hashtable nodesCompacted = new Hashtable(51);
 	private Hashtable nodesCheckedForCompact = new Hashtable(51);
 	private Hashtable nodesCompact = new Hashtable(51);
-	
+
 	/**
 	 * Helper Method. This method compacts the nodes in the given list.
 	 * @param viewFrame com.compendium.ui.UIViewFrame, the frame of the node to compact.
@@ -1535,14 +1536,14 @@ public class UIArrangeLeftRight implements IUIArrange {
 			} else {
 				continue;
 			}
-	*/		
+	*/
 			Vector childNodeList = (Vector)htNodesBelow.get(nodeID);
 
 			if (childNodeList != null) {
 				compactNodesInList(viewFrame, childNodeList);
 			}
 		}
-		
+
 		int currentNodeYPosition = 0;
 		int previousNodeYPosition = 0;
 		int compactAmount = 0;
@@ -1571,10 +1572,10 @@ public class UIArrangeLeftRight implements IUIArrange {
 					UINode previousNode = (UINode)viewPane.get((String)((Vector)nodeLevelList.get(level)).get(index - 1));
 					int previousNodeYPos = previousNode.getNodePosition().getYPos();
 					int previousNodeHeight = previousNode.getHeight();
-					if(centerPosition > previousNodeYPos + previousNodeHeight + FormatProperties.arrangeLeftVerticalGap ){
+					if(centerPosition > previousNodeYPos + previousNodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap() ){
 						node.getNodePosition().setPos(new Point(pos.x, centerPosition));
 					} else {
-						node.getNodePosition().setPos(new Point(pos.x, previousNodeYPos + previousNodeHeight + FormatProperties.arrangeLeftVerticalGap));
+						node.getNodePosition().setPos(new Point(pos.x, previousNodeYPos + previousNodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap()));
 					}
 				}//end if
 			}//end if
@@ -1595,12 +1596,12 @@ public class UIArrangeLeftRight implements IUIArrange {
 			Point p1 = UIUtilities.scalePoint(nodeHeight, nodeHeight, scale);
 			nodeHeight = p1.x;
 
-			if ((currentNodeYPosition - previousNodeYPosition - nodeHeight) > FormatProperties.arrangeLeftVerticalGap) {
+			if ((currentNodeYPosition - previousNodeYPosition - nodeHeight) > APP_PROPERTIES.getArrangeLeftVerticalGap()) {
 				compactDoneForNodes.clear();
 
 				compactAmount = checkCompact(viewFrame,
 											 (String)nodeList.elementAt(i),
-											 currentNodeYPosition - previousNodeYPosition - FormatProperties.arrangeLeftVerticalGap - nodeHeight,
+											 currentNodeYPosition - previousNodeYPosition - APP_PROPERTIES.getArrangeLeftVerticalGap() - nodeHeight,
 											 compactDoneForNodes, vtLevelChecked);
 				if (compactAmount > 0) {
 					compact(viewFrame, (String)nodeList.elementAt(i), compactAmount, compactDoneForNodes);
@@ -1633,11 +1634,11 @@ public class UIArrangeLeftRight implements IUIArrange {
 
 					int centerPosition = firstNodeYPosition + (lastNodeYPosition + lastNode.getHeight() - firstNodeYPosition)/2;
 					centerPosition = centerPosition - node.getHeight()/2;
-					if ((previousNodeYPosition + previousNodeHeight + FormatProperties.arrangeLeftVerticalGap) < centerPosition) {
+					if ((previousNodeYPosition + previousNodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap()) < centerPosition) {
 						node.getNodePosition().setPos(new Point(pos.x, centerPosition));
 					}
 					else {
-						node.getNodePosition().setPos(new Point(pos.x, previousNodeYPosition + previousNodeHeight + FormatProperties.arrangeLeftVerticalGap));
+						node.getNodePosition().setPos(new Point(pos.x, previousNodeYPosition + previousNodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap()));
 					}//end else
 				}//end if
 			}//end if
@@ -1656,7 +1657,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 		UIViewPane viewPane = ((UIMapViewFrame)viewFrame).getViewPane();
 
 		compactDoneForNodes.put(nodeId, new Boolean(false));
-		
+
 		Integer count = new Integer(1);
 		if(nodesCheckedForCompact.containsKey(nodeId)){
 			count = (Integer) nodesCheckedForCompact.get(nodeId);
@@ -1689,7 +1690,7 @@ public class UIArrangeLeftRight implements IUIArrange {
 			int previousNodeYPosition = previousNode.getNodePosition().getYPos();
 
 			double scale = viewPane.getScale();
-			
+
 			// ALLOW FOR FACT VIEW MIGHT BE SCALED
 			int nodeHeight = currentNode.getHeight();
 			Point p = UIUtilities.scalePoint(nodeHeight, nodeHeight, scale);
@@ -1700,9 +1701,9 @@ public class UIArrangeLeftRight implements IUIArrange {
 			Point p2 = UIUtilities.scalePoint(previousNodeHeight, previousNodeHeight, scale);
 			previousNodeHeight = p2.x;
 			if (!vtLevelChecked.contains(htNodesLevel.get(nodeId))) {
-				if ( (currentNodeYPosition - previousNodeYPosition - FormatProperties.arrangeLeftVerticalGap - previousNodeHeight) <
+				if ( (currentNodeYPosition - previousNodeYPosition - APP_PROPERTIES.getArrangeLeftVerticalGap() - previousNodeHeight) <
 						compactAmount) {
-						compactAmount = currentNodeYPosition - previousNodeYPosition - FormatProperties.arrangeLeftVerticalGap - previousNodeHeight;
+						compactAmount = currentNodeYPosition - previousNodeYPosition - APP_PROPERTIES.getArrangeLeftVerticalGap() - previousNodeHeight;
 					}//end if
 			}//end if
 
@@ -1763,8 +1764,8 @@ public class UIArrangeLeftRight implements IUIArrange {
 			Point p = UIUtilities.scalePoint(previousNodeHeight, previousNodeHeight, viewPane.getScale());
 			previousNodeHeight = p.x;
 
-			if ((pos.y - compactAmount) < (previousNodeYPosition + previousNodeHeight + FormatProperties.arrangeLeftVerticalGap)) {
-				yPosition = previousNodeYPosition + previousNodeHeight + FormatProperties.arrangeLeftVerticalGap;
+			if ((pos.y - compactAmount) < (previousNodeYPosition + previousNodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap())) {
+				yPosition = previousNodeYPosition + previousNodeHeight + APP_PROPERTIES.getArrangeLeftVerticalGap();
 			}
 			else {
 				yPosition = pos.y - compactAmount;

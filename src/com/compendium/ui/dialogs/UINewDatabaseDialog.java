@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.util.*;
 import java.awt.*;
@@ -260,7 +261,12 @@ public class UINewDatabaseDialog extends UIDialog implements ActionListener, Ite
 	public void onCreate() {
 
 		final String sNewName = (oNameField.getText()).trim();
-		if (!userPanel.testUserData()) {
+		//ArrayList<String> logins = new ArrayList<String>();
+		//for(Enumeration<?> e = (ProjectCompendium.APP.getModel().getUsers()).elements();e.hasMoreElements();) {
+		//	UserProfile up = (UserProfile)e.nextElement();
+		//	logins.add(up.getLoginName());
+		//}
+		if (!userPanel.testUserData(null, null)) {
 			return;
 		}
 
@@ -286,14 +292,14 @@ public class UINewDatabaseDialog extends UIDialog implements ActionListener, Ite
 				public void run() {
 					setVisible(false);
 					try {
-						DBNewDatabase newDatabase = new DBNewDatabase(FormatProperties.nDatabaseType, ProjectCompendium.APP.adminDatabase, oUser, oDefaultUser.isSelected(), mysqlname, mysqlpassword, mysqlip);
+						DBNewDatabase newDatabase = new DBNewDatabase(APP_PROPERTIES.getDatabaseType(), ProjectCompendium.APP.adminDatabase, oUser, oDefaultUser.isSelected(), mysqlname, mysqlpassword, mysqlip);
 
-						newDatabase.addProgressListener((DBProgressListener)manager);
+						newDatabase.addProgressListener(manager);
 
 						oThread = new ProgressThread("Creating new Project..", "New Project Created");
 						oThread.start();
 						newDatabase.createNewDatabase(sNewName);
-						newDatabase.removeProgressListener((DBProgressListener)manager);
+						newDatabase.removeProgressListener(manager);
 
 						ProjectCompendium.APP.updateProjects();
 
@@ -325,7 +331,13 @@ public class UINewDatabaseDialog extends UIDialog implements ActionListener, Ite
 					}
 					catch(SQLException ex) {
 						progressComplete();
-						//ex.printStackTrace();
+
+						ex.printStackTrace();
+						System.out.println("331 UINewDatabaseDialog insert SQLException: " + ex.getMessage());
+						System.out.println("332 UINewDatabaseDialog insert SQLState: " + ex.getSQLState());
+						System.out.println("333 UINewDatabaseDialog insert VendorError: " + ex.getErrorCode());
+						System.out.flush();
+
 						ProjectCompendium.APP.displayError("There was a problem creating the new project or user data due to:\n\n"+ex.getMessage(), "New Project");
 						onCancel();
 					}

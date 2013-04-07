@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -104,9 +103,6 @@ public class UIBackupDialog extends UIDialog implements ActionListener, IUIConst
 
 	/** The counter for the gridbag layout y position.*/
 	private int gridyStart = 0;
-	
-	/** The current user making the backup.*/
-	private UserProfile oUser	= null;
 
 	private boolean bCancelAfter = false;
 
@@ -119,8 +115,7 @@ public class UIBackupDialog extends UIDialog implements ActionListener, IUIConst
 	 * @param sDatabaseName, the system given name for the database being backed up.
 	 * @param nResumeAction, Indicates if this dialog has been launched during another request that will then need resuming.
 	 */
-	public UIBackupDialog(JFrame parent, UIDatabaseManagementDialog dlg, String sFriendlyName, String sDatabaseName, 
-						int nResumeAction, boolean bCancelAfter, UserProfile oUser ) {
+	public UIBackupDialog(JFrame parent, UIDatabaseManagementDialog dlg, String sFriendlyName, String sDatabaseName, int nResumeAction, boolean bCancelAfter ) {
 
 		super(parent, true);
 		oParent = parent;
@@ -129,7 +124,6 @@ public class UIBackupDialog extends UIDialog implements ActionListener, IUIConst
 		this.sDatabaseName = sDatabaseName;
 		this.sFriendlyName = sFriendlyName;
 		this.bCancelAfter = bCancelAfter;
-		this.oUser = oUser;
 
 		setTitle("Backup");
 
@@ -277,7 +271,7 @@ public class UIBackupDialog extends UIDialog implements ActionListener, IUIConst
 			dlg.onBackupPlain(sFriendlyName, sDatabaseName, nResume, bCancelAfter);
 		}
 		else if (rbToZip.isSelected() ) {
-			dlg.onBackupZip(sFriendlyName, sDatabaseName, nResume, rbKeepPaths.isSelected(), bCancelAfter, oUser);
+			dlg.onBackupZip(sFriendlyName, sDatabaseName, nResume, rbKeepPaths.isSelected(), bCancelAfter);
 		}
 	}
 }

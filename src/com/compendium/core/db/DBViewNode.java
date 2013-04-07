@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.awt.*;
@@ -67,7 +66,7 @@ public class DBViewNode {
 		"ShowWeight=?, SmallIcon=?, HideIcon=?, LabelWrapWidth=?, "+
 		"FontSize=?, FontFace=?, FontStyle=?, Foreground=?, Background=? " +
 		"WHERE NodeID=? AND CurrentStatus="+ICoreConstants.STATUS_ACTIVE;
-	
+
 	/** SQL statement to update the node formatting for all transcluded nodes to mathc the given formatting.*/
 	public final static String UPDATE_FORMATTING_QUERY =
 		"UPDATE ViewNode "+
@@ -75,43 +74,49 @@ public class DBViewNode {
 		"ShowWeight=?, SmallIcon=?, HideIcon=?, LabelWrapWidth=?, "+
 		"FontSize=?, FontFace=?, FontStyle=?, Foreground=?, Background=? " +
 		"WHERE NodeID=? AND ViewID=? AND CurrentStatus="+ICoreConstants.STATUS_ACTIVE;
-	
+
 	// MARK FOR DELETION
 	/** SQL statement to mark ViewNode record for deletion with the given ViewID and NodeID.*/
 	public final static String DELETE_VIEWNODE_QUERY =
 		"UPDATE ViewNode "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ? AND NodeID = ?";
 
 	/** SQL statement to mark ViewNode records for deletion with the given ViewID.*/
 	public final static String DELETE_VIEW_QUERY =
 		"UPDATE ViewNode "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ? ";
 
 	/** SQL statement to mark ViewNode records for deletion with the given NodeID.*/
-	public final static String DELETE_NODE_QUERY =
+	private final static String DELETE_NODE_QUERY =
 		"UPDATE ViewNode "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+"," +
+		"ModificationDate = ? " +
 		" WHERE NodeID = ? ";
 
 	// MARK AS ACTIVE - RESTORE
 	/** SQL statement to mark ViewNode record as active with the given ViewID and NodeID.*/
 	public final static String RESTORE_VIEWNODE_QUERY =
 		"UPDATE ViewNode "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ? AND NodeID = ?";
 
 	/** SQL statement to mark ViewNode records as active with the given ViewID.*/
 	public final static String RESTORE_VIEW_QUERY =
 		"UPDATE ViewNode "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ?";
 
 	/** SQL statement to mark ViewNode records as active with the given NodeID.*/
-	public final static String RESTORE_NODE_QUERY =
+	private final static String RESTORE_NODE_QUERY =
 		"UPDATE ViewNode "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+"," +
+		"ModificationDate = ? " +
 		" WHERE NodeID = ?";
 
 	// PURGE
@@ -155,7 +160,7 @@ public class DBViewNode {
 	public final static String GET_ANYVIEWNODE_QUERY =
 		"SELECT ViewID, NodeID, XPos, YPos, CreationDate, ModificationDate, CurrentStatus " +
 		"ShowTags, ShowText, ShowTrans, ShowWeight, SmallIcon, HideIcon, LabelWrapWidth, "+
-		"FontSize, FontFace, FontStyle, Foreground, Background " +				
+		"FontSize, FontFace, FontStyle, Foreground, Background " +
 		"FROM ViewNode "+
 		"WHERE ViewID = ? AND NodeID = ?";
 
@@ -170,7 +175,7 @@ public class DBViewNode {
 	public final static String GET_NODENODE_QUERY =
 		"SELECT ViewID, NodeID, XPos, YPos, CreationDate, ModificationDate, CurrentStatus " +
 		"ShowTags, ShowText, ShowTrans, ShowWeight, SmallIcon, HideIcon, LabelWrapWidth, "+
-		"FontSize, FontFace, FontStyle, Foreground, Background " +		
+		"FontSize, FontFace, FontStyle, Foreground, Background " +
 		"FROM ViewNode "+
 		"WHERE NodeID = ?";
 
@@ -239,14 +244,38 @@ public class DBViewNode {
 		"AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE;
 
 	/**
+	 * SQL statement to grab all the active nodes in a specific view
+	 */
+	public final static String GET_NODEPOSITIONS_SUMMARY_QUERY =
+		"SELECT Node.NodeID, Node.ModificationDate, " +
+		"ViewNode.ViewID, ViewNode.XPos, ViewNode.YPos "+
+		"FROM ViewNode, Node " +
+		"WHERE ViewNode.ViewID = ? AND ( ViewNode.NodeID = Node.NodeID ) "+
+		"AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE;
+
+	/**
+	 * SQL statement to join the node and the ViewNode tables to return Node data
+	 * for nodes that have been modified by someone else since we last loaded the view
+	 * from the database.
+	 */
+	public final static String GET_VIEWMODIFICATION_QUERY =
+		"SELECT Node.NodeID, Node.ModificationDate, Node.LastModAuthor, ViewNode.CurrentStatus " +
+		"FROM ViewNode, Node " +
+		"WHERE ( ViewNode.ViewID = ? )" +
+		"AND ( ViewNode.NodeID = Node.NodeID ) "+
+		"AND ( ViewNode.CurrentStatus = " + ICoreConstants.STATUS_ACTIVE + " ) " +
+		"AND (Node.LastModAuthor <> ? ) " +
+		"AND ( Node.ModificationDate > ? )";
+
+	/**
 	 * SQL statement to return a count of NodeIDs in the ViewNode tables with the given ViewID, if active.
 	 */
 	public final static String GET_NODECOUNT_QUERY =
 		"SELECT Count(NodeID) "+
 		"FROM ViewNode "+
 		"WHERE ViewID = ? "+
-		"AND CurrentStatus = "+ICoreConstants.STATUS_ACTIVE;	
-	
+		"AND CurrentStatus = "+ICoreConstants.STATUS_ACTIVE;
+
 	/**
 	 *  Inserts a new viewnode record in the database and returns a NodePosition object representing this record.
 	 *
@@ -263,6 +292,8 @@ public class DBViewNode {
 	public static NodePosition insert(DBConnection dbcon, View view, NodeSummary node, int x, int y,
 						java.util.Date creation, java.util.Date modification, String userID) throws SQLException  {
 
+		modification = new java.util.Date();
+
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
@@ -273,7 +304,7 @@ public class DBViewNode {
 		// CHECK ENTRY NOT ALREADY THERE AND POSSIBLY JUST MARKED FOR DELETION
 		// IF IT IS, RESTORE IT JUST TO BE ON THE SAFE SIDE
 		NodePosition nodePos = getAnyNodePosition(dbcon, view.getId(), node.getId(), userID);
-		if (nodePos != null) {			
+		if (nodePos != null) {
 			restore(dbcon, sViewID, sNodeID, userID);
 			return nodePos;
 		}
@@ -335,6 +366,8 @@ public class DBViewNode {
 						boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 						int nFontStyle, int nForeground, int nBackground) throws SQLException  {
 
+		modification = new java.util.Date();
+
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
@@ -353,7 +386,7 @@ public class DBViewNode {
 						modification, bShowTags, bShowText, bShowTrans, bShowWeight, bSmallIcon,
 						bHideIcon, nWrapWidth, nFontSize, sFontFace,
 						nFontStyle, nForeground, nBackground, sUserID)) {
-								
+
 					nodePos.setFontFace(sFontFace);
 					nodePos.setFontSize(nFontSize);
 					nodePos.setFontStyle(nFontStyle);
@@ -365,15 +398,15 @@ public class DBViewNode {
 					nodePos.setShowTags(bShowTags);
 					nodePos.setShowText(bShowText);
 					nodePos.setShowTrans(bShowTrans);
-					nodePos.setShowWeight(bShowWeight);	
+					nodePos.setShowWeight(bShowWeight);
 				}
 			}
-	
+
 			return nodePos;
 		}
 
 		PreparedStatement pstmt = con.prepareStatement(INSERT_VIEWNODE_WITH_FORMATTING_QUERY);
-		
+
 		pstmt.setString(1, sViewID);
 		pstmt.setString(2, sNodeID);
 		pstmt.setInt(3, x);
@@ -392,7 +425,7 @@ public class DBViewNode {
 		pstmt.setString(16, sFontFace);
 		pstmt.setInt(17, nFontStyle);
 		pstmt.setInt(18, nForeground);
-		pstmt.setInt(19, nBackground);		
+		pstmt.setInt(19, nBackground);
 
 		int nRowCount = pstmt.executeUpdate();
 
@@ -400,7 +433,7 @@ public class DBViewNode {
 
 		NodePosition pos = null;
 		if (nRowCount > 0) {
-			pos = new NodePosition(view, node, x, y, creation, modification, bShowTags, 
+			pos = new NodePosition(view, node, x, y, creation, modification, bShowTags,
 					bShowText, bShowTrans, bShowWeight, bSmallIcon, bHideIcon, nWrapWidth,
 					nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 			if (DBAudit.getAuditOn()) {
@@ -410,7 +443,7 @@ public class DBViewNode {
 
 		return pos;
 	}
-	
+
 	/**
 	 *  Update the formatting properties for the given node in all its views.
 	 *
@@ -433,11 +466,13 @@ public class DBViewNode {
 	 *	@return boolean, true if it was successful, else false.
 	 *	@throws java.sql.SQLException
 	 */
-	public static boolean updateTransclusionFormatting(DBConnection dbcon, String sNodeID, 
+	public static boolean updateTransclusionFormatting(DBConnection dbcon, String sNodeID,
 						java.util.Date modification, boolean bShowTags,
 						boolean bShowText, boolean bShowTrans, boolean bShowWeight, boolean bSmallIcon,
 						boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 						int nFontStyle, int nForeground, int nBackground, String sUserID) throws SQLException  {
+
+		modification = new java.util.Date();
 
 		Connection con = dbcon.getConnection();
 		if (con == null)
@@ -447,7 +482,7 @@ public class DBViewNode {
 		if (DBAudit.getAuditOn()) {
 			vtNodes = getNodeNodes(dbcon, sNodeID, sUserID);
 		}
-		
+
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_TRANSCLUSION_FORMATTING_QUERY);
 
 		pstmt.setDouble(1, modification.getTime());
@@ -462,9 +497,9 @@ public class DBViewNode {
 		pstmt.setString(10, sFontFace);
 		pstmt.setInt(11, nFontStyle);
 		pstmt.setInt(12, nForeground);
-		pstmt.setInt(13, nBackground);		
+		pstmt.setInt(13, nBackground);
 		pstmt.setString(14, sNodeID);
-		
+
 		int nRowCount = pstmt.executeUpdate();
 
 		pstmt.close();
@@ -474,7 +509,7 @@ public class DBViewNode {
 				int count = vtNodes.size();
 				NodePosition pos = null;
 				for (int i=0; i<count;i++) {
-					pos = (NodePosition)vtNodes.elementAt(i);				
+					pos = (NodePosition)vtNodes.elementAt(i);
 					DBAudit.auditViewNode(dbcon, DBAudit.ACTION_EDIT, pos);
 				}
 			}
@@ -482,8 +517,8 @@ public class DBViewNode {
 		}
 
 		return false;
-	}	
-	 
+	}
+
 	/**
 	 *  Update the formatting for the given node in the given view.
 	 *
@@ -513,15 +548,17 @@ public class DBViewNode {
 						boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 						int nFontStyle, int nForeground, int nBackground, String sUserID) throws SQLException  {
 
+		modification = new java.util.Date();
+
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		NodePosition pos = null;
 		if (DBAudit.getAuditOn()) {
 			pos = getNodePosition(dbcon, sViewID, sNodeID, sUserID);
 		}
-				
+
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_FORMATTING_QUERY);
 
 		pstmt.setDouble(1, modification.getTime());
@@ -536,25 +573,25 @@ public class DBViewNode {
 		pstmt.setString(10, sFontFace);
 		pstmt.setInt(11, nFontStyle);
 		pstmt.setInt(12, nForeground);
-		pstmt.setInt(13, nBackground);		
+		pstmt.setInt(13, nBackground);
 		pstmt.setString(14, sNodeID);
-		pstmt.setString(15, sViewID);		
-		
+		pstmt.setString(15, sViewID);
+
 		int nRowCount = pstmt.executeUpdate();
-		
+
 		pstmt.close();
 
 		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				DBAudit.auditViewNode(dbcon, DBAudit.ACTION_EDIT, pos);
-			}		
-			
-			return true;		
-		}			
-	
+			}
+
+			return true;
+		}
+
 		return false;
-	}		
-	
+	}
+
 	/**
 	 *	Mark a node view as deleted, and returns true if successful.
 	 *
@@ -577,8 +614,9 @@ public class DBViewNode {
 		}
 
 		PreparedStatement pstmt = con.prepareStatement(DELETE_VIEWNODE_QUERY) ;
-		pstmt.setString(1, sViewID) ;
-		pstmt.setString(2, sNodeID) ;
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID) ;
+		pstmt.setString(3, sNodeID) ;
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -610,8 +648,9 @@ public class DBViewNode {
 			return pos ;
 
 		PreparedStatement pstmt = con.prepareStatement(RESTORE_VIEWNODE_QUERY) ;
-		pstmt.setString(1, sViewID);
-		pstmt.setString(2, sNodeID);
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID);
+		pstmt.setString(3, sNodeID);
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -645,7 +684,8 @@ public class DBViewNode {
 		Vector data = data = getViewNodes(dbcon, sViewID);
 
 		PreparedStatement pstmt = con.prepareStatement(RESTORE_VIEW_QUERY) ;
-		pstmt.setString(1, sViewID);
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID);
 
 		int nRowCount = pstmt.executeUpdate();
 
@@ -853,8 +893,8 @@ public class DBViewNode {
 
 		//* don't delete view-node structural data for now either! - bz
 		PreparedStatement pstmt = con.prepareStatement(DELETE_VIEW_QUERY) ;
-
-		pstmt.setString(1, sViewID) ;
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID) ;
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -932,19 +972,20 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		 
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET FontSize="+nFontSize+
+		"SET FontSize="+nFontSize+","+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
 		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
-		
+
 		int nRowCount = stmt.executeUpdate(sQuery);
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -967,27 +1008,28 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
 
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET FontFace='"+nFontFace+
-		"' WHERE ViewID='"+sViewID+
+		"SET FontFace='"+nFontFace+"',"+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
+		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
-		
+
 		int nRowCount = stmt.executeUpdate(sQuery);
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
 			return true;
 		}
 		return false;
-	}	
-	
+	}
+
 	/**
 	 * Set the font style for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1002,19 +1044,20 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
 
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET FontStyle="+nFontStyle+
+		"SET FontStyle="+nFontStyle+","+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
 		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
-		
+
 		int nRowCount = stmt.executeUpdate(sQuery);
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1022,7 +1065,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Set whether to show tags indicators for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1037,28 +1080,29 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET ShowTags='"+(bShow ? "Y" : "N")+
-		"' WHERE ViewID='"+sViewID+
+		"SET ShowTags='"+(bShow ? "Y" : "N")+"',"+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
+		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
 
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
 			return true;
 		}
 		return false;
-	}	
-	
+	}
+
 	/**
 	 * Set whether to show text indicators for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1073,28 +1117,29 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET ShowText='"+(bShow ? "Y" : "N")+
-		"' WHERE ViewID='"+sViewID+
+		"SET ShowText='"+(bShow ? "Y" : "N")+"',"+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
+		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
 
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
 			return true;
 		}
 		return false;
-	}		
-	
+	}
+
 	/**
 	 * Set whether to show weight indicators for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1109,20 +1154,21 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET ShowWeight='"+(bShow ? "Y" : "N")+
-		"' WHERE ViewID='"+sViewID+
-		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+		"SET ShowWeight='"+(bShow ? "Y" : "N")+"',"+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
+		" WHERE ViewID='"+sViewID+"' "+
+		" AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
-		
+
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1130,7 +1176,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Set whether to show transclusion indicators for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1145,20 +1191,21 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET ShowTrans='"+(bShow ? "Y" : "N")+
-		"' WHERE ViewID='"+sViewID+
-		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+		"SET ShowTrans='"+(bShow ? "Y" : "N")+"',"+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
+		" WHERE ViewID='"+sViewID+"' "+
+		" AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
 
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1166,7 +1213,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Set whether to show small icons for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1181,20 +1228,21 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
 
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET SmallIcon='"+(bSmall ? "Y" : "N")+
-		"' WHERE ViewID='"+sViewID+
+		"SET SmallIcon='"+(bSmall ? "Y" : "N")+"',"+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
+		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
 
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1202,7 +1250,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Set whether to hide icons for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1217,20 +1265,21 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET HideIcon='"+(bHide ? "Y" : "N")+
-		"' WHERE ViewID='"+sViewID+
+		"SET HideIcon='"+(bHide ? "Y" : "N")+"',"+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
+		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
 
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1238,7 +1287,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Set the wrap width for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1253,12 +1302,13 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET LabelWrapWidth="+nWidth+
+		"SET LabelWrapWidth="+nWidth+","+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
 		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
@@ -1266,7 +1316,7 @@ public class DBViewNode {
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1274,7 +1324,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Set the text foreground colour width for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1289,12 +1339,13 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET Foreground="+nColour+
+		"SET Foreground="+nColour+","+
+		"ModificationDate="+ new Long((new java.util.Date()).getTime()).doubleValue() +
 		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
@@ -1302,7 +1353,7 @@ public class DBViewNode {
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1310,7 +1361,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Set the text background colour width for the given NodePosition objects
 	 * @param dbcon the database connection
@@ -1325,12 +1376,13 @@ public class DBViewNode {
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return false;
-		
+
 		String sNodesList = extractNodeIDs(vtPositions);
-		
+
 		Statement stmt = con.createStatement();
 		String sQuery = "UPDATE ViewNode " +
-		"SET Background="+nColour+
+		"SET Background="+nColour+","+
+		"ModificationDate="+new Long((new java.util.Date()).getTime()).doubleValue()+
 		" WHERE ViewID='"+sViewID+
 		"' AND ViewNode.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
 		" AND NodeID IN ("+sNodesList+")";
@@ -1338,7 +1390,7 @@ public class DBViewNode {
 		int nRowCount = stmt.executeUpdate(sQuery);
 
 		stmt.close();
-		if (nRowCount > 0) {			
+		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
 				auditNodePositions(dbcon, vtPositions, DBAudit.ACTION_EDIT);
 			}
@@ -1346,7 +1398,7 @@ public class DBViewNode {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Process the given list of NodePosition object for audit
 	 * @param dbcon the database connection
@@ -1356,20 +1408,20 @@ public class DBViewNode {
 	 */
 	private static void auditNodePositions(DBConnection dbcon, Vector vtPositions, int type) throws SQLException {
 		int count = vtPositions.size();
-		NodePosition position = null;				
-		for (int j=0; j<count; j++) {					
+		NodePosition position = null;
+		for (int j=0; j<count; j++) {
 			position = (NodePosition)vtPositions.elementAt(j);
 			DBAudit.auditViewNode(dbcon, type, position);
-		}		
+		}
 	}
-	
+
 	/**
 	 * Prosses the list of NodePositions and produce a comma separated list of the node ids.
 	 * @param vtPositions the list of NodePositions to process.
 	 * @return the comma separates string of node ids.
 	 */
 	private static String extractNodeIDs(Vector vtPositions) {
-		String sNodesList = "";		
+		String sNodesList = "";
 		int count = vtPositions.size();
 		NodePosition position = null;
 		for (int i=0; i<count; i++) {
@@ -1382,7 +1434,7 @@ public class DBViewNode {
 		}
 		return sNodesList;
 	}
-	
+
 // GETTERS
 	/**
 	 *	Returns the NodePosition for the given active node reference in the given view.
@@ -1404,7 +1456,13 @@ public class DBViewNode {
 		pstmt.setString(1, sViewID);
 		pstmt.setString(2, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodePosition nodePos = null;
 		if (rs != null) {
@@ -1416,14 +1474,14 @@ public class DBViewNode {
 				Date	created		= new Date(new Double(rs.getLong(5)).longValue());
 				Date	modified	= new Date(new Double(rs.getLong(6)).longValue());
 
-				boolean bShowTags 	= false; 
+				boolean bShowTags 	= false;
 				String sShowTags	= rs.getString(7);
 				if (sShowTags.equals("Y")) {
 					bShowTags = true;
 				}
 				boolean bShowText	= false;
 				String sShowText	= rs.getString(8);
-				if (sShowText.equals("Y)")) {
+				if (sShowText.equals("Y")) {
 					bShowText = true;
 				}
 				boolean bShowTrans	= false;
@@ -1434,7 +1492,7 @@ public class DBViewNode {
 				boolean bShowWeight = false;
 				String sShowWeight	= rs.getString(10);
 				if (sShowWeight.equals("Y")) {
-					bShowTrans = true;
+					bShowWeight = true;
 				}
 				boolean bShowSmallIcon = false;
 				String sShowSmallIcon = rs.getString(11);
@@ -1452,12 +1510,12 @@ public class DBViewNode {
 				int	nFontStyle		= rs.getInt(16);
 				int	nForeground		= rs.getInt(17);
 				int	nBackground		= rs.getInt(18);
-				
+
 				View view = View.getView(sViewId);
 				NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeId, userID);
 
-				nodePos = new NodePosition(view, node, nX, nY, created, modified, bShowTags, bShowText, 
-						bShowTrans, bShowWeight, bShowSmallIcon, bHideIcon, nLabelWrapWidth, 
+				nodePos = new NodePosition(view, node, nX, nY, created, modified, bShowTags, bShowText,
+						bShowTrans, bShowWeight, bShowSmallIcon, bHideIcon, nLabelWrapWidth,
 						nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 			}
 		}
@@ -1485,7 +1543,13 @@ public class DBViewNode {
 		pstmt.setString(1, sViewID);
 		pstmt.setString(2, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodePosition nodePos = null;
 		if (rs != null) {
@@ -1496,8 +1560,8 @@ public class DBViewNode {
 				int		nY			= rs.getInt(4);
 				Date	created		= new Date(new Double(rs.getLong(5)).longValue());
 				Date	modified	= new Date(new Double(rs.getLong(6)).longValue());
-				
-				boolean bShowTags 	= false; 
+
+				boolean bShowTags 	= false;
 				String sShowTags	= rs.getString(7);
 				if (sShowTags.equals("Y")) {
 					bShowTags = true;
@@ -1533,12 +1597,12 @@ public class DBViewNode {
 				int	nFontStyle		= rs.getInt(16);
 				int	nForeground		= rs.getInt(17);
 				int	nBackground		= rs.getInt(18);
-				
+
 				View view = View.getView(sViewId);
 				NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeId, userID);
 
-				nodePos = new NodePosition(view, node, nX, nY, created, modified, bShowTags, bShowText, 						
-						bShowTrans, bShowWeight, bShowSmallIcon, bHideIcon, nLabelWrapWidth, 
+				nodePos = new NodePosition(view, node, nX, nY, created, modified, bShowTags, bShowText,
+						bShowTrans, bShowWeight, bShowSmallIcon, bHideIcon, nLabelWrapWidth,
 						nFontSize, sFontFace, nFontStyle, nForeground, nBackground);
 			}
 		}
@@ -1565,7 +1629,13 @@ public class DBViewNode {
 
 		PreparedStatement pstmt = con.prepareStatement(GET_NODENODE_QUERY);
 		pstmt.setString(1, sNodeID) ;
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodePosition nodePos = null;
 		if (rs != null) {
@@ -1609,7 +1679,7 @@ public class DBViewNode {
 				int	nFontStyle			= rs.getInt(17);
 				int	nForeground			= rs.getInt(18);
 				int	nBackground			= rs.getInt(19);
-				
+
 				View view = View.getView(sViewId);
 				NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeId, userID);
 				nodePos = new NodePosition(view, node, nX, nY, created, modified, bShowTags, bShowText,
@@ -1642,7 +1712,13 @@ public class DBViewNode {
 
 		PreparedStatement pstmt = con.prepareStatement(GET_DELETEDVIEW_QUERY);
 		pstmt.setString(1, sViewID) ;
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		NodePosition nodePos = null;
 		if (rs != null) {
@@ -1654,7 +1730,7 @@ public class DBViewNode {
 				Date	created		= new Date(new Double(rs.getLong(5)).longValue());
 				Date	modified	= new Date(new Double(rs.getLong(6)).longValue());
 				int		status		= rs.getInt(7);
-				
+
 				View view = View.getView(sViewId);
 				NodeSummary node = DBNode.getNodeSummary(dbcon, sNodeId, userID);
 				nodePos = new NodePosition(view, node, nX, nY, created, modified) ;
@@ -1693,7 +1769,13 @@ public class DBViewNode {
 
 		PreparedStatement pstmt = con.prepareStatement(GET_NODEIDS_QUERY);
 		pstmt.setString(1, sViewID) ;
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		if (rs != null) {
 			while (rs.next()) {
@@ -1734,14 +1816,36 @@ public class DBViewNode {
 
 		pstmt.setString(1, sNodeID) ;
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
 
-		if (rs != null) {
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+// Orignal code commented out.  The code that follows fetches views from the NodeSummary cache if available
+// This is for performance improvement.  Some risk may exist that the NS cache is out of date with the DB?  -mlb
+/*		if (rs != null) {
 			while (rs.next()) {
 				String	sViewId	= rs.getString(1) ;
 				IView view = DBNode.getView(dbcon, sViewId, userID);
 				if (view != null)
 					vtViews.addElement(view);
+			}
+		}
+*/
+
+		if (rs != null) {
+			while (rs.next()) {
+				String	sViewId	= rs.getString(1) ;
+				if (NodeSummary.bIsInCache(sViewId)) {
+					vtViews.addElement(NodeSummary.getNodeSummary(sViewId));
+				} else {
+					IView view = DBNode.getView(dbcon, sViewId, userID);
+					if (view != null)
+						vtViews.addElement(view);
+				}
 			}
 		}
 		pstmt.close();
@@ -1766,7 +1870,13 @@ public class DBViewNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_ACTIVEVIEWSCOUNT_QUERY);
 		pstmt.setString(1, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		int count = 0;
 		if (rs != null) {
 			while (rs.next()) {
@@ -1797,7 +1907,12 @@ public class DBViewNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_ACTIVEVIEWS_QUERY);
 		pstmt.setString(1, sNodeID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		if (rs != null) {
 			while (rs.next()) {
 				String	sViewId	= rs.getString(1) ;
@@ -1829,7 +1944,12 @@ public class DBViewNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_DELETEDVIEWS_QUERY);
 		pstmt.setString(1, nodeId) ;
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		if (rs != null) {
 			while (rs.next()) {
@@ -1862,7 +1982,12 @@ public class DBViewNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_DELETEDVIEWSCOUNT_QUERY);
 		pstmt.setString(1, nodeId) ;
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		if (rs != null) {
 			while (rs.next()) {
 				count = rs.getInt(1);
@@ -1889,7 +2014,13 @@ public class DBViewNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_NODEPOSITIONS_QUERY);
 		pstmt.setString(1, sViewID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		Vector vtNodePos = new Vector(51);
 		NodeSummary node = null ;
@@ -1898,13 +2029,13 @@ public class DBViewNode {
 			View view = View.getView(sViewID);
 			while (rs.next()) {
 				node = DBNode.processNode(dbcon, rs, userID);
-				
-				String sViewId 		= rs.getString(11);	
+
+				String sViewId 		= rs.getString(11);
 				int			nX		= rs.getInt(12);
 				int			nY		= rs.getInt(13);
 				Date	created		= new Date(new Double(rs.getLong(14)).longValue());
 				Date	modified	= new Date(new Double(rs.getLong(15)).longValue());
-				
+
 				// FORMATTING PROPERTIES
 				String  showTags 	= rs.getString(16);
 				boolean bShowTags = false;
@@ -1936,7 +2067,7 @@ public class DBViewNode {
 				int	nFontStyle			= rs.getInt(25);
 				int	nForeground			= rs.getInt(26);
 				int	nBackground			= rs.getInt(27);
-								
+
 				// now that the node summary object is generated, create the node position object
 				NodePosition nodePos = new NodePosition(view, node, nX, nY, created, modified, bShowTags, bShowText,
 						bShowTrans, bShowWeight, bSmallIcon, bHideIcon, nLabelWrapWidth, nFontSize, sFontFace,
@@ -1948,6 +2079,97 @@ public class DBViewNode {
 
 		pstmt.close();
 		return vtNodePos;
+	}
+
+	/**
+	 *	Returns the array of NodePosition Summary objects in the given view.  Used to see if the view has been changed
+	 *  by someone else.
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@param sViewID, the id of the View to return the NodePositions for.
+	 *	@return Vector, a list of <code>NodePositionSummary</code> objects for the given view id.
+	 *	@throws java.sql.SQLException
+	 */
+	public static Vector getNodePositionsSummary(DBConnection dbcon, String sViewID, String userID) throws SQLException {
+
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return null;
+
+		PreparedStatement pstmt = con.prepareStatement(GET_NODEPOSITIONS_SUMMARY_QUERY);
+		pstmt.setString(1, sViewID);
+
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+		Vector vtNodePosSummary = new Vector(51);
+		NodeSummary node = null ;
+
+		if (rs != null) {
+			while (rs.next()) {
+				String	sNodeId		= rs.getString(1);
+				Date	oMDate		= new Date(new Double(rs.getLong(2)).longValue());
+				String sViewId 		= rs.getString(3);
+				int			nX		= rs.getInt(4);
+				int			nY		= rs.getInt(5);
+
+				NodePositionSummary nodePosSummary = new NodePositionSummary(sNodeId, sViewId, oMDate, nX, nY);
+
+				vtNodePosSummary.addElement(nodePosSummary);
+			}
+		}
+
+		pstmt.close();
+		return vtNodePosSummary;
+	}
+
+	/**
+	 *	Returns TRUE if the given view has been modified since it was last loaded.
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@param sViewID, the id of the View to check.
+	 *	@param sUserName the current users's name
+	 *	@param dLastViewModDate - date od last modification by another user that we're aware of
+	 *	@return Boolean, TRUE if the view is 'dirty'.
+	 *	@throws java.sql.SQLException
+	 */
+	public static Boolean bIsViewDirty(DBConnection dbcon, String sViewID, String sUserName, Date dLastViewModDate) throws SQLException {
+
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return null;
+
+		PreparedStatement pstmt = con.prepareStatement(GET_VIEWMODIFICATION_QUERY);
+		pstmt.setString(1, sViewID);
+		pstmt.setString(2, sUserName);
+		pstmt.setDouble(3, dLastViewModDate.getTime());
+
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+		if (rs != null) {
+			int iDirtyNodeCount = 0;
+			while (rs.next()) {
+				String sID = rs.getString(1);
+				Double dModDate = rs.getDouble(2);
+				String sModAuthor = rs.getString(3);
+				iDirtyNodeCount++;
+			}
+			if (iDirtyNodeCount > 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1968,7 +2190,12 @@ public class DBViewNode {
 		PreparedStatement pstmt = con.prepareStatement(GET_NODECOUNT_QUERY);
 		pstmt.setString(1, sViewID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		int count = 0;
 		if (rs != null) {
@@ -1998,7 +2225,12 @@ public class DBViewNode {
 		pstmt.setString(1, sViewID);
 		pstmt.setString(2, sViewID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		int i = 0;
 
 		if (rs != null) {

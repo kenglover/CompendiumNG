@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
@@ -124,7 +123,7 @@ public class DBCode {
  		pstmt.setString(1, sCodeID);
 		pstmt.setString(2, sAuthor);
 		pstmt.setDouble(3, new Long(dCreationDate.getTime()).doubleValue());
-		pstmt.setDouble(4, new Long(dModificationDate.getTime()).doubleValue());
+		pstmt.setDouble(4, new Long((new java.util.Date()).getTime()).doubleValue());
 		pstmt.setString(5, sName);
 		pstmt.setString(6, sDescription);
 		pstmt.setString(7, sBehavior);
@@ -136,7 +135,7 @@ public class DBCode {
 		Code code = null;
 
 		if (nRowCount > 0) {
-			code = Code.getCode(sCodeID, sAuthor, dCreationDate, dModificationDate, sName, sDescription, sBehavior);
+			code = Code.getCode(sCodeID, sAuthor, dCreationDate, (new java.util.Date()), sName, sDescription, sBehavior);
 
 			// add to nodecode table if the nodeId is not null
 			boolean added = false;
@@ -426,33 +425,60 @@ public class DBCode {
 	 *	@return Vector, a list of <code>Code</code> objects for all the code records in the Code table.
 	 *	@throws java.sql.SQLException
 	 */
-	public static Vector getCodes(DBConnection dbcon) throws SQLException {
+	public static Vector getCodes(DBConnection dbcon) //throws SQLException
+	{
 		Connection con = dbcon.getConnection();
 		if (con == null)
 			return null;
 
-		PreparedStatement pstmt = con.prepareStatement(GET_CODES_QUERY);
-		ResultSet rs = pstmt.executeQuery();
+		showTrace("about to execute GET_CODES_QUERY");
 
 		Vector vtCodes = new Vector(51);
 		Code code = null;
-		if (rs != null) {
-			while (rs.next()) {
-				String	sCodeID	= rs.getString(1);
-				String	sAuthor = rs.getString(2) ;
-				Date	oCDate	= new Date(new Double(rs.getLong(3)).longValue());
-				Date 	oMDate	= new Date(new Double(rs.getLong(4)).longValue());
-				String	sName = rs.getString(5);
-				String	sDescription = rs.getString(6);
-				String	sBehavior = rs.getString(7);
 
-				//Vector	nodes = DBCodeNode.getNodes(dbcon, sCodeID);
+		try
+		{
+			PreparedStatement pstmt = con.prepareStatement(GET_CODES_QUERY);
+			ResultSet rs = pstmt.executeQuery();
 
-				code = Code.getCode(sCodeID, sAuthor, oCDate, oMDate, sName, sDescription, sBehavior);
-				vtCodes.addElement(code);
+			if (rs != null) {
+				while (rs.next()) {
+					String	sCodeID	= rs.getString(1);
+					String	sAuthor = rs.getString(2) ;
+					Date	oCDate	= new Date(new Double(rs.getLong(3)).longValue());
+					Date 	oMDate	= new Date(new Double(rs.getLong(4)).longValue());
+					String	sName = rs.getString(5);
+					String	sDescription = rs.getString(6);
+					String	sBehavior = rs.getString(7);
+
+					//Vector	nodes = DBCodeNode.getNodes(dbcon, sCodeID);
+
+					code = Code.getCode(sCodeID, sAuthor, oCDate, oMDate, sName, sDescription, sBehavior);
+					System.out.println("Code retrieved: " + code.toString());
+					vtCodes.addElement(code);
+				}
 			}
+			pstmt.close();
 		}
-		pstmt.close();
+		catch (SQLException sex)
+		{
+			System.out.println("SQL Exception DBCode.getCodes() line 464");
+		}
+		catch (Exception e)
+		{
+			System.out.println("Exception DBCode.getCodes() line 468");
+		}
+
 		return vtCodes;
+	}
+
+	public static void showTrace(String msg)
+	{
+	  //if (msg.length() > 0) System.out.println(msg);
+	  System.out.println(
+			   new Throwable().getStackTrace()[1].getLineNumber() +
+			   " " + new Throwable().getStackTrace()[1].getFileName() +
+				   " " + new Throwable().getStackTrace()[1].getMethodName() +
+			           " " + msg);
 	}
 }

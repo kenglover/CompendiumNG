@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars.system;
 
 import java.awt.*;
@@ -88,6 +87,7 @@ public class DraggableToolBarIcon extends JLabel implements DragSourceListener, 
 
 		    if (isLeftMouse && !evt.isAltDown()) {
 				StringSelection text = new StringSelection(sIdentifier);
+				this.requestFocus();
 				dragSource.startDrag(e, DragSource.DefaultCopyDrop, text, this);
 			}
 		}

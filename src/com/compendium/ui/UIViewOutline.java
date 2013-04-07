@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 
@@ -101,73 +100,73 @@ import com.compendium.ui.popups.UIViewOutlinePopupMenu;
  * @author Lakshmi Prabhakaran
  */
 
-public class UIViewOutline extends JPanel implements IUIConstants, ActionListener, TreeExpansionListener, 
+public class UIViewOutline extends JPanel implements IUIConstants, ActionListener, TreeExpansionListener,
 				TreeSelectionListener, PropertyChangeListener, TreeWillExpandListener {
-	
+
 	/** The serial version id  */
 	private static final long serialVersionUID 					= -673517173364176061L;
 
 	/** the object of this class */
-	public static UIViewOutline me 								= null; 
-	
+	public static UIViewOutline me 								= null;
+
 	/** The scrollpane for the stencil set.*/
 	private JScrollPane			oScrollPane 					= null;
-	
+
 	/** Has this panel been drawn yet?*/
 	private boolean 			drawn 							= false;
-	
+
 	/** The string value of this outline view.*/
 	private String 				sMode 							= "";
 
 	/** The JTree to display outline view */
 	private JTree 				tree 							= null;
-	
+
 	/** List of Parent Node IDs against Child nodes  */
 	private Hashtable			htNodes							= new Hashtable();
-	
+
 	/** A list of listeners objects */
 	private static Vector 		viewListener 					= new Vector();
-		
+
 	/** The cache model for the currently open database.*/
 	private IModel				oModel							= ProjectCompendium.APP.getModel();
 
 	/** The session for this model.*/
 	private PCSession 			oSession 						= oModel.getSession();
-		
+
 	/** The root Node of the tree */
 	 protected static DefaultMutableTreeNode	rootNode		= null;
-	
+
 	/** The tree Model for the JTree. */
 	private DefaultTreeModel  	treeModel						= null;
-	
+
 	/** The name of the project in the outline view.*/
 	private String 				sProject 						= "";
-	
+
 	/** A list of nodes against nodeSummary */
 	private  Hashtable 			htTreeNodes   					= new Hashtable();
-	
+
 	/** A list of nodes against parent node */
 	private Hashtable 			htNodeParent   					= new Hashtable();
-	
+
 	/** Currently selected node */
 	private UIViewOutlineTreeNode selectedNode   				= null;
-	
+
 	/** The view in which the currently selected node exists. */
-	private View 				selectedView   					= null; 
+	private View 				selectedView   					= null;
 
 
 	/** Currently selected node's NodeSummary */
-	private NodeSummary 		selectedNodeSummary   			= null; 
-	
+	private NodeSummary 		selectedNodeSummary   			= null;
+
 	/** The author name of the current user.*/
 	private String 				sAuthor 						= "";
-	
+
 	/** The node right-click popup menu associated with this node - null if one has not been opened yet.*/
 	private UIViewOutlinePopupMenu			popup				= null;
-	
+
 	/** The button to close the outline view.*/
 	private UIButton		pbCancel			= null;
-	
+
 	/**
 	 * Constructor. Create a new instance of UIViewOutline, for a outline view.
 	 * @param name, the name of the Tab
@@ -186,38 +185,38 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	public void draw() {
 		ProjectCompendium.APP.setWaitCursor();
 		setLayout(new BorderLayout());
-		
+
 		UIViewOutlineTreeNode node = new UIViewOutlineTreeNode(sProject, -1);
 		rootNode = new DefaultMutableTreeNode(node);
-		
+
 		treeModel = new DefaultTreeModel(rootNode);
 		tree = new JTree(treeModel);
 		tree.setFont(ProjectCompendiumFrame.labelFont);
-		
+
 		addNodesToTree();
-		
-		// Create a tree that allows one selection at a time.	
+
+		// Create a tree that allows one selection at a time.
 		tree.getSelectionModel().setSelectionMode
           						(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-		
+
 		tree.setEditable(true);
 		tree.setShowsRootHandles(true);
         tree.setToggleClickCount(4);
-                
+
         //keep root node expanded
         tree.expandPath(tree.getPathForRow(0));
-        
+
 		// Set the icon for nodes.
 		TreeNodeRenderer renderer = new TreeNodeRenderer();
         tree.setCellRenderer(renderer);
 
         // Enable tool tips.
        ToolTipManager.sharedInstance().registerComponent(tree);
-       
+
        // Set the cell editor to modify nodes
        TreeCellEditor cellEditor = new TreeNodeEditor(tree, (DefaultTreeCellRenderer)tree.getCellRenderer());
        tree.setCellEditor(cellEditor);
-  
+
        // Listen for the changes.
 		treeModel.addTreeModelListener(new OutlineTreeModelListener());
 		tree.addTreeSelectionListener(this);
@@ -242,12 +241,12 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 
 		tree.addKeyListener(new KeyAdapter(){
 			public void keyPressed(KeyEvent e){
-				
+
 		 		if(tree.isFocusOwner() && selectedNode != null){
 		 			int modifier = e.getModifiers();
 		 			int shortcutKey = ProjectCompendium.APP.shortcutKey;
 		 			int keyCode = e.getKeyCode();
-		 			
+
 		 			if(modifier == shortcutKey){
 		 				switch (keyCode) {
 		 					case KeyEvent.VK_C: {
@@ -266,7 +265,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		 			} else if((keyCode == KeyEvent.VK_DELETE  && modifier == 0) &&
 		 					selectedNode != rootNode.getUserObject()){
 		 				onDelete();
-		 				
+
 		 			} else if((keyCode == KeyEvent.VK_F12 && modifier == 0) &&
 		 					selectedNode != rootNode.getUserObject()){
 		 				onMarkSeenUnseen(selectedNodeSummary, ICoreConstants.READSTATE);
@@ -279,17 +278,17 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 						popup.onCancel();
 					return ;
 		 		}
-			} 
-		}); 	
-		
+			}
+		});
+
 		tree.addMouseListener(new MouseAdapter(){
-			
+
 			public void mouseExited(MouseEvent evt){
 				ProjectCompendium.APP.setStatus("");
 			}
-			
+
         	public void mouseClicked(MouseEvent evt) {
-        	
+
         		TreePath selPath = tree.getPathForLocation(evt.getX(), evt.getY());
     			UIViewOutlineTreeNode  parentNode = null;
     			UIViewOutlineTreeNode  childNode = null;
@@ -297,7 +296,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
     			selectedView = null;
     			selectedNode = null;
     			boolean isLevelOneNode = true;
-    			
+
     			boolean isRightMouse = SwingUtilities.isRightMouseButton(evt);
     			boolean isLeftMouse = SwingUtilities.isLeftMouseButton(evt);
     			if (ProjectCompendium.isMac &&
@@ -307,17 +306,17 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
     				isRightMouse = true;
     				isLeftMouse = false;
     			}
-    			
+
     			if(selPath != null ) {
-    			
+
     				treeNode = (((DefaultMutableTreeNode) selPath.getLastPathComponent()));
     				childNode =(UIViewOutlineTreeNode)treeNode.getUserObject();
-    				selectedNode = childNode ;	
-        		
+    				selectedNode = childNode ;
+
     				if(!treeNode.equals(rootNode)){
-    					
+
     					DefaultMutableTreeNode parent = null;
-						
+
     					if(sMode.equals(DISPLAY_VIEWS_AND_NODES)){
     						Object[] nodes = (Object[]) selPath.getPath();
     						if(nodes.length > 2){
@@ -326,13 +325,13 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
     							parentNode = (UIViewOutlineTreeNode) parent.getUserObject();
     							isLevelOneNode = false;
     							selectedView = View.getView(parentNode.getId());
-    							
+
     						} else {
     							selectedView = View.getView(childNode.getId());
     						}
     						if(childNode.getType() == ICoreConstants.MAPVIEW  || childNode.getType() == ICoreConstants.LISTVIEW) {
             					parentNode = childNode;
-            				} 
+            				}
     					}
         				else {
         					if(!childNode.getObject().equals(ProjectCompendium.APP.getHomeView())){
@@ -342,7 +341,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		        				isLevelOneNode = false;
         					}
 	        				if(childNode.getType() == ICoreConstants.MAPVIEW  || childNode.getType() == ICoreConstants.LISTVIEW) {
-            					parentNode = childNode; 
+            					parentNode = childNode;
             				}
         				}
     					View parentView = View.getView(parentNode.getId());
@@ -350,7 +349,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
     					setStatus(child);
         				if(isLeftMouse){
   	        				// if single click open the view, if double click open its contents.
-	    					if (evt.getClickCount() == 2){		    					
+	    					if (evt.getClickCount() == 2){
 		    					int type = child.getType();
 		    					if (type == ICoreConstants.REFERENCE || type == ICoreConstants.REFERENCE_SHORTCUT) {
 		    						openReference(child, parentView);
@@ -358,86 +357,86 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		    						openContents(child, UINodeContentDialog.CONTENTS_TAB);
 		    					}
 		    				} else if(evt.getClickCount() == 1){
-		        				// Open the view if it is a Map/ List other wise open the parent view.		    					
+		        				// Open the view if it is a Map/ List other wise open the parent view.
 		    					openView(parentView, child);
-		    				}	    				
+		    				}
 		    			} else if(isRightMouse){
 		    				tree.setSelectionPath(selPath);
 		    				NodeSummary node = (NodeSummary)childNode.getObject();
 		    				String sNodeID = node.getId();
-		    				
+
 		    				if (sNodeID.equals(ProjectCompendium.APP.getInBoxID())){
 		    					return ;
 		    				}
-		    				
+
 		    				popup = new UIViewOutlinePopupMenu("Popup menu", node,  UIViewOutline.this, isLevelOneNode);
 		    				popup.show(tree, evt.getX()+ 20, evt.getY());
 			        	}
     				}
     				tree.requestFocus();
     				evt.consume();
-    				
+
         		}
         	}
         });
 
         Dimension size = tree.getPreferredSize();
-        
+
 		oScrollPane = new JScrollPane(tree);
 		oScrollPane.setBackground(Color.white);
 		oScrollPane.setPreferredSize(new Dimension(300, size.height));
 		add(oScrollPane, BorderLayout.CENTER);
 		add(createButtonPanel(), BorderLayout.SOUTH);
-		
+
 		updateTreeSelection();
 		drawn = true;
 		ProjectCompendium.APP.setDefaultCursor();
 	}
-	
+
 	/**
 	 * Return the font size to its default and then appliy the passed text zoom.
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextAndZoom(int zoom) {
 		Font font = ProjectCompendiumFrame.labelFont;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());								
+		tree.setRowHeight(metrics.getHeight());
 	}
-	
+
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextToActual() {
 		tree.setFont(ProjectCompendiumFrame.labelFont);
 		FontMetrics metrics = tree.getFontMetrics(ProjectCompendiumFrame.labelFont);
-		tree.setRowHeight(metrics.getHeight());								
+		tree.setRowHeight(metrics.getHeight());
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 */
 	public void onIncreaseTextSize() {
 		Font font = tree.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());								
+		tree.setRowHeight(metrics.getHeight());
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 */
 	public void onReduceTextSize() {
 		Font font = tree.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);
 		tree.setFont(newFont);
 		FontMetrics metrics = tree.getFontMetrics(newFont);
-		tree.setRowHeight(metrics.getHeight());								
-	}	
-	
+		tree.setRowHeight(metrics.getHeight());
+	}
+
 	/**
 	 * Create and return the button panel.
 	 */
@@ -452,7 +451,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 
 		return oButtonPanel;
 	}
-	
+
 	/**
 	 * Get the name for this  tab.
 	 * @return String, the name of this tab.
@@ -467,8 +466,8 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	public void  setObjectName(String s ) {
 		 sMode = s;
 	}
-	
-	
+
+
 	/**
 	 * @return Returns the rootNode.
 	 */
@@ -491,7 +490,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	public void refreshTree(){
 		tree.repaint();
 	}
-	
+
 	/**
 	 * adds nodes to the tree depending on the option selected
 	 *
@@ -500,39 +499,39 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		rootNode.removeAllChildren();
 		// Create the nodes according the option selected
 		if(sMode.equals(DISPLAY_VIEWS_AND_NODES)){
-			
+
 			createViewsAndNodes();
-	       	
+
 	    } else if (sMode.equals(DISPLAY_VIEWS_ONLY)) {
-	    		    		    	
+
 	    	View homeView = oModel.getUserProfile().getHomeView();
 			homeView.initialize(oSession,oModel);
-			
+
 			UIViewOutlineTreeNode top = new UIViewOutlineTreeNode(homeView);
 			DefaultMutableTreeNode topNode = new DefaultMutableTreeNode(top);
-						
+
 			if( !homeView.getListenerList().contains(this)){
 				homeView.addPropertyChangeListener(this);
 			}
 			addToTreeNodes(topNode, top.getId());
 			rootNode.add(topNode);
 			createViewNodes(topNode, true);
-	    }    
+	    }
         tree.repaint();
     	treeModel.reload(rootNode);
-    
+
 	}
-	
+
 	/**
-	 * Displays the author, creation date and detail in the status bar 
-	 * @param oNode NodeSummary of the node 
+	 * Displays the author, creation date and detail in the status bar
+	 * @param oNode NodeSummary of the node
 	 */
 	private void setStatus(NodeSummary oNode){
 		String sStatus = "";
 		String author = oNode.getAuthor();
 		String creationDate = (UIUtilities.getSimpleDateFormat("dd, MMMM, yyyy h:mm a").format(oNode.getCreationDate()).toString());
-		
-		
+
+
 		String showtext = author + " " + creationDate +", " +
 						 oNode.getDetail();
 
@@ -564,17 +563,17 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 				}
 				refreshViews(views);
 			}
-			
+
 		} catch(Exception io) {
 			if(state == ICoreConstants.READSTATE)
 				System.out.println("Unable to mark as seen");
-			else 
+			else
 				System.out.println("Unable to mark as un-seen");
 		}
-		
-		
+
+
 	}
-	
+
 	/**
 	 * Marks seen/unseen for whole view
 	 * @param view com.compendium.code.datamodel.View, the view associated with this menu.
@@ -587,7 +586,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			String inboxID = ProjectCompendium.APP.getInBoxID();
 			if(!(viewID.equals(homeID) || viewID.equals(inboxID))) {
 				view.setState(state);
-				
+
 				Vector views = new Vector();
 				views.add(view);
 				refreshViews(views);
@@ -610,25 +609,25 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		} catch(Exception io) {
 			if(state == ICoreConstants.READSTATE)
 				System.out.println("Unable to mark as seen");
-			else 
+			else
 				System.out.println("Unable to mark as un-seen");
 		}
 	}
-	
+
 	/**
 	 * Repaints the view frames.
 	 * @param views , The views to be refreshed
 	 */
-	
+
 	private void refreshViews(Vector views) {
-		
+
 		for(int i = 0; i < views.size(); i++){
 			View view = (View)views.get(i);
 			UIViewFrame internalFrame = ProjectCompendium.APP.getInternalFrame(view);
 	    	if(internalFrame != null){
 	    		ProjectCompendium.APP.getAllFrames().remove(internalFrame);
 	    		internalFrame.dispose();
-	    		
+
 	    		internalFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 	    		try {
 					internalFrame.setClosed(false);
@@ -639,27 +638,27 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	    			String label = "  " +oModel.getUserProfile().getUserName() + "\'s " + view.getLabel();
 	    			internalFrame.setTitle(label);
 	    			internalFrame.setClosable(false);
-	    		} 
+	    		}
 	    		// internalFrame.setNavigationHistory(internalFrame.getChildNavigationHistory());
 	    	}
 		}
 	}
-	
+
 	/**
 	 * Copies the selected node to clipboard
 	 */
-	
+
 	public void onCopy(){
-		
+
 		TreePath treePath = tree.getSelectionPath();
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)tree.getLastSelectedPathComponent();
 		UIViewOutlineTreeNode treeNode = (UIViewOutlineTreeNode)node.getUserObject();
-		
+
 		NodeSummary oNode = treeNode.getObject();
 		if(oNode.equals(ProjectCompendium.APP.getHomeView()) || oNode.getId().equals(ProjectCompendium.APP.getInBoxID())){
 			return ;
 		}
-			
+
 		if(selectedView == null || selectedView.equals(oNode)){
 			Vector parentViews;
 			try {
@@ -673,7 +672,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		}
 		UIViewFrame oViewFrame = ProjectCompendium.APP.getViewFrame(selectedView, selectedView.getLabel());
 		UIViewFrame currentFrame = ProjectCompendium.APP.getCurrentFrame();
-		
+
 		if (oViewFrame instanceof UIMapViewFrame) {
 			UIViewPane oPane = ((UIMapViewFrame)oViewFrame).getViewPane();
 			UINode uinode = (UINode) oPane.get(oNode.getId());
@@ -688,7 +687,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					uinode.getViewPane().getViewPaneUI().copyToClipboard(nodeUI);
 				}
 				uinode.setSelected(false);
-				uinode.requestFocus(); 
+				uinode.requestFocus();
 			}
 		} else {
 			UIListViewFrame oListViewFrame = (UIListViewFrame)oViewFrame;
@@ -702,17 +701,17 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			oViewFrame.moveToBack();
 		}
 	}// End of function OnCopy()
-	
+
 	/**
 	 * Cuts the selected node to clipboard
 	 */
-	
+
 	public void onCut(){
-		
+
 		TreePath treePath = tree.getSelectionPath();
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)tree.getLastSelectedPathComponent();
 		UIViewOutlineTreeNode treeNode = (UIViewOutlineTreeNode)node.getUserObject();
-		
+
 		NodeSummary oNode = treeNode.getObject();
 		if(oNode.equals(ProjectCompendium.APP.getHomeView()) || oNode.getId().equals(ProjectCompendium.APP.getInBoxID())){
 			return ;
@@ -730,7 +729,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		}
 		UIViewFrame oViewFrame = ProjectCompendium.APP.getViewFrame(selectedView, selectedView.getLabel());
 		UIViewFrame currentFrame = ProjectCompendium.APP.getCurrentFrame();
-		
+
 		if (oViewFrame instanceof UIMapViewFrame) {
 			UIViewPane oPane = ((UIMapViewFrame)oViewFrame).getViewPane();
 			UINode uinode = (UINode) oPane.get(oNode.getId());
@@ -744,7 +743,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 				else {
 					uinode.getViewPane().getViewPaneUI().cutToClipboard(nodeUI);
 				}
-				uinode.requestFocus(); 
+				uinode.requestFocus();
 			}
 		} else {
 			UIListViewFrame oListViewFrame = (UIListViewFrame)oViewFrame;
@@ -757,32 +756,32 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			oViewFrame.moveToBack();
 		}
 	}// End of function OnCut()
-	
+
 	/**
 	 * Paste the node from clipboard
 	 */
-	
+
 	public void onPaste(){
-		
+
 		TreePath treePath = tree.getSelectionPath();
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)tree.getLastSelectedPathComponent();
 		UIViewOutlineTreeNode treeNode = (UIViewOutlineTreeNode)node.getUserObject();
-		
+
 		NodeSummary oNode = treeNode.getObject();
 		if(oNode.getId().equals(ProjectCompendium.APP.getInBoxID()) || (!(oNode instanceof View))){
 			return ;
 		}
-				
+
 		ProjectCompendium.APP.ht_pasteCheck.clear();
-		
+
 		UIViewFrame oViewFrame = ProjectCompendium.APP.addViewToDesktop((View)oNode, oNode.getLabel());
-		
+
 		if (oViewFrame instanceof UIMapViewFrame) {
-			
+
 			ViewPaneUI paneUI = ( ((UIMapViewFrame)oViewFrame).getViewPane().getViewPaneUI());
 
 			paneUI.pasteFromClipboard();
-			ProjectCompendium.APP.scaleAerialToFit(); // will refresh aerial view after paste 
+			ProjectCompendium.APP.scaleAerialToFit(); // will refresh aerial view after paste
 		} else {
 			((UIListViewFrame)oViewFrame).getUIList().getListUI().pasteFromClipboard();
 		}
@@ -791,27 +790,27 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			views.add(oNode);
 			refreshViews(views);
 		} catch (Exception e) {
-			
+
 		}
-		
+
 	}// End of function OnPaste()
 	/**
 	 * Deletes the selected node
 	 *
-	 */	
+	 */
 	public void onDelete(){
-		
+
 		TreePath treePath = tree.getSelectionPath();
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)tree.getLastSelectedPathComponent();
 		UIViewOutlineTreeNode treeNode  =(UIViewOutlineTreeNode)node.getUserObject();
-		
-		// root node and Home window cannot be deleted. 
+
+		// root node and Home window cannot be deleted.
 		if(!(node.equals(rootNode) || (treeNode.getObject()).equals(ProjectCompendium.APP.getHomeView()) ||
 				(treeNode.getId()).equals(ProjectCompendium.APP.getInBoxID()))) {
-			
+
 			NodeSummary nodeSum 	= treeNode.getObject();
 			nodeSum.initialize(oSession, oModel);
-			
+
 			try {
 			    Vector parentViews = nodeSum.getMultipleViews();
 			    if(parentViews.size() == 1 && nodeSum instanceof View){
@@ -823,36 +822,36 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			    	}
 				}
 			    if(sMode.equals(DISPLAY_VIEWS_ONLY)){
-					
+
 					DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
 					UIViewOutlineTreeNode parentTreeNode =(UIViewOutlineTreeNode)parentNode.getUserObject();
 					NodeSummary parentSum = parentTreeNode.getObject();
-					
+
 					View view = View.getView(parentSum.getId());
 					view.initialize(oSession, oModel);
 					Vector v = new Vector();
 					v.add(view);
 					deleteSelectedNode(v, nodeSum);
-					
+
 				} else if(sMode.equals(DISPLAY_VIEWS_AND_NODES)) {
 					DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
 					if (!parentNode.equals(rootNode)){
 						Object[] nodes = (Object[]) treePath.getPath();
-    					
+
 						DefaultMutableTreeNode parentView = (DefaultMutableTreeNode)nodes[1];
     					UIViewOutlineTreeNode parentTreeNode =(UIViewOutlineTreeNode)parentView.getUserObject();
 						NodeSummary parentSum = parentTreeNode.getObject();
-						
+
 						View view = View.getView(parentSum.getId());
 						view.initialize(oSession, oModel);
 						Vector v = new Vector();
 						v.add(view);
 						deleteSelectedNode(v, nodeSum);
-					
+
 					} else if(parentViews.size() == 1){
 						deleteSelectedNode(parentViews, nodeSum);
 					} else{
-						int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP, 
+						int response = JOptionPane.showConfirmDialog(ProjectCompendium.APP,
 								"WARNING! The Node is in Multiple views.\n" +
 								"To delete from a particular view, go to that view and delete." +
 								"\nIf you continue, node will be deleted from all views." +
@@ -874,80 +873,87 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	 * Deletes the given node from the given views
 	 * @param view View where the node to be delete exists
 	 * @param node NodeSummary to be deleted
-	 * @throws ModelSessionException 
-	 * @throws SQLException 
-	 * @throws NoSuchElementException 
+	 * @throws ModelSessionException
+	 * @throws SQLException
+	 * @throws NoSuchElementException
 	 */
 	public void deleteSelectedNode(Vector views, NodeSummary node) {
-		
-		for(int i= 0; i <views.size(); i ++){
-			View view = (View) views.get(i);
-			UIViewFrame frame = ProjectCompendium.APP.getViewFrame(view, view.getLabel());
-	    	if(frame instanceof UIMapViewFrame){
-	    		UIViewPane pane = ((UIMapViewFrame)frame).getViewPane();
-	    		UINode uiNode = (UINode)pane.get(node.getId());
-	    		pane.setSelectedNode(uiNode,ICoreConstants.SINGLESELECT);
-	    		pane.getViewPaneUI().onDelete(); 
-	    	} else {
-	    		UIList list = ((UIListViewFrame)frame).getUIList();
-	    		list.deselectAll();
-	    		list.selectNode(list.getIndexOf(node), ICoreConstants.SINGLESELECT);
-	    		list.getListUI().onDelete();
-	    	}
-	    }
-		refreshViews(views);
+
+	    //TODO: Work on locking functions has been frozen. Finish or delete.
+//		int iNodeLock = node.getLockID();
+//		if (0 == iNodeLock) {
+
+			for(int i= 0; i <views.size(); i ++){
+				View view = (View) views.get(i);
+				UIViewFrame frame = ProjectCompendium.APP.getViewFrame(view, view.getLabel());
+		    	if(frame instanceof UIMapViewFrame){
+		    		UIViewPane pane = ((UIMapViewFrame)frame).getViewPane();
+		    		UINode uiNode = (UINode)pane.get(node.getId());
+		    		pane.setSelectedNode(uiNode,ICoreConstants.SINGLESELECT);
+		    		pane.getViewPaneUI().onDelete();
+		    	} else {
+		    		UIList list = ((UIListViewFrame)frame).getUIList();
+		    		list.deselectAll();
+		    		list.selectNode(list.getIndexOf(node), ICoreConstants.SINGLESELECT);
+		    		list.getListUI().onDelete();
+		    	}
+		    }
+			refreshViews(views);
+
+//		}
+
 	}
-	
+
 	/**
 	 * To create nodes for the outline view tree  - view and nodes options
 	 */
 	public DefaultMutableTreeNode createViewsAndNodes() {
-		
+
 		cleanUp();
 		removeChildNodes(rootNode);
 		rootNode.removeAllChildren();
-		
+
 		View root = oModel.getUserProfile().getHomeView();
 		root.initialize(oSession, oModel);
 		try {
 			root.initializeMembers();
 			UIViewOutlineTreeNode top = new UIViewOutlineTreeNode(root);
 			DefaultMutableTreeNode topNode = new DefaultMutableTreeNode(top);
-			
+
 			if( !root.getListenerList().contains(this)){
 				root.addPropertyChangeListener(this);
 			}
-			
+
 			addToTreeNodes(topNode, top.getId());
 			rootNode.add(topNode);
-			
+
 			DefaultMutableTreeNode dummyNode = new DefaultMutableTreeNode("dummy");
 			if(root.getNodeCount()> 0){
 				topNode.add(dummyNode);
 			}
-			
+
 			Vector views = null;
 			try {
 				views = oModel.getNodeService().getAllChildViews(oSession, root.getId());
-				
+
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
-			
+
 			for (int i = 0; i< views.size(); i++){
 	    		View ns = (View)views.get(i);
-	    		
+
 	    		DefaultMutableTreeNode childNode =  null;
-	    		
+
 	    		UIViewOutlineTreeNode child = new UIViewOutlineTreeNode(ns);
 				childNode = new DefaultMutableTreeNode(child);
-				
+
 				if(!ns.getListenerList().contains(this)){
 					ns.addPropertyChangeListener(this);
 				}
 				rootNode.add(childNode);
 	    		addToTreeNodes(childNode, ns.getId());
-	    		
+
 	    		if(ns.getNodeCount() > 0){
 	    			dummyNode = new DefaultMutableTreeNode("dummy");
 	    			childNode.add(dummyNode);
@@ -960,44 +966,44 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		}
 		return rootNode;
 	}
-	
+
 
 	/**
 	 * To create nodes for the outline view tree  - view and nodes options
 	 */
 /* OLD CODE
   	public DefaultMutableTreeNode createViewsAndNodes() {
-		
+
 		Vector vtNodes = new Vector();
 		Vector vtNodesIds = new Vector();
 		Hashtable htNodesCount = new Hashtable();
-		
+
 		removeChildNodes(rootNode);
 		rootNode.removeAllChildren();
 		htTreeNodes.clear();
-		
+
 		View homeView = oModel.getUserProfile().getHomeView();
-		
+
 		NodeSummary root = NodeSummary.getNodeSummary(homeView.getId());
 		root.initialize(oSession, oModel);
-		
+
 		UIViewOutlineTreeNode top = new UIViewOutlineTreeNode(root);
 		DefaultMutableTreeNode topNode = new DefaultMutableTreeNode(top);
-		
+
 		if( !root.getListenerList().contains(this)){
 			root.addPropertyChangeListener(this);
 		}
-		
+
 		addToTreeNodes(topNode, top.getId());
 		rootNode.add(topNode);
 		String id = ((UIViewOutlineTreeNode)topNode.getUserObject()).getId();
-		
+
 		Vector nodes = new Vector();
 		UIArrangeLeftRight arrange = new UIArrangeLeftRight();
 		View view = View.getView(id);
 		view.initialize(oSession, oModel);
 		arrange.processView(view);
-		
+
 		Hashtable htNodesId = arrange.getNodes();
 		Hashtable htNodesLevel = arrange.getNodesLevel();
 		Hashtable htNodesBelow = arrange.getNodesBelow();
@@ -1018,8 +1024,8 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		boolean stop = true;
 		if(nodes.size() > 0){
 			stop = false;
-		} 
-		
+		}
+
 		while(!stop) {
 			Vector nodes1 = new Vector();
 			if(nodes.size() > 0){
@@ -1047,18 +1053,18 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
     		int i;
 	        for (i = 0; i< vtNodes.size(); i++){
 	    		NodeSummary ns = (NodeSummary)vtNodes.get(i);
-	    		
+
 	    		DefaultMutableTreeNode childNode =  null;
-	    		
+
 	    		UIViewOutlineTreeNode child = new UIViewOutlineTreeNode(ns);
 				childNode = new DefaultMutableTreeNode(child);
-				
+
 				if(!ns.getListenerList().contains(this)){
 					ns.addPropertyChangeListener(this);
 				}
 				rootNode.add(childNode);
 	    		addToTreeNodes(childNode, ns.getId());
-	    		
+
 	    		int count = ((Integer)htNodesCount.get(ns)).intValue();
 	    		if(count > 0){
 	    			dummyNode = new DefaultMutableTreeNode("dummy");
@@ -1068,7 +1074,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	   }
         return rootNode;
    }
-	
+
 */
 	/**
 	 * Gets the view nodes in the given view
@@ -1079,10 +1085,10 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	 */
 /* OLD CODE
   	private Vector getLevelOneNodes(View view, Hashtable htNodesCount, Vector vtNodes){
-		
+
 		String sViewID = view.getId();
 		Vector mapnodes  = new Vector();
-		
+
 		 try {
 			 // Get the view nodes in the given node - returns the list of map/list nodes in the view and
 			 // child count for the view
@@ -1098,70 +1104,70 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					}
 				}
 			 }
-			 
-					
+
+
 			 //store the child count to the view.
 			 htNodesCount.put (view, new Integer(count));
 		} catch(Exception io) {
 					ProjectCompendium.APP.displayError("Exception: (UIViewOutline.getLevelOneNodes) \n");//+io.getMessage());
 		}
-		return mapnodes; 
+		return mapnodes;
 	}
-*/	
-	
+*/
+
 	/**
 	 * To update the given tree node
 	 * @param parent, node of the tree where child nodes have to be added
 	 */
-	
+
 	public void updateNodes(DefaultMutableTreeNode parent) {
-		
+
 		removeChildNodes(parent);
 		parent.removeAllChildren();
-		
+
 		NodeSummary nodeSum = ((UIViewOutlineTreeNode)parent.getUserObject()).getObject();
 		TreeNode[] parentNodes = (TreeNode[])parent.getPath();
-		
+
 		String id = ((UIViewOutlineTreeNode)((DefaultMutableTreeNode)parentNodes[1]).getUserObject()).getId();
-		
+
 		//parent - child relationship based on the links
-	
+
 		UIArrangeLeftRight arrange = new UIArrangeLeftRight();
 		View view = View.getView(id);
 		view.initialize(oSession, oModel);
-		
+
 		if (view != null){
 			arrange.processView(view);
-			
+
 			Hashtable htNodesId = arrange.getNodes();
 			Hashtable htNodesLevel = arrange.getNodesLevel();
 			Hashtable htNodesBelow = arrange.getNodesBelow();
-	
+
 			Vector nodeLevelList = arrange.getNodeLevelList();
 			Vector nodesAdded = new Vector();
-			
+
 			if (nodeLevelList.size() > 0) {
-				
+
 				// CYCLE THROUGH NODES SORTED BY YPOS AND PRINT THEM AND THIER CHILDREN
 				for(Enumeration f = ((Vector)nodeLevelList.elementAt(0)).elements();f.hasMoreElements();) {
 					String nodeToAddId = (String)f.nextElement();
 					NodeSummary nodeToAdd = (NodeSummary) htNodesId.get(nodeToAddId);
-					
+
 					DefaultMutableTreeNode childNode =  null;
-		    		
+
 		    		UIViewOutlineTreeNode child = new UIViewOutlineTreeNode(nodeToAdd);
 					childNode = new DefaultMutableTreeNode(child);
-					
+
 					if(!nodeToAdd.getListenerList().contains(this)){
 						nodeToAdd.addPropertyChangeListener(this);
 					}
-					
+
 					parent.add(childNode);
 					nodesAdded.add(nodeToAdd);
 		    		addToTreeNodes(childNode, nodeToAddId);
-					
+
 		    		nodesAdded = recursiveNodeAddition(childNode, htNodesBelow, htNodesId, nodesAdded);
-					
+
 				}//end for
 			}//end if
 			//temp Fix - If any node has been left out because of complex linkage then add them as level 1
@@ -1169,16 +1175,16 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 				if(nodesAdded.size() < view.getNodeCount()){
 					for(Enumeration e = htNodesId.keys(); e.hasMoreElements(); ){
 						String nodeToAddId =  (String)e.nextElement();
-						NodeSummary nodeToAdd = (NodeSummary) htNodesId.get(nodeToAddId); 
-						
+						NodeSummary nodeToAdd = (NodeSummary) htNodesId.get(nodeToAddId);
+
 						if(!nodesAdded.contains(nodeToAdd)) {
 							UIViewOutlineTreeNode child = new UIViewOutlineTreeNode(nodeToAdd);
 							DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
-							
+
 							if(!nodeToAdd.getListenerList().contains(this)){
 								nodeToAdd.addPropertyChangeListener(this);
 							}
-							
+
 							parent.add(childNode);
 							nodesAdded.add(nodeToAdd);
 				    		addToTreeNodes(childNode, nodeToAddId);
@@ -1190,36 +1196,36 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			}//end try
 		}// end if view != null
    }//end updateNodes
-	
-	
+
+
 	//private Hashtable nodesRecursed = new Hashtable(51);
-	
+
 	/**
 	 * Add the child nodes to the parent. (parent - Child relationship is based on links)
 	 * @param node, DefaultMutableTreeNode whose children has to added
 	 * @param htNodesBelow, Hashtable of nodes against their child nodes
 	 */
 	private Vector recursiveNodeAddition(DefaultMutableTreeNode node, Hashtable htNodesBelow, Hashtable htNodes, Vector nodesAdded){
-		
+
 		UIViewOutlineTreeNode treeNode = (UIViewOutlineTreeNode) node.getUserObject();
 		NodeSummary nodeSum = treeNode.getObject();
 		String nodeId = treeNode.getId();
-		
+
 		Vector nodeChildren = (Vector)htNodesBelow.get(nodeId);
 		if (nodeChildren != null) {
 			for (int i = 0; i < nodeChildren.size(); i++) {
 				String nodeToAddId = (String)nodeChildren.elementAt(i);
 				NodeSummary nodeToAdd = (NodeSummary) htNodes.get(nodeToAddId);
-				
+
 				UIViewOutlineTreeNode child = new UIViewOutlineTreeNode(nodeToAdd);
 	    		DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
-				
+
 				if(!nodeToAdd.getListenerList().contains(this)){
 					nodeToAdd.addPropertyChangeListener(this);
 				}
-				
+
 				node.add(childNode);
-				
+
 	    		addToTreeNodes(childNode, nodeToAddId);
 	    		if(!nodesAdded.contains(nodeToAdd)) {
 	    			nodesAdded.add(nodeToAdd);
@@ -1229,35 +1235,35 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		}
 		return nodesAdded;
 	}
-	
-	
+
+
 	/**
 	 * To create nodes for the outline view for Views Only option
 	 * @param node, node of the tree where child nodes have to be added
 	 * @param getChild, boolean true, if child nodes has to be added to the node
 	 */
 	public DefaultMutableTreeNode createViewNodes(DefaultMutableTreeNode parent, boolean getChild) {
-		
+
 		if(parent.equals(rootNode)){
 			cleanUp();
-			
+
 			parent = (DefaultMutableTreeNode) parent.getFirstChild();
 			htNodes.clear();
 			htNodeParent.clear();
 			htTreeNodes.clear();
-			
+
 			NodeSummary parentSummary = ((UIViewOutlineTreeNode)parent.getUserObject()).getObject();
 			String id = parentSummary.getId();
-			
+
 			addToTreeNodes(parent, id);
 		}
-		
+
 		NodeSummary parentSummary = ((UIViewOutlineTreeNode)parent.getUserObject()).getObject();
 		String id = parentSummary.getId();
-				
+
 		removeChildNodes(parent);
 		parent.removeAllChildren();
-		
+
 		if(getChild){
     	    htNodes.remove(parentSummary.getId());
    			Vector vtChildNodes = new Vector();;
@@ -1273,28 +1279,28 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-    		
+
         }
  		Vector vtNodes = ((Vector) htNodes.get(id));
- 		
+
  		for (Enumeration e = vtNodes.elements() ; e.hasMoreElements();){
     		NodeSummary ns = (NodeSummary)e.nextElement();
     		String nodeId = ns.getId();
-    		
+
     		UIViewOutlineTreeNode child = new UIViewOutlineTreeNode(ns);
         	DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
-        	
+
         	if(!ns.getListenerList().contains(this)){
 				ns.addPropertyChangeListener(this);
 			}
-        	
+
         	addToTreeNodes(childNode, nodeId);
-    			
+
 			//put child node against the parent, it is useful when displaying views only option
-			// when a node type is changed from other types to View node. 
+			// when a node type is changed from other types to View node.
 			htNodeParent.put(childNode, parent);
 			parent.add(childNode);
-			
+
 			//check if any views contains itself (even at several levels deep)
 			boolean isRepeat = false;
 		    TreeNode[] path = childNode.getPath();
@@ -1305,7 +1311,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		    		isRepeat = true ;
 		    	}
 		    }
-		    
+
 			if((htNodes.containsKey(nodeId)) && (!isRepeat)) {
         		Vector vtChildNodes = ((Vector) htNodes.get(nodeId));
         		if(vtChildNodes.size() > 0){
@@ -1317,15 +1323,15 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
  		treeModel.reload(parent);
         return parent;
    }
-	
+
 	/**
 	 * Gets the childnodes for the given view ID
 	 * @param sViewID, the view id whose child nodes are needed
-	 * @return Vector, list of Child NodeSummarys for the given view id 
+	 * @return Vector, list of Child NodeSummarys for the given view id
 	 */
 
-/* OLD CODE 
- 
+/* OLD CODE
+
  	private Vector getChildNodes(String  sViewID){
 		Vector vtNodes = new Vector();
 		try {
@@ -1345,35 +1351,35 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			io.printStackTrace();
 			ProjectCompendium.APP.displayError("Exception: (UIViewOutline.getChildNodes) \n");//+io.getMessage());
 		}
-		return vtNodes; 
+		return vtNodes;
 	}
-*/	
+*/
 	/**
 	 * Gets the childnodes for the given view ID
 	 * @param sViewID, the view id whose child nodes are needed
-	 * @return Vector, list of Child NodeSummarys for the given view id 
+	 * @return Vector, list of Child NodeSummarys for the given view id
 	 */
-/* OLD CODE	
+/* OLD CODE
 	private Vector getNextChildNodes(String sViewID){
-	
+
 		Vector vtNodes = new Vector();
 		try {
 			Enumeration nodes = ProjectCompendium.APP.getModel().getNodeService().getChildNodes(
 					ProjectCompendium.APP.getModel().getSession(), sViewID);
-			
+
 			for(Enumeration e = nodes;e.hasMoreElements();) {
 				NodeSummary  nodeSummary = (NodeSummary)e.nextElement();
 				vtNodes.add(nodeSummary);
 			}
-		
+
 		}
 		catch(Exception io) {
-			io.printStackTrace();			
+			io.printStackTrace();
 			ProjectCompendium.APP.displayError("Exception: (UIViewOutline.getNextChildNodes) \n");//+io.getMessage());
 		}
-		return vtNodes; 
+		return vtNodes;
 	}
-*/	
+*/
 	/**
 	 * Open the contents popup for the currently selected node.
 	 */
@@ -1387,7 +1393,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			contentDialog.setVisible(true);
 		}
 	}
-	
+
 	/**
 	 * Open a reference node.
 	 * @param node
@@ -1403,7 +1409,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			int ind = path.indexOf("/");
 			if (ind != -1) {
 				String sGoToViewID = path.substring(0, ind);
-				String sGoToNodeID = path.substring(ind+1);		
+				String sGoToNodeID = path.substring(ind+1);
 				IModel model = ProjectCompendium.APP.getModel();
 				String history = "Outline View ";
 				UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID, history);
@@ -1423,7 +1429,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 										 view,
 										 node));
 				}
-			}		
+			}
 		} else {
 			File file = new File(path);
 			String sPath = path;
@@ -1445,32 +1451,32 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 										 view,
 										 node));
 				}
-			}			
+			}
 		}
 	}
-		
-	
+
+
 	/**
-	 * Opens the given view and highlights the given node 
+	 * Opens the given view and highlights the given node
 	 * @param viewSum, View to be opened
 	 * @param ns, NodeSummary of the node to be highlighted
 	 */
-	
+
 	public void openView(View viewSum, NodeSummary  ns) {
-				
+
 		 try {
 			View view = viewSum;
 			view.initialize(oSession, oModel);
 			view.initializeMembers();
-			
+
 			UIViewFrame viewFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 			viewFrame.setNavigationHistory(viewFrame.getChildNavigationHistory());
 
 			if(!viewSum.equals(ns)){
-				
+
 				UIUtilities.focusNodeAndScroll(ns, viewFrame);
 			}
-			
+
 			Vector history = new Vector();
 			history.addElement( "Outline View ");
 			viewFrame.setNavigationHistory(history);
@@ -1478,8 +1484,8 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			e.printStackTrace();
 		} catch (ModelSessionException e) {
 			e.printStackTrace();
-		} 
-		
+		}
+
 	}
 	/**
 	 * Returns the list of listeners
@@ -1488,22 +1494,22 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	public static Vector getViewListener() {
 		return viewListener;
 	}
-	
+
 	/**
 	 * Adds to the list of listeners
-	 * @return Vector, list of listener object 
+	 * @return Vector, list of listener object
 	 */
 	public static Vector addToViewListener(NodeSummary view) {
 		if(!viewListener.contains(view))
 			viewListener.add(view);
 		return viewListener;
-	} 
-	
+	}
+
 	/**
 	 * Returns to the list of nodes associated with the given id
-	 * @return Vector, list of nodes 
+	 * @return Vector, list of nodes
 	 */
-	
+
 	public Vector getTreeNode(String id) {
 		Vector v = new Vector();
 		if(htTreeNodes.containsValue(id)){
@@ -1517,17 +1523,17 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		}
 		return v;
 	}
-	
+
 	/**
-	 * Removes the given node from the list 
+	 * Removes the given node from the list
 	 * @param node, DefaultMutableTreeNode, the node to be removed
 	 */
 	public void removeTreeNode(DefaultMutableTreeNode node) {
 		htTreeNodes.remove(node);
 	}
-	
+
 	/**
-	 * Removes the all child nodes for the given node recursively 
+	 * Removes the all child nodes for the given node recursively
 	 * @param node, DefaultMutableTreeNode, the node whose children to be removed
 	 */
 	public void removeChildNodes(DefaultMutableTreeNode node) {
@@ -1551,22 +1557,22 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		}
 	}
 	/**
-	 * Removes the node from the outline view that is removed from main view 
+	 * Removes the node from the outline view that is removed from main view
 	 * @param ns, NodeSummary of the view node whose child has been removed
 	 */
-	
+
 	public void removeChildViews(NodeSummary ns){
 		UIArrangeLeftRight arrange = new UIArrangeLeftRight();
 		if (ns != null && ns instanceof View){
 			View view = (View) ns;
 			arrange.processView(view);
-						
+
 			Hashtable htNodesId = arrange.getNodes();
 			Hashtable htNodesLevel = arrange.getNodesLevel();
 			Hashtable htNodesBelow = arrange.getNodesBelow();
-	
+
 			Vector nodeLevelList = arrange.getNodeLevelList();
-			
+
 			for(Enumeration f = htNodesId.keys();f.hasMoreElements();) {
 				String nodeId = (String)f.nextElement();
 				NodeSummary node = (NodeSummary)htNodesId.get(nodeId);
@@ -1593,18 +1599,18 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			}
 		}
 	}
-	
+
 	/**
 	 * Adds the given node to the table
 	 * @param node, the key object for the hashtable
 	 * @param s, String , the id - the value object for the hashtable
 	 * @return Hashtable, the updated the hashtable
-	 */ 
+	 */
 	public Hashtable addToTreeNodes( DefaultMutableTreeNode node, String s) {
 		htTreeNodes.put(node, s);
 		return htTreeNodes;
 	}
-	
+
 	/**
 	 * Returns the Tree
 	 * @return JTree, the outline view tree
@@ -1620,25 +1626,25 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	public DefaultTreeModel getTreeModel() {
 		return treeModel;
 	}
-	
+
 	/**
  	 * Indicates when nodes on a view are selected and deselected.
   	 * @param selected true for selected false for deselected.
 	 */
 	public void setNodeSelected(boolean selected) {
 		tree.clearSelection();
-		if (selected) {			
-			updateTreeSelection();						
-		} 
+		if (selected) {
+			updateTreeSelection();
+		}
 	}
-	
+
 	/**
 	 * Updates the list of nodes for the currently selected nodes in the current view.
 	 */
 	private void updateTreeSelection() {
-		
-		Vector allNodes = new Vector(51);				
-		Hashtable htNodesCheck = new Hashtable();		
+
+		Vector allNodes = new Vector(51);
+		Hashtable htNodesCheck = new Hashtable();
 		UIViewFrame frame = ProjectCompendium.APP.getCurrentFrame();
 		NodeSummary parentView = null;
 		if (frame != null) {
@@ -1660,22 +1666,22 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 						}
 					}
 				}
-				
+
 			} else if (frame instanceof UIListViewFrame) {
 				UIListViewFrame listFrame = (UIListViewFrame)frame;
 				UIList list = listFrame.getUIList();
 				parentView = list.getView();
 				if (list != null) {
 					Enumeration e = list.getSelectedNodes();
-					NodePosition nodePos = null; 
+					NodePosition nodePos = null;
 					for (Enumeration en=e; en.hasMoreElements();) {
 						nodePos = (NodePosition)en.nextElement();
 						allNodes.addElement(nodePos.getNode());
 					}
-				}				
+				}
 			}
 			for(int k = 0; k < allNodes.size(); k ++){
-				NodeSummary node = (NodeSummary) allNodes.get(k);				
+				NodeSummary node = (NodeSummary) allNodes.get(k);
 				String sNodeID = node.getId();
 				Vector v = getTreeNode(sNodeID);
 				for(int i = 0; i < v.size(); i++){
@@ -1685,9 +1691,9 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 						DefaultMutableTreeNode topLevelNode = (DefaultMutableTreeNode) treeNode.getParent();
 						UIViewOutlineTreeNode  topLevelOutlineNode = (UIViewOutlineTreeNode)topLevelNode.getUserObject();
 						TreePath topLevelPath = new TreePath(topLevelNode.getPath());
-						if(topLevelNode.equals(rootNode)) { 
+						if(topLevelNode.equals(rootNode)) {
 							tree.addSelectionPath(selectedNodePath);
-							
+
 						} else {
 							Vector parentViews = getTreeNode(parentView.getId());
 							for(int j = 0; j < parentViews.size(); j ++){
@@ -1722,14 +1728,14 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	 * @param oView View in which the node is.
 	 */
 	public void removeNodeForViewsOnly(NodeSummary ns, View oView){
-		
+
 		Vector nodes = getTreeNode(ns.getId());
 		Vector parentIds = new Vector();
-				
+
 		for(int i=0;i< nodes.size(); i++){
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode)nodes.get(i);
 			DefaultMutableTreeNode parent = (DefaultMutableTreeNode)child.getParent();
-			String parentId = ((UIViewOutlineTreeNode)parent.getUserObject()).getId(); 
+			String parentId = ((UIViewOutlineTreeNode)parent.getUserObject()).getId();
 			parentIds.add(parentId);
 			if(oView.getId().equals(parentId)){
 				parent.remove(child);
@@ -1740,10 +1746,10 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			}
 		}
 	}
-	
+
 	/**
-	 * Removes the node from the outline view for views and nodes options  
-	 * @param ns  NodeSummary of the node to be removed 
+	 * Removes the node from the outline view for views and nodes options
+	 * @param ns  NodeSummary of the node to be removed
 	 */
 	public void removeNodeForViewsAndNodes(NodeSummary ns){
 		try {
@@ -1761,7 +1767,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			e.printStackTrace();
 		}
 		//if the node is a view and is not in mulitple views., then deleted the view node from root
-		
+
 		if(ns instanceof View){
 			Vector parents = getTreeNode(ns.getId());
 			if  (parents == null || parents.size() <= 0){
@@ -1773,19 +1779,19 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					removeChildNodes(parentNode);
 					removeChildViews(ns);
 					removeTreeNode(parentNode);
-					
+
 					rootNode.remove(parentNode);
 					treeModel.reload(rootNode);
-				} 
+				}
 				viewListener.remove(ns);
 			}
 		}
 	}
-	
-	
+
+
 	public void addNodeForViewsOnly(NodeSummary ns, View oView){
 		if((ns.getType()!= ICoreConstants.TRASHBIN)){
-			
+
 			Vector nodes = getTreeNode(ns.getId());
 			Vector parentIds = new Vector();
 			Vector viewIds = new Vector();
@@ -1794,10 +1800,10 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			for(int i=0;i< nodes.size(); i++){
 				DefaultMutableTreeNode child = (DefaultMutableTreeNode)nodes.get(i);
 				DefaultMutableTreeNode parent = (DefaultMutableTreeNode)child.getParent();
-				String parentId = ((UIViewOutlineTreeNode)parent.getUserObject()).getId(); 
+				String parentId = ((UIViewOutlineTreeNode)parent.getUserObject()).getId();
 				parentIds.add(parentId);
 			}
-			
+
 			//Just to make sure the newly node isn't in the current view
 			if(!parentIds.contains(oView.getId())){
 				Vector parentNodes = getTreeNode(oView.getId());
@@ -1805,7 +1811,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) parentNodes.get(i);
 					UIViewOutlineTreeNode treeNode = new UIViewOutlineTreeNode(ns);
 					DefaultMutableTreeNode node = new DefaultMutableTreeNode(treeNode);
-					
+
 					if(!ns.getListenerList().contains(this)){
 						ns.addPropertyChangeListener(this);
 					}
@@ -1851,7 +1857,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	public UIViewOutlinePopupMenu showPopupMenu(NodeSummary node, int x, int y, boolean isLevelOneNode) {
 
 		UIViewOutlinePopupMenu popup = new UIViewOutlinePopupMenu("Popup menu", node,  this, isLevelOneNode);
-	   
+
 	    Dimension dim = ProjectCompendium.APP.getScreenSize();
 	    int screenWidth = dim.width - 50; //to accomodate for the scrollbar
 	    int screenHeight = dim.height ; //to accomodate for the menubar...
@@ -1874,13 +1880,13 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	  //  popup.setCoordinates(realX+offsetX, realY+offsetY);
 	  //   popup.show(tree, realX+offsetX, realY+offsetY);
 	    popup.setCoordinates(point.x  + 50 , point.y);
-	    popup.show(tree, point.x +50 , point.y);	   
+	    popup.show(tree, point.x +50 , point.y);
 
 	    return popup;
-	   
+
 	}
-	
-	
+
+
 	/**
 	 * Handles property change events.
 	 * @param evt, the associated PropertyChangeEvent object.
@@ -1890,10 +1896,10 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		String prop = evt.getPropertyName();
 		Object oldvalue = evt.getOldValue();
 		Object newvalue = evt.getNewValue();
-		
+
 		// get the expanded tree descendants.
 		Enumeration e = tree.getExpandedDescendants(new TreePath(rootNode.getPath()));
-				
+
 		if(prop.equals(NodeSummary.STATE_PROPERTY)){
 			NodeSummary ns = (NodeSummary) obj;
 			int newState = ((Integer) newvalue).intValue();
@@ -1913,9 +1919,9 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			if (sMode.equals(DISPLAY_VIEWS_AND_NODES)) {
 				if(prop.equals(View.NODE_REMOVED)){
 					NodeSummary ns = (NodeSummary) newvalue;
-					removeNodeForViewsAndNodes(ns);	
+					removeNodeForViewsAndNodes(ns);
 				}
-				
+
 				Vector parentNodes = getTreeNode(oView.getId());
 				if  (parentNodes == null || parentNodes.size() <= 0){
 					return;
@@ -1925,16 +1931,16 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) parentNodes.get(i);
 					TreeNode[] path = parentNode.getPath();
 					TreePath parentPath = new TreePath(path);
-					if ((parentNode.getParent() != null) && 
-					  (parentNode.getParent().equals(rootNode)) && 
+					if ((parentNode.getParent() != null) &&
+					  (parentNode.getParent().equals(rootNode)) &&
 					   tree.isExpanded(parentPath)) {
-						
+
 						updateNodes(parentNode);
 						treeModel.reload(parentNode);
 					}
 				}
 			} else if ((sMode.equals(DISPLAY_VIEWS_ONLY)) && prop.equals(View.NODE_REMOVED)){
-				NodeSummary ns = (NodeSummary) newvalue; 
+				NodeSummary ns = (NodeSummary) newvalue;
 				if(((ns.getType() == ICoreConstants.MAPVIEW) ||
 			    	    (ns.getType() == ICoreConstants.LISTVIEW))) {
 					if(prop.equals(View.NODE_REMOVED)){
@@ -1945,7 +1951,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		} else  if(prop.equals(NodeSummary.LABEL_PROPERTY)){
 			NodeSummary ns = (NodeSummary) obj;
 			if(sMode.equals(DISPLAY_VIEWS_AND_NODES) ||
-	    	   	(sMode.equals(DISPLAY_VIEWS_ONLY) && 
+	    	   	(sMode.equals(DISPLAY_VIEWS_ONLY) &&
 	    	   	((ns.getType() == ICoreConstants.MAPVIEW) ||
 	    	   	(ns.getType() == ICoreConstants.LISTVIEW)))) {
 				Vector vtNodes = getTreeNode(ns.getId());
@@ -1960,26 +1966,26 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		} else if(prop.equals(View.NODE_ADDED)) {
 			NodePosition np = (NodePosition) newvalue;
 			View oView = np.getView();
-			
+
 			NodeSummary ns = np.getNode();
 			if(sMode.equals(DISPLAY_VIEWS_AND_NODES)){
 				addNodeForViewsAndNodes(ns, oView);
-			} else if (sMode.equals(DISPLAY_VIEWS_ONLY) && 
+			} else if (sMode.equals(DISPLAY_VIEWS_ONLY) &&
     	    	((ns.getType() == ICoreConstants.MAPVIEW) ||
     	    	(ns.getType() == ICoreConstants.LISTVIEW))) {
 				addNodeForViewsOnly(ns, oView);
     		}
-			
+
 		}else if (prop.equals(View.NODE_TRANSCLUDED)){
 			NodePosition np = (NodePosition) newvalue;
 			View oView = (View)obj;
 			NodeSummary ns = np.getNode();
-			
+
     		if(sMode.equals(DISPLAY_VIEWS_AND_NODES)){
     			if((ns.getType()!= ICoreConstants.TRASHBIN)){
     				Vector v = getTreeNode(ns.getId());
     				Vector parentNodes = getTreeNode(oView.getId());
-    			/*	
+    			/*
     				if(ns instanceof View ){
     					if(v.size() == 0){
 	    					createViewsAndNodes();
@@ -2013,9 +2019,9 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 							}
 						}
 					}
-					
+
 				}
-    		} else if (sMode.equals(DISPLAY_VIEWS_ONLY) && 
+    		} else if (sMode.equals(DISPLAY_VIEWS_ONLY) &&
     	    	((ns.getType() == ICoreConstants.MAPVIEW) ||
     	    	(ns.getType() == ICoreConstants.LISTVIEW))){
 				//System.out.println("IN NODE TRANSCLUDED "+ns.getLabel()+ ", type:" +ns.getType());
@@ -2028,10 +2034,10 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 				for(int i=0;i< nodes.size(); i++){
 					DefaultMutableTreeNode child = (DefaultMutableTreeNode)nodes.get(i);
 					DefaultMutableTreeNode parent = (DefaultMutableTreeNode) child.getParent();
-					String parentId = ((UIViewOutlineTreeNode)parent.getUserObject()).getId(); 
+					String parentId = ((UIViewOutlineTreeNode)parent.getUserObject()).getId();
 					parentIds.add(parentId);
 				}
-					
+
 				//Just to make sure the newly node isn't in the current view
 				if(!parentIds.contains(oView.getId())){
 					Vector parentNodes = getTreeNode(oView.getId());
@@ -2039,17 +2045,17 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 						DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) parentNodes.get(i);
 						UIViewOutlineTreeNode treeNode = new UIViewOutlineTreeNode(ns);
 						DefaultMutableTreeNode node = new DefaultMutableTreeNode(treeNode);
-						
+
 						if(!ns.getListenerList().contains(this)){
 							ns.addPropertyChangeListener(this);
 						}
-						
+
 						parentNode.add(node);
 						addToTreeNodes(node,treeNode.getId());
 						if(ns.getType() == ICoreConstants.MAPVIEW || ns.getType() == ICoreConstants.LISTVIEW){
 							createViewNodes(node, true);
 							treeModel.reload(node);
-							
+
 						}
 						htNodeParent.put(node, parentNode);
 						treeModel.reload(parentNode);
@@ -2058,9 +2064,9 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			}
 		} else if (prop.equals(NodeSummary.SOURCE_PROPERTY)){
 			NodeSummary ns = (NodeSummary) obj;
-			
+
 			if(sMode.equals(DISPLAY_VIEWS_AND_NODES) ||
-	    	   	(sMode.equals(DISPLAY_VIEWS_ONLY) && 
+	    	   	(sMode.equals(DISPLAY_VIEWS_ONLY) &&
 	    	   	((ns.getType() == ICoreConstants.MAPVIEW) ||
 	    	   	(ns.getType() == ICoreConstants.LISTVIEW)))) {
 				Vector vtNodes = getTreeNode(ns.getId());
@@ -2073,16 +2079,16 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 				}
 			}
 		} else if (prop.equals(NodeSummary.NODE_TYPE_PROPERTY)){
-			
+
 			NodeSummary ns = (NodeSummary) obj;
 			int newType = Integer.parseInt(newvalue.toString());
 			int oldType = Integer.parseInt(oldvalue.toString());
-			
+
 			Vector vtNodes = getTreeNode(ns.getId());
 			try {
 				// if the old type is different from the new type, obtain the nodesummary
 				// from the database as it is not update in NodeSummary list yet.
-			
+
 				NodeSummary nodeSum = oModel.getNodeService().getNodeSummary(oSession, ns.getId());
 				nodeSum.initialize(oSession, oModel);
 				if(sMode.equals(DISPLAY_VIEWS_AND_NODES)){
@@ -2093,22 +2099,22 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 						if(((treeNode.getType()) != ICoreConstants.MAPVIEW) && ((treeNode.getType()) != ICoreConstants.LISTVIEW)){
 							createViewsAndNodes();
 							treeModel.reload(rootNode);
-							
+
 							for (;e.hasMoreElements();){
 		    					TreePath path = (TreePath)e.nextElement();
 		    					if(tree.getRowForPath(path) != -1)
 		    						tree.expandPath(path);
 		    				}
-							
+
 							break;
-							
+
 						} else {
 							treeNode.setObject(nodeSum);
 							treeNode.setType(newType);
 							treeModel.reload(node);
 						}
 					}
-					
+
 					if(vtNodes.size() == 0){
 						createViewsAndNodes();
 						treeModel.reload(rootNode);
@@ -2118,7 +2124,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 						addToViewListener(nodeSum);
 					}
 					tree.repaint();
-					
+
 				} else {
 					for(int i=0; i< vtNodes.size(); i++){
 						DefaultMutableTreeNode node = (DefaultMutableTreeNode)vtNodes.get(i);
@@ -2137,8 +2143,8 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					tree.repaint();
 				}
 			} else if(sMode.equals(DISPLAY_VIEWS_ONLY)){
-				
-					// if the new type is map / list 
+
+					// if the new type is map / list
 					if((newType == ICoreConstants.MAPVIEW) || (newType == ICoreConstants.LISTVIEW)){
 						for(int i=0; i< vtNodes.size(); i++){
 							DefaultMutableTreeNode node = (DefaultMutableTreeNode)vtNodes.get(i);
@@ -2151,7 +2157,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 										DefaultMutableTreeNode parent = (DefaultMutableTreeNode)htNodeParent.get(node);
 										parent.add(node);
 										treeModel.reload(parent);
-									} 
+									}
 								} else {
 									treeNode.setObject(nodeSum);
 									treeNode.setType(newType);
@@ -2177,7 +2183,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 										//removeTreeNode(node);
 										htNodeParent.put(node, parent);
 										treeModel.reload(parent);
-									} 
+									}
 								} else {
 									treeNode.setObject(nodeSum);
 									treeNode.setType(newType);
@@ -2205,14 +2211,14 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			}
 		}
 	}
-	
+
 	/**
 	 * Handles the tree will expand events
 	 * @param evt, the associated TreeExpansionEvent object.
 	 */
 		public void treeWillExpand(TreeExpansionEvent evt) throws ExpandVetoException  {
 			ProjectCompendium.APP.setWaitCursor();
-			
+
 			TreePath selPath = evt.getPath();
 			if(selPath != null ){
 				if(sMode.equals(DISPLAY_VIEWS_AND_NODES)) {
@@ -2220,7 +2226,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					if(selPath != rootPath){
 						DefaultMutableTreeNode node = (DefaultMutableTreeNode)selPath.getLastPathComponent();
 						NodeSummary ns = ((UIViewOutlineTreeNode)node.getUserObject()).getObject();
-						
+
 						if((node != null &&  node.getParent() !=null) && node.getParent().equals(rootNode)){
 							updateNodes(node);
 							treeModel.reload(node);
@@ -2244,8 +2250,8 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		 */
 		public void treeWillCollapse(TreeExpansionEvent evt) throws ExpandVetoException {
 		}
-		
-		
+
+
 		/**
 		 *  Called whenever the value of the tree selection changes.
 		 */
@@ -2254,13 +2260,13 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
 			selectedNode = ((UIViewOutlineTreeNode) node.getUserObject());
 			selectedNodeSummary = selectedNode.getObject();
-			
+
 			UIViewOutlineTreeNode treeNode = (UIViewOutlineTreeNode)(node.getUserObject());
-			if(treeNode.getObject() != null )	
+			if(treeNode.getObject() != null )
 				setStatus(treeNode.getObject());
-	    	else 
+	    	else
 		       	ProjectCompendium.APP.setStatus("");
-			
+
 		}
 
 		/**
@@ -2269,14 +2275,14 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		 *
 		 */
 		private class TreeNodeRenderer extends DefaultTreeCellRenderer {
-	        
+
 			private static final long serialVersionUID = 7969295074672629921L;
-			
+
 			Icon imageIcon ;
 			UIViewOutlineTreeNode treeNode = null;
-			
-	        /** Sets the value of the current tree cell to value. 
-	         *  
+
+	        /** Sets the value of the current tree cell to value.
+	         *
 	         *  @return the Component that the renderer uses to draw the value
 	         */
 	        public Component getTreeCellRendererComponent( JTree tree, Object value, boolean sel,
@@ -2284,26 +2290,26 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 
 	        	Component c =  super.getTreeCellRendererComponent(tree, value, sel,
 	                            expanded, leaf, row, hasFocus);
-	            
+
 	            DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-	            
+
 	            treeNode = (UIViewOutlineTreeNode)(node.getUserObject());
-		            
+
 		        String  toolTip = treeNode.getLabel();
 		        int type = treeNode.getType();
 		        int state = treeNode.getState();
-		     
+
 		        //set the font
 	        	setFont(tree.getFont());
-	        	
+
 	        	if (type == ICoreConstants.REFERENCE) {
 			    	imageIcon = UINode.getReferenceImageSmall(treeNode.getReference());
 			    } else if (type == -1) {
-			    	imageIcon = getOpenIcon();			    				    	
+			    	imageIcon = getOpenIcon();
 			    } else {
 			    	imageIcon = UINode.getNodeImageSmall(type);
 	        	}
-	            
+
 	        	if (treeNode.getObject() != null) {
 	        		if(treeNode.getObject().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 	        			imageIcon = UIImages.get(IUIConstants.INBOX_SM);
@@ -2311,14 +2317,14 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	        	}
 	    	    setIcon(imageIcon);
 	            setToolTipText(toolTip);
-	            
-	            // set border color	
+
+	            // set border color
 		        setBorder(new NodeBorder(state, imageIcon));
              return this;
 		}
-	        
+
 		public String getToolTipText(MouseEvent e){
-		       if(treeNode.getObject() != null ){	
+		       if(treeNode.getObject() != null ){
 					// set status info
 					setStatus(treeNode.getObject());
 	    		} else {
@@ -2328,23 +2334,23 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 	        }
 
 		}
-		
+
 		/**
 		 *	This class configures an editor in a tree.
 		 * @author Lakshmi Prabhakaran
 		 *
 		 */
 		private class TreeNodeEditor extends DefaultTreeCellEditor {
-			
+
 			UIViewOutlineTreeNode treeNode = null;
-			
+
 			/** constructor **/
 			public TreeNodeEditor(JTree tree, DefaultTreeCellRenderer cellRenderer) {
 	        	super(tree, cellRenderer);
 	        	super.renderer = cellRenderer;
 	        }
 			/**
-			 * 
+			 *
 			 */
 			public Component getTreeCellEditorComponent(JTree tree,
 								                    Object value,
@@ -2355,23 +2361,23 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 				Icon imageIcon = renderer.getDefaultClosedIcon();
 				Component c = super.getTreeCellEditorComponent(tree, value, isSelected,
                         expanded, leaf, row);
-        
+
 		        DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-		        		        
+
 		        treeNode = (UIViewOutlineTreeNode)(node.getUserObject());
-		        
+
 		        String  toolTip = treeNode.getLabel();
 		        int type = treeNode.getType();
 		        int state = treeNode.getState();
 		        NodeSummary nodeSum = treeNode.getObject();
-		        		       		        
+
 		        ((JTextField)editingComponent).setEditable(true);
 		        ((JTextField)editingComponent).setFont(ProjectCompendium.APP.labelFont);
 			    //	set uneditable for project name and home window cell
 			    if(node.equals(rootNode) || (node.equals(rootNode.getFirstChild()))){
 			    	((JTextField)editingComponent).setEditable(false);
 			    } else if (nodeSum != null && nodeSum.getId().equals(ProjectCompendium.APP.getInBoxID())) {
-			    	((JTextField)editingComponent).setEditable(false);			    	
+			    	((JTextField)editingComponent).setEditable(false);
 				} else {
 			    	((JTextField)editingComponent).addFocusListener(new FocusAdapter(){
 			    		public void focusGained(FocusEvent arg0) {
@@ -2380,76 +2386,76 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 							}else{
 								ProjectCompendium.APP.setStatus("");
 							}
-							
+
 						}
 						public void focusLost(FocusEvent arg0) {
 							ProjectCompendium.APP.setStatus("");
 						}
 			    	});
-			    } 
-		       				    
+			    }
+
 			    if (type == ICoreConstants.REFERENCE) {
 			    	imageIcon = UINode.getReferenceImageSmall(treeNode.getReference());
 			    } else {
 			    	imageIcon = UINode.getNodeImageSmall(type);
 			    }
-	            
+
 	        	if (treeNode.getObject() != null) {
 	        		if(treeNode.getObject().getId().equals(ProjectCompendium.APP.getInBoxID())) {
 	        			imageIcon = UIImages.get(IUIConstants.INBOX_SM);
 	        		}
 	        	}
-			    
+
 		        setToolTipText(toolTip);
 		        super.editingIcon = imageIcon;
-		        
-		        // set border color	
+
+		        // set border color
 		        setBorder(new NodeBorder(state, imageIcon));
-		        
+
 		        return c;
-		        
+
 			}
-			
-		
+
+
 		}
-		
+
 		/**
-		 * The tree Model listener for the tree associated with the outer class 
+		 * The tree Model listener for the tree associated with the outer class
 		 * @author Lakshmi Prabhakaran
 		 *
 		 */
 		private class OutlineTreeModelListener implements TreeModelListener {
 
 			public OutlineTreeModelListener(){}
-			
+
 			/**
 			 * Handles Tree nodes changed event
 			 * @param e, the event associated with TreeModelEvent
 			 */
 			public void treeNodesChanged(TreeModelEvent e) {
-				
+
 				DefaultMutableTreeNode node;
 				DefaultMutableTreeNode parent = (DefaultMutableTreeNode) (e.getTreePath().getLastPathComponent());
 				try {
 			            int index = e.getChildIndices()[0];
-			            
+
 			            node = (DefaultMutableTreeNode) (parent.getChildAt(index));
-			            
+
 			            String newvalue = node.getUserObject().toString();
-			            
+
 			            node.setUserObject(selectedNode);
-			           
+
 			            selectedNodeSummary.setLabel(newvalue, sAuthor);
-			           
+
 			            treeModel.reload(node.getParent());
 			            tree.repaint();
-			       
+
 			        } catch (Exception ex) {
 			        	ex.printStackTrace();
 					}
-					
+
 			}
-		
+
 			public void treeNodesInserted(TreeModelEvent arg0) {
 			}
 
@@ -2460,15 +2466,15 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 			}
 
 		}
-		
+
 		/**
 		 * This border class paints the border for this node.
 		 */
 		private class NodeBorder extends AbstractBorder {
-			
+
 			int state;
 			Icon imageIcon;
-			
+
 			public NodeBorder(int state, Icon icon){
 				this.state = state;
 				imageIcon = icon;
@@ -2482,10 +2488,11 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					int iconWidth = imageIcon.getIconWidth();
 					g.draw3DRect(x + (iconWidth + 3) , y + 1, width - (iconWidth + 5), height-2, true);
 					g.setColor(oldColor);
-					
+
 				}
 				else if (state == ICoreConstants.MODIFIEDSTATE) {
 					Color oldColor = g.getColor();
+					System.out.println("UIViewOutline 2495 setColor modified border color");
 					g.setColor(MODIFIED_BORDER_COLOR);
 					int iconWidth = imageIcon.getIconWidth();
 					g.draw3DRect(x + (iconWidth +3) , y + 1, width - (iconWidth + 5), height-2, true);
@@ -2494,7 +2501,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 					Color oldColor = g.getColor();
 					g.setColor(oldColor);
 				}
-				
+
 			}
 		}
 
@@ -2518,7 +2525,7 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 		public NodeSummary getSelectedNodeSummary() {
 			return selectedNodeSummary;
 		}
-		
+
 		/**
 		 * @return Returns the selectedView.
 		 */
@@ -2532,8 +2539,8 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 				ProjectCompendium.APP.getMenuManager().removeOutlineView(true);
 			}
 		}
-		
-		/** 
+
+		/**
 		 * Remove all listeners before closing view
 		 *
 		 */
@@ -2554,5 +2561,5 @@ public class UIViewOutline extends JPanel implements IUIConstants, ActionListene
 
 		public void treeCollapsed(TreeExpansionEvent arg0) {
 			updateTreeSelection();
-		}	
+		}
 }

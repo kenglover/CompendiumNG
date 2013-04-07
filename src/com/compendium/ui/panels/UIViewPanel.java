@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
 
 import java.util.*;
@@ -52,7 +51,7 @@ import com.compendium.ui.dialogs.*;
  */
 public class UIViewPanel extends JPanel implements IUIConstants {
 
-	/** The serial id of this class.*/	 	 
+	/** The serial id of this class.*/
 	private static final long serialVersionUID = 5611336567405157799L;
 
 	/** The scrollpane for the list of Views.*/
@@ -85,7 +84,7 @@ public class UIViewPanel extends JPanel implements IUIConstants {
 		table.getTableHeader().setReorderingAllowed(false);
 		sorter.addMouseListenerToHeaderInTable(table);
 		setRenderers();
-		
+
 		sp = new JScrollPane(table);
 		sp.setPreferredSize(new Dimension(400, 250));
 		add(sp, BorderLayout.CENTER);
@@ -102,7 +101,7 @@ public class UIViewPanel extends JPanel implements IUIConstants {
             aColumn.setHeaderRenderer(headerRenderer);
     	}
  	}
-    
+
 	/**
 	 * Return the JTable associated with this panel.
 	 * @return JTable, the JTable assoicated with this panel.
@@ -140,20 +139,20 @@ public class UIViewPanel extends JPanel implements IUIConstants {
 			try {
 				Enumeration views = ProjectCompendium.APP.getModel().getNodeService().getAllActiveViews(ProjectCompendium.APP.getModel().getSession());
 				Hashtable htUserViews = ProjectCompendium.APP.getModel().getUserViews();
-				String id = "";				
+				String id = "";
 				for(Enumeration e = views;e.hasMoreElements();) {
 					View view = (View)e.nextElement();
 					id = view.getId();
-					if (!htUserViews.containsKey(id) 
+					if (!htUserViews.containsKey(id)
 							|| id.equals(ProjectCompendium.APP.getHomeView().getId() )
 							|| id.equals(ProjectCompendium.APP.getInBoxID())) {
-						vtTemp.addElement(view);							
-					}					
+						vtTemp.addElement(view);
+					}
 				}
 
 				//sort the vector
 				vtTemp = CoreUtilities.sortList(vtTemp);
-				
+
 				data = new Object [vtTemp.size()][3];
 				int i = 0;
 				for(Enumeration e = vtTemp.elements();e.hasMoreElements();i++) {

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars;
 
 import java.awt.*;
@@ -48,16 +47,16 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 
 	/** Indicates whether the node format toolbar is switched on or not by default.*/
 	private final static boolean DEFAULT_STATE			= true;
-	
+
 	/** Indicates the default orientation for this toolbars ui object.*/
-	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;	
-		
+	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;
+
 	/** This indicates the type of the toolbar.*/
 	private	int 					nType			= -1;
-	
+
 	/** The parent frame for this class.*/
 	private ProjectCompendiumFrame	oParent			= null;
-	
+
 	/** The overall toolbar manager.*/
 	private IUIToolBarManager 		oManager		= null;
 
@@ -74,9 +73,9 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 	private JPanel 				comboPanel 			= null;
 
 	/** The action listener for the active tags choice box.*/
-	private ActionListener 		comboActionListener = null;	
-	
-	
+	private ActionListener 		comboActionListener = null;
+
+
 	/**
 	 * Create a new instance of UIToolBarTags, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
@@ -88,22 +87,22 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 		this.oParent = parent;
 		this.oManager = oManager;
 		this.nType = nType;
-		createToolBar(DEFAULT_ORIENTATION);		
+		createToolBar(DEFAULT_ORIENTATION);
 	}
-	
+
 	/**
 	 * Create a new instance of UIToolBarTags, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
 	 * @param parent the parent frame for the application.
 	 * @param nType the unique identifier for this toolbar.
-	 * @param orientation the orientation of this toolbars ui object. 
+	 * @param orientation the orientation of this toolbars ui object.
 	 */
 	public UIToolBarTags(IUIToolBarManager oManager, ProjectCompendiumFrame parent, int nType, int orientation) {
 
 		this.oParent = parent;
 		this.oManager = oManager;
 		this.nType = nType;
-		createToolBar(orientation);		
+		createToolBar(orientation);
 	}
 
 	/**
@@ -111,7 +110,7 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 	 */
 	public void updateLAF() {
 	    pbCodes.setIcon(UIImages.get(CODES_ICON));
-		
+
 		if (tbrToolBar != null) {
 			SwingUtilities.updateComponentTreeUI(tbrToolBar);
 		}
@@ -209,8 +208,8 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 	 * Update the current tags list when a change occurs.
 	 */
 	public void updateCodeChoiceBoxData() {
-		
-		// IF THIS IS CALLED BY TOOLBAR MANAGER WHEN STARTING COMP APP 
+
+		// IF THIS IS CALLED BY TOOLBAR MANAGER WHEN STARTING COMP APP
 		// MODEL IS NULL.
 		if (oParent == null || oParent.getModel() == null) {
 			return;
@@ -256,9 +255,9 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 
 		Object source = evt.getSource();
 		if (source.equals(pbCodes)) {
-			oParent.onCodes();
+			oParent.toggleCodes();
 		}
-		
+
 		oParent.setDefaultCursor();
 	}
 
@@ -281,7 +280,7 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 	public void onDatabaseClose() {
 		if (tbrToolBar != null) {
 			if (pbCodes != null) {
-				pbCodes.setEnabled(false);				
+				pbCodes.setEnabled(false);
 			}
 			tbrToolBar.setEnabled(false);
 		}
@@ -294,38 +293,38 @@ public class UIToolBarTags implements IUIToolBar, ActionListener, IUIConstants {
 	public void setNodeSelected(boolean selected) {
 		cbCodes.setEnabled(selected);
 	}
-		
+
 	/**
  	 * Does Nothing
  	 * @param selected true to enable, false to disable.
 	 */
 	public void setNodeOrLinkSelected(boolean selected) {}
-	
+
 	public UIToolBar getToolBar() {
 		return tbrToolBar;
 	}
-	
+
 	/**
 	 * Enable/disable the toolbar.
 	 * @param enabled true to enable, false to disable.
 	 */
 	public void setEnabled(boolean enabled) {
 		tbrToolBar.setEnabled(enabled);
-	}	
-	
+	}
+
 	/**
 	 * Return true if this toolbar is active by default, or false if it must be switched on by the user.
 	 * @return true if the toolbar is active by default, else false.
 	 */
 	public boolean getDefaultActiveState() {
 		return DEFAULT_STATE;
-	}		
-	
+	}
+
 	/**
 	 * Return a unique integer identifier for this toolbar.
 	 * @return a unique integer identifier for this toolbar.
 	 */
 	public int getType() {
 		return nType;
-	}			
+	}
 }

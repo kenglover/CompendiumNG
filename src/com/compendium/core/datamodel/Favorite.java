@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.util.*;
@@ -35,8 +34,8 @@ import java.util.*;
  */
 public class Favorite implements java.io.Serializable {
 
-	//public final static long 	serialVersionUID	=	
-	
+	//public final static long 	serialVersionUID	=
+
 	/** The user id of the user who created this Favorite record.*/
 	protected String			sUserID							= "";
 
@@ -48,13 +47,13 @@ public class Favorite implements java.io.Serializable {
 
 	/** The node label.*/
 	protected String 			sLabel							= "";
-	
+
 	/** The type of the favorite node.*/
 	protected int 				nType							= -1;
-	
+
 	/** The date the favorite was created.*/
 	protected Date				dCreationDate					= null;
-	
+
 	/** The date the favorite was modified. NOT USED */
 	protected Date				dModificationDate				= null;
 
@@ -80,7 +79,7 @@ public class Favorite implements java.io.Serializable {
 		this.sLabel = sLabel;
 		this.nType = nType;
 		this.dCreationDate = creation;
-		this.dModificationDate = modification;		
+		this.dModificationDate = modification;
 	}
 
 	/**
@@ -117,7 +116,7 @@ public class Favorite implements java.io.Serializable {
 	 */
 	public void setViewID(String sViewID) {
 		this.sViewID = sViewID;
-	}	
+	}
 
 	/**
 	 * Sets the Node id object associated with this Favorite
@@ -153,7 +152,7 @@ public class Favorite implements java.io.Serializable {
 	 */
 	public String getNodeID() {
 		return sNodeID;
-	}	
+	}
 	/**
 	 * Returns the node type
 	 *

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -58,6 +57,9 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 	/** The button to update the user settings.*/
 	public	UIButton		pbUpdate				= null;
 
+	/** The field to hold the Linked Files folder path.*/
+	public JTextField		txtLinkedFilesPath	= null;
+
 	/** Activates the help opening to the appropriate section.*/
 	private UIButton		pbHelp					= null;
 
@@ -66,14 +68,14 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 	/** The scrollpane for the test label.*/
 	JScrollPane 			scrollpane				= null;
-	
-	/** Holds a temporary piece of info for the preview pane.*/	
+
+	/** Holds a temporary piece of info for the preview pane.*/
 	private String fontface		= "Serif";
 
-	/** Holds a temporary piece of info for the preview pane.*/	
+	/** Holds a temporary piece of info for the preview pane.*/
 	private int fontstyle		= Font.PLAIN;
 
-	/** Holds a temporary piece of info for the preview pane.*/	
+	/** Holds a temporary piece of info for the preview pane.*/
 	private int fontsize		= 12;
 
 	/** The font object from the font settings chosen.*/
@@ -108,7 +110,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 	/** Should maps with images show a border?*/
 	private JCheckBox		cbMapBorder			= null;
-	
+
 	/** Turn on tag node indicators.*/
   	private JCheckBox 		cbShowTags			= null;
 
@@ -141,17 +143,22 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 	/** The field to enter the length of the label for automatic detail box popup.*/
 	private JTextField		labelLengthField 	= null;
-	
+
+	private JRadioButton rbSubfolderYes 		= null;
+
+	private JRadioButton rbSubfolderNo 			= null;
+
+
 	/** The model object that holds the project preference properties.*/
 	private Model			oModel				= null;
 
-		
+
 	/** The iniital ShowWeight preference setting.*/
 	private boolean 	bShowWeight = false;
-	
+
 	/** The iniital ShowTrans preference setting.*/
 	private boolean 	bShowTrans 	= false;
-	
+
 	/** The iniital ShowText preference setting.*/
 	private boolean		bShowText	= false;
 
@@ -166,7 +173,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 	/** The iniital MapBorder preference setting.*/
 	private boolean 	bMapBorder	= false;
-	
+
 	/** The iniital font face preference setting.*/
 	private String 		sFontFace		= "Serif";
 
@@ -175,16 +182,16 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 	/** The iniital font style preference setting.*/
 	private int 		nFontStyle		= Font.PLAIN;
-	  	
+
 	/** Stores the width for wrapping the label.*/
 	private int 		labelWidth 		= 15;
 
 	/** Stored the length of the label for automatic detail box popup.*/
 	private int 		labelLength 	= 100;
-	
+
 	/** Stores if the NodeContentDialog should automatically open when the label reaches a specified length.*/
-	private boolean		detailPopup 	= false;	
-	
+	private boolean		detailPopup 	= false;
+
 
 	/**
 	 * Constructor.
@@ -195,7 +202,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		super(parent, true);
 		this.oParent = parent;
 		this.oModel = (Model)oModel;
-		
+
 		Container oContentPane = getContentPane();
 		oContentPane.setLayout(new BorderLayout());
 
@@ -207,12 +214,13 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		else {
 			setTitle("Project Options");
 		}
-		
+
 		TabbedPane.add(createFontPanel(), "Node Text");
 		TabbedPane.add(createNodePanel(), "Node Extras");
+		TabbedPane.add(createLinkedFilesPanel(), "Linked Files");
 
-		loadProperties();		
-		
+		loadProperties();
+
 		JPanel buttonpanel = createButtonPanel();
 
 		oContentPane.add(TabbedPane, BorderLayout.CENTER);
@@ -220,12 +228,12 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 		pack();
 		setResizable(false);
-	}  	
-	
+	}
+
 	public JPanel createNodePanel() {
 		JPanel panel = new JPanel();
 		panel.setBorder(new EmptyBorder(5,5,5,5));
-		
+
 		GridBagLayout gb = new GridBagLayout();
 		panel.setLayout(gb);
 
@@ -235,43 +243,43 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		gc.gridwidth = GridBagConstraints.REMAINDER;
 
 		JLabel label = new JLabel("Default Settings for New Nodes");
-		gb.setConstraints(label, gc);		
+		gb.setConstraints(label, gc);
     	panel.add(label);
 
 		cbShowTags = new JCheckBox ("Show tag indicator");
-		gb.setConstraints(cbShowTags, gc);		
+		gb.setConstraints(cbShowTags, gc);
     	panel.add(cbShowTags);
 
     	cbShowText = new JCheckBox ("Show text indicator");
- 		gb.setConstraints(cbShowText, gc);		    	
+ 		gb.setConstraints(cbShowText, gc);
     	panel.add(cbShowText);
 
     	cbShowTrans = new JCheckBox ("Show transclusion indicator");
-  		gb.setConstraints(cbShowTrans, gc);		    	
+  		gb.setConstraints(cbShowTrans, gc);
     	panel.add(cbShowTrans);
 
     	cbShowWeight = new JCheckBox ("Show weight indicator");
-  		gb.setConstraints(cbShowWeight, gc);		    	
+  		gb.setConstraints(cbShowWeight, gc);
     	panel.add(cbShowWeight);
 
     	cbSmallIcon = new JCheckBox ("Use small icon");
- 		gb.setConstraints(cbSmallIcon, gc);		    	
+ 		gb.setConstraints(cbSmallIcon, gc);
     	panel.add(cbSmallIcon);
 
     	cbHideIcon = new JCheckBox ("Hide icon");
- 		gb.setConstraints(cbHideIcon, gc);		    	
+ 		gb.setConstraints(cbHideIcon, gc);
     	panel.add(cbHideIcon);
 
     	JSeparator sep = new JSeparator();
     	gc.fill = GridBagConstraints.HORIZONTAL;
 		gb.setConstraints(sep, gc);
 		panel.add(sep);
-   	   
-	   	gc.fill = GridBagConstraints.NONE;		
+
+	   	gc.fill = GridBagConstraints.NONE;
 		cbMapBorder = new JCheckBox("Show Map Border when map has image?");
 		gb.setConstraints(cbMapBorder, gc);
 		panel.add(cbMapBorder);
-    	
+
 		return panel;
 	}
 
@@ -342,7 +350,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		center.add(choices, BorderLayout.NORTH);
 		center.add(checks, BorderLayout.CENTER);
 		center.add(labelpanel, BorderLayout.SOUTH);
-		
+
 		panel.add(center, BorderLayout.NORTH);
 
 		// LABEL WIDTH
@@ -362,14 +370,14 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		lblWidth = new JLabel("Default label wrap width for New Nodes and All Link labels");
 		gc.gridy = 0;
 		gc.gridx = 0;
-		gc.gridwidth=3;		
+		gc.gridwidth=3;
 		gc.anchor = GridBagConstraints.WEST;
 		gb.setConstraints(lblWidth, gc);
 		widthPanel.add(lblWidth);
 
 		labelWidthField = new JTextField(new Integer(labelWidth).toString());
 		labelWidthField.setColumns(5);
-		gc.gridwidth=1;		
+		gc.gridwidth=1;
 		gc.gridy = 0;
 		gc.gridx = 3;
 		gc.anchor = GridBagConstraints.WEST;
@@ -406,12 +414,12 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		lblLength2.setToolTipText("The label length at which you wish to automatically popup the details window when typing");
 		gc.gridy = 2;
 		gc.gridx = 2;
-		gc.gridwidth=2;		
+		gc.gridwidth=2;
 		gb.setConstraints(lblLength2, gc);
 		widthPanel.add(lblLength2);
-		
+
 		lblLength.setEnabled(false);
-		lblLength2.setEnabled(false);		
+		lblLength2.setEnabled(false);
 		labelLengthField.setEditable(false);
 		labelLengthField.setEnabled(false);
 
@@ -420,13 +428,13 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 				if (cbDetail.isSelected()) {
             		lblLength.setEnabled(true);
-               		lblLength2.setEnabled(true);            		
+               		lblLength2.setEnabled(true);
 					labelLengthField.setEnabled(true);
 					labelLengthField.setEditable(true);
 				}
 				else {
 					lblLength.setEnabled(false);
-					lblLength2.setEnabled(false);					
+					lblLength2.setEnabled(false);
 					labelLengthField.setEditable(false);
 					labelLengthField.setEnabled(false);
 				}
@@ -434,12 +442,98 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		});
 
 		cbDetail.setSelected(detailPopup);
-		
+
 		panel.add(widthPanel, BorderLayout.CENTER);
 		return panel;
 	}
 
-	
+	public JPanel createLinkedFilesPanel() {
+		JPanel panel = new JPanel();
+
+		panel.setBorder(new TitledBorder(new EtchedBorder(),
+                "Database default location for Linked Files",
+                TitledBorder.LEFT,
+                TitledBorder.TOP,
+				new Font("Dialog", Font.BOLD, 12) ));
+
+		GridBagLayout gb = new GridBagLayout();
+		panel.setLayout(gb);
+
+		int y = 0;
+		GridBagConstraints gc = new GridBagConstraints();
+		gc.insets = new Insets(5,5,5,5);
+		gc.anchor = GridBagConstraints.NORTHWEST;
+		gc.gridwidth = GridBagConstraints.REMAINDER;
+		gc.gridx = 0;
+		gc.gridy = y;
+
+		txtLinkedFilesPath = new JTextField("");
+
+		JLabel lblLinkedFiles = new JLabel("Enter the complete path to the folder where you want \"Linked Files\" stored:");
+		lblLinkedFiles.setLabelFor(txtLinkedFilesPath);
+		gc.gridy = y;
+		gb.setConstraints(lblLinkedFiles, gc);
+		panel.add(lblLinkedFiles);
+		y++;
+
+		txtLinkedFilesPath.setColumns(50);
+		gc.gridy = y;
+		gb.setConstraints(txtLinkedFilesPath, gc);
+		panel.add(txtLinkedFilesPath);
+		y++;
+
+		JLabel lblLinkedFiles2 = new JLabel("Note: Simple folder names like \"Linked Files\" will be created relative to the Compendium installation folder.");
+		gc.gridy = y;
+		gb.setConstraints(lblLinkedFiles2, gc);
+		panel.add(lblLinkedFiles2);
+		y++;
+
+
+		JSeparator sep = new JSeparator();
+    	gc.fill = GridBagConstraints.HORIZONTAL;
+    	gc.gridy = y;
+    	gb.setConstraints(sep, gc);
+		panel.add(sep);
+		y++;
+
+		JLabel lblFlatLinkedFiles = new JLabel("Do you want Linked Files stored in Project/User sub-folders below the specified path?");
+		gc.gridy = y;
+		gb.setConstraints(lblFlatLinkedFiles, gc);
+		panel.add(lblFlatLinkedFiles);
+		y++;
+
+		JPanel panel2 = new JPanel();
+		rbSubfolderNo = new JRadioButton("No");
+		panel2.add(rbSubfolderNo);
+		rbSubfolderYes = new JRadioButton("Yes");
+		panel2.add(rbSubfolderYes);
+
+		ButtonGroup rgGroup = new ButtonGroup();
+		rgGroup.add(rbSubfolderNo);
+		rgGroup.add(rbSubfolderYes);
+
+    	gc.gridy = y;
+    	gb.setConstraints(panel2, gc);
+    	panel.add(panel2);
+    	y++;
+
+		JLabel lblFlat2 = new JLabel("Select NO to keep all your files together in the folder specified above.");
+		gc.gridy = y;
+		gb.setConstraints(lblFlat2, gc);
+		panel.add(lblFlat2);
+		y++;
+		JLabel lblFlat3 = new JLabel("Select YES to have Compendium create a project & user based sub-folder structure for them.");
+		gc.gridy = y;
+		gb.setConstraints(lblFlat3, gc);
+		panel.add(lblFlat3);
+		y++;
+
+
+
+		return panel;
+	}
+
+
 	/**
 	 * This class draws the elements of the font list.
 	 */
@@ -516,7 +610,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		MouseListener fontmouse = new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 1) {
-					fontface = (String)fontlist.getSelectedValue();					
+					fontface = (String)fontlist.getSelectedValue();
 					setLabelFont();
 				}
 			}
@@ -609,7 +703,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 		sizelist.addKeyListener(sizekey);
 		sizelist.addMouseListener(sizemouse);
-	}	
+	}
 
 	/**
 	 * Set the font to be used for the label showing the example text for a given font.
@@ -621,8 +715,8 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		label.validate();
 
 		scrollpane.repaint();
-	}	
-	
+	}
+
 	/**
 	 * Create the button panel.
 	 */
@@ -649,7 +743,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 		return panel;
 	}
-	
+
 	private void loadProperties() {
 
 		bShowWeight = oModel.showWeightNodeIndicator;
@@ -666,7 +760,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 		bSmallIcon = oModel.smallIcons;
 		cbSmallIcon.setSelected(bSmallIcon);
-	
+
 		bHideIcon = oModel.hideIcons;
 		cbHideIcon.setSelected(bHideIcon);
 
@@ -675,13 +769,13 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 
 		detailPopup = oModel.detailPopup;
 		cbDetail.setSelected(detailPopup);
-		
+
 		labelWidth = oModel.labelWrapWidth;
 		labelWidthField.setText(String.valueOf(labelWidth));
-		
+
 		labelLength = oModel.labelPopupLength;
 		labelLengthField.setText(String.valueOf(labelLength));
-		
+
 		sFontFace = oModel.fontface;
 		fontface = sFontFace;
 	   	fontlist.setSelectedValue(sFontFace, true);
@@ -689,18 +783,28 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		nFontSize = oModel.fontsize;
 		fontsize = nFontSize;
 	   	sizelist.setSelectedValue(String.valueOf(nFontSize), true);
-		
+
 		nFontStyle = oModel.fontstyle;
 		fontstyle = nFontStyle;
-		
+
 		oFont = new Font(sFontFace, nFontStyle, nFontSize);
-		
+
 		cbItalic.setSelected(oFont.isItalic());
 		cbBold.setSelected(oFont.isBold());
-		
+
+		txtLinkedFilesPath.setText(oModel.linkedFilesPath);
+
+		if (oModel.linkedFilesFlat) {
+			rbSubfolderYes.setSelected(false);
+			rbSubfolderNo.setSelected(true);
+		} else {
+			rbSubfolderYes.setSelected(true);
+			rbSubfolderNo.setSelected(false);
+		}
+
 		setLabelFont();
 	}
-	
+
 	/**
 	 * Process button pushes.
 	 * @param evt, the associated ActionEvent object.
@@ -714,19 +818,19 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 		if (source == pbUpdate)
 			onUpdate();
 	}
-	
+
 	/**
 	 * Save the users options and update where necessary.
 	 */
 	public void onUpdate() {
 
-		try {	
+		try {
 			if (bShowTags != cbShowTags.isSelected()) {
 				if (cbShowTags.isSelected()) {
 					oModel.setProjectPreference(Model.SHOW_TAGS_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.SHOW_TAGS_PROPERTY, "false");
-				}				
+				}
 			}
 
 			if (bShowText != cbShowText.isSelected()) {
@@ -734,7 +838,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 					oModel.setProjectPreference(Model.SHOW_TEXT_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.SHOW_TEXT_PROPERTY, "false");
-				}				
+				}
 			}
 
 			if (bShowTrans != cbShowTrans.isSelected()) {
@@ -742,7 +846,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 					oModel.setProjectPreference(Model.SHOW_TRANS_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.SHOW_TRANS_PROPERTY, "false");
-				}				
+				}
 			}
 
 			if (bShowWeight != cbShowWeight.isSelected()) {
@@ -750,7 +854,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 					oModel.setProjectPreference(Model.SHOW_WEIGHT_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.SHOW_WEIGHT_PROPERTY, "false");
-				}				
+				}
 			}
 
 			if (bSmallIcon != cbSmallIcon.isSelected()) {
@@ -758,7 +862,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 					oModel.setProjectPreference(Model.SMALL_ICONS_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.SMALL_ICONS_PROPERTY, "false");
-				}				
+				}
 			}
 
 			if (bHideIcon != cbHideIcon.isSelected()) {
@@ -766,7 +870,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 					oModel.setProjectPreference(Model.HIDE_ICONS_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.HIDE_ICONS_PROPERTY, "false");
-				}				
+				}
 			}
 
 			if (bMapBorder != cbMapBorder.isSelected()) {
@@ -774,7 +878,7 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 					oModel.setProjectPreference(Model.MAP_BORDER_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.MAP_BORDER_PROPERTY, "false");
-				}				
+				}
 			}
 
 			if (detailPopup != cbDetail.isSelected()) {
@@ -782,22 +886,34 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 					oModel.setProjectPreference(Model.DETAIL_POPUP_PROPERTY, "true");
 				} else {
 					oModel.setProjectPreference(Model.DETAIL_POPUP_PROPERTY, "false");
-				}				
+				}
+			}
+
+			if (rbSubfolderYes.isSelected()) {
+				oModel.setProjectPreference(Model.LINKED_FILES_FLAT_PROPERTY, "false");
+			} else {
+				oModel.setProjectPreference(Model.LINKED_FILES_FLAT_PROPERTY, "true");
+			}
+
+			if (txtLinkedFilesPath.getText().isEmpty()) {
+				oModel.setProjectPreference(Model.LINKED_FILES_PATH_PROPERTY, "Linked Files");
+			} else {
+				oModel.setProjectPreference(Model.LINKED_FILES_PATH_PROPERTY, txtLinkedFilesPath.getText());
 			}
 
 			String sFace = (String)fontlist.getSelectedValue();
 			if (!sFace.equals(sFontFace)) {
-				oModel.setProjectPreference(Model.FONTFACE_PROPERTY, sFace);				
+				oModel.setProjectPreference(Model.FONTFACE_PROPERTY, sFace);
 			}
 			if (nFontStyle != fontstyle) {
 				oModel.setProjectPreference(Model.FONTSTYLE_PROPERTY, String.valueOf(fontstyle));
 			}
 			if (nFontSize != fontsize) {
 				oModel.setProjectPreference(Model.FONTSIZE_PROPERTY, String.valueOf(fontsize));
-			}			
-			
+			}
+
 			String width = labelWidthField.getText();
-			int nWidth = -1;			
+			int nWidth = -1;
 			try {
 				nWidth = (new Integer(width)).intValue();
 				if (nWidth != labelWidth) {
@@ -823,10 +939,10 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 				labelLengthField.requestFocus();
 				return;
 			}
-			
+
 			oFont = ( new Font(fontface, fontstyle, fontsize));
 			ProjectCompendium.APP.setLabelFont( oFont );
-			
+
 			// Now Re-apply the new font plus zoom to the list view and side views.
 			int textZoom = ProjectCompendium.APP.getToolBarManager().getTextZoom();
 			Vector views = ProjectCompendium.APP.getAllFrames();
@@ -842,10 +958,10 @@ public class UIProjectOptionsDialog extends UIDialog implements ActionListener {
 				}
 			}
 			ProjectCompendium.APP.getMenuManager().onReturnTextAndZoom(textZoom);
-						
+
 			oModel.saveProjectPreferences();
 			ProjectCompendium.APP.refreshIconIndicators();
-			
+
 		} catch (SQLException ex) {
 			ProjectCompendium.APP.displayError("There was the following error saving project preferences: \n\n"+ex.getMessage());
 			return;

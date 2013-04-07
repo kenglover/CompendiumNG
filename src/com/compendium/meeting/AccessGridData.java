@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting;
 
 import java.util.Properties;
@@ -42,7 +41,7 @@ import com.compendium.ProjectCompendium;
 public class AccessGridData {
 
 	/** The file holding the data.*/
-	public static String			FILE_NAME = "System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"AccessGrid.properties";
+	public static String			FILE_NAME = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"AccessGrid.properties";
 
 	/** The Arena server host name.*/
 	private String 					sArenaURL = "";
@@ -321,14 +320,14 @@ public class AccessGridData {
 			}
 		}
 	}
-	
+
 	/**
 	 * Save the Access Grid data to a property file.
 	 */
 	public void saveProperties() throws IOException {
 
 		Properties oConnectionProperties = new Properties();
-			
+
 		oConnectionProperties.put("arenaurl", sArenaURL);
 		//oConnectionProperties.put("arenaport", sArenaPort);
 		oConnectionProperties.put("triplestoreurl", sTriplestoreURL);
@@ -340,5 +339,5 @@ public class AccessGridData {
 		//oConnectionProperties.put("fileurl;", sFileURL);
 
 		oConnectionProperties.store(new FileOutputStream(FILE_NAME), "Access Grid Details");
-	}	
+	}
 }

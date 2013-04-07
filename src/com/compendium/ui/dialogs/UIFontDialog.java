@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -596,7 +595,7 @@ public class UIFontDialog extends UIDialog implements ActionListener {
 			int lLength = (new Integer(length)).intValue();
 
 			//ProjectCompendium.APP.setLabelProperties( new Font(fontface, fontstyle, fontsize), lWidth, lLength, detailPopup );
-			
+
 			// Begin edit - Lakshmi - 5/22/06
 			//refresh outline view label
 			//if(ProjectCompendium.APP.oStencilManager.getOutlineView() != null){

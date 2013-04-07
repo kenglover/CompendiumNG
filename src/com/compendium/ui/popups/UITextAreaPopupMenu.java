@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.popups;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.Container;
 import java.awt.Color;
@@ -104,7 +105,7 @@ public class UITextAreaPopupMenu extends JPopupMenu implements ActionListener {
 		//add(miMenuItemPrint);
 
 		// If on the Mac OS and the Menu bar is at the top of the OS screen, remove the menu shortcut Mnemonics.
-		if (ProjectCompendium.isMac && (FormatProperties.macMenuBar || (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) )
+		if (ProjectCompendium.isMac && (APP_PROPERTIES.isMacMenuBar() || (!APP_PROPERTIES.isMacMenuBar() && !APP_PROPERTIES.isMacMenuUnderline())) )
 			UIUtilities.removeMenuMnemonics(getSubElements());
 
 		pack();

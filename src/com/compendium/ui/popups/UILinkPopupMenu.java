@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.popups;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.Container;
 import java.awt.Color;
@@ -110,7 +111,7 @@ public class UILinkPopupMenu extends JPopupMenu implements ActionListener{
 
 	/** The user Id of the current user */
 	private String userID = "";
-	
+
 	/**
 	 * Constructor. Creates the menuitems for this popup.
 	 * @param title the title for this popup.
@@ -118,7 +119,7 @@ public class UILinkPopupMenu extends JPopupMenu implements ActionListener{
 	 */
 	public UILinkPopupMenu(String title, LinkUI linkui, String userID) {
 		super(title);
-		
+
 		this.userID = userID;
 		miMenuItemContents = new JMenuItem("Contents");
 		miMenuItemContents.setMnemonic(KeyEvent.VK_C);
@@ -242,7 +243,7 @@ public class UILinkPopupMenu extends JPopupMenu implements ActionListener{
 		/**
 		 * If on the Mac OS and the Menu bar is at the top of the OS screen, remove the menu shortcut Mnemonics.
 		 */
-		if (ProjectCompendium.isMac && (FormatProperties.macMenuBar || (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) )
+		if (ProjectCompendium.isMac && (APP_PROPERTIES.isMacMenuBar() || (!APP_PROPERTIES.isMacMenuBar() && !APP_PROPERTIES.isMacMenuUnderline())) )
 			UIUtilities.removeMenuMnemonics(getSubElements());
 
 		pack();

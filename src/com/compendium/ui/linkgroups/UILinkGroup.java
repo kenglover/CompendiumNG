@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.linkgroups;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -218,7 +219,7 @@ public class UILinkGroup extends Component { // extends Compoenent For sorting o
 		data.append(">\n");
 		data.append("]>\n\n");
 
-		data.append("<linkgroup name=\""+CoreUtilities.cleanSQLText(sName, FormatProperties.nDatabaseType)+"\" id=\""+sID+"\" default=\""+sDefaultID.toString()+"\">\n");
+		data.append("<linkgroup name=\""+CoreUtilities.cleanSQLText(sName, APP_PROPERTIES.getDatabaseType())+"\" id=\""+sID+"\" default=\""+sDefaultID.toString()+"\">\n");
 		data.append("\t<linktypes>\n");
 
 		int count = vtItems.size();
@@ -265,7 +266,7 @@ public class UILinkGroup extends Component { // extends Compoenent For sorting o
 		// SAVE THE XML FILE
 		String data = getXML();
 		try {
-			FileWriter fileWriter = new FileWriter("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LinkGroups"+ProjectCompendium.sFS+sFileName);
+			FileWriter fileWriter = new FileWriter(ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LinkGroups"+ProjectCompendium.sFS+sFileName);
 			fileWriter.write(data);
 			fileWriter.close();
 		}

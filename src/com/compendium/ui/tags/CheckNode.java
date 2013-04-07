@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import java.sql.SQLException;
@@ -41,26 +40,26 @@ import com.compendium.core.datamodel.IModel;
  *
  */
 public class CheckNode {
-	
+
 	Vector vtGroup = null;
 	private Code code = null;
 	private boolean isGroup = false;
-	
-	
+
+
 	private boolean checked = false;
-	
+
 	/** Is the associated tag found on all selected nodes?.*/
 	private boolean universal = false;
-	
+
 	public CheckNode(Vector data) {
 		isGroup = true;
 		this.vtGroup = data;
 	}
-	
+
 	public CheckNode(Code code) {
 		this.code = code;
 	}
-	
+
 	public Object getData() {
 		if (isGroup) {
 			return vtGroup;
@@ -68,11 +67,11 @@ public class CheckNode {
 			return code;
 		}
 	}
-	
+
 	public boolean isGroup () {
 		return isGroup;
 	}
-	
+
 	public boolean isChecked() {
 		return checked;
 	}
@@ -80,7 +79,7 @@ public class CheckNode {
 	public void setChecked(boolean checked) {
 		this.checked = checked;
 	}
-	
+
 	public boolean isUniversal() {
 		return universal;
 	}
@@ -88,37 +87,37 @@ public class CheckNode {
 	public void setUniversal(boolean uni) {
 		this.universal = uni;
 	}
-	
+
 	public void setText(String sText) {
 		IModel model = ProjectCompendium.APP.getModel();
 		if (sText.length() > 50) {
 			ProjectCompendium.APP.displayError("Tag names cannot be more than 50 characters long.\n.");
 			return;
-		}		
-		
+		}
+
 		if (isGroup) {
 			String sOldName = (String)vtGroup.elementAt(1);
-			if (!sText.equals("") && !sOldName.equals(sText)) {				
-				try {	
+			if (!sText.equals("") && !sOldName.equals(sText)) {
+				try {
 					vtGroup.setElementAt(sText, 1);
 					String sUserID = model.getUserProfile().getId();
 					String sCodeGroupID = (String)vtGroup.elementAt(0);
 					// UPDATE DATABASE
 					(model.getCodeGroupService()).setName(model.getSession(), sCodeGroupID, sText, new Date(), sUserID);
-	
+
 					// UPDATE MODEL
 					model.replaceCodeGroupName(sCodeGroupID, sText);
-					
+
 				} catch( SQLException ex) {
 					ProjectCompendium.APP.displayError("UITagTreevtGroupPopupMenu.editvtGroupName\n\n"+ex.getMessage());
-				}	
+				}
 			}
 		} else {
 			String sOldName = code.getName();
 	   		String sNewName = sText;
 			sNewName = sNewName.trim();
-			if (!sNewName.equals("") && !sOldName.equals(sText)) {				
-				try {				
+			if (!sNewName.equals("") && !sOldName.equals(sText)) {
+				try {
 					String sCodeID = code.getId();
 
 					//CHECK NAME DOES NOT ALREADY EXIST
@@ -129,14 +128,14 @@ public class CheckNode {
 						code.initialize(model.getSession(), model);
 						code.setName(sNewName); // Updates Database and model as model holds same object.
 					}
-					
+
 				} catch( Exception ex) {
 					ProjectCompendium.APP.displayError("UITagTreeLeafPopupMenu.editTagName\n\n"+ex.getMessage());
-				}	
+				}
 			}
 		}
 	}
-	
+
 	public String getText() {
 		String sText = "";
 		if (isGroup) {

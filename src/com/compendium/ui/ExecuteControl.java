@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.io.*;
 import java.awt.*;
@@ -72,7 +73,7 @@ public class ExecuteControl {
 			    	return launchMacCommand(path);
 				}
 				else if (ProjectCompendium.isLinux) {
-					if (FormatProperties.useKFMClient) {
+					if (APP_PROPERTIES.isUseKFMClient()) {
 						return launchLinuxCommandKDE(path);
 					} else {
 						return launchLinuxCommand(path);
@@ -133,7 +134,7 @@ public class ExecuteControl {
 			else if (refString.startsWith("https:"))
 				key = "https";
 			else if (refString.startsWith("file:"))
-				key = "file";		    
+				key = "file";
 			else if ( refString.indexOf("\n") == -1 && refString.indexOf("\r") == -1
 			       && refString.length() <= 100	&& refString.indexOf("@") != -1)
 				key = "email";
@@ -175,33 +176,12 @@ public class ExecuteControl {
 				else {
 			    	if (!key.equals("")) {
 						apps.put(key, app.getPath());
-						apps.store(new FileOutputStream("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LaunchApplications.properties"), "Launch Application Details");
+						apps.store(new FileOutputStream(ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LaunchApplications.properties"), "Launch Application Details");
 			    	}
 			    	return true;
 				}
 		    }
 
-		    /*JFileChooser fileDialog = new JFileChooser();
-		    fileDialog.setDialogTitle("Select an application to open this with...");
-		    int retval = fileDialog.showOpenDialog(ProjectCompendium.APP);
-		    if (retval == JFileChooser.APPROVE_OPTION) {
-			if ((fileDialog.getSelectedFile()) != null) {
-			    String fileName = fileDialog.getSelectedFile().getAbsolutePath();
-			    File app = new File(fileName);
-
-			    p = Runtime.getRuntime().exec(new String[] {"open", "-a", app.getPath(), path});
-			    if (p.waitFor() != 0)
-				System.out.println("FAILED to launch "+path);
-			    else {
-				if (!key.equals("")) {
-				    apps.put(key, app.getPath());
-				    apps.store(new FileOutputStream("System"+ProjectCompendium.sFS+"resources"+Projectcompendium.sFS+"LaunchApplications.properties"), "Launch Application Details");
-				}
-
-				return true;
-			    }
-			}
-		    }*/
 		}
 		else {
 		    return true;
@@ -226,7 +206,7 @@ public class ExecuteControl {
 		else if (refString.startsWith("https:"))
 	    	key = "https";
 		else if (refString.startsWith("file:"))
-			key = "file";		    		
+			key = "file";
 		else if ( refString.indexOf("\n") == -1 && refString.indexOf("\r") == -1
 	   				&& refString.length() <= 100	&& refString.indexOf("@") != -1)
 	    	key = "email";
@@ -270,16 +250,16 @@ public class ExecuteControl {
 				else {
 			    	if (!key.equals("")) {
 						apps.put(key, app.getPath());
-						apps.store(new FileOutputStream("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LaunchApplications.properties"), "Launch Application Details");
+						apps.store(new FileOutputStream(ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LaunchApplications.properties"), "Launch Application Details");
 			    	}
 			    	return true;
 				}
 		    }
 		}
 
-		return false;    
+		return false;
     }
-    
+
     /**
     * Display a file or URL in the system application on a KDE Linux machine.
     * Used when launching applications under KDE, i.e. kfmclient is handling all files extensions appropriately.
@@ -288,10 +268,10 @@ public class ExecuteControl {
     */
     private static boolean launchLinuxCommandKDE(String path) throws IOException, InterruptedException, IllegalThreadStateException {
 
-	   if (path.startsWith("www.")) { 
+	   if (path.startsWith("www.")) {
 		   path= "http://"+path;
 	   }
-	   Process p = Runtime.getRuntime().exec(new String[] {"/usr/bin/kfmclient", "exec" , path});	   
+	   Process p = Runtime.getRuntime().exec(new String[] {"/usr/bin/kfmclient", "exec" , path});
 	   int reply = p.waitFor();
 	   //reply seems to always be 1? Not sure why, but it launches OK.
 	   if (reply != 0 && reply != 1){
@@ -301,5 +281,5 @@ public class ExecuteControl {
 	   else {
 		   return true;
 	   }
-	}    
+	}
 }

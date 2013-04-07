@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
 
 import java.util.*;
@@ -129,7 +128,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 
 	/** The button to say they want the icon image displayed as a thumbnail.*/
 	public JRadioButton			pbThumbNail		= null;
-	
+
 	/** The button to say they want the icon image displayed at its actual size.*/
 	public JRadioButton			pbActualSize	= null;
 
@@ -174,13 +173,16 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 	private JButton		pbPrint				= null;
 
 	/** The file browser dialog for looking for references.*/
-	private	JFileChooser	fdgBrowse			= null;
+//	private	JFileChooser	fdgBrowse			= null;
+	private	FileDialog		fdgBrowse			= null;
 
 	/** The file browser dialog for looking for image files.*/
-	private	JFileChooser	fdgBrowse2			= null;
+//	private	JFileChooser	fdgBrowse2			= null;
+	private	FileDialog		fdgBrowse2			= null;
 
 	/** The file browser dialog for looking for background files.*/
-	private	JFileChooser	fdgBrowse3			= null;
+//	private	JFileChooser	fdgBrowse3			= null;
+	private	FileDialog		fdgBrowse3			= null;
 
 	/** The Document for the label text area.*/
 	private Document		oLabelDoc			= null;
@@ -262,16 +264,16 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 
 	/** The user author name of the current user */
 	private String 			sAuthor 		= "";
-	
+
 	/** Actual Image size.*/
 	private Dimension 		oActualImageSize		= null;
 
 	/** Last Saved Image size.*/
 	private Dimension 		oLastImageSize		= null;
-	
+
 	/** Dialog for user to enter specific image display size.*/
 	private UIImageSizeDialog dlg				= null;
-	
+
 	private Font font							= null;
 
 	/**
@@ -284,11 +286,11 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		super();
 		oParentDialog = tabbedPane;
 		oUINode = uinode;
-		
+
 		this.sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
-		
+
 		initEditPanel(uinode.getNode());
-		
+
 		//set the updated node retireved from the db to the old node
 		oUINode.setNode(oNode);
 	}
@@ -301,9 +303,9 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 	 */
 	public UINodeEditPanel(JFrame parent, NodeSummary node, UINodeContentDialog tabbedPane) {
 		super();
-		
+
 		this.sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
-		
+
 		oParentDialog = tabbedPane;
 
 		initEditPanel(node);
@@ -346,6 +348,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 	 */
 	private void showNodeEditPanel() {
 
+		String sUserHomeDir = System.getProperty("user.home");	//mlb: This speeds up Map Contents Window creation enormously!
 		centerpanel = new JPanel();
 		centerpanel.setBorder(new EmptyBorder(5,5,5,5));
 
@@ -361,7 +364,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 
 		font = ProjectCompendiumFrame.labelFont;
 		int scale = ProjectCompendium.APP.getToolBarManager().getTextZoom();
-		font = new Font(font.getName(), font.getStyle(), font.getSize()+ scale);		
+		font = new Font(font.getName(), font.getStyle(), font.getSize()+ scale);
 
 
 		// WHEN NODE LEVEL FONT SETTING IS INTRODUCED, WILL NEED TO DO THIS
@@ -398,7 +401,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		if (oNode.getId().equals(ProjectCompendium.APP.getInBoxID())) {
 			txtLabel.setEditable(false);
 		}
-		
+
 		scrollpane2 = new JScrollPane(txtLabel);
 		scrollpane2.setPreferredSize(new Dimension(500,70));
 		labelPanel.add(scrollpane2, BorderLayout.CENTER);
@@ -529,9 +532,16 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 			oRefDoc.addDocumentListener(this);
 
 			// other initializations
-			fdgBrowse = new JFileChooser();
-			fdgBrowse.setDialogTitle("Choose a reference");
-			UIUtilities.centerComponent(fdgBrowse, ProjectCompendium.APP);
+
+			fdgBrowse = new FileDialog(ProjectCompendium.APP);
+			fdgBrowse.setTitle("Choose a reference");
+			fdgBrowse.setMode(FileDialog.LOAD);
+
+
+
+//			fdgBrowse = new JFileChooser(sUserHomeDir);
+//			fdgBrowse.setDialogTitle("Choose a reference");
+//			UIUtilities.centerComponent(fdgBrowse, ProjectCompendium.APP);
 
 			pbBrowse = new UIButton("./.");
 			pbBrowse.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -558,7 +568,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 			centerpanel.add(pbExecute);
 
 			y++;
-			
+
 		} else if(nodeType == ICoreConstants.MAPVIEW) {
 
 			gc.fill = GridBagConstraints.NONE;
@@ -602,11 +612,14 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 			oBackgroundDoc.addDocumentListener(this);
 
 			// other initializations
-			fdgBrowse3 = new JFileChooser();
-			fdgBrowse3.setDialogTitle("Choose a background image");
-			UIUtilities.centerComponent(fdgBrowse3, ProjectCompendium.APP);
+//			fdgBrowse3 = new JFileChooser(sUserHomeDir);
+//			fdgBrowse3.setDialogTitle("Choose a background image");
+//			UIUtilities.centerComponent(fdgBrowse3, ProjectCompendium.APP);
+			fdgBrowse3 = new FileDialog(ProjectCompendium.APP);
+			fdgBrowse3.setTitle("Choose a background image");
+			fdgBrowse3.setMode(FileDialog.LOAD);
 			UIFileFilter filter2 = new UIFileFilter(new String[] {"gif","jpg","jpeg","png"}, "Image Files");
-			fdgBrowse3.setFileFilter(filter2);
+//			fdgBrowse3.setFileFilter(filter2);
 
 			pbBrowse3 = new UIButton("./.");
 			pbBrowse3.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -634,11 +647,14 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 
 			y++;
 		}
-				
+
 		if(nodeType == ICoreConstants.REFERENCE || nodeType == ICoreConstants.REFERENCE_SHORTCUT
 				|| nodeType == ICoreConstants.MAPVIEW || nodeType == ICoreConstants.MAP_SHORTCUT ||
 					nodeType == ICoreConstants.LISTVIEW || nodeType == ICoreConstants.LIST_SHORTCUT){
-			
+
+			gc.fill = GridBagConstraints.NONE;
+			gc.anchor = GridBagConstraints.WEST;
+			gc.gridwidth = 1;
 			lblImage = new JLabel("Icon Image:");
 			gc.gridy = y;
 			gc.gridx = 0;
@@ -663,11 +679,14 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 			oImageDoc.addDocumentListener(this);
 
 			// other initializations
-			fdgBrowse2 = new JFileChooser();
-			fdgBrowse2.setDialogTitle("Choose an image");
-			UIUtilities.centerComponent(fdgBrowse2, ProjectCompendium.APP);
+//			fdgBrowse2 = new JFileChooser(sUserHomeDir);
+//			fdgBrowse2.setDialogTitle("Choose an image");
+//			UIUtilities.centerComponent(fdgBrowse2, ProjectCompendium.APP);
+			fdgBrowse2 = new FileDialog(ProjectCompendium.APP);
+			fdgBrowse2.setTitle("Choose an image");
+			fdgBrowse2.setMode(FileDialog.LOAD);
 			UIFileFilter filter = new UIFileFilter(new String[] {"gif","jpg","jpeg","png"}, "Image Files");
-			fdgBrowse2.setFileFilter(filter);
+//			fdgBrowse2.setFileFilter(filter);
 
 			pbBrowse2 = new UIButton("./.");
 			pbBrowse2.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -689,19 +708,19 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 			gb.setConstraints(pbView, gc);
 			pbView.addActionListener(this);
 			centerpanel.add(pbView);
-		
-			y++;						
-			
+
+			y++;
+
 			JPanel sizePanel = new JPanel();
 			gc.gridy = y;
 			gc.gridx = 1;
 			gc.gridwidth=2;
 			gb.setConstraints(sizePanel, gc);
 			centerpanel.add(sizePanel);
-			
+
 			pbThumbNail = new JRadioButton("Display as Thumbnail");
-			pbThumbNail.addItemListener(this);			
-			sizePanel.add(pbThumbNail);			
+			pbThumbNail.addItemListener(this);
+			sizePanel.add(pbThumbNail);
 
 			pbActualSize = new JRadioButton("Actual Size");
 			pbActualSize.addItemListener(this);
@@ -709,29 +728,29 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 
 			pbSpecifiedSize = new JRadioButton("Specified Size");
 			pbSpecifiedSize.addItemListener(this);
-			sizePanel.add(pbSpecifiedSize);			
+			sizePanel.add(pbSpecifiedSize);
 
 			ButtonGroup group = new ButtonGroup();
 			group.add(pbThumbNail);
 			group.add(pbActualSize);
 			group.add(pbSpecifiedSize);
-			
+
 			pbSize = new UIButton("Specify");
 			pbSize.setToolTipText("Specify the image size to be used.");
-			pbSize.addActionListener(this);		
-			
+			pbSize.addActionListener(this);
+
 			if (sImage == null || sImage.equals("")) {
 				pbView.setEnabled(false);
 				pbThumbNail.setEnabled(false);
 				pbActualSize.setEnabled(false);
-				pbSpecifiedSize	.setEnabled(false);			
+				pbSpecifiedSize	.setEnabled(false);
 			}
-			
+
 			gc.gridy = y;
 			gc.gridx = 3;
 			gc.gridwidth=1;
 			gb.setConstraints(pbSize, gc);
-			centerpanel.add(pbSize);			
+			centerpanel.add(pbSize);
 		}
 
 		setNode(oNode);
@@ -746,7 +765,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		add(centerpanel, BorderLayout.CENTER);
 		add(createButtonPanel(), BorderLayout.SOUTH);
 	}
-	
+
 	/**
 	 * Get the dialog to recalulate the default font and reset it on the text areas.
 	 * Used for presentation font changes.
@@ -754,11 +773,11 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 	public void refreshFont() {
 		font = ProjectCompendiumFrame.labelFont;
 		int scale = ProjectCompendium.APP.getToolBarManager().getTextZoom();
-		font = new Font(font.getName(), font.getStyle(), font.getSize()+ scale);		
+		font = new Font(font.getName(), font.getStyle(), font.getSize()+ scale);
 
-		txtLabel.setFont(font);	
+		txtLabel.setFont(font);
 		txtDetail.setFont(font);
-				
+
 		repaint();
 	}
 
@@ -977,24 +996,24 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 				if(nodeType == ICoreConstants.REFERENCE || nodeType == ICoreConstants.REFERENCE_SHORTCUT) {
 					txtReference.setText(oNode.getSource());
 				} else if (nodeType == ICoreConstants.MAPVIEW) {
-					txtBackground.setText(((View)oNode).getViewLayer().getBackground());					
+					txtBackground.setText(((View)oNode).getViewLayer().getBackground());
 				}
-				
+
 				if (nodeType == ICoreConstants.REFERENCE || nodeType == ICoreConstants.REFERENCE_SHORTCUT ||
 						nodeType == ICoreConstants.MAPVIEW || nodeType == ICoreConstants.MAP_SHORTCUT ||
 						nodeType == ICoreConstants.LISTVIEW || nodeType == ICoreConstants.LIST_SHORTCUT) {
 
 					txtImage.setText(oNode.getImage());
 					String imageRef = oNode.getImage();
-					oLastImageSize = node.getImageSize();					
+					oLastImageSize = node.getImageSize();
 					if (oLastImageSize.width > 0 && oLastImageSize.height > 0 && !imageRef.equals("")) {
 						if ( UIImages.isImage(imageRef) ) {
-							ImageIcon originalSizeImage = UIImages.createImageIcon(imageRef); 								
+							ImageIcon originalSizeImage = UIImages.createImageIcon(imageRef);
 							if (originalSizeImage != null) {
 								Image originalIcon = originalSizeImage.getImage();
 								int originalWidth = originalIcon.getWidth(null);
 								int originalHeight = originalIcon.getHeight(null);
-								oActualImageSize = new Dimension(originalWidth, originalHeight);															
+								oActualImageSize = new Dimension(originalWidth, originalHeight);
 								if (oLastImageSize.width == originalWidth && oLastImageSize.height == originalHeight) {
 									this.pbActualSize.setSelected(true);
 								} else {
@@ -1021,10 +1040,10 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		} else if (pbActualSize != null && pbActualSize.isSelected()) {
 			pbSize.setEnabled(false);
 		} else if (pbSpecifiedSize != null && pbSpecifiedSize.isSelected()) {
-			pbSize.setEnabled(true);	
+			pbSize.setEnabled(true);
 		}
 	}
-	
+
 	/**
 	 * DOES NOTHING
 	 * @param evt, the associated DocumentEvent.
@@ -1082,15 +1101,15 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 				pbView.setEnabled(true);
 				pbThumbNail.setEnabled(true);
 				pbActualSize.setEnabled(true);
-				pbSpecifiedSize.setEnabled(true);	
+				pbSpecifiedSize.setEnabled(true);
 				if (pbSpecifiedSize.isSelected()) {
 					pbSize.setEnabled(true);
 				}
 				if ( UIImages.isImage(sImageRef) ) {
-					ImageIcon originalSizeImage = UIImages.createImageIcon(sImageRef); 		
+					ImageIcon originalSizeImage = UIImages.createImageIcon(sImageRef);
 					if (originalSizeImage == null) {
 						return;
-					} else {					
+					} else {
 						oLastImageSize = new Dimension(0,0);
 						Image originalIcon = originalSizeImage.getImage();
 						int originalWidth = originalIcon.getWidth(null);
@@ -1101,7 +1120,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 			} else {
 				pbThumbNail.setEnabled(false);
 				pbActualSize.setEnabled(false);
-				pbSpecifiedSize.setEnabled(false);	
+				pbSpecifiedSize.setEnabled(false);
 				pbSize.setEnabled(false);
 				pbView.setEnabled(false);
 			}
@@ -1324,16 +1343,16 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		}
 		else if (source == pbNew) {
 			page = (NodeDetailPage)detailPages.elementAt(currentPage);
-			page.setText(txtDetail.getText());			
+			page.setText(txtDetail.getText());
 			if (datePanel.dateChanged()) {
 				page.setCreationDate((datePanel.getDate()).getTime());
 				bDetailChange = true;
 			}
 			page.setPageNo(currentPage+1);
-			currentPage++;			
-			
-			NodeDetailPage pageNew = new NodeDetailPage(oNode.getId(), ProjectCompendium.APP.getModel().getUserProfile().getId(), "", currentPage+1, new Date(), new Date());			
-			detailPages.insertElementAt(pageNew, currentPage);						
+			currentPage++;
+
+			NodeDetailPage pageNew = new NodeDetailPage(oNode.getId(), ProjectCompendium.APP.getModel().getUserProfile().getId(), "", currentPage+1, new Date(), new Date());
+			detailPages.insertElementAt(pageNew, currentPage);
 			txtDetail.setText("");
 			createInfo(pageNew) ;
 			centerpanel.repaint();
@@ -1414,9 +1433,9 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 	/**
 	 * Process the saving of any node contents changes.
 	 */
-	public void onUpdate() {		
+	public void onUpdate() {
 		if (oNode != null) {
-			try {				
+			try {
 				// If there was not actual changes, some validation and repaints where still happening.
 				// This was making for slow closing of the dialog even if nothing had changed on maps with lots of picture etc.
 				// This variable is used to check whether to run them or not.
@@ -1436,7 +1455,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 					bUpdated = true;
 					bLabelChange = false;
 				}
-			
+
 				if(nodeType == ICoreConstants.REFERENCE || nodeType == ICoreConstants.REFERENCE_SHORTCUT) {
 					if (bRefChange) {
 						sReference = txtReference.getText();
@@ -1444,14 +1463,14 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 					}
 					if (bImageChange) {
 						sImage = txtImage.getText();
-						sImage = sImage.trim();						
+						sImage = sImage.trim();
 					}
 
 					if (bImageChange || bRefChange) {
 						oNode.setSource( sReference, sImage, sAuthor );
 						bUpdated = true;
-					} 
-						
+					}
+
 					if (checkImageSize()) {
 						bUpdated = true;
 					}
@@ -1464,7 +1483,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 					if(nodeType == ICoreConstants.MAPVIEW) {
 						if (bBackgroundChange) {
 							sBackground = txtBackground.getText();
-							sBackground = sBackground = sBackground.trim();
+							sBackground = sBackground.trim();
 
 							((View)oNode).setBackground( sBackground );
 							((View)oNode).updateViewLayer();
@@ -1485,7 +1504,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 						oNode.setSource( "", sImage, sAuthor);
 						bUpdated = true;
 					}
-					
+
 					if (checkImageSize()) {
 						bUpdated = true;
 					}
@@ -1526,7 +1545,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 			}
 		}
 	}
-	
+
 	/**
 	 * Chack if the image size needs saving, and if it does, save.
 	 * @return if the image size was saved.
@@ -1538,21 +1557,22 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 					if (oLastImageSize.width != 0 || oLastImageSize.height != 0) {
 						oNode.setImageSize(new Dimension(0,0), sAuthor);
 						return true;
-					} 
-				} else if (pbActualSize != null && pbActualSize.isSelected() && 
+					}
+				} else if (pbActualSize != null && pbActualSize.isSelected() &&
 						(oLastImageSize.width != oActualImageSize.width || oLastImageSize.height != oActualImageSize.height)) {
 					oNode.setImageSize(oActualImageSize, sAuthor);
 					return true;
 				} else if (pbSpecifiedSize != null && pbSpecifiedSize.isSelected()) {
 					//Get then set the user Specified size
-					Dimension oSpecifiedSize = new Dimension(0,0);													
+					Dimension oSpecifiedSize = new Dimension(0,0);
 					if (dlg != null) {
 						oSpecifiedSize = dlg.getImageSize();
 						dlg.dispose();
-					}
-					if (oLastImageSize.width != oSpecifiedSize.width || oLastImageSize.height != oSpecifiedSize.height) {
-						oNode.setImageSize(oSpecifiedSize, sAuthor);
-						return true;
+					
+					    if (oLastImageSize.width != oSpecifiedSize.width || oLastImageSize.height != oSpecifiedSize.height) {
+						    oNode.setImageSize(oSpecifiedSize, sAuthor);
+						    return true;
+					    }
 					}
 				}
 			}
@@ -1607,17 +1627,23 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 
 		String path = txtReference.getText();
 		if (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("www.") ||
-				ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") || 
+				ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") ||
 						path.startsWith("ftp:") || path.startsWith("smb:"))) {
 			ExecuteControl.launch( path );
-		} else if (path.startsWith(ICoreConstants.sINTERNAL_REFERENCE) && oUINode != null) {
+		} else if (path.startsWith(ICoreConstants.sINTERNAL_REFERENCE)) {
 			path = path.substring(ICoreConstants.sINTERNAL_REFERENCE.length());
 			int ind = path.indexOf("/");
 			if (ind != -1) {
 				String sGoToViewID = path.substring(0, ind);
-				String sGoToNodeID = path.substring(ind+1);		
-				UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID, 
+				String sGoToNodeID = path.substring(ind+1);
+				if (oUINode != null) {
+					UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID,
 						oUINode.getViewPane().getViewFrame().getChildNavigationHistory());
+				} else {
+					Vector history = new Vector();			//mlb: Add this so that Ref node content launches
+					history.addElement("?");				// from the inbox will work.  (bug fix)
+					UIUtilities.jumpToNode(sGoToViewID, sGoToNodeID, history);
+				}
 			}
 		} else {
 			File file = new File(path);
@@ -1636,7 +1662,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 	public void onView() {
 		String path = txtImage.getText();
 		if (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("www.") ||
-				ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") || 
+				ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") ||
 						path.startsWith("ftp:") || path.startsWith("smb:"))) {
 			ExecuteControl.launch( path );
 		}
@@ -1652,7 +1678,7 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 	public void onView2() {
 		String path = txtBackground.getText();
 		if (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("www.") ||
-				ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") || 
+				ProjectCompendium.isLinux && (path.startsWith("fish:") || path.startsWith("ssh:") ||
 						path.startsWith("ftp:") || path.startsWith("smb:"))) {
 			ExecuteControl.launch( path );
 		}
@@ -1671,30 +1697,19 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		if (CoreUtilities.isFile(path)) {
 			File file = new File(path);
 			if (file.exists()) {
-				fdgBrowse.setCurrentDirectory(file);
-			}			
+				fdgBrowse.setDirectory(path);
+			}
 		} else if (!UINodeEditPanel.lastFileDialogDir.equals("")) {
 			// FIX FOR MAC - NEEDS '/' ON END TO DENOTE A FOLDER
 			File file = new File(UINodeEditPanel.lastFileDialogDir+ProjectCompendium.sFS);
 			if (file.exists()) {
-				fdgBrowse.setCurrentDirectory(file);
+				fdgBrowse.setDirectory(file.toString());
 			}
 		}
-
-		int retval = fdgBrowse.showOpenDialog(ProjectCompendium.APP);
-		String fileName = "";
-		if (retval == JFileChooser.APPROVE_OPTION) {
-		     if ((fdgBrowse.getSelectedFile()) != null) {
-
-			  	String filePath = fdgBrowse.getSelectedFile().getAbsolutePath();
-				File fileDir = fdgBrowse.getCurrentDirectory();
-				String dir = fileDir.getPath();
-
-				if (filePath != null) {
-					UINodeEditPanel.lastFileDialogDir = dir;
-					txtReference.setText(filePath);
-				}
-			}
+		fdgBrowse.setVisible(true);
+		if (fdgBrowse.getFile() != null) {
+			UINodeEditPanel.lastFileDialogDir2 = fdgBrowse.getDirectory();
+			txtReference.setText(fdgBrowse.getDirectory()+fdgBrowse.getFile());
 		}
 	}
 
@@ -1707,32 +1722,22 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		if (CoreUtilities.isFile(path)) {
 			File file = new File(path);
 			if (file.exists()) {
-				fdgBrowse2.setCurrentDirectory(file);
-			}			
+				fdgBrowse2.setDirectory(path);
+			}
 		} else if (!UINodeEditPanel.lastFileDialogDir2.equals("")) {
 			// FIX FOR MAC - NEEDS '/' ON END TO DENOTE A FOLDER
 			File file = new File(UINodeEditPanel.lastFileDialogDir2+ProjectCompendium.sFS);
 			if (file.exists()) {
-				fdgBrowse2.setCurrentDirectory(file);
+				fdgBrowse2.setDirectory(file.toString());
 			}
 		}
+		fdgBrowse2.setVisible(true);
 
-		int retval = fdgBrowse2.showOpenDialog(ProjectCompendium.APP);
-		String fileName = "";
-		if (retval == JFileChooser.APPROVE_OPTION) {
-		     if ((fdgBrowse2.getSelectedFile()) != null) {
-
-			  	String filePath = fdgBrowse2.getSelectedFile().getAbsolutePath();
-				File fileDir = fdgBrowse2.getCurrentDirectory();
-				String dir = fileDir.getPath();
-
-				if (filePath != null) {
-					UINodeEditPanel.lastFileDialogDir2 = dir;
-					txtImage.setText(filePath);
-				}
-			}
+		if (fdgBrowse2.getFile() != null) {
+			UINodeEditPanel.lastFileDialogDir2 = fdgBrowse2.getDirectory();
+			txtImage.setText(fdgBrowse2.getDirectory()+fdgBrowse2.getFile());
 		}
-	}
+}
 
 	/**
 	 * Open a file browser dialog for the background field.
@@ -1743,31 +1748,19 @@ public class UINodeEditPanel extends JPanel implements ActionListener, ItemListe
 		if (CoreUtilities.isFile(path)) {
 			File file = new File(path);
 			if (file.exists()) {
-				fdgBrowse3.setCurrentDirectory(file);
-			}			
+				fdgBrowse3.setDirectory(path);
+			}
 		} else if (!UINodeEditPanel.lastFileDialogDir2.equals("")) {
-
 			// FIX FOR MAC - NEEDS '/' ON END TO DENOTE A FOLDER
 			File file = new File(UINodeEditPanel.lastFileDialogDir2+ProjectCompendium.sFS);
 			if (file.exists()) {
-				fdgBrowse3.setCurrentDirectory(file);
+				fdgBrowse3.setDirectory(file.toString());
 			}
 		}
-
-		int retval = fdgBrowse3.showOpenDialog(ProjectCompendium.APP);
-		String fileName = "";
-		if (retval == JFileChooser.APPROVE_OPTION) {
-		     if ((fdgBrowse3.getSelectedFile()) != null) {
-
-			  	String filePath = fdgBrowse3.getSelectedFile().getAbsolutePath();
-				File fileDir = fdgBrowse3.getCurrentDirectory();
-				String dir = fileDir.getPath();
-
-				if (filePath != null) {
-					UINodeEditPanel.lastFileDialogDir2 = dir;
-					txtBackground.setText(filePath);
-				}
-			}
+		fdgBrowse3.setVisible(true);
+		if ((fdgBrowse3.getFile()) != null) {
+				UINodeEditPanel.lastFileDialogDir2 = fdgBrowse3.getDirectory();
+				txtBackground.setText(fdgBrowse3.getDirectory()+fdgBrowse3.getFile());
 		}
 	}
 

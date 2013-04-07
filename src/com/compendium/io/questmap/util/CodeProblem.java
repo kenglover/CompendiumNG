@@ -30,7 +30,7 @@ package com.compendium.io.questmap.util;
  * @author ?
  */
 public class CodeProblem extends Message {
-
+/*
     protected int line;
     protected int pos;
     protected String file;
@@ -96,5 +96,5 @@ public class CodeProblem extends Message {
 
     public void setFile(String f) {
         file = f;
-    }
+    }  */
 }

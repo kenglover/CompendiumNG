@@ -42,7 +42,7 @@ import java.util.Vector;
  * @author ?
  */
 public class Union {
-
+/*
  	public int ival;
 	public long lval;
 	public char cval;
@@ -64,5 +64,5 @@ public class Union {
 		relopval = 0;
 		oval = null;
 		vval = null;
-  	} 
+  	}  */
 }

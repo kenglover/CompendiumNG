@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.plaf;
 
 import java.awt.*;
@@ -314,6 +313,8 @@ public	class ScribblePadUI extends ComponentUI implements MouseListener, MouseMo
 	 * @param g, the Graphics object for this pain method to use.
 	 * @param c, the component to paint.
 	 */
+
+	 /*
 	public void paint(Graphics g, JComponent c) {
 
 	    Graphics2D g2d = (Graphics2D)g;
@@ -364,6 +365,113 @@ public	class ScribblePadUI extends ComponentUI implements MouseListener, MouseMo
 		}
 	}
 
+	*/
+
+	     /**
+
+	     * Draws the scribble line / or shapes on the given graphics context.
+
+	     *
+
+	     * @param g, the Graphics object for this pain method to use.
+
+	     * @param c, the component to paint.
+
+	     */
+
+	     public void paint(Graphics g, JComponent c) {
+
+	          double  scale = oViewPane.getScale();
+
+	         Graphics2D g2d = (Graphics2D)g;
+
+	          // DRAW POINTS
+
+	          int count = data.size();
+	          Point prev = null;
+	          Point current = null;
+	          for (int i=0; i<count; i++) {
+	               Vector next = (Vector)data.elementAt(i);
+	               prev = null;
+	               int jcount = next.size();
+	               for (int j=0; j<jcount; j++) {
+	                    UIShape shape = (UIShape)next.elementAt(j);
+	                    g.setColor(shape.getColour());
+	                    int thickness = shape.getThickness();
+	                   //g2d.setStroke(new BasicStroke(thickness));
+	                    Point thicknessScaled = UIUtilities.transformPoint(thickness, thickness, scale);
+	                    g2d.setStroke(new BasicStroke(thicknessScaled.x));
+	                    if (j==0)
+	                         prev = UIUtilities.transformPoint(shape.getX(), shape.getY(), scale);
+	                         //prev = new Point(shape.getX(), shape.getY());
+	                    else {
+	                         current = UIUtilities.transformPoint(shape.getX(), shape.getY(), scale);
+	                         //current = new Point(shape.getX(), shape.getY());
+	                         g.drawLine(prev.x, prev.y, current.x, current.y);
+	                         prev = current;
+	                    }
+	               }
+	          }
+	          // DRAW SHAPES
+
+	          int jcount = shapes.size();
+
+	          for (int j=0; j<jcount; j++) {
+
+	               UIShape shape = (UIShape)shapes.elementAt(j);
+
+	               int type = shape.getType();
+
+	               g.setColor(shape.getColour());
+
+	               int thickness = shape.getThickness();
+
+	              //g2d.setStroke(new BasicStroke(thickness));
+
+	               Point thicknessScaled = UIUtilities.transformPoint(thickness, thickness, scale);
+
+	               g2d.setStroke(new BasicStroke(thicknessScaled.x));
+
+
+
+	               Point pos = UIUtilities.transformPoint(shape.getX(), shape.getY(), scale);
+
+	               Point width = UIUtilities.transformPoint(shape.getWidth(), shape.getWidth(), scale);
+
+	               Point height = UIUtilities.transformPoint(shape.getHeight(), shape.getHeight(), scale);
+
+
+
+	               if (type == UIScribblePad.OVAL) {
+
+	                    g.drawOval(pos.x, pos.y, width.x, height.x);
+
+	                    //g.drawOval(shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight());
+
+	               }
+
+	               else if (type == UIScribblePad.RECTANGLE) {
+
+	                    g.drawRect(pos.x, pos.y, width.x, height.x);
+
+	                    //g.drawRect(shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight());
+
+	               }
+
+	               else if (type == UIScribblePad.LINE) {
+
+	                    g.drawLine(pos.x, pos.y, width.x, height.x);
+
+	                    //g.drawLine(shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight());
+
+	               }
+
+	          }
+
+
+
+     }
+
 	/**
 	 * Clear all the data elements used to draw the scribble.
 	 */
@@ -408,7 +516,15 @@ public	class ScribblePadUI extends ComponentUI implements MouseListener, MouseMo
 
 		// start dragging if left or right mouse button is pressed
 		boolean isLeftMouse = SwingUtilities.isLeftMouseButton(evt);
+
 		if (isLeftMouse) {
+			if ( oViewPane.getScale() != 1.0){
+				JOptionPane.showMessageDialog(null,
+					    "You can only Scribble at 100% zoom.",
+					    "Scribble",
+					    JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 			int x = evt.getX();
 			int y = evt.getY();
 

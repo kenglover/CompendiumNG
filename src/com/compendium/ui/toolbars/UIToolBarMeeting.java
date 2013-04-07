@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars;
 
 import java.awt.event.*;
@@ -47,19 +46,19 @@ import com.compendium.core.datamodel.*;
  * @version	1.0
  */
 public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstants {
-	
+
 	/** Indicates whether the node format toolbar is switched on or not by default.*/
 	private final static boolean DEFAULT_STATE			= false;
-	
+
 	/** Indicates the default orientation for this toolbars ui object.*/
-	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;	
-	
+	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;
+
 	/** This indicates the type of the toolbar.*/
-	private	int 					nType			= -1;	
-	
+	private	int 					nType			= -1;
+
 	/** The parent frame for this class.*/
 	private ProjectCompendiumFrame	oParent			= null;
-	
+
 	/** The overall toolbar manager.*/
 	private IUIToolBarManager 		oManager		= null;
 
@@ -79,13 +78,13 @@ public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstant
 	private JButton				pbResetMeeting		= null;
 
 	/** The button to upload meeting data.*/
-	private JButton				pbUploadMeeting		= null;		
-	
+	private JButton				pbUploadMeeting		= null;
+
 	/**
 	 * Create a new instance of UIToolBarMeeting, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
 	 * @param parent the parent frame for the application.
-	 * @param orientation the orientation of this toolbars ui object.   
+	 * @param orientation the orientation of this toolbars ui object.
 	 */
 	public UIToolBarMeeting(IUIToolBarManager oManager, ProjectCompendiumFrame parent, int nType) {
 
@@ -93,14 +92,14 @@ public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstant
 		this.oManager = oManager;
 		this.nType = nType;
 		createToolBar(DEFAULT_ORIENTATION);
-	}	
-	
+	}
+
 	/**
 	 * Create a new instance of UIToolBarMeeting, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
 	 * @param parent the parent frame for the application.
 	 * @param nType the unique identifier for this toolbar.
-	 * @param orientation the orientation of this toolbars ui object.   
+	 * @param orientation the orientation of this toolbars ui object.
 	 */
 	public UIToolBarMeeting(IUIToolBarManager oManager, ProjectCompendiumFrame parent, int nType, int orientation) {
 
@@ -269,7 +268,7 @@ public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstant
 
 		if (frame instanceof UIMapViewFrame) {
 			IModel model = oParent.getModel();
-			
+
 			Meeting meeting = null;
 			try {
 				meeting = model.getMeetingService().getMeetingForMap(model.getSession(), view.getId());
@@ -292,7 +291,7 @@ public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstant
 				else {
 					bOpenDialog = false;
 
-					String sPath = "System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+UIMeetingReplayDialog.PROPERTY_FILE;
+					String sPath = ProjectCompendium.sSYSPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+UIMeetingReplayDialog.PROPERTY_FILE;
 					File optionsFile = new File(sPath);
 					Properties connectionProperties = new Properties();
 					boolean bOpenReplayDialog = true;
@@ -310,7 +309,7 @@ public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstant
 									oParent.oMeetingManager = new MeetingManager(MeetingManager.REPLAY);
 									oParent.oMeetingManager.setMeeting(meeting);
 									bOpenReplayDialog = false;
-									oParent.oMeetingManager.openMeetingReplayConnection(server, username, password, resource, roomServer);
+									//oParent.oMeetingManager.openMeetingReplayConnection(server, username, password, resource, roomServer);
 								} catch (AccessGridDataException ex) {
 									oParent.displayError(ex.getMessage());
 									return;
@@ -357,17 +356,17 @@ public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstant
  	 * @param selected true to enable, false to disable.
 	 */
 	public void setNodeSelected(boolean selected) {}
-		
+
 	/**
  	 * Does Nothing
  	 * @param selected true to enable, false to disable.
 	 */
 	public void setNodeOrLinkSelected(boolean selected) {}
-	
+
 	public UIToolBar getToolBar() {
 		return tbrToolBar;
 	}
-	
+
 	/**
 	 * Enable/disable the toolbar.
 	 * @param enabled true to enable, false to disable.
@@ -376,22 +375,22 @@ public class UIToolBarMeeting implements IUIToolBar, ActionListener, IUIConstant
 		tbrToolBar.setEnabled(enabled);
 		//pbStartMeeting.setEnabled(!enabled);
 		//pbPauseMeeting.setEnabled(enabled);
-		//pbStopMeeting.setEnabled(enabled);		
-	}	
-	
+		//pbStopMeeting.setEnabled(enabled);
+	}
+
 	/**
 	 * Return true if this toolbar is active by default, or false if it must be switched on by the user.
 	 * @return true if the toolbar is active by default, else false.
 	 */
 	public boolean getDefaultActiveState() {
 		return DEFAULT_STATE;
-	}	
-	
+	}
+
 	/**
 	 * Return a unique integer identifier for this toolbar.
 	 * @return a unique integer identifier for this toolbar.
 	 */
 	public int getType() {
 		return nType;
-	}		
+	}
 }

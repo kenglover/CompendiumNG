@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 /*
@@ -43,6 +42,9 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 
 	/** The SQL statement to drop a Node table if it exists */
 	public final static String MYSQL_DROP_NODE_TABLE 		= "DROP TABLE IF EXISTS Node";
+
+	/** The SQL statement to drop a Lock table if it exists */
+	public final static String MYSQL_DROP_NODELOCK_TABLE		= "DROP TABLE IF EXISTS NodeLock";
 
 	/** The SQL statement to drop a Link table if it exists */
 	public final static String MYSQL_DROP_LINK_TABLE		= "DROP TABLE IF EXISTS Link";
@@ -142,6 +144,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 	public static final String MYSQL_CREATE_PROPERTIES_TABLE = "CREATE TABLE Properties ("+
 															"Property VARCHAR(100) NOT NULL, "+
 															"Contents LONGTEXT NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Properties PRIMARY KEY (Property)) TYPE = InnoDB";
 
 	/** The SQL statement to create a new User table */
@@ -157,7 +160,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"HomeView VARCHAR(50) NOT NULL, "+
 															"IsAdministrator ENUM('N','Y') NOT NULL, "+
 															"CurrentStatus INTEGER NOT NULL DEFAULT '0', "+
-															"LinkView VARCHAR(50), "+																														
+															"LinkView VARCHAR(50), "+
 															"CONSTRAINT PK_User PRIMARY KEY(UserID)) TYPE = InnoDB";
 
 	/** The SQL statement to create a new Audit table */
@@ -169,6 +172,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"Category VARCHAR(50) NOT NULL, "+
 															"Action INTEGER NOT NULL, "+
 															"Data LONGTEXT, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Audit PRIMARY KEY (AuditID)) TYPE = InnoDB";
 
 	/** The SQL statement to create a new Code table */
@@ -203,6 +207,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"Name VARCHAR(255), "+
 															"Port INTEGER, "+
 															"Resource VARCHAR(255), "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Connection PRIMARY KEY (UserID, Profile, Type), "+
 															"CONSTRAINT FK_Connection_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE) TYPE = InnoDB";
 
@@ -222,6 +227,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 	public static final String MYSQL_CREATE_EXTENDEDCODE_TABLE = "CREATE TABLE ExtendedTypeCode ("+
 															"ExtendedNodeTypeID VARCHAR(50) NOT NULL, " +
 															"CodeID VARCHAR(50) NOT NULL, " +
+															"ModificationDate DOUBLE, "+
 															"INDEX ExtendedCode_CodeID_Ind (CodeID), "+
 															"CONSTRAINT PK_ExtendedCode PRIMARY KEY (ExtendedNodeTypeID, CodeID), "+
 															"CONSTRAINT FK_ExtendedCode_1 FOREIGN KEY (ExtendedNodeTypeID) REFERENCES ExtendedNodeType (ExtendedNodeTypeID) ON DELETE CASCADE, "+
@@ -235,14 +241,14 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"NodeType INTEGER NOT NULL, " +
 															"CreationDate DOUBLE NOT NULL, " +
 															"ModificationDate DOUBLE NOT NULL, "+
-															"ViewID VARCHAR(50), " +	
-															"INDEX Favorite_NodeID_Ind (NodeID), "+	
-															//"INDEX Favorite_ViewID_Ind (ViewID), "+																														
+															"ViewID VARCHAR(50), " +
+															"INDEX Favorite_NodeID_Ind (NodeID), "+
+															//"INDEX Favorite_ViewID_Ind (ViewID), "+
 															"CONSTRAINT PK_Favorite PRIMARY KEY (UserID, NodeID), "+
 															"CONSTRAINT FK_Favorite_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_Favorite_2 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_Favorite_3 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE) TYPE = InnoDB";
-	
+
 
 	/** The SQL statement to create a new GroupCode table */
 	public static final String MYSQL_CREATE_GROUPCODE_TABLE = "CREATE TABLE GroupCode ("+
@@ -276,6 +282,18 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"CONSTRAINT FK_Link_1 FOREIGN KEY (FromNode) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
 															"CONSTRAINT FK_Link_2 FOREIGN KEY (ToNode) REFERENCES Node (NodeID) ON DELETE CASCADE) type = InnoDB";
 
+
+    //TODO: Work on locking functions has been frozen. Finish or delete.
+	public static final String MYSQL_CREATE_NODELOCK_TABLE = "CREATE TABLE NodeLock (" +
+															"LockID INT UNSIGNED PRIMARY KEY  NOT NULL AUTO_INCREMENT, " +
+															"OwnerID VARCHAR(50) NOT NULL, " +
+															"NodeID VARCHAR(50) NOT NULL, " +
+															"created TIMESTAMP, " +
+															"ModificationDate DOUBLE, "+
+															"CONSTRAINT UK_NodeLock UNIQUE KEY (NodeID), " +
+															"CONSTRAINT FK_NodeLock_1 FOREIGN KEY (OwnerID) REFERENCES Users (UserID) ON DELETE CASCADE, " +
+															"CONSTRAINT FK_NodeLock_2 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE) type = InnoDB";
+
 	/** The SQL statement to create a new Node table */
 	public static final String MYSQL_CREATE_NODE_TABLE = "CREATE TABLE Node ("+
 															"NodeID VARCHAR(50) NOT NULL, " +
@@ -288,7 +306,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"Label LONGTEXT, "+
 															"Detail LONGTEXT, "+
 															"CurrentStatus INTEGER NOT NULL DEFAULT '0', "+
-															"LastModAuthor VARCHAR(50), " +															
+															"LastModAuthor VARCHAR(50), " +
 															"CONSTRAINT PK_Node PRIMARY KEY (NodeID)) TYPE = InnoDB";
 
 	/** The SQL statement to create a new NodeDetail table */
@@ -307,6 +325,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"NodeID VARCHAR(50) NOT NULL, " +
 															"UserID VARCHAR(50) NOT NULL, " +
 															"State INTEGER NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"INDEX NodeUserState_UserID_Ind (UserID), "+
 															"CONSTRAINT PK_NodeUserState PRIMARY KEY (NodeID, UserID), "+
 															"CONSTRAINT FK_NodeUserState_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
@@ -315,6 +334,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 	/** The SQL statement to create a new System table */
 	public static final String MYSQL_CREATE_SYSTEM_TABLE = "CREATE TABLE System (Property VARCHAR(100) NOT NULL, "+
 															"Contents VARCHAR(255) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_System PRIMARY KEY (Property)) TYPE = InnoDB";
 
 	/** The SQL statement to create a new ReferenceNode table */
@@ -324,6 +344,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"ImageSource VARCHAR(255), "+
 															"ImageWidth INTEGER, "+
 															"ImageHeight INTEGER, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_ReferenceNode PRIMARY KEY (NodeID), "+
 															"CONSTRAINT FK_ReferenceNode_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE) TYPE = InnoDB";
 
@@ -331,6 +352,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 	public static final String MYSQL_CREATE_NODECODE_TABLE = "CREATE TABLE NodeCode ("+
 															"NodeID VARCHAR(50) NOT NULL, " +
 															"CodeID VARCHAR(50) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"INDEX NodeCode_CodeID_Ind (CodeID), "+
 															"CONSTRAINT PK_NodeCode PRIMARY KEY (NodeID, CodeID), "+
 															"CONSTRAINT FK_NodeCode_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
@@ -352,6 +374,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 	public static final String MYSQL_CREATE_SHORTCUT_TABLE = "CREATE TABLE ShortCutNode ("+
 															"NodeID VARCHAR(50) NOT NULL, " +
 															"ReferenceID VARCHAR(50) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_ShortcutNode PRIMARY KEY (NodeID, ReferenceID), "+
 															"CONSTRAINT FK_ShortcutNode_1 FOREIGN KEY (NodeID) REFERENCES Node (NodeID) ON DELETE CASCADE) TYPE = InnoDB";
 
@@ -369,13 +392,13 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"ShowTrans VARCHAR(1) NOT NULL DEFAULT 'Y', "+
 															"ShowWeight VARCHAR(1) NOT NULL DEFAULT 'Y', "+
 															"SmallIcon VARCHAR(1) NOT NULL DEFAULT 'N', "+
-															"HideIcon VARCHAR(1) NOT NULL DEFAULT 'N', "+															
+															"HideIcon VARCHAR(1) NOT NULL DEFAULT 'N', "+
 															"LabelWrapWidth INTEGER NOT NULL DEFAULT '25', "+
 															"FontSize INTEGER NOT NULL DEFAULT '12', "+
 															"FontFace VARCHAR(100) NOT NULL DEFAULT 'Arial', "+
 															"FontStyle INTEGER NOT NULL DEFAULT '0', " +
 															"Foreground INTEGER NOT NULL DEFAULT '0', "+
-															"Background INTEGER NOT NULL DEFAULT '-1', "+																														
+															"Background INTEGER NOT NULL DEFAULT '-1', "+
 															"INDEX ViewNode_NodeID_Ind (NodeID), "+
 															"CONSTRAINT PK_ViewNode PRIMARY KEY (ViewID, NodeID), "+
 															"CONSTRAINT FK_ViewNode_1 FOREIGN KEY (ViewID) REFERENCES Node (NodeID) ON DELETE CASCADE, "+
@@ -395,6 +418,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 	public static final String MYSQL_CREATE_GROUPUSER_TABLE = "CREATE TABLE GroupUser ("+
 															"UserID VARCHAR(50) NOT NULL, " +
 															"GroupID VARCHAR(50) NOT NULL, " +
+															"ModificationDate DOUBLE, "+
 															"INDEX GroupUser_GroupID_Ind (GroupID), "+
 															"INDEX UserGroup_UserID_Ind (UserID), "+
 															"CONSTRAINT PK_GroupUser PRIMARY KEY (UserID, GroupID), "+
@@ -406,6 +430,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"ItemID VARCHAR(50) NOT NULL, " +
 															"GroupID VARCHAR(50) NOT NULL, " +
 															"Permission INTEGER NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"INDEX Permission_GroupID_Ind (GroupID), "+
 															"CONSTRAINT PK_Permission PRIMARY KEY (ItemID, GroupID), "+
 															"CONSTRAINT FK_Permission_1 FOREIGN KEY (GroupID) REFERENCES UserGroup (GroupID) ON DELETE CASCADE) TYPE = InnoDB";
@@ -414,6 +439,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 	public static final String MYSQL_CREATE_CLONE_TABLE = "CREATE TABLE Clone ("+
 															"ParentNodeID VARCHAR(50) NOT NULL, "+
 															"ChildNodeID VARCHAR(50) NOT NULL, " +
+															"ModificationDate DOUBLE, "+
 															"INDEX Clone_ChildNodeID_Ind (ChildNodeID), "+
 															"CONSTRAINT PK_Clone PRIMARY KEY (ParentNodeID, ChildNodeID), "+
 															"CONSTRAINT FK_Clone_1 FOREIGN KEY (ChildNodeID) REFERENCES Node (NodeID) ON DELETE CASCADE) TYPE = InnoDB";
@@ -423,6 +449,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"UserID VARCHAR(50) NOT NULL, " +
 															"Property VARCHAR(100) NOT NULL, "+
 															"Contents VARCHAR(255) NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"CONSTRAINT PK_Preference PRIMARY KEY (UserID, Property), "+
 															"CONSTRAINT FK_Preference_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE) TYPE = InnoDB";
 
@@ -434,6 +461,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"Background VARCHAR(255), "+
 															"Grid VARCHAR(255), "+
 															"Shapes LONGTEXT, " +
+															"ModificationDate DOUBLE, "+
 															"INDEX ViewLayer_ViewID_Ind (ViewID), "+
 															"CONSTRAINT PK_ViewLayer PRIMARY KEY (UserID, ViewID), "+
 															"CONSTRAINT FK_ViewLayer_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE, "+
@@ -462,6 +490,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"FontSize INTEGER NOT NULL DEFAULT '12', "+
 															"FontFace VARCHAR(100) NOT NULL DEFAULT 'Arial', "+
 															"FontStyle INTEGER NOT NULL DEFAULT '0', "+
+															"ModificationDate DOUBLE, "+
 															"INDEX ViewProperty_ViewID_Ind (ViewID), "+
 															"CONSTRAINT PK_ViewProperty PRIMARY KEY (UserID, ViewID), "+
 															"CONSTRAINT FK_ViewProperty_1 FOREIGN KEY (UserID) REFERENCES Users (UserID) ON DELETE CASCADE, "+
@@ -490,6 +519,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"YPosition INTEGER NOT NULL, " +
 															"IsIcon ENUM('N','Y') NOT NULL, " +
 															"IsMaximum ENUM('N','Y') NOT NULL, "+
+															"ModificationDate DOUBLE, "+
 															"INDEX WorkspaceView_ViewID_Ind (ViewID), "+
 															"CONSTRAINT PK_WorkspaceView PRIMARY KEY (WorkspaceID, ViewID), "+
 															"CONSTRAINT FK_WorkspaceView_1 FOREIGN KEY (WorkspaceID) REFERENCES Workspace (WorkspaceID) ON DELETE CASCADE, "+
@@ -502,6 +532,7 @@ public interface DBConstantsMySQL extends java.io.Serializable {
 															"MeetingName VARCHAR (255), "+
 															"MeetingDate DOUBLE, "+
 															"CurrentStatus INTEGER NOT NULL DEFAULT 0, "+
+															"ModificationDate DOUBLE, "+
 															"INDEX Meeting_MeetingMapID_Ind (MeetingMapID), "+
 															"CONSTRAINT PK_Meeting PRIMARY KEY (MeetingID), "+
 															"CONSTRAINT FK_Meeting_1 FOREIGN KEY (MeetingMapID) REFERENCES Node (NodeID) ON DELETE CASCADE) TYPE = InnoDB";

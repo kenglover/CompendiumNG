@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.util.*;
@@ -32,6 +31,7 @@ import java.awt.Color;
 import java.util.Hashtable;
 import java.sql.SQLException;
 
+import com.compendium.core.ICoreConstants;
 import com.compendium.core.datamodel.services.*;
 
 /**
@@ -50,99 +50,111 @@ public class Model implements java.io.Serializable, IModel {
 
 	/** The property name of the small icon preference property*/
 	public static final String	SMALL_ICONS_PROPERTY	="smallIcons";
-	
+
 	/** The property name of the hide icon preference property*/
 	public static final String 	HIDE_ICONS_PROPERTY 	= "hideIcons";
-	
+
 	/** The property name of the show weight indicator preference property*/
 	public static final String 	SHOW_WEIGHT_PROPERTY	= "showWeight";
-	
+
 	/** The property name of the show tags indicator preference property*/
 	public static final String  SHOW_TAGS_PROPERTY		= "showTags";
-	
+
 	/** The property name of the show text indicator preference property*/
 	public static final String  SHOW_TEXT_PROPERTY		= "showText";
-	
+
 	/** The property name of the show transclusion indicator preference property*/
 	public static final String  SHOW_TRANS_PROPERTY		= "showTrans";
-	
+
 	/** The property name of the wrpa width preference property*/
 	public static final String  LABEL_WRAP_WIDTH_PROPERTY = "labelWrapWidth";
-	
+
 	/** The property name of the font face preference property*/
 	public static final String	FONTFACE_PROPERTY		= "fontface";
-	
+
 	/** The property name of the font size preference property*/
 	public static final String 	FONTSIZE_PROPERTY		= "fontsize";
-	
+
 	/** The property name of the font style preference property*/
 	public static final String 	FONTSTYLE_PROPERTY		= "fontstyle";
 
 	/** The property name of the detail popup preference property*/
 	public static final String 	DETAIL_POPUP_PROPERTY	= "detailPopup";
-	
+
 	/** The property name of the label popup length preference property*/
 	public static final String  LABEL_POPUP_LENGTH_PROPERTY	= "labelPopupLength";
-	
+
 	/** The property name of the map border preference property*/
 	public static final String 	MAP_BORDER_PROPERTY			= "mapBorder";
-	
-	
+
+	/** The property name of the Linked Files path property */
+	public static final String	LINKED_FILES_PATH_PROPERTY = "linkedFilesPath";
+
+	/** The property name of the property for expanding the Linked Files sub-folders */
+	public static final String LINKED_FILES_FLAT_PROPERTY = "linkedFilesFlat";
+
+
 	// THE DEFAULT PROPERTY SETTINGS
-	
+
 	/** The property name of the small icon preference property*/
 	public static final boolean		SMALL_ICONS_DEFAULT		= false;
-	
+
 	/** The property name of the hide icon preference property*/
 	public static final boolean 	HIDE_ICONS_DEFAULT 		= false;
-	
+
 	/** The property name of the show weight indicator preference property*/
 	public static final boolean 	SHOW_WEIGHT_DEFAULT		= true;
-	
+
 	/** The property name of the show tags indicator preference property*/
 	public static final boolean  	SHOW_TAGS_DEFAULT		= true;
-	
+
 	/** The property name of the show text indicator preference property*/
 	public static final boolean  	SHOW_TEXT_DEFAULT		= true;
-	
+
 	/** The property name of the show transclusion indicator preference property*/
 	public static final boolean		SHOW_TRANS_DEFAULT		= true;
-	
+
 	/** The property name of the wrpa width preference property*/
 	public static final int		  	LABEL_WRAP_WIDTH_DEFAULT = 25;
-	
+
 	/** The property name of the font face preference property*/
 	public static final String		FONTFACE_DEFAULT		= "Dialog";
-	
+
 	/** The property name of the font size preference property*/
 	public static final int		 	FONTSIZE_DEFAULT		= 12;
-	
+
 	/** The property name of the font style preference property*/
 	public static final int		 	FONTSTYLE_DEFAULT		= Font.PLAIN;
 
 	/** The property name of the detail popup preference property*/
 	public static final boolean 	DETAIL_POPUP_DEFAULT	= false;
-	
+
 	/** The property name of the label popup length preference property*/
 	public static final int  		LABEL_POPUP_LENGTH_DEFAULT	= 100;
-	
+
 	/** The property name of the map border preference property*/
-	public static final boolean 	MAP_BORDER_DEFAULT			= true;	
-	
+	public static final boolean 	MAP_BORDER_DEFAULT			= true;
+
 	/** Default foreground colour*/
 	public static final Color		FOREGROUND_DEFAULT			= Color.black;
 
 	/** Default background colour*/
 	public static final Color		BACKGROUND_DEFAULT			= Color.white;
 
+	/** Default Linked Files folder */
+	public static final String		LINKED_FILES_PATH_DEFAULT = "Linked Files";
+
+	/** Default value for keeping Linked Files area flattened */
+	public static final boolean		LINKED_FILES_FLAT_DEFAULT = false;
+
 	// THE PROJECT PREFERENCE PROPERTIES
-	
+
 	/** The map node label wrap width.*/
 	public int labelWrapWidth = LABEL_WRAP_WIDTH_DEFAULT;
 
 	/** The map node label length at which to popup the detail box.*/
 	public int labelPopupLength = LABEL_POPUP_LENGTH_DEFAULT;
-	
+
 	/** The default font face for nodes and lists.*/
 	public String fontface = FONTFACE_DEFAULT;
 
@@ -169,15 +181,21 @@ public class Model implements java.io.Serializable, IModel {
 
 	/** Show node icon tag inidicators.*/
 	public boolean showTagsNodeIndicator = SHOW_TAGS_DEFAULT;
-	
+
 	/** Should the detail box be automatically popped up.*/
 	public boolean detailPopup = DETAIL_POPUP_DEFAULT;
 
 	/** Should maps with images show borders.*/
 	public boolean mapBorder = MAP_BORDER_DEFAULT;
 
+	/** Where to store Linked Files */
+	public String linkedFilesPath = LINKED_FILES_PATH_DEFAULT;
+
+	/** If Linked Files should be in an expanded or flat folder structure */
+	public boolean linkedFilesFlat = LINKED_FILES_FLAT_DEFAULT;
+
 	public Font labelFont = new Font(fontface, fontstyle, fontsize);
-	
+
 	/** The name is the unique name of this model. It is unique for a single database project.*/
 	private String								sName = "";
 
@@ -240,7 +258,7 @@ public class Model implements java.io.Serializable, IModel {
 
 	/** Stores codes and code groups.*/
 	private CodeCache						oCodeCache = null;
-	
+
 	/** This holds project level preferences.*/
 	private Hashtable						htProjectPreferences = null;
 
@@ -252,7 +270,7 @@ public class Model implements java.io.Serializable, IModel {
 
 	/** The time (in milliseconds), when this model instance was created.*/
 	private Long							creationTime = null;
-	
+
 	/** A list of all UserProfiles*/
 	private Vector 							vtUsers		= null;
 
@@ -288,7 +306,7 @@ public class Model implements java.io.Serializable, IModel {
 		catch(java.net.UnknownHostException e) {}
 
 		String add = netAddress.getHostAddress() ;
-		
+
 		// FOR IPv6
 		String sSplitter = ".";
 		if (add.indexOf(":") != -1) {
@@ -298,7 +316,7 @@ public class Model implements java.io.Serializable, IModel {
 		while(st.hasMoreTokens()) {
 			sInetAddress += st.nextToken();
 		}
-		
+
 		loadProjectPreferences();
 		loadUsers();
 	}
@@ -308,48 +326,53 @@ public class Model implements java.io.Serializable, IModel {
 	 * @throws SQLExcpetion
 	 */
 	public void loadProjectPreferences() throws SQLException {
-		htProjectPreferences = getSystemService().getProperties(oSession);	
-		
+		htProjectPreferences = getSystemService().getProperties(oSession);
+
 		String sProperty  = "";
 		for (Enumeration e = htProjectPreferences.keys(); e.hasMoreElements();) {
 			sProperty = (String)e.nextElement();
-			
+
 			if (sProperty.equals(SMALL_ICONS_PROPERTY)) {
-				smallIcons = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();				
+				smallIcons = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			} else if (sProperty.equals(HIDE_ICONS_PROPERTY)) {
-				hideIcons = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();								
+				hideIcons = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			} else if (sProperty.equals(SHOW_WEIGHT_PROPERTY)) {
-				showWeightNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();								
+				showWeightNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			} else if (sProperty.equals(SHOW_TAGS_PROPERTY)) {
-				showTagsNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();								
+				showTagsNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			} else if (sProperty.equals(SHOW_TEXT_PROPERTY)) {
-				showTextNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();								
+				showTextNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			} else if (sProperty.equals(SHOW_TRANS_PROPERTY)) {
-				showTransNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();							
+				showTransNodeIndicator = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			} else if (sProperty.equals(LABEL_WRAP_WIDTH_PROPERTY)) {
 				try { labelWrapWidth = Integer.valueOf((String)htProjectPreferences.get(sProperty)).intValue(); }
-				catch(NumberFormatException nfe) {}				
+				catch(NumberFormatException nfe) {}
 			} else if (sProperty.equals(FONTFACE_PROPERTY)) {
 				fontface = (String)htProjectPreferences.get(sProperty);
 			} else if (sProperty.equals(FONTSIZE_PROPERTY)) {
 				try { fontsize = Integer.valueOf((String)htProjectPreferences.get(sProperty)).intValue(); }
-				catch(NumberFormatException nfe) {}								
+				catch(NumberFormatException nfe) {}
 			} else if (sProperty.equals(FONTSTYLE_PROPERTY)) {
 				try { fontstyle = Integer.valueOf((String)htProjectPreferences.get(sProperty)).intValue(); }
-				catch(NumberFormatException nfe) {}				
+				catch(NumberFormatException nfe) {}
 			} else if (sProperty.equals(DETAIL_POPUP_PROPERTY)) {
-				detailPopup = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();								
+				detailPopup = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			} else if (sProperty.equals(LABEL_POPUP_LENGTH_PROPERTY)) {
 				try { labelPopupLength = Integer.valueOf((String)htProjectPreferences.get(sProperty)).intValue(); }
-				catch(NumberFormatException nfe) {}				
+				catch(NumberFormatException nfe) {}
 			} else if (sProperty.equals(MAP_BORDER_PROPERTY)) {
-				mapBorder = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();				
+				mapBorder = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
+			} else if (sProperty.equals(LINKED_FILES_PATH_PROPERTY)) {
+				linkedFilesPath = (String)htProjectPreferences.get(sProperty);
+				showTrace("linkedFilesPath is set to " + linkedFilesPath);
+			} else if (sProperty.equals(LINKED_FILES_FLAT_PROPERTY)) {
+				linkedFilesFlat = new Boolean((String)htProjectPreferences.get(sProperty)).booleanValue();
 			}
-			
-			labelFont = new Font(fontface, fontstyle, fontsize);			
+
+			labelFont = new Font(fontface, fontstyle, fontsize);
 		}
 	}
-	
+
 	/**
 	 * Save all project preferneces to the database.
 	 * @return true if all went well.
@@ -370,7 +393,7 @@ public class Model implements java.io.Serializable, IModel {
 		}
 		return sValue;
 	}*/
-	
+
 	/**
 	 * Set the value for the given preference both locally AND in the DATABASE
 	 * @param sProperty the preference property name.
@@ -378,42 +401,46 @@ public class Model implements java.io.Serializable, IModel {
 	 */
 	public void setProjectPreference(String sProperty, String sValue) throws SQLException {
 		htProjectPreferences.put(sProperty, sValue);
-		
+
 		if (sProperty.equals(SMALL_ICONS_PROPERTY)) {
-			smallIcons = new Boolean(sValue).booleanValue();				
+			smallIcons = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(HIDE_ICONS_PROPERTY)) {
-			hideIcons = new Boolean(sValue).booleanValue();								
+			hideIcons = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(SHOW_WEIGHT_PROPERTY)) {
-			showWeightNodeIndicator = new Boolean(sValue).booleanValue();								
+			showWeightNodeIndicator = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(SHOW_TAGS_PROPERTY)) {
-			showTagsNodeIndicator = new Boolean(sValue).booleanValue();								
+			showTagsNodeIndicator = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(SHOW_TEXT_PROPERTY)) {
-			showTextNodeIndicator = new Boolean(sValue).booleanValue();								
+			showTextNodeIndicator = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(SHOW_TRANS_PROPERTY)) {
 			showTransNodeIndicator = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(MAP_BORDER_PROPERTY)) {
-			mapBorder = new Boolean(sValue).booleanValue();				
+			mapBorder = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(FONTFACE_PROPERTY)) {
 			fontface = sValue;
 		} else if (sProperty.equals(FONTSIZE_PROPERTY)) {
 			try { fontsize = Integer.valueOf(sValue).intValue(); }
-			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}								
+			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}
 		} else if (sProperty.equals(FONTSTYLE_PROPERTY)) {
 			try { fontstyle = Integer.valueOf(sValue).intValue(); }
-			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}				
+			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}
 		} else if (sProperty.equals(DETAIL_POPUP_PROPERTY)) {
-			detailPopup = new Boolean(sValue).booleanValue();	
+			detailPopup = new Boolean(sValue).booleanValue();
 		} else if (sProperty.equals(LABEL_WRAP_WIDTH_PROPERTY)) {
 			try { labelWrapWidth = Integer.valueOf(sValue).intValue(); }
-			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}							
+			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}
 		} else if (sProperty.equals(LABEL_POPUP_LENGTH_PROPERTY)) {
 			try { labelPopupLength = Integer.valueOf(sValue).intValue(); }
-			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}			
+			catch(NumberFormatException nfe) {System.out.println(nfe.getMessage());}
+		} else if (sProperty.equals(LINKED_FILES_PATH_PROPERTY)) {
+			linkedFilesPath = sValue;
+		} else if (sProperty.equals(LINKED_FILES_FLAT_PROPERTY)) {
+			linkedFilesFlat = new Boolean(sValue).booleanValue();
 		}
-		
+
 		getSystemService().insertProperty(oSession, sProperty, sValue);
 	}
-	
+
 	/**
 	 *	Returns the model name of this model object.
 	 *
@@ -421,6 +448,24 @@ public class Model implements java.io.Serializable, IModel {
 	 */
 	public String getModelName() {
 		return sName;
+	}
+
+	/**
+	 * Returns the linkedFilesPath value
+	 *
+	 * @return String, the value of the linkedFilesPath setting
+	 */
+	public String getlinkedFilesPath() {
+		return linkedFilesPath;
+	}
+
+	/**
+	 * Returns the linkedFilesFlat value
+	 *
+	 * @return boolean, the value of the linkedFilesFlat setting
+	 */
+	public boolean getlinkedFilesFlat() {
+		return linkedFilesFlat;
 	}
 
 	/**
@@ -505,13 +550,7 @@ public class Model implements java.io.Serializable, IModel {
 		catch(java.net.UnknownHostException e) {}
 
 		String add = netAddress.getHostAddress();
-		
-		// FOR IPv6
-		String sSplitter = ".";
-		if (add.indexOf(":") != -1) {
-			sSplitter = ":";
-		}		
-		StringTokenizer st = new StringTokenizer(add, sSplitter);
+		StringTokenizer st = new StringTokenizer(add,".");
 		while(st.hasMoreTokens()) {
 			sInetAddress += st.nextToken();
 		}
@@ -826,10 +865,10 @@ public class Model implements java.io.Serializable, IModel {
 	 * @return Hashtable of all user home and link ids as the keys and user names as the values.
 	 */
 	public Hashtable getUserViews() {
-		
+
 		int count = vtUsers.size();
 		Hashtable htIDs = new Hashtable( (count*2) );
-		
+
 		UserProfile up = null;
 		View home = null;
 		View inbox = null;
@@ -842,7 +881,7 @@ public class Model implements java.io.Serializable, IModel {
 			inbox = up.getLinkView();
 			if (inbox != null) {
 				htIDs.put(inbox.getId(), up.getUserName());
-			}			
+			}
 		}
 
 		return htIDs;
@@ -855,14 +894,67 @@ public class Model implements java.io.Serializable, IModel {
 	public Vector getUsers() {
 		return vtUsers;
 	}
-	
+
+	/**
+	 * Remove a specific User Profile from the vtUsers list.  This gets called when
+	 * a user ID gets deleted via the UIUserManagerDialog
+	 *
+	 * @param String sUserID - User ID of the person being removed
+	 */
+	public void removeUserProfile(String sUserID) {
+		int count = vtUsers.size();
+
+		UserProfile up = null;
+		for (int i=0; i<count; i++) {
+			up = (UserProfile)vtUsers.elementAt(i);
+			if (up.getUserID().equals(sUserID)) {
+				vtUsers.removeElementAt(i);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Updates info for the given User in the in-memory UserProfile cache
+	 *
+	 * @param UserProfile upNew - The UserProfile to update (or add) to the local cache
+	 */
+	public void updateUserProfile(UserProfile upNew) {
+
+		int count = vtUsers.size();
+		boolean	upFound = false;
+
+		UserProfile up = null;
+		for (int i=0; i<count; i++) {
+			up = (UserProfile)vtUsers.elementAt(i);
+			if (up.getUserID().equals(upNew.getUserID())) {
+				upFound = true;
+				vtUsers.removeElementAt(i);
+				vtUsers.insertElementAt(upNew, i);
+				break;
+			}
+		}
+		if (!upFound) {
+			vtUsers.addElement(upNew);
+		}
+	}
+
+
 	/**
 	 * Load the list of all users.
+	 *
+	 * In 1.5.2 this reloaded user info from the database each time (no 'if' clause).  To optimize
+	 * performance, this was changed to only load from the database once.  The UIUserManagerDialog
+	 * code that adds, deleted and modifies users was changed to modify the data in the vtUser vector
+	 * so this always contains a correct user list.
+	 *
 	 */
 	public void loadUsers() throws SQLException {
-		vtUsers = getUserService().getUsers(sName, oUserProfile.getId());
+		if (vtUsers == null) {
+			vtUsers = getUserService().getUsers(sName, oUserProfile.getId());
+		}
 	}
-	
+
 	/**
 	 *	Returns the user profile object associated with this model.
 	 *
@@ -1000,7 +1092,7 @@ public class Model implements java.io.Serializable, IModel {
 // CODES
 
 	/**
-	 * Checks if a code with the passed name already exists in the data 
+	 * Checks if a code with the passed name already exists in the data
 	 * and does not have the the given code id.
 	 * @param sCodeID the code id to ignore
 	 * @param sName the code name to check.
@@ -1008,8 +1100,8 @@ public class Model implements java.io.Serializable, IModel {
 	 */
 	public boolean codeNameExists(String sCodeID, String sName) {
 		return oCodeCache.codeNameExists(sCodeID, sName);
-	}		
-	
+	}
+
 	/**
 	 *  Load all the codes for the current project into the code cache.
 	 */
@@ -1229,5 +1321,15 @@ public class Model implements java.io.Serializable, IModel {
 		sName			= null;
 		oSession 		= null;
 		oldID 			= null;
+	}
+
+	public static void showTrace(String msg)
+	{
+		  //if (msg.length() > 0) System.out.println(msg);
+		  System.out.println(
+		  	       new Throwable().getStackTrace()[1].getLineNumber() +
+		           " " + new Throwable().getStackTrace()[1].getFileName() +
+		           " " + new Throwable().getStackTrace()[1].getMethodName() +
+		           " " + msg);
 	}
 }

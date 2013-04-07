@@ -22,19 +22,19 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.io.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.Vector;
 
-import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListModel;
 
-import com.compendium.core.datamodel.*;
-import com.compendium.*;
+import com.compendium.ProjectCompendium;
+import com.compendium.core.datamodel.Code;
+import com.compendium.core.datamodel.NodeSummary;
 
 /**
  * This class extends JList and implments key control search of the list.
@@ -44,6 +44,10 @@ import com.compendium.*;
  */
 public class UINavList extends JList {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	/** The keys entered by the user for the search.*/
 	String keys = "";
 
@@ -96,7 +100,7 @@ public class UINavList extends JList {
      *
      * @param listData, the <code>Vector</code> to be loaded into the data model.
      */
-    public UINavList(final Vector listData) {
+    public UINavList(final Vector<?> listData) {
 		super(listData);
 
 		addKeyListener(new KeyAdapter() {

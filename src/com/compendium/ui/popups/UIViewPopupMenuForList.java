@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.popups;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -71,8 +72,8 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 
 	/** The JMenuItem to open this view's contents dialog.*/
 	private JMenuItem		miMenuItemOpen			= null;
-	
-	/** The  JMenuItem to mark the nodes as read*/ 
+
+	/** The  JMenuItem to mark the nodes as read*/
 	private JMenuItem		miMenuItemMarkSeen 		= null;
 
 	/**The  JMenuItem to mark the nodes as unread*/
@@ -131,27 +132,22 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 
 	/** The JMenuItem to import XML.*/
 	private JMenuItem		miImportXMLView			= null;
-	
+
 	/** The menu item to import Flashmeeting XML.*/
 	private JMenuItem		miImportXMLFlashmeeting = null;
-	
+
 	/** The JMenuItem to export to a HTML Outline.*/
 	private JMenuItem		miExportHTMLOutline		= null;
+	private JMenuItem		miExportWordDocOutline		= null;
 
 	/** The JMenuItem to export to a HTML Views.*/
 	private JMenuItem		miExportHTMLView		= null;
 
 	/** The JMenuItem to export to XML.*/
 	private JMenuItem		miExportXMLView			= null;
-	
-	/** The menu item to export a HTML view with the XML included.*/
-	private JMenuItem		miExportHTMLViewXML		= null;	
-	
-	/** The JMenu to send information to IX Panels.*/
-	private JMenu			mnuSendToIX				= null;
 
-	/** The JMenu to send information to a Jabber client.*/
-	private JMenu			mnuSendToJabber			= null;
+	/** The menu item to export a HTML view with the XML included.*/
+	private JMenuItem		miExportHTMLViewXML		= null;
 
 	/** The JMenu to holds links to Reference nodes contained in the current view.*/
 	private JMenu			mnuRefNodes				= null;
@@ -190,7 +186,7 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 		View view = listUI.getUIList().getView();
 		String sViewID = view.getId();
 		String sInBoxID = ProjectCompendium.APP.getInBoxID();
-			
+
 		Vector refNodes = view.getReferenceNodes();
 
 		mnuNodes = new JMenu("Create Node");
@@ -337,6 +333,11 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 		miExportHTMLOutline.addActionListener(this);
 		mnuExport.add(miExportHTMLOutline);
 
+		miExportWordDocOutline = new JMenuItem("Word Doc Outline...");
+		//miExportWordDocOutline.setMnemonic(KeyEvent.VK_O);
+		miExportWordDocOutline.addActionListener(this);
+		mnuExport.add(miExportWordDocOutline);
+
 		miExportHTMLView = new JMenuItem("Web Maps...");
 		miExportHTMLView.setMnemonic(KeyEvent.VK_M);
 		miExportHTMLView.addActionListener(this);
@@ -350,7 +351,7 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 
 		add(mnuExport);
 		addSeparator();
-		
+
 		miMenuItemMarkSeen = new JMenuItem("Mark Seen");
 		miMenuItemMarkSeen.addActionListener(this);
 		miMenuItemMarkSeen.setMnemonic(KeyEvent.VK_M);
@@ -362,7 +363,7 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 		miMenuItemMarkUnseen.setMnemonic(KeyEvent.VK_N);
 		add(miMenuItemMarkUnseen);
 		miMenuItemMarkUnseen.setEnabled(false);
-		
+
 		Enumeration e = listUI.getUIList().getSelectedNodes();
 		for(;e.hasMoreElements();){
 			NodePosition np = (NodePosition) e.nextElement();
@@ -377,27 +378,6 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 
 		// SEND TO OPTIONS
 		boolean addSep = false;
-		if (ProjectCompendium.APP.jabber != null &&
-									ProjectCompendium.APP.jabber.getRoster().hasMoreElements()) {
-			addSep = true;
-			mnuSendToJabber = new JMenu("Send To Jabber");
-			mnuSendToJabber.setMnemonic(KeyEvent.VK_J);
-			mnuSendToJabber.setEnabled(false);
-			add(mnuSendToJabber);
-
-			ProjectCompendium.APP.drawJabberRoster( mnuSendToJabber );
-		}
-
-		if (ProjectCompendium.APP.ixPanel != null &&
-									ProjectCompendium.APP.ixPanel.getRoster().hasMoreElements()) {
-
-			addSep = true;
-			mnuSendToIX = new JMenu("Send To IX");
-			mnuSendToIX.setMnemonic(KeyEvent.VK_X);
-			mnuSendToIX.setEnabled(false);
-			add(mnuSendToIX);
-			ProjectCompendium.APP.drawIXRoster( mnuSendToIX );
-		}
 
 		// END IMPORT / EXPORT OPTIONS
 
@@ -409,12 +389,12 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 			miMenuItemOpen.addActionListener(this);
 			miMenuItemOpen.setMnemonic(KeyEvent.VK_O);
 			add(miMenuItemOpen);
-	
+
 			miMenuItemProperties = new JMenuItem("Properties");
 			miMenuItemProperties.setMnemonic(KeyEvent.VK_P);
 			miMenuItemProperties.addActionListener(this);
 			add(miMenuItemProperties);
-	
+
 			miMenuItemViews = new JMenuItem("Views");
 			miMenuItemViews.setMnemonic(KeyEvent.VK_W);
 			miMenuItemViews.addActionListener(this);
@@ -422,7 +402,7 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 		}
 
 	 	// If on the Mac OS and the Menu bar is at the top of the OS screen, remove the menu shortcut Mnemonics.
-		if (ProjectCompendium.isMac && (FormatProperties.macMenuBar || (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) )
+		if (ProjectCompendium.isMac && (APP_PROPERTIES.isMacMenuBar() || (!APP_PROPERTIES.isMacMenuBar() && !APP_PROPERTIES.isMacMenuUnderline())) )
 			UIUtilities.removeMenuMnemonics(getSubElements());
 
 		pack();
@@ -456,26 +436,28 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 
 		else if (source.equals(miExportHTMLOutline))
 			onExportFile();
+		else if (source.equals(miExportWordDocOutline))
+			onExportWordDoc();
 		else if (source.equals(miExportHTMLView))
 			onExportView();
 
 		else if (source.equals(miExportXMLView)) {
-			onXMLExport(false); 
+			onXMLExport(false);
 		} else if (source.equals(miExportHTMLViewXML)) {
-			ProjectCompendium.APP.onFileExportPower();		
+			ProjectCompendium.APP.onFileExportPower();
 		} else if (source.equals(miImportXMLView)) {
 			onXMLImport();
 		} else if (source.equals(miImportXMLFlashmeeting)) {
 			UIImportFlashMeetingXMLDialog dlg = new UIImportFlashMeetingXMLDialog(ProjectCompendium.APP);
 			UIUtilities.centerComponent(dlg, ProjectCompendium.APP);
-			dlg.setVisible(true);									
+			dlg.setVisible(true);
 		} else if(source.equals(miMenuItemMarkSeen)) {
 			try {
 				Enumeration e = listUI.getUIList().getSelectedNodes();
 				for(;e.hasMoreElements();){
 					NodePosition np = (NodePosition) e.nextElement();
 					NodeSummary oNode = np.getNode();
-					oNode.setState(ICoreConstants.READSTATE);	
+					oNode.setState(ICoreConstants.READSTATE);
 				}
 			}
 			catch(Exception io) {
@@ -488,7 +470,7 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 				for(;e.hasMoreElements();){
 					NodePosition np = (NodePosition) e.nextElement();
 					NodeSummary oNode = np.getNode();
-					oNode.setState(ICoreConstants.UNREADSTATE);	
+					oNode.setState(ICoreConstants.UNREADSTATE);
 				}
 			}
 			catch(Exception io) {
@@ -595,6 +577,14 @@ public class UIViewPopupMenuForList extends JPopupMenu implements ActionListener
 		UIExportDialog export = new UIExportDialog(ProjectCompendium.APP, listUI.getUIList().getViewFrame());
 		export.setVisible(true);
 	}
+
+	public void onExportWordDoc() {
+
+		UIExportDialog export = new UIExportDialog(ProjectCompendium.APP, listUI.getUIList().getViewFrame());
+		export.setWordDocExportOptions();
+		export.setVisible(true);
+	}
+
 
 	/**
 	 * Exports the current view to an XML file.

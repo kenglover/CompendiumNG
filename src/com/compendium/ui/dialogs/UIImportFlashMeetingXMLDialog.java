@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -87,9 +86,9 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 
 	/** Include the votes.*/
 	private JCheckBox			cbIncludeVotes 	= null;
-	
 
-	
+
+
 	/** Select to mark all nodes seen /unseen  on import.*/
 	private JCheckBox			cbMarkSeen 	= null;
 
@@ -101,7 +100,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 
 	/** The XML file to import.*/
 	private File 				file 			= null;
-	
+
 	/**
 	 * Initializes and sets up the dialog.
 	 * @param parent, the parent view for this doalog.
@@ -146,9 +145,9 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 		gc.anchor = GridBagConstraints.WEST;
 		oCenterPanel.setLayout(gb);
 		gc.insets = new Insets(5,5,5,5);
-		
+
 		int y = 0;
-		
+
 		cbIncludeKeywords = new JCheckBox("Import Keyword Data?");
 		cbIncludeKeywords.setSelected(true);
 		cbIncludeKeywords.addActionListener(this);
@@ -164,7 +163,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 		y++;
 		gb.setConstraints(cbIncludePlayList, gc);
 		oCenterPanel.add(cbIncludePlayList);
-		
+
 		cbIncludeURLs = new JCheckBox("Import URL Data?");
 		cbIncludeURLs.setSelected(true);
 		cbIncludeURLs.addActionListener(this);
@@ -172,7 +171,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 		y++;
 		gb.setConstraints(cbIncludeURLs, gc);
 		oCenterPanel.add(cbIncludeURLs);
-		
+
 		cbIncludeAttendees = new JCheckBox("Import Attendee Data?");
 		cbIncludeAttendees.setSelected(true);
 		cbIncludeAttendees.addActionListener(this);
@@ -180,7 +179,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 		y++;
 		gb.setConstraints(cbIncludeAttendees, gc);
 		oCenterPanel.add(cbIncludeAttendees);
-		
+
 		cbIncludeChats = new JCheckBox("Import Chat Data?");
 		cbIncludeChats.setSelected(true);
 		cbIncludeChats.addActionListener(this);
@@ -188,7 +187,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 		y++;
 		gb.setConstraints(cbIncludeChats, gc);
 		oCenterPanel.add(cbIncludeChats);
-		
+
 		cbIncludeWhiteboard = new JCheckBox("Import Whiteboard Data?");
 		cbIncludeWhiteboard.setSelected(true);
 		cbIncludeWhiteboard.addActionListener(this);
@@ -220,7 +219,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 		y++;
 		gb.setConstraints(cbIncludeVotes, gc);
 		oCenterPanel.add(cbIncludeVotes);
-	
+
 		// Add spacer label
 		JLabel spacer = new JLabel(" ");
 		gc.gridy = y;
@@ -231,12 +230,12 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 		//flag to mark seen/unseen on import
 		cbMarkSeen = new JCheckBox("Mark nodes seen");
 		cbMarkSeen.setSelected(true);
-		cbMarkSeen.addActionListener(this);		
+		cbMarkSeen.addActionListener(this);
 		gc.gridy = y;
 		y++;
 		gb.setConstraints(cbMarkSeen, gc);
 		oCenterPanel.add(cbMarkSeen);
-		
+
 		// Add spacer label
 		spacer = new JLabel(" ");
 		gc.gridy = y;
@@ -308,7 +307,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 	 * Handle the import action request.
 	 */
 	public void onImport()  {
-		
+
 		String finalFile = "";
 
 		if (file == null) {
@@ -352,7 +351,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 			if ((new File(finalFile)).exists()) {
 				setVisible(false);
 				Vector choices = new Vector();
-				
+
 				if (cbIncludeKeywords.isSelected()) {
 					choices.addElement(FlashMeetingXMLImport.KEYWORDS_LABEL);
 				}
@@ -384,7 +383,7 @@ public class UIImportFlashMeetingXMLDialog extends UIDialog implements ActionLis
 				DBNode.setNodesMarkedSeen(cbMarkSeen.isSelected());
 
 				FlashMeetingXMLImport xmlImport = new FlashMeetingXMLImport(finalFile, ProjectCompendium.APP.getModel(), choices);
-				xmlImport.start();	
+				xmlImport.start();
 
 				dispose();
 				ProjectCompendium.APP.setStatus("");

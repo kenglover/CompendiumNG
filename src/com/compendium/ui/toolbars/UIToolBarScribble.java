@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars;
 
 import java.awt.*;
@@ -49,19 +48,19 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 
 	/** Hint text when scribble pad toggle button should move layer to back.*/
 	private final static String SCRIBBLE_BACK_TEXT		= "Move Scribbles Behind Nodes and Links";
-	
+
 	/** Indicates whether the node format toolbar is switched on or not by default.*/
 	private final static boolean DEFAULT_STATE			= true;
-	
+
 	/** Indicates the default orientation for this toolbars ui object.*/
 	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;
-	
+
 	/** This indicates the type of the toolbar.*/
 	private	int 					nType			= -1;
-		
+
 	/** The parent frame for this class.*/
 	private ProjectCompendiumFrame	oParent			= null;
-	
+
 	/** The overall toolbar manager.*/
 	private IUIToolBarManager 		oManager		= null;
 
@@ -106,9 +105,9 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 
 	/** The button to clear the contents of the scribble layer.*/
 	private JButton				pbClearScribble		= null;
-	
+
 	/** The text field to hold the link type colour.*/
-	private JTextField				txtColour			= null;	
+	private JTextField				txtColour			= null;
 
 
 	/**
@@ -124,13 +123,13 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 		this.nType = nType;
 		createToolBar(DEFAULT_ORIENTATION);
 	}
-	
+
 	/**
 	 * Create a new instance of UIToolBarScribble, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
 	 * @param parent the parent frame for the application.
 	 * @param nType the unique identifier for this toolbar.
-	 * @param orientation the orientation of this toolbars ui object.  
+	 * @param orientation the orientation of this toolbars ui object.
 	 */
 	public UIToolBarScribble(IUIToolBarManager oManager, ProjectCompendiumFrame parent, int nType, int orientation) {
 
@@ -352,12 +351,12 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 		drawPanel.add(cbDraw, BorderLayout.CENTER);
 		return drawPanel;
 	}
-	
+
 	/**
 	 * Update the look and feel of all the toolbars
 	 */
 	public void updateLAF() {
-		
+
 		pbPencil.setIcon(UIImages.get(PENCIL_TOOL_ICON));
 		//pbNoTool.setIcon(UIImages.get(NO_TOOL_ICON));
 		pbLine.setIcon(UIImages.get(LINE_TOOL_ICON));
@@ -384,7 +383,7 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 		if (tbrToolBar != null)
 			SwingUtilities.updateComponentTreeUI(tbrToolBar);
 	}
-		
+
 	/**
 	 * Handles most menu and toolbar action event for this application.
 	 *
@@ -480,7 +479,7 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 				}
 			}
 		}*/
-		
+
 		oParent.setDefaultCursor();
 	}
 
@@ -501,7 +500,7 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 			tbrToolBar.setEnabled(false);
 		}
 	}
-	
+
 	/**
 	 * Is scribble pad on.
 	 * @return boolean, true if on, else false.
@@ -578,7 +577,7 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
 				pad.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 			}
 		}
-	}	
+	}
 
  	/**
 	 * Set the scribble pad line thickness to the given integer.
@@ -697,28 +696,28 @@ public class UIToolBarScribble implements IUIToolBar, ActionListener, IUIConstan
  	 * Does nothing
  	 * @param selected true to enable, false to disable.
 	 */
-	public void setNodeOrLinkSelected(boolean selected) {}	
-	
+	public void setNodeOrLinkSelected(boolean selected) {}
+
 	/**
 	 * Return the ui toolbar object.
 	 */
 	public UIToolBar getToolBar() {
 		return tbrToolBar;
 	}
-	
+
 	/**
 	 * Return true if this toolbar is active by default, or false if it must be switched on by the user.
 	 * @return true if the toolbar is active by default, else false.
 	 */
 	public boolean getDefaultActiveState() {
 		return DEFAULT_STATE;
-	}		
-	
+	}
+
 	/**
 	 * Return a unique integer identifier for this toolbar.
 	 * @return a unique integer identifier for this toolbar.
 	 */
 	public int getType() {
 		return nType;
-	}		
+	}
 }

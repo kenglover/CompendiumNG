@@ -22,16 +22,20 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium;
 
 import java.net.*;
 import java.util.*;
-import java.io.File;
+import java.io.*;
+
+import javax.swing.*;
 
 import com.compendium.core.*;
 import com.compendium.ui.dialogs.UIStartUp;
+import com.compendium.ui.ApplicationProperties;
+import com.compendium.ui.ExportProperties;
 import com.compendium.ui.ProjectCompendiumFrame;
+import com.compendium.ui.PropertyManager;
 import com.compendium.meeting.MeetingManager;
 import com.compendium.meeting.remote.RecordListener;
 
@@ -48,7 +52,45 @@ public class ProjectCompendium {
 	public static ProjectCompendiumFrame APP = null;
 
 	/** The path to the current Compendium home folder.*/
-	public static String 		sHOMEPATH	= (new File("")).getAbsolutePath();
+	//public static String 		sHOMEPATH	= (new File("")).getAbsolutePath();
+
+	//public static String 		sHOMEPATH	= System.getenv("APPDATA");
+	//public static String 		sSYSPATH	= System.getenv("ProgramFiles(x86)");
+
+	public static String 		sHOMEPATH	= System.getenv("CompendiumUserPath");
+	public static String 		sSYSPATH	= System.getenv("CompendiumSysPath");
+
+	/*  Matt Stucky, Feb 2012
+		New directory structure for win7.  the runnable parts of the code are
+		going to c:/program files/ and the user configurable parts are going to
+		APPDATA which is c:/users/owner/appdata/roaming.
+
+		the directory structure will be:
+
+		c:/program files/
+		    Skins/*
+		    Templates/
+		    System/lib/*
+		    System/resources/
+		        toolbars.xml
+		        Audio/*
+		        Help/*
+		        Images/*
+		        LinkGroups/*
+		        OutlineStyles/*
+		        ReferenceNodeIcons/*
+		        Stencils/*
+
+		c:/users/public/documents/compendium
+		    Backups/
+		    Exports/
+		    Linked Files/
+		    System/resources/
+		        *.properties
+		        Databases/
+		        Logs/
+        		Meetings/
+	*/
 
 	/** A reference to the system file path separator*/
 	public final static String	sFS		= System.getProperty("file.separator");
@@ -74,6 +116,29 @@ public class ProjectCompendium {
 	/** Instance of the RMI listener for memetic web start stuff.*/
 	public static RecordListener oRecordListener = null;
 
+    /** The property manager which allows to read/write application properties from the "Format.properties" file.*/
+    public static final PropertyManager<ApplicationProperties> APP_PROPERTY_MANAGER;
+
+    /** The application properties from the "Format.properties" file.*/
+    public static final ApplicationProperties APP_PROPERTIES;
+
+    /** The property manager which allows to read/write application properties from the "ExportOptions.properties" file.*/
+    public static final PropertyManager<ExportProperties> EXPORT_PROPERTY_MANAGER;
+
+    /** The application properties from the "ExportOptions.properties" file.*/
+    public static final ExportProperties EXPORT_PROPERTIES;
+
+    static {
+        APP_PROPERTY_MANAGER = new PropertyManager<ApplicationProperties>(
+                ApplicationProperties.class, "Format.properties");
+        APP_PROPERTIES = APP_PROPERTY_MANAGER.load();
+
+        EXPORT_PROPERTY_MANAGER =
+            new PropertyManager<ExportProperties>(
+                    ExportProperties.class, "ExportOptions.properties");
+        EXPORT_PROPERTIES = EXPORT_PROPERTY_MANAGER.load();
+    }
+
 	/**
 	 * Starts Project Compendium as an application
 	 *
@@ -82,27 +147,45 @@ public class ProjectCompendium {
 	public static void main(String [] args) {
 
 		UIStartUp oStartDialog = new UIStartUp(null);
+
         oStartDialog.setLocationRelativeTo(oStartDialog.getParent());
 		oStartDialog.setVisible(true);
 
 		// MAKE SURE ALL EMPTY FOLDERS THAT SHOULD EXIST, DO
-		checkDirectory("Exports");
-		checkDirectory("Backups");
-		checkDirectory("Linked Files");
-		checkDirectory("Templates");
-		checkDirectory("System"+sFS+"resources"+sFS+"Logs");
-		checkDirectory("System"+sFS+"resources"+sFS+"Databases");
+		checkDirectory(sHOMEPATH+sFS+"Exports");
+		checkDirectory(sHOMEPATH+sFS+"Backups");
+		checkDirectory(sHOMEPATH+sFS+"Linked Files");
+		checkDirectory(sSYSPATH +sFS+"Templates");
+		checkDirectory(sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"Logs");
+		checkDirectory(sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"Databases");
 		checkDirectory("System"+sFS+"resources"+sFS+"Meetings");
+
+		//JOptionPane.showMessageDialog(null, "directories checked");
 
 		try {
 			Date date = new Date();
 			sCompendiumInstanceID = (new Long(date.getTime()).toString());
-			SaveOutput.start("System"+sFS+"resources"+sFS+"Logs"+sFS+"log_"+CoreCalendar.getCurrentDateStringFull()+".txt");
+
+			//JOptionPane.showMessageDialog(null, sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"Logs"+sFS+"log_"+CoreCalendar.getCurrentDateStringFull()+".txt");
+
+			SaveOutput.start(sHOMEPATH+sFS+"System"+sFS+"resources"+sFS+"Logs"+sFS+"log_"+CoreCalendar.getCurrentDateStringFull()+".txt");
+
+			//JOptionPane.showMessageDialog(null, "output saved");
+
 			ProjectCompendium app = new ProjectCompendium(oStartDialog, args);
 		}
 		catch(Exception ex) {
 			ex.printStackTrace();
 		}
+
+		//Map<String, String> env = System.getenv();
+		//for (String envName : env.keySet())
+		//{
+		//	System.out.format("%s=%s%n", envName, env.get(envName));
+		//}
+
+		java.util.Date now = new java.util.Date();
+		System.out.println("133 ProjectCompendium now is " + now.getTime());
 	}
 
 	/**
@@ -204,7 +287,7 @@ public class ProjectCompendium {
 				sCompendiumInstanceID = sID;
 			}
 		}
-		
+
 		oStartDialog.setVisible(false);
 		oStartDialog.dispose();
 
@@ -212,8 +295,10 @@ public class ProjectCompendium {
 		APP.setVisible(true);
 
 		APP.showFloatingToolBars();
-		if (APP.isFirstTime())
-			APP.onFileNew();
+		if (APP.isFirstTime()) {
+			//APP.onFileNew(); We don't want this, because it presents a database security issue on commercial hosting.
+		}
+
 		else if (APP.shouldOpenFile()) {
 			APP.onFileOpen();
 		}

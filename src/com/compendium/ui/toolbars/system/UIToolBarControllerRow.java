@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars.system;
 
 import java.awt.*;
@@ -72,11 +71,11 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 
 	/** The filler label for this row*/
 	private JLabel filler = null;
-	
-	/** The current row position count.*/
-	private int nPositionCount = 0;	
 
-	
+	/** The current row position count.*/
+	private int nPositionCount = 0;
+
+
 	/**
 	 * Constructor.
 	 *
@@ -98,17 +97,17 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		oManager = manager;
 
 		//setBorder(new LineBorder(Color.red, 1));
-		
+
 		htToolBarPanels = new Hashtable(10);
 		htOffToolBarPanels = new Hashtable(10);
 
 		nRow = pos;
 		nAlignment = oManager.getAlignment();
-		
+
 		dropTarget = new DropTarget(this, this);
 
 		createLayoutManager();
-		
+
 		addFiller();
 
 		setVisible(false);
@@ -205,12 +204,12 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 					// Drop point is inside the filler component so need to convert.
 					Point dropPoint = e.getLocation();
 					dropPoint = SwingUtilities.convertPoint(filler, dropPoint, this);
-					
+
 					Point sourcePoint = panel.getLocation();
 					int sourceRow = panel.getRow();
 					if (nRow != sourceRow) {
 						movePanel(panel, false);
-					} else { 
+					} else {
 						if (nAlignment == UIToolBarController.HORIZONTAL_ALIGNMENT) {
 							if (dropPoint.x > sourcePoint.x)
 								movePanel(panel, false);
@@ -249,7 +248,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 	public int getAlignment() {
 		return nAlignment;
 	}
-	
+
 	/**
 	 * For use by drop methods here and in <code>UIToolBarPanel</code>
 	 * To check is panel can be docked here.
@@ -270,8 +269,8 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 			}
 		}
 		return true;
-	}	
-	
+	}
+
 	/**
 	 * Moved the dragSource <code>UIToolBarPanel</code>.
 	 *
@@ -289,7 +288,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		if (sourceRow > 0 && items <= 1) {
 			return;
 		}
-		
+
 		// remove from current controller
 		dragSource.getController().removePanel(dragSource);
 
@@ -298,13 +297,13 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		dragSource.setRow(nRow);
 
 		// add to this controller
-		UIToolBar bar  = dragSource.getToolBar();		
+		UIToolBar bar  = dragSource.getToolBar();
 		htToolBarPanels.put(bar, dragSource);
 
 		// check alignment, and reset if required
 		if (dragSource.getAlignment() != nAlignment )
-			dragSource.setAlignment(nAlignment);		
-		
+			dragSource.setAlignment(nAlignment);
+
 		Component comps[] = getComponents();
 		removeAll();
 		addFiller();
@@ -337,7 +336,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		if (!isVisible()) {
 			setVisible(true);
 		}
-		
+
 		validate();
 		repaint();
 	}
@@ -358,19 +357,19 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		dragSource.setRow(nRow);
 
 		// add to this controller
-		UIToolBar bar  = dragSource.getToolBar();		
+		UIToolBar bar  = dragSource.getToolBar();
 		htToolBarPanels.put(bar, dragSource);
 
 		// check alignment, and reset if required
 		if (dragSource.getAlignment() != nAlignment )
-			dragSource.setAlignment(nAlignment);	
-		
+			dragSource.setAlignment(nAlignment);
+
 		Component comps[] = getComponents();
 		removeAll();
 
 		// Start all rows again
 		addFiller();
-		
+
 		int count = comps.length;
 		for (int i=0; i<count; i++) {
 			Component comp = (Component)comps[i];
@@ -392,11 +391,11 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 				}
 			}
 		}
-		
+
 		if (!isVisible()) {
 			setVisible(true);
 		}
-		
+
 		validate();
 		repaint();
 	}
@@ -434,10 +433,10 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		if (comp instanceof UIToolBarPanel) {
 			panel = (UIToolBarPanel)comp;
 		}
-		
+
 		if (!isEnoughSpace(comp))
 			hideToolBars(comp);
-						
+
 		if (nAlignment == UIToolBarController.HORIZONTAL_ALIGNMENT) {
 			gc.gridy = 0;
 			gc.gridx = nPositionCount;
@@ -446,9 +445,9 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 			gb.setConstraints(comp, gc);
 		}
 		else {
-			gc.gridx = 0;			
+			gc.gridx = 0;
 			gc.gridy = nPositionCount;
-			panel.setPosition(nPositionCount);						
+			panel.setPosition(nPositionCount);
 			nPositionCount++;
 			gb.setConstraints(comp, gc);
 		}
@@ -456,7 +455,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		gb.invalidateLayout(this);
 		gb.layoutContainer(this);
 	}
-	
+
 	/**
 	 * Add a filler JLabel to fill any spare space and thereby align the toolbar panels correctly.
 	 * @param nRow the row to add the filler to.
@@ -465,17 +464,17 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		filler = new JLabel(" ");
 		//filler.setBorder(new LineBorder(Color.blue, 1));
 		dropTarget = new DropTarget(filler, this);
-		
+
 		if (nAlignment == UIToolBarController.HORIZONTAL_ALIGNMENT) {
-			gc.fill = GridBagConstraints.HORIZONTAL;	
-			gc.gridwidth = GridBagConstraints.REMAINDER;							
+			gc.fill = GridBagConstraints.HORIZONTAL;
+			gc.gridwidth = GridBagConstraints.REMAINDER;
 			gc.gridx = 300;
 			gc.weightx=10;
 			gb.setConstraints(filler, gc);
 		}
 		else {
-			gc.fill = GridBagConstraints.VERTICAL;	
-			gc.gridheight = GridBagConstraints.REMAINDER;							
+			gc.fill = GridBagConstraints.VERTICAL;
+			gc.gridheight = GridBagConstraints.REMAINDER;
 			gc.gridy = 300;
 			gc.weighty=10;
 			gb.setConstraints(filler, gc);
@@ -484,8 +483,8 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		validate();
 
 		gc.fill = GridBagConstraints.NONE;
-		gc.gridwidth = 1;	
-		gc.gridheight = 1;											
+		gc.gridwidth = 1;
+		gc.gridheight = 1;
 		gc.weightx=0;
 		gc.weighty=0;
 	}
@@ -511,7 +510,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 					validate();
 					if (isEnoughSpace(comp))
 						break;
-				}			
+				}
 			}
 		}
 		validate();
@@ -541,12 +540,12 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 			height = size.height;
 		}
 
-		Dimension freeSize = filler.getSize(); 
+		Dimension freeSize = filler.getSize();
 
 		// THIS HAPPENS BEFORE COMPENDIUM VISIBLE
 		if (freeSize.height == 0 && freeSize.width == 0)
 			return true;
-		
+
 		if (nAlignment == UIToolBarController.HORIZONTAL_ALIGNMENT) {
 			if (width > freeSize.width) return false;
 		}
@@ -556,15 +555,15 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Reverse (Expand/Collapse) the toolbar panels current state.
 	 */
 	public void togglePosition() {
 		oManager.togglePosition();
 	}
-	
+
 	/**
 	 * Reverse (Expand/Collapse) the toolbar panels current state.
 	 */
@@ -578,8 +577,8 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		validate();
 		repaint();
 	}
-	
-	
+
+
 	/**
 	 * Toggle the visibility of the toolbar panel for the given toolbar.
 	 *
@@ -590,7 +589,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 	public boolean toggleToolBar(UIToolBar bar, boolean switchOn) {
 
 		if (switchOn) {
-			if (htOffToolBarPanels.containsKey(bar)) {				
+			if (htOffToolBarPanels.containsKey(bar)) {
 				UIToolBarPanel panel = (UIToolBarPanel)htOffToolBarPanels.get(bar);
 				if (!panel.getIsVisible()) {
 					panel.toggleVisibility();
@@ -606,7 +605,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 			}
 		}
 		else {
-			if (htToolBarPanels.containsKey(bar)) {				
+			if (htToolBarPanels.containsKey(bar)) {
 				UIToolBarPanel panel = (UIToolBarPanel)htToolBarPanels.get(bar);
 				Component comps[] = getComponents();
 				int count = comps.length;
@@ -628,7 +627,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 
 				panel.setPosition(pos);
 				htToolBarPanels.remove(bar);
-				htToolBarPanels.put(bar, panel);				
+				htToolBarPanels.put(bar, panel);
 				htOffToolBarPanels.put(bar, panel);
 
 				removePanel(panel);
@@ -661,14 +660,14 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 				return;
 			}
 		}
-		
+
 		if (!isVisible() && bSwitchOn) {
 			setVisible(true);
 		}
 
 		UIToolBarPanel panel = new UIToolBarPanel(oManager.getManager(), this, bar, type, isVisible, wasVisible, nRow);
 		panel.setClosed(isClosed);
-		
+
 		if (bSwitchOn) {
 			addToGrid(panel);
 			add(panel);
@@ -684,7 +683,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		getParent().validate();
 		getParent().repaint();
 	}
-	
+
 	/**
 	 * Add the panel at the gien position.
 	 *
@@ -726,7 +725,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		validate();
 		repaint();
 	}
-	
+
 	/**
 	 * Calculates and return the total length needed to display all the toolbars in this toolbar controller panel.
 	 * @return int, the length this panel needs to be to display all the toolbars in it.
@@ -761,7 +760,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 	private boolean isTooSmall() {
 
 		Dimension size = oManager.getSize();
-		if (size.width == 0 && size.height == 0) {
+		if (size.width == 0 || size.height == 0) {
 			// when Compendium first oppened, when Item are first painting and are not vivisble
 			// they have no size, so hope for the best, rather than close then all
 			return false;
@@ -783,15 +782,15 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 
 		return false;
 	}
-	
+
 	/**
 	 * Called when this panel is resized to determine if one of more toolbar panel should be collapsed
 	 * due to lack of visible space.
 	 * @param Component comp the UIToolBarPanel calling this method.
 	 */
 	public void validateResize(UIToolBarPanel panel) {
-								
-		boolean foundOne = true;		
+
+		boolean foundOne = true;
 		while(isTooSmall() && foundOne) {
 			foundOne = false;
 			for (Enumeration e = htToolBarPanels.elements(); e.hasMoreElements();) {
@@ -808,7 +807,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 
 		//if (panel != null && !isTooSmall())
 		//	panel.setVisible(false);
-	}	
+	}
 
 	/**
 	 * Remove the given <code>UIToolBarPanel</code> from this controller panel.
@@ -818,9 +817,9 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 
 		htToolBarPanels.remove(panel.getToolBar());
 		remove(panel);
-		
-		// JUST LET THE GRID BAG COUNT UP ELSE THERE IS A CONFLICT WHEN FLOATERS ARE ADDED BACK		
-		//nPositionCount--;		
+
+		// JUST LET THE GRID BAG COUNT UP ELSE THERE IS A CONFLICT WHEN FLOATERS ARE ADDED BACK
+		//nPositionCount--;
 
 		if (htToolBarPanels.isEmpty() && htOffToolBarPanels.isEmpty()) {
 			setVisible(false);
@@ -843,7 +842,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		}
 
 		oManager.validateController();
-		
+
 		validate();
 		repaint();
 
@@ -864,7 +863,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		for (Enumeration e = htOffToolBarPanels.elements(); e.hasMoreElements();) {
 			UIToolBarPanel nextpanel = (UIToolBarPanel)e.nextElement();
 			removePanel(nextpanel);
-		}		
+		}
 	}
 
 	/**
@@ -879,7 +878,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 
 		return false;
 	}
-	
+
 	/**
 	 * Set the row filler label
 	 * @param filler
@@ -895,7 +894,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 	public JLabel getFiller() {
 		return filler;
 	}
-	
+
 	/**
 	 * Set the current row position count.
 	 * @param nCount
@@ -903,15 +902,15 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 	public void setPositionCount(int nCount) {
 		nPositionCount = nCount;
 	}
-	
+
 	/**
 	 * Return the current row position count.
 	 * @return
 	 */
 	public int getPositionCount() {
 		return nPositionCount;
-	}		
-	
+	}
+
 	public int getVisibleCount() {
 		return htToolBarPanels.size();
 	}
@@ -927,7 +926,7 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 	public UIToolBarController getController() {
 		return oManager;
 	}
-	
+
 	/**
 	 * Creates an XML string representation of the data in this object.
 	 *
@@ -938,8 +937,8 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		StringBuffer data = new StringBuffer(100);
 
 		Component comps[] = getComponents();
-		int count = comps.length;		
-		
+		int count = comps.length;
+
 		// MERGE TOOLBARS WHICH ARE SWITCHED ON AND SWITCHED OFF
 		Vector temp = new Vector();
 		for (int i=0; i<count; i++) {
@@ -981,5 +980,5 @@ public class UIToolBarControllerRow extends JPanel implements SwingConstants, Dr
 		}
 
 		return data.toString();
-	}	
+	}
 }

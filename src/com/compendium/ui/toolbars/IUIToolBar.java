@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars;
 
 import com.compendium.ui.toolbars.system.*;
@@ -36,7 +35,7 @@ import com.compendium.ui.toolbars.system.*;
  */
 public interface IUIToolBar {
 
-	
+
 	/**
 	 * Update the look and feel of all the toolbars
 	 */
@@ -47,40 +46,40 @@ public interface IUIToolBar {
 	 * @param enabled true to enable, false to disable.
 	 */
 	public void setEnabled(boolean enabled);
-	
+
 	/**
 	 * Updates the menu when a new database project is opened.
 	 */
-	public void onDatabaseOpen(); 
+	public void onDatabaseOpen();
 
 	/**
 	 * Updates the menu when the current database project is closed.
 	 */
-	public void onDatabaseClose(); 
+	public void onDatabaseClose();
 	/**
  	 * Enable the toobar icons.
  	 * @param selected, true to enable, false to disable.
 	 */
-	public void setNodeSelected(boolean selected); 
-	
+	public void setNodeSelected(boolean selected);
+
 	/**
  	 * Does Nothing
  	 * @param selected, true to enable, false to disable.
 	 */
 	public void setNodeOrLinkSelected(boolean selected);
-	
+
 	/**
 	 * Return the toolbar object.
 	 * @return the toolbar object.
 	 */
 	public UIToolBar getToolBar();
-	
+
 	/**
 	 * Return if this toolbar is active by default, or if it must be switched on by the user.
 	 * @return true if the toolbar is active by default, else false.
 	 */
 	public boolean getDefaultActiveState();
-	
+
 	/**
 	 * Return a unique integer identifier for this toolbar type.
 	 * @return a unique integer identifier for this toolbar type.

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import java.awt.event.*;
@@ -68,9 +67,9 @@ public class UITagTreeLeafPopupMenu extends JPopupMenu implements ActionListener
 
 	/** The UITextArea associated with this popup.*/
 	private UITagTreePanel oParent				= null;
-	
+
 	private Code			code				= null;
-	
+
 	private String			sGroupID			= "";
 
 	/**
@@ -81,7 +80,7 @@ public class UITagTreeLeafPopupMenu extends JPopupMenu implements ActionListener
 		super("Details options");
 
 		this.sGroupID = sGroupID;
-		
+
 		this.oParent = panel;
 		this.code = code;
 
@@ -102,15 +101,15 @@ public class UITagTreeLeafPopupMenu extends JPopupMenu implements ActionListener
 		miMenuItemRemoveTag.setMnemonic('R');
 		miMenuItemRemoveTag.addActionListener(this);
 		add(miMenuItemRemoveTag);*/
-		
+
 		if (!sGroupID.equals("")) {
 			miMenuItemRemove = new JMenuItem("Remove Tag From Group");
 			miMenuItemRemove.setToolTipText("Temove this tag from this group");
 			miMenuItemRemove.setMnemonic('G');
 			miMenuItemRemove.addActionListener(this);
 			add(miMenuItemRemove);
-		}		
-		
+		}
+
 		miMenuItemDelete = new JMenuItem("Delete Tag");
 		miMenuItemDelete.setToolTipText("Delete this tag from the project");
 		miMenuItemDelete.setMnemonic('D');
@@ -120,7 +119,7 @@ public class UITagTreeLeafPopupMenu extends JPopupMenu implements ActionListener
 		pack();
 		setSize(nWidth,nHeight);
 	}
-	
+
 	/**
 	 * Handles the event of an option being selected.
 	 * @param evt, the event associated with the option being selected.
@@ -131,16 +130,16 @@ public class UITagTreeLeafPopupMenu extends JPopupMenu implements ActionListener
 
 		if(source.equals(miMenuItemShow)) {
 			UITagUsageDialog dlg = new UITagUsageDialog(code, oParent);
- 			dlg.setVisible(true);	   		          			
+ 			dlg.setVisible(true);
 		}
 		else if(source.equals(miMenuItemEdit)) {
 			IModel model = ProjectCompendium.APP.getModel();
-			
+
 			String sOldName = code.getName();
 	   		String sNewName = JOptionPane.showInputDialog("Edit tag name", sOldName);
 			sNewName = sNewName.trim();
-			if (!sNewName.equals("")) {				
-				try {				
+			if (!sNewName.equals("")) {
+				try {
 					String sCodeID = code.getId();
 
 					//CHECK NAME DOES NOT ALREADY EXIST
@@ -152,11 +151,11 @@ public class UITagTreeLeafPopupMenu extends JPopupMenu implements ActionListener
 						code.setName(sNewName); // Updates Database and model as model holds same object.
 						oParent.updateTreeData();
 					}
-					
+
 				} catch( Exception ex) {
 					ProjectCompendium.APP.displayError("UITagTreeLeafPopupMenu.editTagName\n\n"+ex.getMessage());
-				}	
-			}			
+				}
+			}
 		} else if (source.equals(miMenuItemDelete)) {
 			oParent.onDeleteCode(code);
 		} else if (source.equals(miMenuItemRemove)) {
@@ -165,7 +164,7 @@ public class UITagTreeLeafPopupMenu extends JPopupMenu implements ActionListener
 			oParent.onRemoveCodeFromNodes(code);
 		}
 	}
-		
+
 	/**
 	 * Handle the cancelleing of this popup. Set is to invisible.
 	 */

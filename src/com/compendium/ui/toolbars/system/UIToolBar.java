@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars.system;
 
 import java.awt.*;
@@ -167,7 +166,7 @@ public class UIToolBar extends JToolBar {
 		btn.setMargin(new Insets(0,0,0,0));
 		return btn;
 	}
-	
+
 	/**
 	 * Creates a radio button for the toolbar with focus disabled and insets of 1.
 	 *
@@ -182,7 +181,7 @@ public class UIToolBar extends JToolBar {
 		btn.setMargin(new Insets(0,0,0,0));
 		return btn;
 	}
-	
+
 
 	/**
 	 * Creates a draggable button for the toolbar and sets some default properties.

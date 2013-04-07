@@ -23,7 +23,6 @@
  ********************************************************************************/
 
 
-
 package com.compendium.ui.popups;
 
 import java.awt.event.ActionEvent;
@@ -71,25 +70,25 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 
 	/** The default width for this popup menu.*/
 	private static final int WIDTH						= 100;
-	
+
 	/** The default height for this popup menu.*/
 	private static final int HEIGHT						= 300;
-	
+
 	/** The  JMenuItem to mark the node as read. */
 	private JMenuItem		miMenuItemMarkSeen 			= null;
 
 	/**The  JMenuItem to mark the node as unread. */
 	private JMenuItem		miMenuItemMarkUnseen 		= null;
-	
+
 	/** The  JMenuItem to mark the whole view as read. */
 	private JMenuItem		miMenuItemMarkViewSeen 		= null;
 
 	/**The  JMenuItem to mark the whole view as unread. */
 	private JMenuItem		miMenuItemMarkViewUnseen 	= null;
-	
+
 	/** The JMenuItem to open this node's contents dialog.*/
 	private JMenuItem		miMenuItemOpen				= null;
-	
+
 	/** The JMenuItem to open this node's contents dialog.*/
 	private JMenuItem		miMenuItemReference 		= null;
 
@@ -98,7 +97,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 
 	/** The JMenuItem to perform a cut operation.*/
 	private JMenuItem		miMenuItemCut				= null;
-	
+
 	/** The JMenu for node type change options.*/
 	private JMenu			mnuChangeType				= null;
 
@@ -131,28 +130,28 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 
 	/** The JMenuItem to change the selected nodes to Map nodes.*/
 	private JMenuItem		miTypeMap					= null;
-	
+
 	/**The  JMenuItem to delete the node. */
 	private JMenuItem		miMenuItemDelete 			= null;
-	
+
 	/**The  JMenuItem to paste the node. */
 	private JMenuItem		miMenuItemPaste 			= null;
-	
+
 	/** The JMenu to list the associated nodes parent views.*/
 	private JMenu				mnuViews 			= null;
-	
+
 	/** The JMenu to list the associated nodes tags.*/
 	private JMenu				mnuTags 			= null;
 
 	/** The JMenuItem to open the associated nodes properties dialog.*/
 	private JMenuItem		miMenuItemProperties		= null;
-	
+
 	/** The NodeSummary object associated with this popup menu.*/
 	private NodeSummary			oNode					= null;
-	
+
 	/** The view object associated with this NodeSummary .*/
 	//private View				oView					= null;
-	
+
 	/** The x value for the location of this popup menu.*/
 	private int					nX						= 0;
 
@@ -164,7 +163,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 
 	/** The platform specific shortcut key used to access menus and thier options.*/
 	private int shortcutKey;
-	
+
 	/**
 	 * Constructor. Create the menus and items and draws the popup menu.
 	 * @param title, the title for this popup menu.
@@ -175,14 +174,14 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 
 		setNode(node);
 		setOutline(outlineView);
-		
+
 		int nType = getNode().getType();
 		shortcutKey = ProjectCompendium.APP.shortcutKey;
-		
+
 		mnuTags = new JMenu("Tags");
 		mnuTags.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				
+
 				ProjectCompendium.APP.setWaitCursor();
 				ProjectCompendium.APP.getMenuManager().addTagsView(true);
 				try {
@@ -204,10 +203,10 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 				ProjectCompendium.APP.setDefaultCursor();
 			}
 		});
-		
+
 		mnuTags.setMnemonic(KeyEvent.VK_T);
 		Enumeration codes = oNode.getCodes();
-		
+
 		if (codes != null && codes.hasMoreElements()){
 			for (; codes.hasMoreElements();) {
 				final Code code = (Code) codes.nextElement();
@@ -227,21 +226,21 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 						} catch (ModelSessionException e) {
 							e.printStackTrace();
 						}
-						
+
 					}
-					
+
 				});
 				 mnuTags.add(list);
 			}
-				
+
 		}
 		add(mnuTags);
-		
+
 		miMenuItemOpen = new JMenuItem("Contents");
 		miMenuItemOpen.setMnemonic(KeyEvent.VK_O);
 		miMenuItemOpen.addActionListener(this);
 		add(miMenuItemOpen);
-		
+
 		mnuChangeType = new JMenu("Change Type To ...");
 		mnuChangeType.setMnemonic(KeyEvent.VK_Y);
 		mnuChangeType.addActionListener(this);
@@ -297,9 +296,9 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		miTypeArgument.addActionListener(this);
 		miTypeArgument.setMnemonic(KeyEvent.VK_U);
 		mnuChangeType.add(miTypeArgument);
-		
+
 		addSeparator();
-		
+
 		miMenuItemCopy = new JMenuItem("Copy", UIImages.get(IUIConstants.COPY_ICON));
 		miMenuItemCopy.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_C, shortcutKey));
 		miMenuItemCopy.setMnemonic(KeyEvent.VK_C);
@@ -313,7 +312,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		miMenuItemCut.addActionListener(this);
 		miMenuItemCut.setEnabled(true);
 		add(miMenuItemCut);
-		
+
 		miMenuItemPaste = new JMenuItem("Paste", UIImages.get(IUIConstants.PASTE_ICON));
 		miMenuItemPaste.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_V, shortcutKey));
 		miMenuItemPaste.setMnemonic(KeyEvent.VK_P);
@@ -324,7 +323,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 				miMenuItemPaste.setEnabled(true);
 			add(miMenuItemPaste);
 		}
-		
+
 
 		miMenuItemDelete = new JMenuItem("Delete", UIImages.get(IUIConstants.DELETE_ICON));
 		miMenuItemDelete.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_DELETE, 0));
@@ -333,44 +332,44 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		add(miMenuItemDelete);
 
 		addSeparator();
-		
+
 		miMenuItemMarkSeen = new JMenuItem("Mark Seen");
 		miMenuItemMarkSeen.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_F12, 0));
 		miMenuItemMarkSeen.addActionListener(this);
 		miMenuItemMarkSeen.setMnemonic(KeyEvent.VK_M);
-		add(miMenuItemMarkSeen);				
-		
+		add(miMenuItemMarkSeen);
+
 		miMenuItemMarkUnseen = new JMenuItem("Mark Unseen");
 		miMenuItemMarkUnseen.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_F12, 1));
 		miMenuItemMarkUnseen.addActionListener(this);
 		miMenuItemMarkUnseen.setMnemonic(KeyEvent.VK_N);
-		add(miMenuItemMarkUnseen);		
+		add(miMenuItemMarkUnseen);
 		// if node is in read state enable mark unseen and disable mark seen and vice versa
 		int state = getNode().getState();
-		
+
 		if(state == ICoreConstants.READSTATE){
 			miMenuItemMarkSeen.setEnabled(false);
 		} else if(state == ICoreConstants.UNREADSTATE) {
 			miMenuItemMarkUnseen.setEnabled(false);
 		}
-		
+
 		addSeparator();
 		if (nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT ||
 				nType == ICoreConstants.LISTVIEW || nType == ICoreConstants.LIST_SHORTCUT ) {
-			
+
 			miMenuItemMarkViewSeen = new JMenuItem("Mark Seen All");
 			miMenuItemMarkViewSeen.addActionListener(this);
 			miMenuItemMarkViewSeen.setMnemonic(KeyEvent.VK_S);
-			add(miMenuItemMarkViewSeen);				
-			
+			add(miMenuItemMarkViewSeen);
+
 			miMenuItemMarkViewUnseen = new JMenuItem("Mark Unseen All");
 			miMenuItemMarkViewUnseen.addActionListener(this);
 			miMenuItemMarkViewUnseen.setMnemonic(KeyEvent.VK_U);
 			add(miMenuItemMarkViewUnseen);
-			
+
 			addSeparator();
 		}
-		
+
 		miMenuItemProperties = new JMenuItem("Properties");
 		miMenuItemProperties.addActionListener(this);
 		miMenuItemProperties.setMnemonic(KeyEvent.VK_P);
@@ -379,7 +378,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		mnuViews = new JMenu("Views");
 		mnuViews.addActionListener(this);
 		mnuViews.setMnemonic(KeyEvent.VK_V);
-		
+
 		try {
 			Vector views = node.getMultipleViews();
 			if (views != null && views.size() > 0){
@@ -387,7 +386,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 					final View view = (View) views.get(i);
 					final String nodeId = node.getId();
 					JMenuItem item = new JMenuItem(view.getLabel());
-					item.setToolTipText(view.getLabel());				
+					item.setToolTipText(view.getLabel());
 					item.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							ProjectCompendium.APP.setWaitCursor();
@@ -404,7 +403,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		} catch (ModelSessionException e1) {
 			e1.printStackTrace();
 		}
-		
+
 		if(nType == ICoreConstants.REFERENCE || nType == ICoreConstants.REFERENCE_SHORTCUT){
 			String path = node.getSource();
 
@@ -419,7 +418,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		if(isLevelOneNode){
 			miMenuItemCut.setEnabled(false);
 		}
-		
+
 		if(node.equals(ProjectCompendium.APP.getHomeView())){
 			miMenuItemCopy.setEnabled(false);
 			miMenuItemCut.setEnabled(false);
@@ -429,7 +428,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		}
 		pack();
 		setSize(WIDTH,HEIGHT);
-		
+
 	}
 
 	/**
@@ -444,7 +443,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 	public NodeSummary getNode() {
 		return oNode;
 	}
-	
+
 	/**
 	 * @return Returns the outline.
 	 */
@@ -458,7 +457,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 	public void setOutline(UIViewOutline outline) {
 		this.outline = outline;
 	}
-	
+
 	/**
 	 * Set the location to draw this popup menu at.
 	 * @param x, the x position of this popup's location.
@@ -468,7 +467,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		nX = x;
 		nY = y;
 	}
-	
+
 	/**
 	* Handles the event of an option being selected.
 	 * @param evt, the event associated with the option being selected.
@@ -510,7 +509,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 			onChangeType(ICoreConstants.MAPVIEW);
 		} else if(source.equals(miTypeList)) {
 			onChangeType(ICoreConstants.LISTVIEW);
-			
+
 		} else if(source.equals(miTypePro)) {
 			onChangeType(ICoreConstants.PRO);
 		} else if(source.equals(miTypeCon)) {
@@ -524,11 +523,11 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 		} else if(source.equals(miTypeReference)) {
 			onChangeType(ICoreConstants.REFERENCE);
 		}
-		
+
 		ProjectCompendium.APP.setDefaultCursor();
 		onCancel();
 	}
-	
+
 	/**
 	 * Handle the canceling of this popup. Set is to invisible.
 	 */
@@ -563,7 +562,7 @@ public class UIViewOutlinePopupMenu extends JPopupMenu implements ActionListener
 			//e.printStackTrace();
 			System.out.println(" unable to change node type.");
 		}
-		
+
 	}
-	
+
 }

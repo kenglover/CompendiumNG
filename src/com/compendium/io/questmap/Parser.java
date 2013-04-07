@@ -52,8 +52,8 @@ import com.compendium.core.db.*;
 // class: Parser
 // does : encapsulates yacc() parser functionality in a Java
 //        class for quick code development
-
 public class Parser extends Thread {
+	/*
 
 	boolean yydebug;        //do I want debug output?
 	int yynerrs;            //number of errors so far
@@ -351,7 +351,7 @@ public class Parser extends Thread {
 	 * to. The token, keyword, and character symbol
 	 * tables are created for use in the parser. Error and warning
 	 * messages are displayed on the given log.
-	 */
+	 */  /*
 	public Parser(boolean debug, String fileName, IModel model, IView view) {
 		this(debug);
 		if (view.getType() == ICoreConstants.LISTVIEW) {
@@ -367,7 +367,7 @@ public class Parser extends Thread {
 	 * Creates a parser to parse the file with the given filename.
 	 * Uses the given model and view o add the nodes and links
 	 * to and uses the given token, keyword and character symbol table in the parser.
-	 */
+	 */ /*
 	public Parser(boolean debug, String fileName, IModel model, IView view,
 							TokenTable tokens, KeywordTable keywords, CharSymbolTable charSymbols) {
 		this(debug);
@@ -407,7 +407,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Do the actual parsing.
-	 */
+	 */ /*
 	public void parse() {
 
 		if (isListImport) {
@@ -558,7 +558,7 @@ public class Parser extends Thread {
 	/**
 	 * Initializes the parser, creating the various tables required
 	 * for the parser and initializing the lexical analyzer.
-	 */
+	 */ /*
 	private void init(String fileName, IModel model, IView view) {
 		file = fileName;
 		this.model = model;
@@ -570,7 +570,7 @@ public class Parser extends Thread {
   		initKeywords();
   		initCharSymbols();
 		*/
-
+/*
 		this.tokens = DEFAULT_TOKEN_TABLE;
 		this.keywords = DEFAULT_KEYWORDS;
 		this.charSymbols = DEFAULT_CHAR_SYMBOLS;
@@ -631,7 +631,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Read the next token from the lexical analyzer.
-	 */
+	 */ /* 
 	private int yylex() {
 		int val = Lexer.ERROR;
 		try {
@@ -648,7 +648,7 @@ public class Parser extends Thread {
 	/**
 	 * Display error message in log using the line number and position from the
 	 * lexical analyzer.
-	 */
+	 */ /*
 	private void yyerror(String s) {
 		//  log.addError(new CodeError(s, lex.getLine(), lex.getPos()-lex.getYYLeng(), file));
 		oThread.interrupt();
@@ -664,7 +664,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Display error message in log using the given line number and position.
-	 */
+	 */ /*
 	private void yyerror(String s, int line, int pos) {
 		//	log.addError(new CodeError(s, line, pos, file));
 		oThread.interrupt();
@@ -681,14 +681,14 @@ public class Parser extends Thread {
 	/**
 	 * Display warning message in log using the line number and position from the
 	 * lexical analyzer.
-	 */
+	 */ /*
 	private void yywarning(String s) {
 		System.out.println(s + " line:" + lex.getLine() +  " pos:" + (lex.getPos()-lex.getYYLeng()) + " file:" + file);
 	}
 
 	/**
 	 * Display warning message in log using the given line number and position.
-	 */
+	 */ /*
 	private void yywarning(String s, int line, int pos) {
 		System.out.println(s + " line:" + line + " pos:" + pos + " file:" + file);
 	}
@@ -700,7 +700,7 @@ public class Parser extends Thread {
 	 * Ex., PositionNode String means a Node in the file
 	 *      RespondsToLink String means a link in the file
 	 * Based on this display the Progress Bar
-	 */
+	 */ /*
 	private void scanFile(String file) {
 		//clean the vector
 		numberOfNodes = 0;
@@ -740,7 +740,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Creates an INodeSummary object and adds it to the model and view
-	 */
+	 */ /*
 	private INodeSummary createNode( IModel model, IView  view,
 													 int		nType,
 													 int		nId,
@@ -828,7 +828,7 @@ public class Parser extends Thread {
 			ex.printStackTrace();
 		}
 		*/
-
+/*
 		//set the node count for progress bar
 		nNodeCount++;
 		//System.out.println(nNodeCount + " nodes created");
@@ -846,7 +846,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Creates an INodeSummary object and adds it to the model and view
-	 */
+	 */ /*
 	private INodeSummary createListNode( IModel model, IView  view,
 													 int		nType,
 													 int		nId,
@@ -930,7 +930,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Creates a IView object and adds it to the model and view
-	 */
+	 */ /*
 	private IView createView( IModel model, IView  view,
 													 int		nType,
 													 int		nId,
@@ -974,7 +974,7 @@ public class Parser extends Thread {
 			//set the author as the Current User
 			author = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
 			userID = ProjectCompendium.APP.getModel().getUserProfile().getId();
-			
+
 		}
 
 		// IDENTIFY QUESTMAP IDs SEPARATELY FROM OTHER IMPORTED IDs
@@ -1013,7 +1013,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Creates a IView object and adds it to the model and view
-	 */
+	 */ /*
 	private IView createListView( IModel model, IView  view,
 													 int		nType,
 													 int		nId,
@@ -1098,7 +1098,7 @@ public class Parser extends Thread {
 
 	/**
 	 * Creates a ILink object and adds it to the model and view
-	 */
+	 */ /*
 	private ILink createLink( IModel model, IView  view,
 													 String sType,
 													 int		nId,
@@ -1299,7 +1299,7 @@ public class Parser extends Thread {
 				//########## USER-SUPPLIED ACTIONS ##########
 				case 13:
 				//#line 137 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* positionnode:*/
+				{ /* positionnode:*/ /*
 					try	{
 						if (isListImport) {
 							yyval.oval = createListNode(model, view,
@@ -1315,73 +1315,73 @@ public class Parser extends Thread {
 				break;
 				case 14:
 				//#line 143 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* id: '(' IDENT INT ')'*/
+				{ /* id: '(' IDENT INT ')'*/ /*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
 				case 15:
 				//#line 148 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* author: '(' AUTHOR STRING ')'*/
+				{ /* author: '(' AUTHOR STRING ')'*//*
 					yyval.sval = val_peek(1).sval;
 				}
 				break;
 				case 16:
 				//#line 153 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* creationdate:	'(' CRDATE INT ')'*/
+				{ /* creationdate:	'(' CRDATE INT ')'*/ /*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
 				case 17:
 				//#line 158 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* moddate:	'(' MODDATE INT ')'*/
+				{ /* moddate:	'(' MODDATE INT ')'*//*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
 				case 18:
 				//#line 163 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* label:	'(' LABEL STRING ')'*/
+				{ /* label:	'(' LABEL STRING ')'*//*
 					yyval.sval = val_peek(1).sval;
 				}
 				break;
 				case 19:
 				//#line 168 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* detail:	'('DETAIL STRING ')'*/
+				{ /* detail:	'('DETAIL STRING ')'*//*
 					yyval.sval = val_peek(1).sval;
 				}
 				break;
 				case 20:
 				//#line 173 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* pos: xpos ypos*/
+				{ /* pos: xpos ypos*/ /*
 					yyval.oval = new Point(val_peek(1).ival, val_peek(0).ival);
 				}
 				break;
 				case 21:
 				//#line 176 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* pos: lpos*/
+				{ /* pos: lpos*//*
 					yyval.oval = new Point(0, val_peek(0).ival);
 				}
 				break;
 				case 22:
 				//#line 181 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* xpos:	'(' XPOS INT ')'*/
+				{ /* xpos:	'(' XPOS INT ')'*//*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
 				case 23:
 				//#line 186 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* ypos:	'(' YPOS INT ')'*/
+				{ /* ypos:	'(' YPOS INT ')'*//*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
 				case 24:
 				//#line 191 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* lpos: '(' POS INT ')'*/
+				{ /* lpos: '(' POS INT ')'*//*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
 				case 25:
 				//#line 205 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* issuenode:*/
+				{ /* issuenode:*//*
 					try {
 						if (isListImport) {
 							yyval.oval = createListNode(model, view,
@@ -1397,7 +1397,7 @@ public class Parser extends Thread {
 				break;
 				case 26:
 				//#line 220 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* argumentnode:*/
+				{ /* argumentnode:*//*
 					try {
 						if (isListImport) {
 							yyval.oval = createListNode(model, view,
@@ -1413,7 +1413,7 @@ public class Parser extends Thread {
 				break;
 				case 27:
 				//#line 235 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* decisionnode:*/
+				{ /* decisionnode:*//*
 					try {
 						if (isListImport) {
 							yyval.oval = createListNode(model, view,
@@ -1429,7 +1429,7 @@ public class Parser extends Thread {
 				break;
 				case 28:
 				//#line 250 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* notenode:*/
+				{ /* notenode:*//*
 					try {
 						if (isListImport) {
 							yyval.oval = createListNode(model, view,
@@ -1445,7 +1445,7 @@ public class Parser extends Thread {
 				break;
 				case 29:
 				//#line 266 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* referencenode:*/
+				{ /* referencenode:*//*
 					try {
 						if (isListImport) {
 							yyval.oval = createListNode(model, view,
@@ -1461,14 +1461,14 @@ public class Parser extends Thread {
 				break;
 				case 30:
 				//#line 272 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* refpath: '(' REFPATH STRING ')'*/
+				{ /* refpath: '(' REFPATH STRING ')'*//*
 					yyval.sval = val_peek(1).sval;
 					refpath = val_peek(1).sval;
 				}
 				break;
 				case 31:
 				//#line 286 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* mapview:*/
+				{ /* mapview:*//*
 					try {
 						if (isListImport) {
 							yyval.oval = createListView(model, view,
@@ -1484,7 +1484,7 @@ public class Parser extends Thread {
 				break;
 				case 32:
 				//#line 301 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* listview:*/
+				{ /* listview:*//*
 					try {
 						if (isListImport) {
 							yyval.oval = createListView(model, view,
@@ -1500,7 +1500,7 @@ public class Parser extends Thread {
 				break;
 				case 33:
 				//#line 312 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* link:*/
+				{ /* link:*//*
 					try {
 						if (!isListImport) {
 							yyval.oval = createLink(model, view,
@@ -1513,13 +1513,13 @@ public class Parser extends Thread {
 				break;
 				case 35:
 				//#line 321 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* fromid: '(' FROMID INT ')'*/
+				{ /* fromid: '(' FROMID INT ')'*//*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
 				case 36:
 				//#line 326 "D:\Java\nynexst\projectcompendium\parser\parser.y"
-				{ /* toid: '(' TOID INT ')'*/
+				{ /* toid: '(' TOID INT ')'*//*
 					yyval.ival = val_peek(1).ival;
 				}
 				break;
@@ -1588,5 +1588,5 @@ public class Parser extends Thread {
 			}
 		}
 	}
-
+*/
 }

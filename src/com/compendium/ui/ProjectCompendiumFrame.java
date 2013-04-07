@@ -1,5 +1,5 @@
 /********************************************************************************
- *                                                                              *
+ *                                                                            *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
  *  This software is freely distributed in accordance with                      *
@@ -22,14 +22,15 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.print.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.awt.datatransfer.*;
-import java.awt.image.*;
 import java.io.*;
 import java.util.*;
 import java.sql.SQLException;
@@ -49,8 +50,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.imageio.*;
 import javax.imageio.stream.*;
 import com.sun.image.codec.jpeg.*;
-
-import org.jabber.jabberbeans.util.*;
 
 import com.compendium.core.datamodel.*;
 import com.compendium.core.datamodel.services.*;
@@ -72,11 +71,20 @@ import com.compendium.ui.linkgroups.*;
 
 import com.compendium.io.html.HTMLOutline;
 import com.compendium.io.html.HTMLViews;
-import com.compendium.io.jabber.*;
+
 import com.compendium.io.udig.*;
 import com.compendium.io.xml.XMLExportNoThread;
 
+import com.compendium.sync.*;
+/*
+import java.awt.BorderLayout;
+import java.awt.Container;
 
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+import javax.swing.JProgressBar;
+import javax.swing.border.Border;
+*/
 
 /**
  * This is the main JFrame for the application and holds many central application variables and methods.
@@ -139,7 +147,7 @@ public class ProjectCompendiumFrame	extends JFrame
 	/** The Communication Manager for talking to a uDig Application.*/
 	public UDigCommunicationManager oUDigCommunicationManager 	= null;
 
-		
+
 	/** Holds the currently being used MySQL connection profile details.*/
 	public ExternalConnection oCurrentMySQLConnection 	= null;
 
@@ -163,13 +171,13 @@ public class ProjectCompendiumFrame	extends JFrame
 
 	/** The database administration instance used to manage the current database.*/
 	public DBAdminDatabase 		adminDatabase 			= null;
-	
+
 	/** The main split pane object.*/
 	public JSplitPane 			oSplitter				= null;
 
 	/** The main tabbed pane*/
 	public JTabbedPane			oTabbedPane				= null;
-	
+
 	/** The current database name.*/
 	//public static String sCurrentDatabase = "";
 
@@ -190,7 +198,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 	/** A reference to the inbox node.*/
 	private NodeSummary			oInboxNode				= null;
-	
+
 	/** A List of the View Frames that have been opened during this database session.*/
 	private Vector 				viewFrameList 			= new Vector();
 
@@ -246,6 +254,12 @@ public class ProjectCompendiumFrame	extends JFrame
 	/** Indicates whether to proceed with a login.*/
 	private boolean				bProceed				= false;
 
+	/** Semaphore to prevent simultaneous timed/manual refresh operation */
+	private static boolean				bReloadingProject = false;
+
+	/** Semaphore to prevent overlapping timed refresh operations */
+	private static boolean				bChecking = false;
+
 	/** The hostname for this machine.*/
 	private String				sServerName				= "";
 
@@ -273,6 +287,8 @@ public class ProjectCompendiumFrame	extends JFrame
 	/** A reference to the XML export dialog.*/
 	private UIExportXMLDialog	dlgExportXML			= null;
 
+	private UIMarkProjectSeenDialog	dlgMarkProjectSeen	= null;
+
 	/** A reference to the HTML Views export dialog.*/
 	private UIExportViewDialog 	dialog2 				= null;
 
@@ -292,18 +308,11 @@ public class ProjectCompendiumFrame	extends JFrame
 
 	// CLAIMAKER
 	/** The url for the ClaiMaker server search.*/
-	private static String 		claiMakerServer 		= "";
+	//private static String 		claiMakerServer 		= "";
 
 	/** Whether the CaliMaker url has been set or not.*/
-	private static boolean 		claiMakerConnected 		= false;
+//	private static boolean 		claiMakerConnected 		= false;
 
-	// JABBER
-	/** A reference to the Jabber client.*/
-	public static Jabber 		jabber 					= null;
-
-	// IXPANELS
-	/** A reference to the Jabber client for IX Panel connections.*/
-	public static IXPanel 		ixPanel 				= null;
 
 	// HELP
 	/** The name of the helpset to load for the help.*/
@@ -344,10 +353,10 @@ public class ProjectCompendiumFrame	extends JFrame
 
 	/** The name of the project in use   */
 	private String 			sProject					= "";
-	
+
 	/** Is Paste Enabled? */
 	public boolean 			isPasteEnabled				= false;
-	
+
 	/** The UIViewOutline object to display outline view */
 	public UIViewOutline 		outlineView  			= null;
 
@@ -373,7 +382,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		this.oParent = parent;
 		this.sServerName = serverName;
 		this.sServerIP = IP;
-		
+
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent evt) {
 				onExit();
@@ -381,31 +390,31 @@ public class ProjectCompendiumFrame	extends JFrame
 		});
 
 		// LOAD ANY LAUNCH APPLICATION PROPERTIES REQURIED BY MAC AND LINUX
-		File file = new File("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LaunchApplications.properties");
+		String file_name = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LaunchApplications.properties";
+
+		File file = new File(file_name);
 		launchApplications = new Properties();
 		if (file.exists()) {
 			try {
-				launchApplications.load(new FileInputStream("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"LaunchApplications.properties"));
+				launchApplications.load(new FileInputStream(file_name));
 			}
 			catch (IOException e) {}
 		}
 
 		// SET DERBY DATABASE LOCATION
-		File file2 = new File("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"Databases");
+		File file2 = new File(ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"Databases");
 		Properties p = System.getProperties();
 		p.put("derby.system.home", file2.getAbsolutePath());
 		if (ProjectCompendium.isMac) {
-			setMacMenuBar(FormatProperties.macMenuBar);
+			setMacMenuBar(APP_PROPERTIES.isMacMenuBar());
 			p.put("derby.storage.fileSyncTransactionLog", "true");
 		}
 
 		// SET PROXY
 		setProxy();
-		
-		FormatProperties.loadProperties();
-		
+
 		// CREATE UDIG CONNECTION MANAGER IF REQUIRED
-		if (FormatProperties.startUDigCommunications) {
+		if (APP_PROPERTIES.isStartUDigCommunications()) {
 			startUDigConnection();
 		}
 	}
@@ -413,14 +422,14 @@ public class ProjectCompendiumFrame	extends JFrame
 	/**
 	 * Create the uDig connection manager which will open a server socket.
 	 */
-	public void startUDigConnection() {		
+	public void startUDigConnection() {
 		try {
 			oUDigCommunicationManager = new UDigCommunicationManager();
 		} catch(Exception e) {
 			displayError("Unable to start uDig Communications");
 		}
 	}
-	
+
 	/**
 	 * Destroy the uDig connection manager and server socket.
 	 */
@@ -436,7 +445,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			//displayError("Unable to stop uDig Communications");
 		}
 	}
-	
+
 	/**
 	 * Set the proxy for Compendium to use for HTTP connections.
 	 */
@@ -581,7 +590,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		// HELP
 		try {
-		    String helpfile = "System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"Help"+ProjectCompendium.sFS+"CompendiumHelp.hs";
+		    String helpfile = ProjectCompendium.sSYSPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"Help"+ProjectCompendium.sFS+"CompendiumHelp.hs";
 
 			File file = new File(helpfile);
 			if (file.exists()) {
@@ -605,9 +614,9 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		pack();
 
-		if (FormatProperties.lastScreenWidth == -1 && FormatProperties.lastScreenHeight == -1) {
+		if (APP_PROPERTIES.getLastScreenWidth() == -1 && APP_PROPERTIES.getLastScreenHeight() == -1) {
 
-			//determins the size of user screen in pixels
+			//determines the size of user screen in pixels
 			Toolkit tk = this.getToolkit();
 			Dimension screensize = tk.getScreenSize();
 			nScreenWidth = screensize.width;
@@ -628,11 +637,25 @@ public class ProjectCompendiumFrame	extends JFrame
 			}
 		}
 		else {
-			nScreenWidth = FormatProperties.lastScreenWidth;
-			nScreenHeight = FormatProperties.lastScreenHeight;
+			nScreenWidth = APP_PROPERTIES.getLastScreenWidth();
+			nScreenHeight = APP_PROPERTIES.getLastScreenHeight();
 
 			setSize(nScreenWidth, nScreenHeight);
-			setLocation(FormatProperties.lastScreenX, FormatProperties.lastScreenY);
+
+			int nScreenX = APP_PROPERTIES.getLastScreenX();
+			int nScreenY = APP_PROPERTIES.getLastScreenY();
+			int nMaxScreenX = 0;
+
+			// Make sure entire Frame is on-screen at start-up.  This bit of code solves several problems...
+			// 1. Restarting C with display set to a lower resolution than last time
+			// 2. Starting C when Frame was mostly slid off-screen last time
+			// 3. Starting C with one monitor when frame was on the right-side of a dual-headed display last time
+			for (GraphicsDevice gs : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+				GraphicsConfiguration[] gc = gs.getConfigurations();
+				nMaxScreenX += gc[0].getBounds().width;
+			}
+			if (nScreenX+nScreenWidth > nMaxScreenX) nScreenX = nMaxScreenX-nScreenWidth;
+			setLocation(nScreenX, nScreenY);
 		}
 
 		if (!ProjectCompendium.isMac) {
@@ -640,13 +663,13 @@ public class ProjectCompendiumFrame	extends JFrame
 			if (imageicon != null)
 				setIconImage(imageicon.getImage());
 		}
-		
+
 		try {
-			UIReferenceNodeManager.loadReferenceNodeTypes();	
+			UIReferenceNodeManager.loadReferenceNodeTypes();
 		} catch (Exception e) {
 			System.out.println("Exception: "+e.getMessage());
-		}		
-		
+		}
+
 		return true;
 	}
 
@@ -668,6 +691,9 @@ public class ProjectCompendiumFrame	extends JFrame
 		if (!connectToServices())
 			return false;
 
+	    startUpDlg.setMessage("Adding Extra MySQL profiles...");
+        initializeExtraMySqlProfiles();
+
 		startUpDlg.setMessage("Checking files to be deleted...");
 		CoreUtilities.checkFilesToDeleted();
 
@@ -684,7 +710,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		// create audio thread.
 		// this must be done before createMenuBar() which uses it
 		audioThread = new UIAudio();
-		audioThread.setAudio( FormatProperties.audioOn );
+		audioThread.setAudio(APP_PROPERTIES.isAudioOn());
 
 		// CREATE BEFORE TOOLBAR MANAGER AS IT NEEDS IT
 		oRefreshManager = new UIRefreshManager();
@@ -697,7 +723,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		oStencilManager.getTabbedPane().addKeyListener(this);
 
 		oTabbedPane = new JTabbedPane();
-		
+
 		//oInnerPanel.add(oTabbedPane, BorderLayout.WEST);
 		//oInnerPanel.add(oStencilManager.getTabbedPane(), BorderLayout.WEST);
 
@@ -721,17 +747,17 @@ public class ProjectCompendiumFrame	extends JFrame
 		oToolBarManager.createToolbars();
 		oToolBarManager.onDatabaseClose();
 
-		onImageRollover(FormatProperties.imageRollover);
+		onImageRollover(APP_PROPERTIES.isImageRollover());
 
 		// create and initialize the desktop
 		createDesktop();
-		
+
 		// create and initialize the status bar
 		createStatusBar();
-		
+
 		// create and initialize the view history bar
 		createViewHistoryBar();
-		
+
 		//create the clipboard
 		createClipboard();
 
@@ -759,12 +785,12 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		// IF A DEFAULT DATABASE HAS BEEN SET, AND YOU ARE CONNECTING LOCALLY
 		// TRY AND LOGIN AUTOMATICALLY
-		if (FormatProperties.nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-			if (FormatProperties.defaultDatabase != null
-					&& !FormatProperties.defaultDatabase.equals("")
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.DERBY_DATABASE) {
+			if (APP_PROPERTIES.getDefaultDatabase() != null
+					&& !APP_PROPERTIES.getDefaultDatabase().equals("")
 						&& !firstTime) {
 
-				autoFileOpen(FormatProperties.defaultDatabase);
+				autoFileOpen(APP_PROPERTIES.getDefaultDatabase());
 			}
 		} else {
 			if (oCurrentMySQLConnection != null) {
@@ -783,7 +809,7 @@ public class ProjectCompendiumFrame	extends JFrame
 					}
 				}
 				catch(Exception ex) {
-					displayError("Could not find the database profile: "+FormatProperties.sDatabaseProfile+"due to:\n\n"+ex.getMessage()+"\n\nSwitching to Local Default database");
+					displayError("Could not find the database profile: " + APP_PROPERTIES.getDatabaseProfile() + "due to:\n\n"+ex.getMessage()+"\n\nSwitching to Local Default database");
 					setDerbyDatabaseProfile();
 				}
 			}
@@ -795,7 +821,22 @@ public class ProjectCompendiumFrame	extends JFrame
 		return true;
 	}
 
-	/**
+    private void initializeExtraMySqlProfiles() {
+        DBAdminProperties properties = new DBAdminPropertiesProvider().get();
+        properties.getExtraMsqlConnectionProfiles();
+        for (ExternalConnection connection : properties.getExtraMsqlConnectionProfiles()) {
+            try {
+                if (adminDerbyDatabase.getConnectionByName(
+                    connection.getProfile(), connection.getType()) == null ) {
+                    adminDerbyDatabase.insertConnection(connection);
+                }
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    /**
 	 * Set the title of the main application for derby database mode.
 	 * @param sProject, the name of the project to display.
 	 */
@@ -813,7 +854,7 @@ public class ProjectCompendiumFrame	extends JFrame
 	public void setTitle(int nType, String sAddress, String sProfile, String sProject) {
 		String sTitle = "Compendium";
 
-		if (FormatProperties.displayFullPath) {
+		if (APP_PROPERTIES.isDisplayFullPath()) {
 			if (!sAddress.equals("")) {
 				if (nType == ICoreConstants.MYSQL_DATABASE) {
 					sTitle += ": MySQL "+ProjectCompendium.sFS+" "+sAddress+" "+ProjectCompendium.sFS+" "+sProfile+" "+ProjectCompendium.sFS+" "+sProject;
@@ -876,16 +917,16 @@ public class ProjectCompendiumFrame	extends JFrame
 	public void initLAF() {
 
 		// If nothing set, leave as system default.
-		if (FormatProperties.currentLookAndFeel == null || FormatProperties.currentLookAndFeel.equals(""))
+		if (APP_PROPERTIES.getCurrentLookAndFeel() == null || APP_PROPERTIES.getCurrentLookAndFeel().equals(""))
 		    return;
 
 		try {
-			UIManager.setLookAndFeel(FormatProperties.currentLookAndFeel);
+			UIManager.setLookAndFeel(APP_PROPERTIES.getCurrentLookAndFeel());
 
 			//added this to specifically set the scroll bar color - the scroll
 			// bar was not always apparent - prob due to a swing bug in the way
 			// the windows class sets the scroll bar color. - bz - 5/8/00
-			if (FormatProperties.currentLookAndFeel.equals(windowsClassName))
+			if (APP_PROPERTIES.getCurrentLookAndFeel().equals(windowsClassName))
 				UIManager.put("ScrollBar.track", new Color(224, 224, 224));
 
 			// IF THERE IS A MENUBAR THEN THIS HAS NOT BEEN CALLED FROM INIT BUT FROM A LAF CHANGE OPTION
@@ -899,10 +940,10 @@ public class ProjectCompendiumFrame	extends JFrame
 				SwingUtilities.updateComponentTreeUI(oTabbedPane);
 				SwingUtilities.updateComponentTreeUI(oDesktop);
 
-				oToolBarManager.updateLAF();				
+				oToolBarManager.updateLAF();
 				oStencilManager.updateLAF();
-				oMenuManager.updateLAF();				
-				
+				oMenuManager.updateLAF();
+
 				UIViewFrame viewFrame = null;
 				JInternalFrame[] frames = oDesktop.getAllFrames();
 				for (int i=0; i < frames.length; i++ ) {
@@ -925,7 +966,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		}
 		catch (Exception ex) {
 			ex.printStackTrace();
-			System.err.println ("Could not swap LookAndFeel: " + FormatProperties.currentLookAndFeel);
+			System.err.println ("Could not swap LookAndFeel: " + APP_PROPERTIES.getCurrentLookAndFeel());
 		}
 	}
 
@@ -943,9 +984,10 @@ public class ProjectCompendiumFrame	extends JFrame
 			adminDatabase = adminDerbyDatabase;
 		}
 		catch (Exception ex1) {
+			System.out.println(ex1.getLocalizedMessage());
 			ex1.printStackTrace();
 			System.out.flush();
-			displayError("Error creating Derby ServiceManager.");
+			displayError("Error creating Derby ServiceManager...\n" + ex1.getLocalizedMessage());
 			return false;
 		}
 
@@ -955,27 +997,27 @@ public class ProjectCompendiumFrame	extends JFrame
 				firstTime = true;
 
 			if (adminDerbyDatabase.checkAdminDatabase()) {
-				if (FormatProperties.nDatabaseType == ICoreConstants.DERBY_DATABASE) {
+				if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.DERBY_DATABASE) {
 					adminDerbyDatabase.loadDatabaseProjects();
 				}
 			}
 			else {
-				displayError("Unable to establish connection to Derby Administration database");
+				displayError("Unable to establish connection to local Derby Administration database");
 				return false;
 			}
 		}
 		catch(Exception ex2) {
+			System.out.println(ex2.getLocalizedMessage());
 			ex2.printStackTrace();
 			System.out.flush();
-			displayError("The Compendium Derby Administration database was unable to be created.\nPlease contact Compendium support staff.\n",
-							  "Database Creation Error");
+			displayError("The local Derby Administration database was unable to be opened/created...\n" + ex2.getLocalizedMessage());
 			return false;
 		}
 
 		// IF THE LAST ACCESSED DATABASE WAS A MYSQL ONE LOAD AND CHECK
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE && !FormatProperties.sDatabaseProfile.equals("")) {
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE && !APP_PROPERTIES.getDatabaseProfile().equals("")) {
 			try {
-				oCurrentMySQLConnection = adminDerbyDatabase.getConnectionByName(FormatProperties.sDatabaseProfile, ICoreConstants.MYSQL_DATABASE);
+				oCurrentMySQLConnection = adminDerbyDatabase.getConnectionByName(APP_PROPERTIES.getDatabaseProfile(), ICoreConstants.MYSQL_DATABASE);
 				if (oCurrentMySQLConnection != null) {
 
 					oServiceManager = new ServiceManager(ICoreConstants.MYSQL_DATABASE, oCurrentMySQLConnection.getLogin(), oCurrentMySQLConnection.getPassword(), oCurrentMySQLConnection.getServer());
@@ -992,22 +1034,23 @@ public class ProjectCompendiumFrame	extends JFrame
 				}
 			}
 			catch (Exception ex3) {
+				System.out.println(ex3.getLocalizedMessage());
 				ex3.printStackTrace();
 				System.out.flush();
 
 				if (oCurrentMySQLConnection != null) {
-					ProjectCompendium.APP.displayError("Error Connecting to MySQL database "+oCurrentMySQLConnection.getProfile());
-					FormatProperties.nDatabaseType = ICoreConstants.DERBY_DATABASE;
-					FormatProperties.setFormatProp("database", "derby");
-					FormatProperties.saveFormatProps();
+					displayError("Error Connecting to MySQL database \""+oCurrentMySQLConnection.getProfile()+"\".\n"+
+							"Check your internet connection and connectivity to your MySQL server.\n"+
+							"Then restart Compendium, and reselect \"MySQL: "+oCurrentMySQLConnection.getProfile()+
+							"\" from the Data Connection drop-down in the bottom toolbar.\n");
+//							ex3.getLocalizedMessage());
+					APP_PROPERTIES.setDatabaseType(ICoreConstants.DERBY_DATABASE);
 					oServiceManager = oDerbyServiceManager;
 					adminDatabase = adminDerbyDatabase;
 				}
 				else {
-					ProjectCompendium.APP.displayError("Error Loading profile details for MySQL database: "+FormatProperties.sDatabaseProfile);
-					FormatProperties.nDatabaseType = ICoreConstants.DERBY_DATABASE;
-					FormatProperties.setFormatProp("database", "derby");
-					FormatProperties.saveFormatProps();
+					displayError("Error Loading profile details for MySQL database: "+APP_PROPERTIES.getDatabaseProfile()+"\n"+ex3.getLocalizedMessage());
+					APP_PROPERTIES.setDatabaseType(ICoreConstants.DERBY_DATABASE);
 					oServiceManager = oDerbyServiceManager;
 					adminDatabase = adminDerbyDatabase;
 				}
@@ -1033,11 +1076,12 @@ public class ProjectCompendiumFrame	extends JFrame
 			if (connections.size() == 0) {
 
 				// IS THERE A PROPERTIES FILE WE CAN USE TO SET ONE UP FOR THE USER?
-				File file = new File("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"MySQL.properties");
+				String file_name = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"MySQL.properties";
+				File file = new File(file_name);
 				if (file.exists()) {
 					try {
 						Properties mysqlProperties = new Properties();
-						mysqlProperties.load(new FileInputStream("System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"MySQL.properties"));
+						mysqlProperties.load(new FileInputStream(file_name));
 						String url = (String)mysqlProperties.get("url");
 						if (url.equals("")) {
 							url = ICoreConstants.sDEFAULT_DATABASE_ADDRESS;
@@ -1082,13 +1126,21 @@ public class ProjectCompendiumFrame	extends JFrame
 						}
 					}
 					catch(SQLException ex) {
-						System.out.println("Exception (ProjectCompendiumFrame.connectToServices - localhost) \n\n"+ex.getMessage());
+						System.out.println(ex.getLocalizedMessage());
+						System.out.println("Exception (ProjectCompendiumFrame.connectToServices - localhost).");
+						ex.printStackTrace();
+						System.out.flush();
+//						displayError("Exception (ProjectCompendiumFrame.connectToServices - localhost):\n"+ex.getLocalizedMessage());
 					}
 				}
 			}
 		}
 		catch(Exception ex) {
-			System.out.println("Exception (ProjectCompendiumFrame.connectToServices - main) \n\n"+ex.getMessage());
+			System.out.println(ex.getLocalizedMessage());
+			System.out.println("Exception (ProjectCompendiumFrame.connectToServices - main).");
+			ex.printStackTrace();
+			System.out.flush();
+			displayError("Exception (ProjectCompendiumFrame.connectToServices - main):\n"+ex.getLocalizedMessage());
 		}
 
 		return true;
@@ -1184,6 +1236,7 @@ public class ProjectCompendiumFrame	extends JFrame
 	  	}
 		catch (Exception e) {
 			displayError("Exception: creating ServiceManager (ProjectCompendiumFrame.setDatabaseProfile)\n\n"+e.getMessage());
+			setDefaultCursor();
 			return false;
 	  	}
 		adminDatabase = new DBAdminDatabase(oServiceManager, sUserName, sPassword, sServer);
@@ -1197,20 +1250,16 @@ public class ProjectCompendiumFrame	extends JFrame
 			}
 		}
 		catch(Exception ex) {
-                  ex.printStackTrace();
-			JOptionPane.showMessageDialog(this,
-                      "The Compendium Administration database was unable to be created.\nPlease contact Compendium support staff.\n",
-                      "Database Creation Error", JOptionPane.ERROR_MESSAGE);
+			System.out.println(ex.getLocalizedMessage());
+			ex.printStackTrace();
+			System.out.flush();
+			displayError("Error Connecting to MySQL database "+oCurrentMySQLConnection.getProfile()+"\n"+ex.getLocalizedMessage());
+			setDefaultCursor();
 			return false;
 		}
 
-		FormatProperties.nDatabaseType = nType;
-		FormatProperties.sDatabaseProfile = sProfileName;
-
-		FormatProperties.setFormatProp("database", "mysql");
-		FormatProperties.setFormatProp("databaseprofile", sProfileName);
-
-		FormatProperties.saveFormatProps();
+		APP_PROPERTIES.setDatabaseType(nType);
+		APP_PROPERTIES.setDatabaseProfile(sProfileName);
 
 		setTitle(ICoreConstants.MYSQL_DATABASE, sServer, sProfileName, "");
 
@@ -1246,9 +1295,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			onFileClose();
 		}
 
-		FormatProperties.nDatabaseType = ICoreConstants.DERBY_DATABASE;
-		FormatProperties.setFormatProp("database", "derby");
-		FormatProperties.saveFormatProps();
+		APP_PROPERTIES.setDatabaseType(ICoreConstants.DERBY_DATABASE);
 		oServiceManager = oDerbyServiceManager;
 		adminDatabase = adminDerbyDatabase;
 		adminDatabase.loadDatabaseProjects();
@@ -1260,9 +1307,9 @@ public class ProjectCompendiumFrame	extends JFrame
 		oToolBarManager.selectProfile("");
 
 		// IF A DEFAULT DATABASE HAS BEEN SET, TRY AND LOGIN AUTOMATICALLY
-		if (FormatProperties.defaultDatabase != null
-					&& !FormatProperties.defaultDatabase.equals("")) {
-			autoFileOpen(FormatProperties.defaultDatabase);
+		if (APP_PROPERTIES.getDefaultDatabase() != null
+					&& !APP_PROPERTIES.getDefaultDatabase().equals("")) {
+			autoFileOpen(APP_PROPERTIES.getDefaultDatabase());
 		}
 		else if (vtProjects == null || vtProjects.size() == 0) {
 			onFileNew();
@@ -1322,6 +1369,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			try {
 				activeGroup = sCodeGroupID;
 				((SystemService)oModel.getSystemService()).setCodeGroup(oModel.getSession(), activeGroup);
+				APP_PROPERTIES.setActiveCodeGroup(activeGroup);
 				oToolBarManager.updateCodeChoiceBoxData();
 				return true;
 			}
@@ -1340,7 +1388,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		oDesktop = new JDesktopPane();
 		oDesktop.setPreferredSize(new Dimension(nScreenWidth-100,nScreenHeight-100));
 		oDesktop.setDesktopManager(new UIDesktopManager());
-		
+
 		JScrollPane scrollpane = new JScrollPane(oDesktop);
 		scrollpane.setBounds(0,0,nScreenWidth-100,nScreenHeight-100);
 
@@ -1352,7 +1400,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		oSplitter.setDividerSize(10);
 		oSplitter.setContinuousLayout(true);
 		oInnerPanel.add(oSplitter, BorderLayout.CENTER);
-		
+
 		//splitpane
 		oMainPanel.add(oInnerPanel, BorderLayout.CENTER);
 	}
@@ -1364,7 +1412,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		oViewHistoryBar = new UIViewHistoryBar();
 		oInnerPanel.add(oViewHistoryBar, BorderLayout.NORTH);
-		displayViewHistoryBar(FormatProperties.displayViewHistoryBar);
+		displayViewHistoryBar(APP_PROPERTIES.isDisplayViewHistoryBar());
 	}
 
 	/**
@@ -1376,7 +1424,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		oStatusBar.setMinimumSize(new Dimension(0, 14));
 		oContentPane.add(oStatusBar, BorderLayout.SOUTH);
 
-		displayStatusBar(FormatProperties.displayStatusBar);
+		displayStatusBar(APP_PROPERTIES.isDisplayStatusBar());
 	}
 
 	/**
@@ -1385,30 +1433,31 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * @date 2/3/06
 	 */
 	protected void createOutlineView() {
-		String sDisplay = FormatProperties.displayOutlineView;
+		String sDisplay = APP_PROPERTIES.getDisplayOutlineView();
 		oMenuManager.addOutlineView(sDisplay, false);
 	}
-	
+
 	/**
 	 * hide/show the unread view.
 	 * @author Lakshmi
+	 * @throws SQLException
 	 * @date 6/27/06
 	 */
-	protected void createUnreadView() {
-		boolean sDisplay = FormatProperties.displayUnreadView;
+	protected void createUnreadView() throws SQLException {
+		boolean sDisplay = APP_PROPERTIES.isDisplayUnreadView();
 		if (sDisplay) {
 			oMenuManager.addUnreadView(false);
-		} 
+		}
 	}
-	
+
 	/**
 	 * hide/show the tags view.
 	 */
 	protected void createTagsView() {
-		boolean sDisplay = FormatProperties.displayTagsView;
+		boolean sDisplay = APP_PROPERTIES.isDisplayTagsView();
 		if (sDisplay) {
 			oMenuManager.addTagsView(false);
-		} 
+		}
 	}
 
 	/**
@@ -1455,6 +1504,7 @@ public class ProjectCompendiumFrame	extends JFrame
 				// CHECK IF DATABASE UP TO DATE
 				try {
 					startUpDlg.setMessage("checking database schema...");
+					System.out.println("1504 ProjectCompendiumFrame sModel is " + sModel);
 					int status = adminDatabase.getSchemaStatusForDatabase(sModel);
 					if (status == ICoreConstants.OLDER_DATABASE_SCHEMA) {
 						if (!UIDatabaseUpdate.updateDatabase(adminDatabase, this, sModel)) {
@@ -1485,8 +1535,8 @@ public class ProjectCompendiumFrame	extends JFrame
 					sUserPassword = oUser.getPassword();
 					bDefaultLoginSucessful = validateUser(sModel, sUserName, sUserPassword);
 					if (bDefaultLoginSucessful) {
-						if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE) {
-							setTitle(ICoreConstants.MYSQL_DATABASE, oCurrentMySQLConnection.getServer(), FormatProperties.sDatabaseProfile, sFriendlyName);
+						if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
+							setTitle(ICoreConstants.MYSQL_DATABASE, oCurrentMySQLConnection.getServer(), APP_PROPERTIES.getDatabaseProfile(), sFriendlyName);
 						}
 						else {
 							setDerbyTitle(sFriendlyName);
@@ -1521,9 +1571,9 @@ public class ProjectCompendiumFrame	extends JFrame
 		//Hashtable htProjectStatus = adminDatabase.getProjectSchemaStatus();
 
 		//Hashtable htProjectStatus = new Hashtable();
-		
+
 		String sDatabaseServer = "";
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE && oCurrentMySQLConnection != null)
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE && oCurrentMySQLConnection != null)
 			sDatabaseServer = oCurrentMySQLConnection.getServer();
 
 		//oLogonDialog = new UILogonDialog(this, vtProjects, htProjectStatus, sUserName, sUserPassword, sFriendlyName, sDatabaseServer);
@@ -1598,8 +1648,8 @@ public class ProjectCompendiumFrame	extends JFrame
 			return false;
 		}
 
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE) {
-			setTitle(ICoreConstants.MYSQL_DATABASE, oCurrentMySQLConnection.getServer(), FormatProperties.sDatabaseProfile, sFriendlyName);
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
+			setTitle(ICoreConstants.MYSQL_DATABASE, oCurrentMySQLConnection.getServer(), APP_PROPERTIES.getDatabaseProfile(), sFriendlyName);
 		}
 		else {
 			setDerbyTitle(sFriendlyName);
@@ -1632,16 +1682,27 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * @param password, the password to validate.
 	 * @return boolean, whether the login was valid or not.
 	 */
-	protected boolean validateUser(String model, String user, String password) {
+	protected boolean validateUser(String model, String user, String password)
+	{
+		System.out.println("1693 ProjectCompendiumFrame entered validate user, model user pass are " +
+			model + " " + user + " " + password);
 
-		try {
+		try
+		{
+			System.out.println("1698 ProjectCompendiumFrame going to oServiceManager.registerUser");
 			oModel = oServiceManager.registerUser(model, user, password);
-		} catch(SQLException ex) {
+			System.out.println("1700 ProjectCompendiumFrame oModel returned is " + oModel);
+		}
+		catch(SQLException ex)
+		{
 			System.out.println("Exception: (ProjectCompendiumFrame.validateUser) \n\n"+ex.getMessage());
 		}
-		
+
 		if (oModel == null )
+		{
+			System.out.println("1704 ProjectCompendiumFrame oModel is null");
 			return false;
+		}
 		//else
 			//sCurrentDatabase = model;
 
@@ -1654,9 +1715,9 @@ public class ProjectCompendiumFrame	extends JFrame
 			System.out.println("Exception: (ProjectCompendiumFrame.validateUser) \n\n"+uhe.getMessage());
 			return false;
 		}
-				
+
 		// Store default font.
-		labelFont = ((Model)oModel).labelFont;		
+		labelFont = ((Model)oModel).labelFont;
 
 		if(oModel != null)
 			return true;
@@ -1671,6 +1732,13 @@ public class ProjectCompendiumFrame	extends JFrame
 	 */
 	public void setStatus(String text) {
 		oStatusBar.setStatus(text);
+	}
+
+	/**
+	 * Gets the current text from the status bar.
+	 */
+	public String getStatus() {
+		return 	oStatusBar.getStatus();
 	}
 
 	/**
@@ -1901,17 +1969,17 @@ public class ProjectCompendiumFrame	extends JFrame
 					onCodes();
 					evt.consume();
 					break;
-				}				
+				}
 				case KeyEvent.VK_B: { // BOLD / UNBOLD THE TEXT OF ALL SELECTED NODES IN THE CURRENT MAP
 					getToolBarManager().addFontStyle(Font.BOLD);
 					evt.consume();
-					break;					
+					break;
 				}
 				case KeyEvent.VK_I: { // ITALIC / UNITALIC THE TEXT OF ALL SELECTED NODES IN THE CURRENT MAP
-					getToolBarManager().addFontStyle(Font.ITALIC);					
+					getToolBarManager().addFontStyle(Font.ITALIC);
 					evt.consume();
-					break;									
-				}							
+					break;
+				}
 				case KeyEvent.VK_ENTER: { // CLOSE WINDOW
 					try {
 						if (viewui != null) {
@@ -1928,9 +1996,9 @@ public class ProjectCompendiumFrame	extends JFrame
 				}
 			}
 		}
-		else if ((keyCode == KeyEvent.VK_DELETE && modifiers == 0) 
+		else if ((keyCode == KeyEvent.VK_DELETE && modifiers == 0)
 				|| (keyCode == KeyEvent.VK_BACK_SPACE && modifiers == 0)) {
-			
+
 			if (viewui != null)
 				viewui.onDelete();
 			else
@@ -2018,11 +2086,11 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * @param e, the associated KeyEvent.
 	 */
   	public void keyTyped(KeyEvent e) {
-  		
+
 		if (!e.isAltDown() && !e.isControlDown() && !e.isMetaDown()) {
-			
+
 			UIViewFrame viewFrame = getCurrentFrame();
-			
+
 			// IF WINDOW NOT SELECTED, KEY EVENT GOES SKEWY
 			if (!viewFrame.isSelected()) {
 				if (viewFrame instanceof UIMapViewFrame)
@@ -2046,21 +2114,21 @@ public class ProjectCompendiumFrame	extends JFrame
 				if (uilist != null)
 					listui = uilist.getListUI();
 			}
-			
+
 			char keyChar = e.getKeyChar();
 			char[] key = {keyChar};
 			String sKeyPressed = new String(key);
-	
-  		
+
+
 			int nType = -1;
-	
+
 			//if(sKeyPressed.equals("i") || sKeyPressed.equals("I") || sKeyPressed.equals("q") || sKeyPressed.equals("Q") || sKeyPressed.equals("?") || sKeyPressed.equals("/")) {
 			//	nType = ICoreConstants.ISSUE;
 			//}
 			//if(sKeyPressed.equals("p") || sKeyPressed.equals("P") || sKeyPressed.equals("a") || sKeyPressed.equals("A") || sKeyPressed.equals("!") || sKeyPressed.equals("1")) {
 			//	nType = ICoreConstants.POSITION;
 			//}
-	
+
 			if(sKeyPressed.equals("p") || sKeyPressed.equals("P")) {
 				nType = ICoreConstants.POSITION;
 			}
@@ -2094,7 +2162,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			else if(sKeyPressed.equals("-")) {
 				nType = ICoreConstants.CON;
 			}
-			
+
 			if (viewui != null) {
 				Point p = getKeyPress(uiview);
 				int nX = p.x;
@@ -2111,8 +2179,8 @@ public class ProjectCompendiumFrame	extends JFrame
 						"", listui.ptLocationKeyPress.x, (uilist.getNumberOfNodes() + 1) * 10
 						);
 					uilist.updateTable();
-				}				
-			}  		
+				}
+			}
 		}
   		e.consume();
   	}
@@ -2166,6 +2234,7 @@ public class ProjectCompendiumFrame	extends JFrame
 	 */
 	public void updateProjects() {
 
+		System.out.println("2232 ProjectCompendiumFrame entered updateProjects");
 		vtProjects = adminDatabase.getDatabaseProjects();
 		if (vtProjects == null || vtProjects.size() == 0) {
 			oMenuManager.setFileOpenEnablement(false);
@@ -2175,6 +2244,8 @@ public class ProjectCompendiumFrame	extends JFrame
 			oMenuManager.setFileOpenEnablement(true);
 			oToolBarManager.setFileOpenEnablement(true);
 		}
+		System.out.println("2242 ProjectCompendiumFrame exiting updateProjects");
+
 	}
 
 	/**
@@ -2206,12 +2277,12 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * @return boolean, true if the current database the default database, else false.
 	 */
 	public boolean isDefaultDatabase() {
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE) {
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
 			if ( sFriendlyName.equals(oCurrentMySQLConnection.getName()) )
 				return true;
 		}
 		else {
-			if ( sFriendlyName.equals(FormatProperties.defaultDatabase) )
+			if ( sFriendlyName.equals(APP_PROPERTIES.getDefaultDatabase()) )
 				return true;
 		}
 		return false;
@@ -2222,10 +2293,11 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * @return String, the name of the default database.
 	 */
 	public String getDefaultDatabase() {
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE)
+		//November 2011 - i don't think this is returning anything - matt
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE)
 			return oCurrentMySQLConnection.getName();
 		else {
-			return FormatProperties.defaultDatabase;
+			return APP_PROPERTIES.getDefaultDatabase();
 		}
 	}
 
@@ -2235,14 +2307,12 @@ public class ProjectCompendiumFrame	extends JFrame
 	 */
 	public void setDefaultDatabase(String database) {
 
-		if (FormatProperties.nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-			FormatProperties.defaultDatabase = database;
-			FormatProperties.setFormatProp( "defaultdatabase", database );
-			FormatProperties.saveFormatProps();
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.DERBY_DATABASE) {
+			APP_PROPERTIES.setDefaultDatabase(database);
 		}
 		else {
 			try {
-				adminDerbyDatabase.setDefaultDatabase(database, FormatProperties.sDatabaseProfile, ICoreConstants.MYSQL_DATABASE);
+				adminDerbyDatabase.setDefaultDatabase(database, APP_PROPERTIES.getDatabaseProfile(), ICoreConstants.MYSQL_DATABASE);
 				if (oCurrentMySQLConnection != null)
 					oCurrentMySQLConnection.setName(database);
 			}
@@ -2266,7 +2336,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		// THIS THREAD IS REQUIRED FOR PROGRESS DIALOG CALLED IN processDefaultLogin
 		Thread thread = new Thread("ProjectCompendiumFrame.autoFileOpen") {
 
-			public void run() {
+			public void run()  {
 
 				// create the log on screen
 				sUserName = "";
@@ -2278,7 +2348,8 @@ public class ProjectCompendiumFrame	extends JFrame
 				if (!processDefaultLogin(sDatabase))
 					return;
 
-				initializeForProject();
+					initializeForProject();
+
 				if (oUDigCommunicationManager != null) {
 					oUDigCommunicationManager.openProject();
 				}
@@ -2324,8 +2395,9 @@ public class ProjectCompendiumFrame	extends JFrame
 	/**
 	 * Initialize various elements like menus and toolbars
 	 * and set up the users home view for the curent project.
+	 * @throws SQLException
 	 */
-	private void initializeForProject() {
+	private void initializeForProject()  {
 
 		if (oModel != null) {
 			oMenuManager.onDatabaseOpen();
@@ -2336,17 +2408,21 @@ public class ProjectCompendiumFrame	extends JFrame
 
 			// Create and initialize the outline View -Lakshmi 2/2/06
 			createOutlineView();
-			
+
 			// Create and initialize the unread View -Lakshmi 6/27/06
-			createUnreadView();
-			
+			try {
+				createUnreadView();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
 			//set the trashbin icon
 			setTrashBinIcon();
 
 			refreshCodeAndMenuData();
-			
+
 			// Create the tags view if the user has requested it.
-			createTagsView();			
+			createTagsView();
 		}
 	}
 
@@ -2375,16 +2451,110 @@ public class ProjectCompendiumFrame	extends JFrame
 	}
 
 	/**
+	 * Makes a pass through all open views to see if any are dirty (i.e., have been modified by another person)
+	 * This is called by the UIRefreshManager timed-refresh thread, so is running in the 'background'.
+	 */
+	public void checkProjectDirty() {
+		//System.out.println("2452 ProjectCompendiumFrame entered checkProjectDirty");
+
+		boolean bInboxChecked = false;
+		boolean bInboxDirty = false;
+
+
+		if (!bReloadingProject && !bChecking && (oModel != null)) { //If project being manually reloaded or check already in progress then skip the timed refresh
+			oToolBarManager.disableDataRefresh();					// Turn off the manual Refresh toolbar button while checking
+			bChecking = true;										// Stops overlapping checking (can happen if timer is fast & connection is slow)
+			JInternalFrame[] frames = getDesktop().getAllFrames();
+
+			for(int i=0; i<frames.length; i++) {
+				UIViewFrame viewFrame = (UIViewFrame)frames[i];
+				View innerview = viewFrame.getView();
+				if (innerview != getHomeView()) {					// Skip Home window since other people can't make it dirty
+					try {
+						if (innerview.isViewDirty()) {				// Had a dirty view, need to refresh the ViewFrame's contents...
+							refreshViewFrame(viewFrame, innerview);
+							if (innerview == getInBoxView()) {
+								System.out.println("2470 ProjectCompendiumFrame setting Inbox Dirty");
+								bInboxDirty = true;					// Flag to do an inbox pop-up after everything else is checked
+							}
+						}
+					} catch (Exception ex) {}
+				}
+				if (innerview == getInBoxView()) bInboxChecked = true;
+			}
+			// Force the inbox to be examined in the case where the user did not have it open...
+			if(!bInboxChecked) {
+				try {
+					if (getInBoxView().isViewDirty()) {
+						System.out.println("2482 ProjectCompendiumFrame setting Inbox Dirty");
+						bInboxDirty = true;
+					}
+				} catch (Exception ex) {}
+			}
+			//if (bInboxDirty) JOptionPane.showMessageDialog(this, "A new node has arrived in your Inbox.");
+
+			bChecking = false;
+			oToolBarManager.enableDataRefresh();		// Turn the Refresh button back on
+		}
+
+	}
+
+	/**
+	 * Redraw the view.  This is called by checkProjectDirty() after the View data has been
+	 * refreshed due to a groupware update by another user.
+	 */
+	private void refreshViewFrame(UIViewFrame viewFrame, View innerview) {
+
+		setWaitCursor(viewFrame);
+
+		if (viewFrame instanceof UIMapViewFrame) {
+			int xPos = viewFrame.getHorizontalScrollBarPosition();
+			int yPos = viewFrame.getVerticalScrollBarPosition();
+			((UIMapViewFrame)viewFrame).createViewPane((View)innerview);
+			viewFrame.setHorizontalScrollBarPosition(xPos, false);
+			viewFrame.setVerticalScrollBarPosition(yPos, true);
+		} else {													// Destroy and recreate the Frame from scratch.  There's got to be
+			UIListViewFrame frame = (UIListViewFrame)viewFrame;		// a better way to refresh the List views, but I haven't found it yet....
+			String title = innerview.getLabel();
+			int width = frame.getWidth();
+			int height = frame.getHeight();
+			int xPos = frame.getX();
+			int yPos = frame.getY();
+			boolean isIcon = frame.isIcon();
+			boolean isMaximum = frame.isMaximum();
+			int hScroll = frame.getHorizontalScrollBarPosition();
+			int vScroll = frame.getVerticalScrollBarPosition();
+
+			oDesktop.getDesktopManager().closeFrame(viewFrame);
+			oDesktop.remove(viewFrame);
+			viewFrame.cleanUp();
+			viewFrameList.remove(viewFrame);
+			viewFrame.dispose();
+
+			viewFrame = addViewToDesktop(innerview, title, width, height, xPos, yPos, isIcon, isMaximum, hScroll, vScroll);
+
+			viewFrameList.add(viewFrame);
+
+		}
+		validateComponents();				// Probably not necessary, but....
+		setDefaultCursor(viewFrame);
+	}
+
+
+	/**
 	 * Clear all cached data and reload from the database.
 	 */
 	public void reloadProjectData() {
 
+		bReloadingProject = true;
+
 		if (oModel != null) {
+
+			String sHomeWindowID = oHomeView.getId();
 
 			UIViewFrame currentView = getCurrentFrame();
 
 			setWaitCursor();
-			setWaitCursor(currentView);
 
 			Code.clearList();
 			Link.clearList();
@@ -2409,15 +2579,16 @@ public class ProjectCompendiumFrame	extends JFrame
 				if (innerview != null) {
 					innerview.initialize(oSession, oModel);
 
+					if (innerview.getId().equals(sHomeWindowID)) oHomeView = innerview;
+
 					viewFrame.setView(innerview);
 					if (viewFrame instanceof UIMapViewFrame) {
 
 						UIViewPane pane = ((UIMapViewFrame)viewFrame).getViewPane();
 						UINode trashbin = (UINode)pane.get(trashbinID);
 
-						innerview.setIsMembersInitialized(false);
 						try {
-							innerview.initializeMembers();
+							innerview.reloadViewData();
 						}
 						catch(Exception io) {
 							io.printStackTrace();
@@ -2427,14 +2598,19 @@ public class ProjectCompendiumFrame	extends JFrame
 						if (trashbin != null) {
 							innerview.addMemberNode(trashbin.getNodePosition());
 						}
+						int xPos = viewFrame.getHorizontalScrollBarPosition();
+						int yPos = viewFrame.getVerticalScrollBarPosition();
 
 						((UIMapViewFrame)viewFrame).createViewPane((View)innerview);
+
+						viewFrame.setHorizontalScrollBarPosition(xPos, false);
+						viewFrame.setVerticalScrollBarPosition(yPos, true);
 					}
 					else {
 						UIListViewFrame frame = (UIListViewFrame)viewFrame;
-						innerview.setIsMembersInitialized(false);
+
 						try {
-							innerview.initializeMembers();
+							innerview.reloadViewData();
 						}
 						catch(Exception io) {}
 
@@ -2446,9 +2622,10 @@ public class ProjectCompendiumFrame	extends JFrame
 
 			validateComponents();
 
-			setDefaultCursor(currentView);
 			setDefaultCursor();
 		}
+
+		bReloadingProject = false;
 	}
 
 	/**
@@ -2459,7 +2636,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		if (isProjectOpen("New Project"))
 			return;
 
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE) {
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
 			UINewDatabaseDialog dialog = new UINewDatabaseDialog(this, vtProjects, oCurrentMySQLConnection.getLogin(), oCurrentMySQLConnection.getPassword(), oCurrentMySQLConnection.getServer());
 			dialog.setVisible(true);
 		}
@@ -2485,7 +2662,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			return;
 
 
-		UIDatabaseAdministrationDialog dlg = new UIDatabaseAdministrationDialog(this, FormatProperties.nDatabaseType, oCurrentMySQLConnection);
+		UIDatabaseAdministrationDialog dlg = new UIDatabaseAdministrationDialog(this, APP_PROPERTIES.getDatabaseType(), oCurrentMySQLConnection);
 		UIUtilities.centerComponent(dlg, this);
 		dlg.setVisible(true);
 	}
@@ -2542,7 +2719,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			return;
 
 		//Hashtable htProjectStatus = adminDatabase.getProjectSchemaStatus();
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE) {
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
 			//UIDatabaseManagementDialog dialog = new UIDatabaseManagementDialog(this, htProjectStatus, adminDatabase, vtProjects, oCurrentMySQLConnection.getLogin(), oCurrentMySQLConnection.getPassword(), oCurrentMySQLConnection.getServer());
 			UIDatabaseManagementDialog dialog = new UIDatabaseManagementDialog(this, adminDatabase, vtProjects, oCurrentMySQLConnection.getLogin(), oCurrentMySQLConnection.getPassword(), oCurrentMySQLConnection.getServer());
 			UIUtilities.centerComponent(dialog, this);
@@ -2556,19 +2733,187 @@ public class ProjectCompendiumFrame	extends JFrame
 		}
 	}
 
+	public void onSynchronize ()
+	{
+		System.out.println("2715 ProjectCompendiumFrame entered onSynchronize");
+
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE)
+		{
+			JOptionPane.showMessageDialog(null, "The MySQL Projects are currently loaded, please load the Derby Projects");
+			return;
+		}
+		else
+		{
+			//JOptionPane.showMessageDialog(null, "derby db projects?");
+		}
+
+		if (vtProjects == null)
+			System.out.println("vtProjects is null");
+		else if (vtProjects.size() == 0)
+			System.out.println("vtProjects size is 0");
+		else
+		{
+			int count = vtProjects.size();
+			for (int i=0; i<count; i++)
+			{
+				String project = (String)vtProjects.elementAt(i);
+
+				try
+				{
+					String nextModel = adminDatabase.getDatabaseName(project);
+					String friendlyName = adminDatabase.getFriendlyName(nextModel);
+					System.out.println("2732 ProjectCompendiumFrame nextModel is " + nextModel + " friendly: " + friendlyName);
+					//JOptionPane.showMessageDialog(null, "Project: " + nextModel + " friendly: " + friendlyName);
+
+					Synchronizer sync = new Synchronizer();
+					sync.setLogOnlyToSystemOut(true);
+
+					//System.out.println("2740 ProjectCompendiumFrame parent path reports: " + oParent.sHOMEPATH.replace('\\', '/'));
+					//System.out.println("2740 ProjectCompendiumFrame derby currently is    C:/Program Files/Compendium/System/resources/Databases/");
+					sync.setDerbyUrl("jdbc:derby:" + oParent.sHOMEPATH.replace('\\', '/') + "/System/resources/Databases/" + nextModel + ";create=false");
+					sync.setDerbyConnection();
+
+					if (sync.getRowCount("System", sync.getDerbyConnection(), " where Property='mysql_sourced' and Contents='true'") == 1)
+					{
+						//sync-able project
+
+						int answer = JOptionPane.showConfirmDialog(null, "Sync: " + friendlyName + "?");
+						if (answer == JOptionPane.YES_OPTION)
+						{
+							// User clicked YES.
+							//JOptionPane.showMessageDialog(null, "syncing...");
+
+							JFrame f = new JFrame("Synchronization Progress");
+							JTextArea _resultArea = new JTextArea(3, 60);
+							_resultArea.setText("Initializing...");
+
+							JScrollPane scrollingArea = new JScrollPane(_resultArea);
+
+							//... Get the content pane, set layout, add to center
+							JPanel content = new JPanel();
+							content.setLayout(new BorderLayout());
+							content.add(scrollingArea, BorderLayout.CENTER);
+
+							//... Set window characteristics.
+							f.setContentPane(content);
+							f.setTitle("Synchronization Progress");
+							f.pack();
+
+							f.setVisible(true);
+							f.paint(f.getGraphics());
+
+							_resultArea.setText("Retrieving Connection Info...");
+							f.paint(f.getGraphics());
+
+							String ip = sync.getColumnValue(sync.issueSelectQuery(sync.getDerbyConnection(), "select Contents from System where Property = 'mysql_source_ip'"), "Contents");
+							String db = sync.getColumnValue(sync.issueSelectQuery(sync.getDerbyConnection(), "select Contents from System where Property = 'mysql_source_db'"), "Contents");
+							String u = sync.getColumnValue(sync.issueSelectQuery(sync.getDerbyConnection(), "select Contents from System where Property = 'mysql_source_user'"), "Contents");
+							String p = sync.getColumnValue(sync.issueSelectQuery(sync.getDerbyConnection(), "select Contents from System where Property = 'mysql_source_password'"), "Contents");
+
+							//String mysql_url = "jdbc:mysql://" + ip + "/" + db + "?user=" + u + "&password=" + p;
+							String mysql_url = "jdbc:mysql://" + ip + "/" + db;
+
+							System.out.println("mysql url is " + mysql_url);
+
+							_resultArea.setText("Going to set MySQL Connection...");
+							f.paint(f.getGraphics());
+
+							sync.setMySQLUrl(mysql_url);
+							sync.setMySQLConnection(u,p);
+
+							if (sync.mysql_conn == null)
+							{
+								//JOptionPane.showMessageDialog(null, "Unable to Connect to the MySQL Server - cannot Synchronize.");
+								_resultArea.setText("Synchronization aborted.\n(Failed MySQL connection - check your internet connection?)");
+								f.paint(f.getGraphics());
+							}
+							else
+							{
+								java.util.Date now = new java.util.Date();
+								long lnow = now.getTime();
+								sync.log("2742 ProjectCompendiumFrame Now C time is " + lnow);
+
+								String last_sync_time = sync.getColumnValue(sync.issueSelectQuery(sync.getDerbyConnection(), "select Contents from System where Property = 'last_sync_time'"), "Contents");
+
+								System.out.println("2746 ProjectCompendiumFrame last sync time from db is " + last_sync_time);
+								System.out.flush();
+
+								_resultArea.setText("going to gen statements...");
+								f.paint(f.getGraphics());
+
+								sync.generateStatements(Long.parseLong(last_sync_time), f, _resultArea);
+
+								_resultArea.setText("going to issue updates...");
+								f.paint(f.getGraphics());
+
+								sync.send(f, _resultArea);
+
+								sync.issueUpdateQuery(sync.getDerbyConnection(), "update System set Contents = '" + lnow + "' where Property = 'last_sync_time'");
+
+								//_resultArea.setText("reloading current project...");
+								//f.paint(f.getGraphics());
+
+								//reloadProjectData();
+
+								String cf = sync.getConflictReport();
+								_resultArea.setText("Done. " + (new java.util.Date()).toString() + ". " + cf);
+
+								if (cf.length() > 100)
+									f.setSize(900,900);
+
+								f.paint(f.getGraphics());
+							}
+						}
+						else if (answer == JOptionPane.NO_OPTION)
+						{
+							// User clicked NO.
+							JOptionPane.showMessageDialog(null, "skipped");
+						}
+
+					}
+				}
+				catch(Exception io)
+				{
+					System.out.println("Exception = "+io.getMessage());
+					System.out.flush();
+				}
+			}
+		}
+
+		System.out.println("2800 ProjectCompendiumFrame exiting onSynchronize");
+	}
+
+	/**
+	 * Open the dialog to confirm marking the entire project as Seen.  This function is intended to be
+	 * used when a new person joins a project and needs to 'catch up' on everything.
+	 */
+
+	public void onMarkProjectSeen() throws SQLException {
+		if (isProjectOpen2()) {
+			long lNodeCount = ProjectCompendium.APP.getModel().getNodeService().lGetNodeCount(ProjectCompendium.APP.getModel().getSession());
+			dlgMarkProjectSeen = new UIMarkProjectSeenDialog(this, lNodeCount);
+			dlgMarkProjectSeen.setVisible(true);
+		}
+	}
+
 	/**
 	 * Open the dialog to backup the current database.
 	 */
 	public void onFileBackup() {
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE) {
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
 			UIDatabaseManagementDialog manager = new UIDatabaseManagementDialog(this, adminDatabase, oCurrentMySQLConnection.getLogin(), oCurrentMySQLConnection.getPassword(), oCurrentMySQLConnection.getServer());
-			UIBackupDialog dialog = new UIBackupDialog(ProjectCompendium.APP, manager, sFriendlyName, oModel.getModelName(), UIDatabaseManagementDialog.RESUME_NONE, true, getModel().getUserProfile());
+			//manager.onBackup(sFriendlyName, oModel.getModelName(), UIDatabaseManagementDialog.RESUME_NONE, true);
+			//manager.onCancel();
+			UIBackupDialog dialog = new UIBackupDialog(ProjectCompendium.APP, manager, sFriendlyName, oModel.getModelName(), UIDatabaseManagementDialog.RESUME_NONE, true);
 			UIUtilities.centerComponent(dialog, ProjectCompendium.APP);
 			dialog.setVisible(true);
+
 		}
 		else {
 			UIDatabaseManagementDialog manager = new UIDatabaseManagementDialog(this, adminDatabase, "", "", "");
-			UIBackupDialog dialog = new UIBackupDialog(ProjectCompendium.APP, manager, sFriendlyName, oModel.getModelName(), UIDatabaseManagementDialog.RESUME_NONE, true, getModel().getUserProfile());
+			//manager.onBackup(sFriendlyName, oModel.getModelName(), UIDatabaseManagementDialog.RESUME_NONE, true);
+			//manager.onCancel();
+			UIBackupDialog dialog = new UIBackupDialog(ProjectCompendium.APP, manager, sFriendlyName, oModel.getModelName(), UIDatabaseManagementDialog.RESUME_NONE, true);
 			UIUtilities.centerComponent(dialog, ProjectCompendium.APP);
 			dialog.setVisible(true);
 		}
@@ -2579,15 +2924,15 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * @param sType, the type of connection dialog to open.
 	 */
 	public void onConnect(String sType) {
-		UIConnectionDialog dialog = new UIConnectionDialog( this, sType );
-		UIUtilities.centerComponent(dialog, this);
-		dialog.setVisible(true);
+	//	UIConnectionDialog dialog = new UIConnectionDialog( this, sType );
+	//	UIUtilities.centerComponent(dialog, this);
+	//	dialog.setVisible(true);
 	}
 
 	/**
 	 * Imports a questmap file into a user selected view from the active project compendium model.
 	 * @param showViewList, true to import into multiple views else false for current view.
-	 */
+	 */ /*
 	public void onFileImport(boolean showViewList) {
 
 		dlgImport = new UIImportDialog(this, showViewList);
@@ -2605,7 +2950,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		dlgImport.setVisible(true);
 	}
-
+*/
 	/**
 	 * Imports a folder of images into the active view as reference nodes
 	 */
@@ -2668,6 +3013,14 @@ public class ProjectCompendiumFrame	extends JFrame
 		dlgExport.setVisible(true);
 	}
 
+	public void onFileExportWordDocOutline()
+	{
+
+		dlgExport = new UIExportDialog(this, getCurrentFrame());
+		dlgExport.setWordDocExportOptions();
+		UIUtilities.centerComponent(dlgExport, this);
+		dlgExport.setVisible(true);
+	}
 	/**
 	 * Opens the dialog to exports Compendium views to HTML View.
 	 */
@@ -2682,13 +3035,13 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * Export to HTML Views with XML included.
 	 */
 	public void onFileExportPower() {
-		
+
 		htCheckDepth = new Hashtable(51);
 		htChildrenAdded = new Hashtable(51);
-		
-		final UIViewFrame frame = getCurrentFrame();									
+
+		final UIViewFrame frame = getCurrentFrame();
 		final Vector selectedViews = getSelectedViews();
-		
+
 		if (selectedViews.size() == 0) {
 			displayMessage("Please select a map to export", "Export Web Maps/Outline + XML");
 			return;
@@ -2702,13 +3055,13 @@ public class ProjectCompendiumFrame	extends JFrame
 				UIList uiList = ((UIListViewFrame)frame).getUIList();
 				count = uiList.getNumberOfSelectedNodes();
 			}
-			
+
 			if (count > 1) {
 				displayMessage("You can only export one top level map.\n\nPlease ensure that you only have one map selected.\n", "Export Web Maps/Outline + XML");
-				return;							
+				return;
 			}
-		}							
-		
+		}
+
 		UIFileFilter filter = new UIFileFilter(new String[] {"zip"}, "ZIP Files");
 
 		UIFileChooser fileDialog = new UIFileChooser();
@@ -2734,40 +3087,40 @@ public class ProjectCompendiumFrame	extends JFrame
 					if ( !fileName.toLowerCase().endsWith(".zip") ) {
 						fileName = fileName+".zip";
 					}
-					sDirectory = fileDir.getAbsolutePath();					
-				}				
+					sDirectory = fileDir.getAbsolutePath();
+				}
 			}
 		}
-		
+
 		if (fileName != null && !fileName.equals("")) {
 			final String fFileName = fileName;
 			final String fsDirectory = sDirectory;
 			Thread thread = new Thread("ProjectCompendium.APP.onFileExportHTMLViewWithXML") {
 				public void run() {
-															
+
 					// XML ZIP EXPORT
 					setWaitCursor();
-					
+
 					boolean selectedOnly = true;
 					boolean allDepths = true;
 					boolean withStencilsAndLinkGroups = true;
-					boolean withMeetings = false;		
+					boolean withMeetings = false;
 					boolean toZip = true;
-					
-					String zipFileName = fFileName.replaceAll(".zip", "_xml.zip");		
+
+					String zipFileName = fFileName.replaceAll(".zip", "_xml.zip");
 					File xmlFile = new File(fsDirectory+ProjectCompendium.sFS+zipFileName);
 					XMLExportNoThread export = new XMLExportNoThread(frame, xmlFile.getAbsolutePath(), allDepths, selectedOnly, toZip, withStencilsAndLinkGroups, withMeetings, false);
-					
+
 					// OUTLINE ZIP EXPORT
 					boolean bPrintNodeDetail = true;
 					boolean bPrintNodeDetailDate = false;
 					boolean bPrintAuthor = false;
 					int nExportLevel = 2;
 					//String sExportFile = fsDirectory+ProjectCompendium.sFS+fFileName.replaceAll(".zip", "_outline.zip");
-					String sExportFile = fsDirectory+ProjectCompendium.sFS+fFileName;					
-					File outlineFile = new File(sExportFile);					
+					String sExportFile = fsDirectory+ProjectCompendium.sFS+fFileName;
+					File outlineFile = new File(sExportFile);
 					boolean bToZip = true;
-					
+
 					HTMLOutline oHTMLExport = new HTMLOutline(bPrintNodeDetail, bPrintNodeDetailDate, bPrintAuthor, nExportLevel, outlineFile.getAbsolutePath(), bToZip);
 					oHTMLExport.setIncludeImage(true);
 					oHTMLExport.setIncludeNodeAnchors(true);
@@ -2776,7 +3129,7 @@ public class ProjectCompendiumFrame	extends JFrame
 					oHTMLExport.setAnchorImage(UIExportDialog.sBaseAnchorPath+"anchor0.gif");
 					oHTMLExport.setTitle("Open Learn Outline Export");
 					oHTMLExport.setDisplayInDifferentPages(true);
-					oHTMLExport.setDisplayDetailDates(false);					
+					oHTMLExport.setDisplayDetailDates(false);
 					oHTMLExport.setHideNodeNoDates(false);
 					oHTMLExport.setIncludeLinks(false);
 					oHTMLExport.setIncludeNavigationBar(true);
@@ -2794,7 +3147,7 @@ public class ProjectCompendiumFrame	extends JFrame
 					} else {
 						displayError("Unable to include Outline in export.");
 					}
-										
+
 					// WEB ZIP EXPORT
 					String sUserTitle = "";
 					boolean bIncludeReferences = true;
@@ -2803,21 +3156,21 @@ public class ProjectCompendiumFrame	extends JFrame
 					bToZip = true;
 					boolean bSortMenu = false;
 					boolean bNoDetailPopup = false;
-					boolean bNoDetailPopupAtAll = false;					
-					HTMLViews htmlViews = new HTMLViews(fsDirectory, fFileName, sUserTitle, bIncludeReferences, bToZip, bSortMenu, addMapTitles, bOpenNew, bNoDetailPopup, bNoDetailPopupAtAll);
+					boolean bNoDetailPopupAtAll = false;
+					HTMLViews htmlViews = new HTMLViews(fsDirectory, fFileName, sUserTitle, bIncludeReferences, bToZip, bSortMenu, bOpenNew, bNoDetailPopup, bNoDetailPopupAtAll);
 					htmlViews.processViewsWithXML(selectedViews, xmlFile.getAbsolutePath());
-					
+
 					setDefaultCursor();
-					
+
 					if (!ProjectCompendium.isLinux) {
 						ExecuteControl.launch(fsDirectory);
 					}
 				}
 			};
 			thread.start();
-		}				
+		}
 	}
-	
+
 	/**
 	 * Get the views to export depending on user options.
 	 * Vector, the list of view to export.
@@ -2829,7 +3182,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		Vector vtTemp = new Vector();
 
 		UIViewFrame currentFrame = this.getCurrentFrame();
-		
+
 		if (currentFrame instanceof UIMapViewFrame) {
 			UIViewPane uiViewPane = ((UIMapViewFrame)currentFrame).getViewPane();
 			nodes = uiViewPane.getSelectedNodes();
@@ -2929,7 +3282,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		return childViews;
 	}
-	
+
 
 // XML IMPORT AND EXPORT
 
@@ -2991,8 +3344,8 @@ public class ProjectCompendiumFrame	extends JFrame
 			UIList uiList = listFrame.getUIList();
 			onTemplateImport(sXMLFile, uiList);
 		}
-	}		
-	
+	}
+
 	/**
 	 * Imports an XML file into a user selected view as a Template, from the given filename.
 	 * @param sXMLFile, the file to import.
@@ -3011,8 +3364,8 @@ public class ProjectCompendiumFrame	extends JFrame
 			DBNode.setImportAsTranscluded(transclude);
 			DBNode.setPreserveImportedIds(preserveIDs);
 			DBNode.setUpdateTranscludedNodes(updateTranscludedNodes);
-			DBNode.setNodesMarkedSeen(markSeen);			
-			
+			DBNode.setNodesMarkedSeen(markSeen);
+
 			if (oViewPane != null) {
 				ViewPaneUI oViewPaneUI = oViewPane.getUI();
 				if (oViewPaneUI != null) {
@@ -3021,8 +3374,8 @@ public class ProjectCompendiumFrame	extends JFrame
 				}
 			}
 		}
-	}	
-	
+	}
+
 	/**
 	 * Imports an XML file into a user selected view as a Template, from the given filename.
 	 * @param sXMLFile the file to import.
@@ -3042,14 +3395,14 @@ public class ProjectCompendiumFrame	extends JFrame
 			DBNode.setImportAsTranscluded(transclude);
 			DBNode.setPreserveImportedIds(preserveIDs);
 			DBNode.setUpdateTranscludedNodes(updateTranscludedNodes);
-			DBNode.setNodesMarkedSeen(markSeen);			
+			DBNode.setNodesMarkedSeen(markSeen);
 
 			if (uiList != null) {
 				uiList.getListUI().setSmartImport(importAuthorAndDate);
 				uiList.getListUI().onImportXMLFile(sXMLFile, includeOriginalAuthorDate);
 			}
 		}
-	}			
+	}
 	/**
 	 * Exports a user selected view to an XML file.
 	 * @param multipleViews, false if exporting the current view, true is exporting multiple views.
@@ -3063,7 +3416,12 @@ public class ProjectCompendiumFrame	extends JFrame
 			dlgExportXML.setCurrentView(viewFrame);
 		}
 
-		dlgExportXML.setVisible(true);
+		if (dlgExportXML.hasSelectedMapNodes()) {
+    		dlgExportXML.initDefaults();
+    		dlgExportXML.setVisible(true);
+		} else {
+            displayMessage("Please select a map node to export.\n\nMulitple map nodes can be selected.", "Export To XML");
+		}
 	}
 
 	/**
@@ -3169,6 +3527,10 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * Exits the application, and close connections and open frames.
 	 */
 	public void onExit() {
+		System.out.println("3349 ProjectCompendiumFrame entered onExit");
+
+		onFileClose();
+
 		if (oUDigCommunicationManager != null) {
 			oUDigCommunicationManager.sendGoodbye();
 		}
@@ -3177,11 +3539,13 @@ public class ProjectCompendiumFrame	extends JFrame
 		int screenY = getY();
 		int screenWidth = getWidth();
 		int screenHeight = getHeight();
-		FormatProperties.setFormatProp("lastScreenWidth", new Integer(screenWidth).toString());
-		FormatProperties.setFormatProp("lastScreenHeight", new Integer(screenHeight).toString());
-		FormatProperties.setFormatProp("lastScreenX", new Integer(screenX).toString());
-		FormatProperties.setFormatProp("lastScreenY", new Integer(screenY).toString());
-		FormatProperties.saveFormatProps();
+		APP_PROPERTIES.setLastScreenWidth(screenWidth);
+		APP_PROPERTIES.setLastScreenHeight(screenHeight);
+		APP_PROPERTIES.setLastScreenX(screenX);
+		APP_PROPERTIES.setLastScreenY(screenY);
+
+	    APP_PROPERTY_MANAGER.save();
+	    EXPORT_PROPERTY_MANAGER.save();
 
 		setVisible(false);
 
@@ -3200,12 +3564,9 @@ public class ProjectCompendiumFrame	extends JFrame
 			oToolBarManager.saveToolBarData();
         }
 
-		// Close any connections
-		closeJabberConnection();
-		closeIXPanelConnection();
 
 		cleanupServices();
-		DBConnectionManager.shutdownDerby(FormatProperties.nDatabaseType);
+		DBConnectionManager.shutdownDerby(APP_PROPERTIES.getDatabaseType());
 
 		SaveOutput.stop();
 		dispose();
@@ -3250,6 +3611,8 @@ public class ProjectCompendiumFrame	extends JFrame
             }
         }
 
+		System.out.println("3434 ProjectCompendiumFrame calling gc then terminating");
+
 		System.gc();
 		System.exit(0);
 	}
@@ -3261,372 +3624,36 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * Set the ClaiMaker connection string.
 	 *
 	 * @param server, the ClaiMaker server string.
-	 */
 	public void openClaiMakerConnection(String server) {
 		claiMakerServer = server;
 		claiMakerConnected = true;
 	}
-
+*/
 	/**
 	 * Has a ClaiMaker server string been set?
 	 * @return boolean, true if the string has been set, else false.
 	 */
-	public boolean isClaiMakerConnected() {
-		return claiMakerConnected;
-	}
+	//public boolean isClaiMakerConnected() {
+//		return claiMakerConnected;
+//	}
 
 	/**
 	 * Return the ClaiMaker server String.
 	 * @return the ClaiMaker server String.
-	 */
+	 *
 	public String getClaiMakerServer() {
 		return claiMakerServer;
 	}
-
+*/
 	/**
 	 * Set the ClaiMaker connection to false.
-	 */
+	 *
 	public void closeClaiMakerConnection() {
 		claiMakerConnected = false;
 	}
+*/
 
 
-// JABBER METHODS
-
-	/**
-	 * Open a Jabber connection for the given jid details.
-	 *
-	 * @param server, the jabber server to connect to.
-	 * @param username, the username of the account to connect to.
-	 * @param password, the password to use to connect.
-	 */
-	public void openJabberConnection(String server, String username, String password) {
-		jabber = new Jabber();
-		jabber.connect(server, username, password, oModel.getMyIP());
-	}
-
-	/**
-	 * Return if an Jabber connection is open.
-	 * @return boolean, true if the connection if open, else false.
-	 */
-	public boolean isJabberConnected() {
-		if (jabber != null)
-			return true;
-		return false;
-	}
-
-	/**
-	 * Called once a Jabber connection has been successfully opened.
-	 */
-	public void jabberConnectionOpened() {
-		JOptionPane.showMessageDialog((Component)this, (Object)new String("Jabber connection open"), "Jabber Connection", JOptionPane.PLAIN_MESSAGE);
-	}
-
-	/**
-	 * Close the Jabber connection if open.
-	 */
-	public void closeJabberConnection() {
-		if (jabber != null) {
-			jabber.destroy();
-			jabber = null;
-		}
-        if (oMenuManager != null) {
-		    oMenuManager.setJabberMenuEnablement(false);
-        }
-	}
-
-	/**
-	 * Disable the Jabber roster menu.
-	 */
-	public void disableJabberMenu() {
-		oMenuManager.setJabberMenuEnablement(true);
-	}
-
-	/**
-	 * Send the selected nodes in the current view to the given Jabber account jid.
-	 *
-	 * @param jid, the jabber id of the Jabber account to send the nodes to.
-	 */
-	public void toJabber(JID jid) {
-
-		UIViewFrame viewFrame = getCurrentFrame();
-		try {
-			Enumeration nodes = null;
-
-			if ( viewFrame instanceof UIMapViewFrame) {
-				UIViewPane view = ((UIMapViewFrame)viewFrame).getViewPane();
-				nodes = view.getSelectedNodes();
-				for(Enumeration e = nodes; e.hasMoreElements();) {
-					UINode node = (UINode)e.nextElement();
-					processNodeToJabber(jid, node.getNode());
-				}
-			}
-			else {
-				nodes = ((UIListViewFrame)viewFrame).getUIList().getSelectedNodes();
-				for(Enumeration e = nodes; e.hasMoreElements();) {
-					NodePosition node = (NodePosition)e.nextElement();
-					processNodeToJabber(jid, node.getNode());
-				}
-			}
-		}
-		catch(Exception ex) {
-			displayError("Exception: (ProjectCompendium.toJabber) \n" + ex.getMessage());
-		}
-	}
-
-	/**
-	 * Send the given node info to the given Jabber account jid.
-	 *
-	 * @param jid, the jabber id of the IX Panel to send the node to.
-	 * @param node com.compendium.core.datamodelNodeSummary, the node to send.
-	 */
-	public void processNodeToJabber(JID jid, NodeSummary node) {
-
-		int type = node.getType();
-
-		IModel model = getModel();
-		String author = model.getUserProfile().getUserName();
-
-		String label = CoreUtilities.cleanXMLText(node.getLabel());
-		String detail = CoreUtilities.cleanXMLText(node.getDetail());
-
-		String message = author+" says: \n   "+label;
-		if (detail != null && !detail.equals("") && !detail.equals(ICoreConstants.NODETAIL_STRING) )
-			message += "\n\n   "+detail;
-
-		/*while(waitingToSend);
-
-		if (!secondConnection) {
-			secondConnection = true;
-			this.jid = jid;
-			this.body = message;
-			waitingToSend = true;
-
-			jabber = null;
-			jabber = new Jabber();
-			jabber.connect();
-		}
-		else {*/
-			if (jabber != null)
-				jabber.sendMessage(jid, message);
-		//}
-	}
-
-	/**
-	 * Open a jabber message dialog to display the message sent from a Jabber account.
-	 * @param from, the string of the nickname of the person who sent the message.
-	 * @param messge, the message to process.
-	 * @param type, the type of the message.
-	 */
-	public void displayJabberReply(String from, String message, String type) {
-
-		message = message.trim();
-		if (message.length() > 0) {
-			final String fmessage = message;
-			final String ftype = type;
-			final String ffrom = from;
-			//Thread thread = new Thread("Jabber Message") {
-			//	public void run() {
-					UIJabberMessageDialog dialog = new UIJabberMessageDialog(ProjectCompendium.APP, ffrom, fmessage, ftype);
-					dialog.setVisible(true);
-			//	}
-			//};
-			//thread.start();
-		}
-	}
-
-	/**
-	 * Create the Jabber roster menu items.
-	 */
-	public void createJabberRoster() {
-		drawJabberRoster(null, null);
-	}
-
-	/**
-	 * Create the Jabber roster menu items for the given menu.
-	 * @param menu, the menu to add the roster items to.
-	 */
-	public void drawJabberRoster(JMenu menu) {
-		drawJabberRoster(menu, null);
-	}
-
-	/**
-	 * Create the Jabber roster menu items for the given menu.
-	 * @param menu, the menu to add the roster items to.
-	 * @param node com.compendium.code.datamodel.NodeSummary, the node associated with this menu.
-	 * if the menu if on a node right-click menu.
-	 */
-	public void drawJabberRoster(JMenu menu, NodeSummary node) {
-
-		if (jabber == null)
-			return;
-
-		Enumeration rosterEntries = jabber.getRoster();
-		oMenuManager.drawJabberRoster(menu, node, rosterEntries);
-	}
-
-// IX METHODS
-	/**
-	 * Open a Jabber IX Panel connection for the given jid details.
-	 *
-	 * @param server, the jabber server to connect to.
-	 * @param username, the username of the account to connect to.
-	 * @param password, the password to use to connect.
-	 */
-	public void openIXPanelConnection(String server, String username, String password) {
-		ixPanel = new IXPanel();
-		ixPanel.connect(server, username, password, oModel.getMyIP());
-	}
-
-	/**
-	 * Called once a Jabber IX Panel connection has been successfully opened.
-	 */
-	public void ixPanelConnectionOpened() {
-		JOptionPane.showMessageDialog((Component)this, (Object)new String("IX Panel connection open"), "IX Panel Connection", JOptionPane.PLAIN_MESSAGE);
-	}
-
-	/**
-	 * Close the Jabber IX Panel connection if open.
-	 */
-	public void closeIXPanelConnection() {
-		if (ixPanel != null) {
-			ixPanel.destroy();
-			ixPanel = null;
-		}
-        if (oMenuManager != null) {
-		    oMenuManager.setIXMenuEnablement(false);
-        }
-	}
-
-	/**
-	 * Return if an Jabber IX Panel connection is open.
-	 * @return boolean, true if the connection if open, else false.
-	 */
-	public boolean isIXConnected() {
-		if (ixPanel != null)
-			return true;
-		return false;
-	}
-
-	/**
-	 * Disable the IX roster menu.
-	 */
-	public void disableIXMenu() {
-		oMenuManager.setIXMenuEnablement(false);
-	}
-
-	/**
-	 * Send the selected nodes in the current view to the given IX Panel jid.
-	 *
-	 * @param jid, the jabber id of the IX Panel to send the nodes to.
-	 */
-	public void toIXPanel(JID jid) {
-
-		UIViewFrame viewFrame = getCurrentFrame();
-		try {
-			Enumeration nodes = null;
-
-			if ( viewFrame instanceof UIMapViewFrame) {
-				UIViewPane view = ((UIMapViewFrame)viewFrame).getViewPane();
-				nodes = view.getSelectedNodes();
-				for(Enumeration e = nodes; e.hasMoreElements();) {
-					UINode node = (UINode)e.nextElement();
-					processNodeToIX(jid, node.getNode());
-				}
-			}
-			else {
-				nodes = ((UIListViewFrame)viewFrame).getUIList().getSelectedNodes();
-				for(Enumeration e = nodes; e.hasMoreElements();) {
-					NodePosition node = (NodePosition)e.nextElement();
-					processNodeToIX(jid, node.getNode());
-				}
-			}
-		}
-		catch(Exception ex) {
-			displayError("Exception: (ProjectCompendium.toIXPanel) \n" + ex.getMessage());
-		}
-	}
-
-	/**
-	 * Send the given node info to the given IX Panel jid.
-	 *
-	 * @param jid, the jabber id of the IX Panel to send the node to.
-	 * @param node com.compendium.core.datamodelNodeSummary, the node to send.
-	 */
-	public void processNodeToIX(JID jid, NodeSummary node) {
-
-		int type = node.getType();
-		String label = CoreUtilities.cleanXMLText(node.getLabel());
-		String detail = CoreUtilities.cleanXMLText(node.getDetail());
-
-		IModel model = getModel();
-		String author = model.getUserProfile().getUserName();
-
-		//String message = author+" says: \n   "+label;
-
-		String message = label;
-
-		//if (detail != null && !detail.equals("") && !detail.equals(ICoreConstants.NODETAIL_STRING) )
-			//	message += "\n\n   "+detail;
-
-		StringBuffer ixMessage = new StringBuffer(500);
-
-		ixMessage.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-		ixMessage.append("<issue status=\"blank\" priority=\"normal\" sender-id=\""+ixPanel.getSender()+"\">\n");
-		ixMessage.append("<pattern>\n");
-		ixMessage.append("<list>\n");
-		ixMessage.append("\t\t<symbol>"+message+"</symbol>\n");
-		ixMessage.append("\t</list>\n");
-		ixMessage.append("</pattern>\n");
-		ixMessage.append("</issue>\n");
-
-		/*while(waitingToSendIX);
-
-		if (!secondIXConnection) {
-			secondIXConnection = true;
-			this.jidIX = jid;
-			this.bodyIX = ixMessage.toString();
-			waitingToSendIX = true;
-
-			ixPanel = null;
-			ixPanel = new IXPanel();
-			ixPanel.connect();
-		}
-		else {*/
-			if (ixPanel != null)
-				ixPanel.sendMessage(jid, ixMessage.toString());
-		//}
-	}
-
-	/**
-	 * Create the IX roster menu items.
-	 */
-	public void createIXRoster() {
-		drawIXRoster(null, null);
-	}
-
-	/**
-	 * Create the IX roster menu items for the given menu.
-	 * @param menu, the menu to add the roster items to.
-	 */
-	public void drawIXRoster(JMenu menu) {
-		drawIXRoster(menu, null);
-	}
-
-	/**
-	 * Create the IX roster menu items for the given menu.
-	 * @param menu, the menu to add the roster items to.
-	 * @param node com.compendium.code.datamodel.NodeSummary, the node associated with this menu.
-	 * if the menu if on a node right-click menu.
-	 */
-	public void drawIXRoster(JMenu menu, NodeSummary node) {
-
-		if (ixPanel == null)
-			return;
-
-		Enumeration rosterEntries = ixPanel.getRoster();
-		oMenuManager.drawIXRoster(menu, node, rosterEntries);
-	}
 
 //****************** EDIT MENU **********************/
 
@@ -3634,12 +3661,12 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * Undo the previous edit if any
 	 */
 	public void onEditUndo() {
-	
+
 		UIViewFrame viewFrame = getCurrentFrame();
 		viewFrame.onUndo();
-		
+
 		setTrashBinIcon();
-		
+
 		refreshIconIndicators();
 	}
 
@@ -3647,7 +3674,7 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * Redo the previous undo if any
 	 */
 	public void onEditRedo() {
-	
+
 		//get the active frame which will give the view to be searched
 		UIViewFrame viewFrame = getCurrentFrame();
 		viewFrame.onRedo();
@@ -3675,7 +3702,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		}
 
 		stopWaitCursor(viewFrame);
-		
+
 	}
 
 	/**
@@ -3785,7 +3812,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			UIViewOutline.me.onDelete();
 			setDefaultCursor();
 		} else {
-		
+
 			// get the active frame which will give the view to be searched
 			UIViewFrame viewFrame = getCurrentFrame();
 			startWaitCursor(viewFrame);
@@ -3795,7 +3822,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			else {
 				( ((UIMapViewFrame)viewFrame).getViewPane().getViewPaneUI() ).onDelete();
 			}
-	
+
 			stopWaitCursor(viewFrame);
 		}
 		isNewDelete = false;
@@ -3824,19 +3851,10 @@ public class ProjectCompendiumFrame	extends JFrame
 	 */
 	public void onImageRollover(boolean state) {
 
-		FormatProperties.imageRollover = state;
+		APP_PROPERTIES.setImageRollover(state);
 
-		if (FormatProperties.imageRollover) {
-			FormatProperties.setFormatProp( "imageRollover", "true" );
-		}
-		else {
-			FormatProperties.setFormatProp( "imageRollover", "false" );
-		}
-
-		FormatProperties.saveFormatProps();
-
-		oToolBarManager.updateImageRollover(FormatProperties.imageRollover);
-		oMenuManager.updateImageRollover(FormatProperties.imageRollover);
+		oToolBarManager.updateImageRollover(APP_PROPERTIES.isImageRollover());
+		oMenuManager.updateImageRollover(APP_PROPERTIES.isImageRollover());
 	}
 
 	/**
@@ -3905,6 +3923,15 @@ public class ProjectCompendiumFrame	extends JFrame
 		UISelectViewDialog dlgView = new UISelectViewDialog(this);
 		UIUtilities.centerComponent(dlgView, this);
 		dlgView.setVisible(true);
+	}
+
+	/**
+	 * Displays a dialog to select the map the user wants to view.
+	 */
+	public void openGotoDialog() {
+	    UIGotoDialog gotoDialog = new UIGotoDialog(this);
+	    UIUtilities.centerComponent(gotoDialog, this);
+	    gotoDialog.setVisible(true);
 	}
 
 	/**
@@ -4057,18 +4084,14 @@ public class ProjectCompendiumFrame	extends JFrame
 		Thread th = new Thread("APP.onShowAerialView") {
 			public void run() {
 	            if(fselected) {
-	            	FormatProperties.aerialView = true;
-					FormatProperties.setFormatProp( "aerialView", "true" );
-					FormatProperties.saveFormatProps();
+	            	APP_PROPERTIES.setAerialView(true);
 					updateAerialView();
 				}
 	            else {
 					if (oAerialViewDialog != null)
 						oAerialViewDialog.onCancel();
 					else {
-				       	FormatProperties.aerialView = false;
-						FormatProperties.setFormatProp( "aerialView", "false" );
-						FormatProperties.saveFormatProps();
+				       	APP_PROPERTIES.setAerialView(false);
 					}
 				}
 
@@ -4084,12 +4107,9 @@ public class ProjectCompendiumFrame	extends JFrame
 	 */
 	public void cancelAerialView() {
 
-       	FormatProperties.aerialView = false;
+       	APP_PROPERTIES.setAerialView(false);
 
 		oMenuManager.setAerialView(false);
-
-		FormatProperties.setFormatProp( "aerialView", "false" );
-		FormatProperties.saveFormatProps();
 
 		if (oAerialViewDialog != null) {
 			oAerialViewDialog.setVisible(false);
@@ -4099,11 +4119,22 @@ public class ProjectCompendiumFrame	extends JFrame
 	}
 
 	/**
+	 * Toggle the aerial view on/off
+	 */
+//	public void toggleAerialView() {
+//		if (APP_PROPERTIES.aerialView) {
+//			cancelAerialView();
+//		} else {
+//			onAerialView(true);
+//		}
+//	}
+
+	/**
 	 * Open the aerial view for the current.
 	 */
 	public void updateAerialView() {
 
-		if (FormatProperties.aerialView) {
+		if (APP_PROPERTIES.isAerialView()) {
 			UIViewFrame frame = getCurrentFrame();
 			if (frame instanceof UIMapViewFrame) {
 				Rectangle dialogBounds = null;
@@ -4213,10 +4244,10 @@ public class ProjectCompendiumFrame	extends JFrame
 		final String look = laf;
 		Thread thread = new Thread("LAF") {
 			public void run() {
-				FormatProperties.currentLookAndFeel = look;
+				APP_PROPERTIES.currentLookAndFeel = look;
 				//initLAF();
-				FormatProperties.setFormatProp( "LAF", FormatProperties.currentLookAndFeel );
-				FormatProperties.saveFormatProps();
+				APP_PROPERTIES.setFormatProp( "LAF", APP_PROPERTIES.currentLookAndFeel );
+				APP_PROPERTIES.saveFormatProps();
 			}
 		};
 		thread.start();
@@ -4232,15 +4263,13 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		Thread thread = new Thread("Skin") {
 			public void run() {
-				FormatProperties.skin = skinName;
+				APP_PROPERTIES.setSkin(skinName);
 				refreshIcons(true);
 				// Lakshmi 3/24/06 - Refresh outline View Icons
 				if(UIViewOutline.me != null){
 					UIViewOutline.me.refreshTree();
 				}
 				oToolBarManager.swapToobarSkin();
-				FormatProperties.setFormatProp( "skin", FormatProperties.skin );
-				FormatProperties.saveFormatProps();
 			}
 		};
 		thread.start();
@@ -4329,7 +4358,7 @@ public class ProjectCompendiumFrame	extends JFrame
 					if (node.getId().equals(sNodeID)) {
 						int nType = uinode.getNode().getType();
 						ImageIcon icon = null;
-	
+
 						if (nType == ICoreConstants.REFERENCE || nType == ICoreConstants.REFERENCE_SHORTCUT) {
 							String image  = node.getImage();
 							if ( image != null && !image.equals(""))
@@ -4360,7 +4389,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			}
 		}
 	}
-	
+
 	/**
 	 * Update the icon indicator of a specific nodeID
 	 * @param sNodeID, the id of the node to refresh the icon indicators for.
@@ -4426,15 +4455,15 @@ public class ProjectCompendiumFrame	extends JFrame
 			if (viewFrame instanceof UIMapViewFrame) {
 				viewpane = ((UIMapViewFrame)viewFrame).getViewPane();
 			}
-	
+
 			NodeSummary favnode = null;
-	
+
 			// CHECK DELETED STATUS
 			boolean isDeleted = false;
 			try {
 				if (oModel.getNodeService().isMarkedForDeletion(oModel.getSession(), sNodeID))
 					isDeleted = true;
-	
+
 				if (isDeleted) {
 					try {
 						NodeSummary node = ((NodeService)oModel.getNodeService()).getDeletedNodeSummaryId(oModel.getSession(), sNodeID);
@@ -4450,7 +4479,7 @@ public class ProjectCompendiumFrame	extends JFrame
 					catch(Exception io) { return; }
 					if (favnode == null)
 						return;
-	
+
 					// CHECK TO SEE IF DELETED FROM THIS VIEW ALREADY
 					NodePosition pos = oModel.getNodeService().restoreNodeView(oModel.getSession(), sNodeID, view.getId());
 					if (pos != null) {
@@ -4459,24 +4488,24 @@ public class ProjectCompendiumFrame	extends JFrame
 					}
 					else {
 						if (viewpane != null) {
-	
+
 							int nX = (viewFrame.getWidth()/2)-60;
 							int nY = (viewFrame.getHeight()/2)-60;
-	
+
 							// GET CURRENT SCROLL POSITION AND ADD THIS TO POSITIONING INFO
 							int hPos = viewFrame.getHorizontalScrollBarPosition();
 							int vPos = viewFrame.getVerticalScrollBarPosition();
-	
+
 							nX = nX + hPos;
 							nY = nY + vPos;
-	
+
 							Object exists = viewpane.get(sNodeID);
 							if (exists != null) {
 								UINode uinode = (UINode) exists;
 								viewpane.getViewPaneUI().createShortCutNode(uinode, nX, nY);
 							}
 							else {
-	
+
 								ViewPaneUI oViewPaneUI = viewpane.getViewPaneUI();
 								UINode uinode = oViewPaneUI.addNodeToView(favnode, nX, nY);
 								if (uinode != null) {
@@ -4488,9 +4517,9 @@ public class ProjectCompendiumFrame	extends JFrame
 						}
 						else {
 							if (viewFrame instanceof UIListViewFrame) {
-	
+
 								UIList uiList = ((UIListViewFrame)viewFrame).getUIList();
-	
+
 								int nodeindex = uiList.getIndexOf(sNodeID);
 								if (nodeindex != -1) {
 									int[] indexes = {nodeindex};
@@ -4501,7 +4530,7 @@ public class ProjectCompendiumFrame	extends JFrame
 								else {
 									int nY = (uiList.getNumberOfNodes() + 1) * 10;
 										int nX = 0;
-	
+
 									try {
 										NodePosition favpos = uiList.getView().addNodeToView(favnode, nX, nY);
 										uiList.insertNode(favpos, uiList.getNumberOfNodes());
@@ -4520,14 +4549,14 @@ public class ProjectCompendiumFrame	extends JFrame
 			}
 		} else {
 			String sNodeID = fav.getNodeID();
-			UIUtilities.jumpToNode(sViewID, sNodeID, "Bookmark");	
+			UIUtilities.jumpToNode(sViewID, sNodeID, "Bookmark");
 		}
 	}
 
 	/**
 	 * Create a new favorite with the given node is, label and node type.
 	 * @param sNodeID the id of the node to create a favorite for.
-	 * @param sViewID the id of the view to create a favorite for.	 
+	 * @param sViewID the id of the view to create a favorite for.
 	 * @param sLabel the label for th favorite node.
 	 * @param nType the node type of the favorite node.
 	 */
@@ -4567,7 +4596,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		refreshFavoritesMenu();
 	}
-	
+
 	/**
 	 * Delete the favorites with the given node ids.
 	 * @param vtFavorites the list of Favorites to delete.
@@ -4669,7 +4698,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 				WorkspaceView work = (WorkspaceView)workspace.elementAt(j);
 				String sViewID = work.getViewID();
-				
+
 				int width = work.getWidth();
 				int height = work.getHeight();
 				int xPos = work.getXPosition();
@@ -4679,7 +4708,7 @@ public class ProjectCompendiumFrame	extends JFrame
 				int HScroll = work.getHorizontalScrollBarPosition();
 				int VScroll = work.getVerticalScrollBarPosition();
 
-				if (sViewID.equals(sHomeViewID)) {					
+				if (sViewID.equals(sHomeViewID)) {
 					homeFrame.setBounds(xPos, yPos, width, height);
 					homeFrame.setHorizontalScrollBarPosition(HScroll, true);
 					homeFrame.setVerticalScrollBarPosition(VScroll, true);
@@ -4689,14 +4718,14 @@ public class ProjectCompendiumFrame	extends JFrame
 					}catch(Exception ex){}
 					((UIMapViewFrame)homeFrame).setSelected(true);
 					oDesktop.moveToFront(homeFrame);
-				} else {								
+				} else {
 					for(int k=0; k<countk; k++) {
 						View view = (View)views.elementAt(k);
-						if (view.getId().equals(sViewID)) {						
+						if (view.getId().equals(sViewID)) {
 							UIViewFrame oViewFrame = addViewToDesktop(view, view.getLabel(), width, height, xPos, yPos, isIcon, isMaximum, HScroll, VScroll);
 							Vector history = new Vector();
 							history.addElement(new String("Workspace"));
-							oViewFrame.setNavigationHistory(history);							
+							oViewFrame.setNavigationHistory(history);
 							break;
 						}
 					}
@@ -4896,7 +4925,14 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * Open the code (tag) maintenance dialog.
 	 */
 	public void onCodes() {
-		oMenuManager.addTagsView(true);	
+		oMenuManager.addTagsView(true);
+	}
+
+	/**
+	 * Toggle the code (tag) view
+	 */
+	public void toggleCodes() {
+		oMenuManager.toggleTagView();
 	}
 
 	/**
@@ -4963,7 +4999,7 @@ public class ProjectCompendiumFrame	extends JFrame
 			Object obj = null;
 			NodeSummary node = null;
 			for(Enumeration e = nodes; e.hasMoreElements();) {
-				
+
 				node = null;
 				obj = e.nextElement();
 				if (obj instanceof UINode) {
@@ -4978,11 +5014,11 @@ public class ProjectCompendiumFrame	extends JFrame
 					if (!node.getId().equals(this.getInBoxID()) && !node.getId().equals(this.getTrashBinID())) {
 						try {
 							node.addCode(code);
-		
+
 							// IF WE ARE RECORDING or REPLAYING A MEETING, RECORD A TAG ADDED EVENT.
 							if (ProjectCompendium.APP.oMeetingManager != null
 										&& ProjectCompendium.APP.oMeetingManager.captureEvents()) {
-		
+
 								View view  = viewFrame.getView();
 								ProjectCompendium.APP.oMeetingManager.addEvent(
 										new MeetingEvent(oMeetingManager.getMeetingID(),
@@ -4992,7 +5028,7 @@ public class ProjectCompendiumFrame	extends JFrame
 														 node,
 														 code));
 							}
-							
+
 							// REFRESH TAGS WORKING AREA.
 							oMenuManager.setNodeSelected(true);
 						}
@@ -5036,6 +5072,11 @@ public class ProjectCompendiumFrame	extends JFrame
 		}
 	}
 
+	public boolean isScribblePadOn()
+	{
+			return oToolBarManager.isScribblePadOn();
+	}
+
 	/**
 	 * Clear the scribble pad for the current map.
 	 */
@@ -5076,7 +5117,7 @@ public class ProjectCompendiumFrame	extends JFrame
 	public void onHelpAbout() {
 		if (oAboutDialog != null) {
 			oAboutDialog.setVisible(false);
-			oAboutDialog.dispose();			
+			oAboutDialog.dispose();
 		}
 
 		oAboutDialog = new UIAboutDialog(this);
@@ -5119,7 +5160,7 @@ public class ProjectCompendiumFrame	extends JFrame
 
 			NodeSummary.clearList();
 			oTrashbinNode = null;
-			oInboxNode = null;		
+			oInboxNode = null;
 
 			// update menu
 			oToolBarManager.onDatabaseClose();
@@ -5136,10 +5177,11 @@ public class ProjectCompendiumFrame	extends JFrame
 
 		if (oModel != null) {
 			oModel.cleanUp();
+			System.out.println("5514 ProjectCompendiumFrame setting oModel to null");
 			oModel= null;
 		}
-		
-		if (FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE) {
+
+		if (APP_PROPERTIES.getDatabaseType() == ICoreConstants.MYSQL_DATABASE) {
 			if (oCurrentMySQLConnection != null)
 				setTitle(ICoreConstants.MYSQL_DATABASE, oCurrentMySQLConnection.getServer(), oCurrentMySQLConnection.getProfile(), "");
 			else
@@ -5270,7 +5312,7 @@ public class ProjectCompendiumFrame	extends JFrame
 	public View getInBoxView() {
 		return (View)oInboxNode;
 	}
-	
+
 	/**
 	 * Returns the service manager.
 	 * @param ServiceManager, the service manager for this session.
@@ -5327,7 +5369,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		setWaitCursor();
 
 		oHomeView = null;
-		
+
 		if(oModel == null) {
 			JOptionPane oOptionPane = new JOptionPane("Please exit Compendium and Login again! ");
 			JDialog oDialog = oOptionPane.createDialog(oContentPane,"Login Information..");
@@ -5336,15 +5378,15 @@ public class ProjectCompendiumFrame	extends JFrame
 			oDialog.setVisible(true);
 			return;
 		}
-		
+
 		UserProfile up = oModel.getUserProfile();
 		up.initialize(oModel.getSession(),oModel);
-		
+
 		//Get the users homeview
 		oHomeView = up.getHomeView();
 		Date date = new Date();
 		String userName = up.getUserName();
-		
+
 		//if no home view try and create one
 		if(oHomeView == null) {
 			try {
@@ -5375,15 +5417,15 @@ public class ProjectCompendiumFrame	extends JFrame
 				//add to the DB
 				Code code = model.getCodeService().createCode(session, codeId, author, creationDate, modificationDate, name, description, behavior);
 				model.addCode(code);
-				up.setHomeView(oHomeView);				
+				up.setHomeView(oHomeView);
 			}
 			catch (Exception e) {
 				displayError("Error: (ProjectCompendiumFrame.setNodesAndLinks)\n\n"+e.getMessage());
 				return;
 			}
 		}
-		
-		// If the user does not have a linkview add one 
+
+		// If the user does not have a linkview add one
 		// This will probably only happen the first time after people update the new database scheme.
 		// but does not harm anything to leave this check in.
 		oInboxNode = createInBox(up);
@@ -5411,33 +5453,33 @@ public class ProjectCompendiumFrame	extends JFrame
 		}
 
 		String sTrashbinId = oModel.getUniqueID();
-		
+
 // Lakshmi (4/21/06 ) - State of Trash bin? - Default read State.
 		oTrashbinNode = NodeSummary.getNodeSummary(sTrashbinId, ICoreConstants.TRASHBIN, "", sTrashbinId , ICoreConstants.READSTATE, oModel.getUserProfile().getUserName(),
 				    						date, date, "Trash Bin", "");
 
-		NodePosition pos = oHomeView.addMemberNode(new NodePosition(oHomeView, oTrashbinNode, 
-				15, 5, date, date, Model.SHOW_TAGS_DEFAULT, Model.SHOW_TEXT_DEFAULT, 
-				Model.SHOW_TRANS_DEFAULT, Model.SHOW_WEIGHT_DEFAULT, Model.SMALL_ICONS_DEFAULT, 
-				Model.HIDE_ICONS_DEFAULT, Model.LABEL_WRAP_WIDTH_DEFAULT, Model.FONTSIZE_DEFAULT, 
-				Model.FONTFACE_DEFAULT,	Model.FONTSTYLE_DEFAULT, Model.FOREGROUND_DEFAULT.getRGB(), 
+		NodePosition pos = oHomeView.addMemberNode(new NodePosition(oHomeView, oTrashbinNode,
+				15, 5, date, date, Model.SHOW_TAGS_DEFAULT, Model.SHOW_TEXT_DEFAULT,
+				Model.SHOW_TRANS_DEFAULT, Model.SHOW_WEIGHT_DEFAULT, Model.SMALL_ICONS_DEFAULT,
+				Model.HIDE_ICONS_DEFAULT, Model.LABEL_WRAP_WIDTH_DEFAULT, Model.FONTSIZE_DEFAULT,
+				Model.FONTFACE_DEFAULT,	Model.FONTSTYLE_DEFAULT, Model.FOREGROUND_DEFAULT.getRGB(),
 				Model.BACKGROUND_DEFAULT.getRGB()));
-		
-		pos.initialize(oModel.getSession(), oModel); // Need this to set font and wrap width			
+
+		pos.initialize(oModel.getSession(), oModel); // Need this to set font and wrap width
 
 		// Begin Edit - Lakshmi 5/15/06
 		// By Default make home window as read
 		try {
 			if (oHomeView.getState() != ICoreConstants.READSTATE) {
-				oModel.getNodeService().setState(oModel.getSession(), oHomeView.getId(), 
+				oModel.getNodeService().setState(oModel.getSession(), oHomeView.getId(),
 						ICoreConstants.UNREADSTATE, ICoreConstants.READSTATE, new Date());
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		//End edit
-		
+
 		oTrashbinNode.initialize(oModel.getSession(), oModel);
 
 		// add this view to the desktop
@@ -5448,7 +5490,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		viewFrame.setVisible(true);
 
 		// Lakshmi (10/18/06) - set the initial state of inbox.
-		boolean isModified = false; 
+		boolean isModified = false;
 		View inbox = getInBoxView();
 		try {
 			inbox.initialize(oModel.getSession(), oModel);
@@ -5460,7 +5502,7 @@ public class ProjectCompendiumFrame	extends JFrame
 				if(state == ICoreConstants.UNREADSTATE){
 					isModified = true;
 					break ;
-				} 
+				}
 			}
 			if(isModified) {
 				getInBoxView().setState(ICoreConstants.MODIFIEDSTATE);
@@ -5480,15 +5522,15 @@ public class ProjectCompendiumFrame	extends JFrame
 	 * @return
 	 */
 	public View createInBox(UserProfile up) {
-		
+
 		up.initialize(oModel.getSession(), oModel);
-		
+
 		String sLinkViewID = "";
 		Date date = new Date();
 		View oInboxNode = up.getLinkView();
  		if (oInboxNode == null) {
  			String userName = up.getUserName();
- 	 		Model model = (Model)oModel;		 			
+ 	 		Model model = (Model)oModel;
 			try {
 				sLinkViewID = oModel.getUniqueID();
 				oInboxNode = (View)oModel.getNodeService().createNode(oModel.getSession(),
@@ -5505,19 +5547,19 @@ public class ProjectCompendiumFrame	extends JFrame
 						date
 						);
 
-				oInboxNode.initialize(oModel.getSession(), oModel);					
+				oInboxNode.initialize(oModel.getSession(), oModel);
 		  		IViewService vs = oModel.getViewService();
-		  		
-				NodePosition oLinkPos = vs.addMemberNode(oModel.getSession(), up.getHomeView(), 
-						(NodeSummary)oInboxNode, 
-						0, 75, date, date, false, false, false, true, false, false, 
-						Model.LABEL_WRAP_WIDTH_DEFAULT, Model.FONTSIZE_DEFAULT, 
-						Model.FONTFACE_DEFAULT,	Model.FONTSTYLE_DEFAULT, Model.FOREGROUND_DEFAULT.getRGB(), 
+
+				NodePosition oLinkPos = vs.addMemberNode(oModel.getSession(), up.getHomeView(),
+						(NodeSummary)oInboxNode,
+						0, 75, date, date, false, false, false, true, false, false,
+						Model.LABEL_WRAP_WIDTH_DEFAULT, Model.FONTSIZE_DEFAULT,
+						Model.FONTFACE_DEFAULT,	Model.FONTSTYLE_DEFAULT, Model.FOREGROUND_DEFAULT.getRGB(),
 						Model.BACKGROUND_DEFAULT.getRGB());
-				oLinkPos.initialize(oModel.getSession(), oModel);					
+				oLinkPos.initialize(oModel.getSession(), oModel);
 				oInboxNode.setSource("", CoreUtilities.unixPath(UIImages.getPathString(IUIConstants.INBOX)), userName);
 				oInboxNode.setState(ICoreConstants.READSTATE);
-				up.setLinkView((View)oInboxNode);				
+				up.setLinkView((View)oInboxNode);
 			} catch (Exception e) {
 				e.printStackTrace();
 				displayError("(ProjectCompendiumFrame.createInBox - adding inbox)\n\n"+e.getMessage());
@@ -5525,17 +5567,17 @@ public class ProjectCompendiumFrame	extends JFrame
 		} else {
 			try {
 				if (oInboxNode.getState() != ICoreConstants.READSTATE) {
-					oInboxNode.initialize(oModel.getSession(), oModel);						
+					oInboxNode.initialize(oModel.getSession(), oModel);
 					oInboxNode.setState(ICoreConstants.READSTATE);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-			}			
+			}
 		}
- 		
+
  		return oInboxNode;
 	}
-	
+
 	/**
 	 * Set the trashbin icon depending upon if there any deleted objects in the database
 	 */
@@ -5546,7 +5588,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		try {
 			String userID = oModel.getUserProfile().getId();
 			PCSession session = oModel.getSession();
-			Vector vtNodes = oModel.getNodeService().getDeletedNodeSummary(session);
+			int iDeletedNodeCount = oModel.getNodeService().iGetDeletedNodeCount(session);
 
 			UIViewFrame homeFrame = getInternalFrame(oHomeView);
 			if (homeFrame != null) {
@@ -5554,7 +5596,7 @@ public class ProjectCompendiumFrame	extends JFrame
 				if (pane != null) {
 					UINode trashbin = (UINode) pane.get(oTrashbinNode.getId());
 					if (trashbin != null) {
-						if(vtNodes.size() > 0) {
+						if(iDeletedNodeCount > 0) {
 							img = UIImages.getNodeIcon(IUIConstants.TRASHBINFULL_ICON);
 							trashbin.setIcon(img);
 						}
@@ -5596,7 +5638,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		}
 		return sID;
 	}
-	
+
 	/**
 	 * Set the trashbin icon to empty.
 	 */
@@ -5646,7 +5688,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		if(!frameFound) {
 			if (view.getModel() == null) {
 				view.initialize(oModel.getSession(), oModel);
-			}			
+			}
 			try {
 				view.initializeMembers();
 			}
@@ -5719,6 +5761,22 @@ public class ProjectCompendiumFrame	extends JFrame
 	}
 
 	/**
+	 * Check to see if a project is currently open before continuing with some earlier process.
+	 * If a project is closed, tell the user their chosen option requires an open project.
+	 * @return boolean, true if a project is open, else false;
+	 */
+	private boolean isProjectOpen2() {
+
+		if (oModel == null) {
+   			JOptionPane.showMessageDialog(this, "This operation requires you to have a project open.\nPlease open a project and try again.",
+   					"Open project required...", JOptionPane.INFORMATION_MESSAGE);
+   			return false;
+		} else {
+			return true;
+		}
+	}
+
+	/**
 	 * Add a new frame to the desktop if required for the given view and return.
 	 * Load the frame properties to apply.
 	 *
@@ -5741,6 +5799,8 @@ public class ProjectCompendiumFrame	extends JFrame
 				}
 				catch(Exception ex) {
 					displayError("Exception: (ProjectCompendiumFrame.addViewToDesktop) \n"+ex.getMessage());
+					//System.out.println("Exception: (ProjectCompendiumFrame.addViewToDesktop) \n"+ex.getMessage());
+					//ex.printStackTrace();
 				}
 
 				oDesktop.moveToFront(viewFrame);
@@ -5780,6 +5840,11 @@ public class ProjectCompendiumFrame	extends JFrame
 			isIcon = properties.getIsIcon();
 			isMaximum = properties.getIsMaximum();
 		}
+
+		try {
+			view.setState(ICoreConstants.READSTATE);
+		}  catch(Exception ex) {}
+
 
 		return addViewToDesktop(view, title, width, height, xPos, yPos, isIcon, isMaximum, nHScroll, nVScroll);
 	}
@@ -5853,6 +5918,11 @@ public class ProjectCompendiumFrame	extends JFrame
 					displayError("Exception: (ProjectCompendiumFrame.addViewToDesktop-1)\nCannot initialize View \n"+ex.getMessage());
 				}
 
+				if (xPos > getDesktop().getWidth()-64)  xPos = getDesktop().getWidth()-64;		// Bring off-screen maps back into view
+				if (yPos > getDesktop().getHeight()-64) yPos = getDesktop().getHeight()-64;
+				if (xPos < 0) xPos = 0;
+				if (yPos < 0) yPos = 0;
+
 				// CREATE NEW MAP/LIST
 				UIMapViewFrame mapFrame = null;
 				if(view.getType() == ICoreConstants.MAPVIEW) {
@@ -5876,8 +5946,8 @@ public class ProjectCompendiumFrame	extends JFrame
 						mapFrame.setHorizontalScrollBarPosition(HScroll, true);
 						mapFrame.setVerticalScrollBarPosition(VScroll, true);
 						UIViewPane pane = mapFrame.getViewPane();
-						pane.setZoom(FormatProperties.zoomLevel);
-						if (FormatProperties.zoomLevel != 1.0)
+						pane.setZoom(APP_PROPERTIES.getZoomLevel());
+						if (APP_PROPERTIES.getZoomLevel() != 1.0)
 							pane.scale();
 						viewFrame = (UIViewFrame)mapFrame;
 					}
@@ -5894,6 +5964,9 @@ public class ProjectCompendiumFrame	extends JFrame
 
 						if (view.equals(oHomeView)) {
 							listFrame.setClosable(false);
+						}
+						if (view.equals(getInBoxView())) {				// Sort inbox by Creation date
+							listFrame.getUIList().sortByCreationDate();
 						}
 						listFrame.setBounds(xPos, yPos, width, height);
 					}
@@ -6063,7 +6136,8 @@ public class ProjectCompendiumFrame	extends JFrame
 
 			// INITIATE ACTIVE CODE GROUP
 			SystemService service = (SystemService)oModel.getSystemService();
-			activeGroup	= service.getCodeGroup(oModel.getSession());
+//			activeGroup	= service.getCodeGroup(oModel.getSession());
+			activeGroup = APP_PROPERTIES.getActiveCodeGroup();
 			activeLinkGroup	= service.getLinkGroup(oModel.getSession());
 		}
 		catch(Exception ex)	{
@@ -6189,7 +6263,7 @@ public class ProjectCompendiumFrame	extends JFrame
 		aset.add(MediaSizeName.ISO_A4);
 		aset.add(new Copies(1));
 		aset.add(new JobName(currentFrame.getView().getLabel(), null));
-		
+
 		if (currentFrame instanceof UIListViewFrame) {
 			UIListViewFrame listFrame = (UIListViewFrame)currentFrame;
 			UIList uiList = listFrame.getUIList();
@@ -6342,7 +6416,7 @@ public void setupForReplay(String sSetupData, String sReplayData) {
 
 		PCSession session = oModel.getSession();
 		NodeService nodeService = (NodeService)oModel.getNodeService();
-		
+
 		UIViewFrame viewFrame = addViewToDesktop(view, view.getLabel() );
 		Vector history = new Vector();
 		history.addElement(new String("Restored"));
@@ -6351,11 +6425,11 @@ public void setupForReplay(String sSetupData, String sReplayData) {
 		// Bug Fix  - Lakshmi (9/13/06)
 		// Included check if viewFrame instanceof UIMapViewFrame to avoid ClassCastException
 		// when restoring a node to a list.
-		
+
 		ViewPaneUI viewpaneui = null;
 		if(viewFrame instanceof  UIMapViewFrame)
 			viewpaneui = ((UIMapViewFrame)viewFrame).getViewPane().getViewPaneUI();
-		
+
 		try {
 			// CHECK DELETED STATUS
 			boolean wasDeleted = false;
@@ -6517,7 +6591,7 @@ public void setupForReplay(String sSetupData, String sReplayData) {
 
 		return properties;
 	}
-	
+
 
 	/**
 	 * Save the properties of the given view to the database.
@@ -6574,7 +6648,7 @@ public void setupForReplay(String sSetupData, String sReplayData) {
 	 */
 	public void setNodeSelected(boolean selected) {
 		oToolBarManager.setNodeSelected(selected);
-		oMenuManager.setNodeSelected(selected);		
+		oMenuManager.setNodeSelected(selected);
 	}
 
 	/**
@@ -6595,7 +6669,7 @@ public void setupForReplay(String sSetupData, String sReplayData) {
 	 * @see com.compendium.ui.UIMenuManager#setPasteEnabled
 	 */
 	public void setPasteEnabled(boolean enabled) {
-		isPasteEnabled = enabled ; 
+		isPasteEnabled = enabled ;
 		oToolBarManager.setPasteEnabled(enabled);
 		oMenuManager.setPasteEnabled(enabled);
 	}

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.edits;
 
 import javax.swing.undo.*;
@@ -35,7 +34,7 @@ import com.compendium.ui.*;
  * @author	Beatrix Zimmermann
  */
 public class DeleteEdit extends PCEdit {
-	
+
 	/** The serial version id */
 	private static final long serialVersionUID = -5469147081971977733L;
 

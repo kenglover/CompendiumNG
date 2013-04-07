@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
 import java.sql.*;
@@ -65,10 +64,10 @@ public interface IUserService	extends IService {
 	 * @param boolean bIsAdministrator, true if this user is an administrator, else false.
 	 * @exception java.sql.SQLException
 	 */
-	public UserProfile insertUserProfile(PCSession session, String sUserID, String sAuthor, java.util.Date dCreationDate,
-			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean dIsAdministrator)
-			throws SQLException;
+//	public UserProfile insertUserProfile(PCSession session, String sUserID, String sAuthor, java.util.Date dCreationDate,
+//			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
+//			String sUserDescription, String sHomeViewID, boolean dIsAdministrator)
+//			throws SQLException;
 
 	/**
 	 * Inserts a new user in the database.
@@ -89,9 +88,9 @@ public interface IUserService	extends IService {
 	 */
 	public UserProfile insertUserProfile(PCSession session, String sUserID, String sAuthor, java.util.Date dCreationDate,
 			java.util.Date dModificationDate, String sLoginName, String sUserName, String sPassword,
-			String sUserDescription, String sHomeViewID, boolean bIsAdministrator, String sLinkViewID)
+			String sUserDescription, String sHomeViewID, boolean bIsAdministrator, String sLinkViewID, int iActiveStatus)
 			throws SQLException;
-	
+
 	/**
 	 * This method returns the user profile for a given user for a given project.
 	 *
@@ -124,7 +123,7 @@ public interface IUserService	extends IService {
 	 * @exception java.sql.SQLException
 	 */
 	public boolean deleteUserProfile(PCSession session, String sUserID) throws SQLException;
-	
+
 	/**
 	 * Sets the home view and returns if successful.
 	 *
@@ -165,8 +164,8 @@ public interface IUserService	extends IService {
 	 * @return IView, the hove view for the given user id.
 	 * @exception java.sql.SQLException
 	 */
-	public IView getLinkView(PCSession session, String sUserID) throws SQLException;	
-	
+	public IView getLinkView(PCSession session, String sUserID) throws SQLException;
+
 	/**
 	 * Gets a Hashtable of all user homeview ids currently in the db.
 	 *
@@ -174,7 +173,7 @@ public interface IUserService	extends IService {
 	 * @exception java.sql.SQLException
 	 */
 	public Hashtable getHomeViews(PCSession session) throws SQLException;
-	
+
 	/**
 	 * Gets a Hashtable of all user link view ids currently in the database.
 	 *
@@ -182,8 +181,8 @@ public interface IUserService	extends IService {
 	 * @return a hastable mapping LinkView id to user name.
 	 * @exception java.sql.SQLException
 	 */
-	public Hashtable getLinkViews(PCSession session) throws SQLException;	
-	
+	public Hashtable getLinkViews(PCSession session) throws SQLException;
+
 	/**
 	 * This method is called by the permission objects to register change of permission for
 	 * a single object for a group in the project. The object can be a node type or view type only.
@@ -302,4 +301,15 @@ public interface IUserService	extends IService {
 	 * @exception java.sql.SQLException
 	 */
 	public void setAdministrator(PCSession session, String sUserID, boolean oldValue, boolean newValue) throws SQLException;
+
+	/**
+	 * 	Sets the CurrentStatus field for the given user id and returns if successful.
+	 *
+	 *	@param PCSession session, the PCSession object for the database to use..
+	 *	@param sUserID, the id of the user whose link view to set.
+	 *	@param iCurrentStatus, the User's Status (active/inactive).
+	 *	@return boolean, true if it was successful, else false.
+	 *	@throws java.sql.SQLException
+	 */
+	public boolean setCurrentStatus(PCSession session, String sUserID, int iCurrentStatus) throws SQLException;
 }

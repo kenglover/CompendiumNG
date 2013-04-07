@@ -1,6 +1,6 @@
 /********************************************************************************
  *                                                                              *
- *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
+ *  (c) C 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
  *  This software is freely distributed in accordance with                      *
  *  the GNU Lesser General Public (LGPL) license, version 3 or later            *
@@ -21,7 +21,6 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 
 package com.compendium.ui.dialogs;
 
@@ -59,7 +58,7 @@ public class UIAboutDialog extends UIDialog {
 	private JLabel			lblApplicationTitle1		= null;
 
 	/** Holds a brief description of the application.*/
-	private JLabel			lblApplicationTitle2		= null;
+//	private JLabel			lblApplicationTitle2		= null;
 
 	/** Holds the version number for this copy of the Compendium application.*/
 	private JLabel			lblApplicationVersion		= null;
@@ -125,19 +124,19 @@ public class UIAboutDialog extends UIDialog {
 		gb.setConstraints(lblApplicationTitle1, gc);
 		oContentPane.add(lblApplicationTitle1);
 
-		lblApplicationTitle2 = new JLabel("A Tool for the Compendium Methodology", JLabel.CENTER);
+/*		lblApplicationTitle2 = new JLabel("A Tool for the Compendium Methodology", JLabel.CENTER);
 		lblApplicationTitle2.setFont(new Font("ARIAL", Font.BOLD, 12));
 		lblApplicationTitle2.setForeground(new Color(0,0,0));
 		gb.setConstraints(lblApplicationTitle2, gc);
 		oContentPane.add(lblApplicationTitle2);
-
+*/
 		lblApplicationVersion = new JLabel("Version: "+ICoreConstants.sAPPVERSION, JLabel.CENTER);
 		lblApplicationVersion.setFont(new Font("ARIAL", Font.PLAIN, 12));
 		lblApplicationVersion.setForeground(new Color(0, 0, 0));
 		gb.setConstraints(lblApplicationVersion, gc);
 		oContentPane.add(lblApplicationVersion);
 
-		lblApplicationdevelopedby = new JLabel("Developed by: Verizon and The Open University UK", JLabel.CENTER);
+		lblApplicationdevelopedby = new JLabel("Developed by: CogNexus, Verizon and The Open University UK", JLabel.CENTER);
 		lblApplicationdevelopedby.setFont(new Font("ARIAL", Font.PLAIN, 12));
 		lblApplicationdevelopedby.setForeground(new Color(0,0,0));
 		gb.setConstraints(lblApplicationdevelopedby, gc);
@@ -148,17 +147,17 @@ public class UIAboutDialog extends UIDialog {
 		pbHelp.setMnemonic(KeyEvent.VK_H);
 		pbHelp.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				ExecuteControl.launch("http://compendium.open.ac.uk/support/");
+				ExecuteControl.launch("http://www.cognexus.org/SCE/Compendium_Support/compendium_help.html");
 				onCancel();
 			}
 		});
 		JPanel but = new JPanel();
-		but.add(pbHelp);	
-		but.setBackground(Color.white);	
+		but.add(pbHelp);
+		but.setBackground(Color.white);
 		gb.setConstraints(but, gc);
 		oContentPane.add(but);
-		
-		lblContactInfo3 = new JButton("www.CompendiumInstitute.org");
+
+		lblContactInfo3 = new JButton("www.Cognexus.org");
 		lblContactInfo3.setBackground(new Color(255,255,255));
 		lblContactInfo3.setRequestFocusEnabled(false);
 		lblContactInfo3.setFocusPainted(false);
@@ -167,7 +166,7 @@ public class UIAboutDialog extends UIDialog {
 
 		ActionListener action = new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				ExecuteControl.launch("http://www.CompendiumInstitute.org");
+				ExecuteControl.launch("http://www.Cognexus.org");
 				onCancel();
 			}
 		};
@@ -194,7 +193,7 @@ public class UIAboutDialog extends UIDialog {
 		getRootPane().setDefaultButton(pbOK);
 		gc.insets = new Insets(5,5,5,5);
 
-		lblCopyright = new JLabel("Copyright (c) 1998-2007 Verizon and The Open University UK", JLabel.CENTER);
+		lblCopyright = new JLabel("Copyright (c) 1998-2011 The CogNexus Institute", JLabel.CENTER);
 		lblCopyright.setFont(new Font("ARIAL", Font.BOLD, 10));
 		lblCopyright.setForeground(new Color(0,0,0));
 		gb.setConstraints(lblCopyright, gc);
@@ -203,38 +202,38 @@ public class UIAboutDialog extends UIDialog {
         // ACKNOWLEDGEMENT SECTION
 		BorderLayout layout4 = new BorderLayout();
 		layout4.setHgap(0);
-		layout4.setVgap(0);		
+		layout4.setVgap(0);
 		JPanel panel4 = new JPanel(layout4);
-		panel4.setBorder(null);		
+		panel4.setBorder(null);
 		panel4.setOpaque(false);
-		panel4.setBackground(Color.white);	
-       		
+		panel4.setBackground(Color.white);
+
         JLabel label8 = new JLabel("Support for Compendium gratefully acknowledged:");
-        JLabel label9 = new JLabel("USA: NASA, Hewlett Foundation");       
+        JLabel label9 = new JLabel("USA: SCE, NASA, Hewlett Foundation");
         JLabel label10 = new JLabel("UK: EPSRC, ESRC, JISC, e-Science Programme");
-        
- 		label8.setHorizontalAlignment(SwingUtilities.CENTER);	
-		label9.setHorizontalAlignment(SwingUtilities.CENTER);		 		
-		label10.setHorizontalAlignment(SwingUtilities.CENTER);		
-        
+
+ 		label8.setHorizontalAlignment(SwingUtilities.CENTER);
+		label9.setHorizontalAlignment(SwingUtilities.CENTER);
+		label10.setHorizontalAlignment(SwingUtilities.CENTER);
+
         label8.setFont(new Font("ARIAL", Font.BOLD, 10));
         label9.setFont(new Font("ARIAL", Font.BOLD, 10));
         label10.setFont(new Font("ARIAL", Font.BOLD, 10));
- 		    	
+
 		label8.setBackground(Color.white);
 		label9.setBackground(Color.white);
 		label10.setBackground(Color.white);
-        
+
         panel4.add(label8, BorderLayout.NORTH);
         panel4.add(label9, BorderLayout.CENTER);
         panel4.add(label10, BorderLayout.SOUTH);
 
         //panel4.setSize(300, 45);
         //panel4.setLocation(0,370);
-          
-		gb.setConstraints(panel4, gc);        
-        oContentPane.add(panel4);		
-		
+
+		gb.setConstraints(panel4, gc);
+        oContentPane.add(panel4);
+
 		// initialize the dialog
 		oContentPane.setBorder(new EmptyBorder(10,10,10,10));
 

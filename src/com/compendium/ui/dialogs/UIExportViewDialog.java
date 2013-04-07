@@ -22,27 +22,24 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
+import static com.compendium.ProjectCompendium.*;
+
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import javax.swing.*;
-import javax.swing.event.*;
 import javax.swing.border.*;
-import javax.swing.table.*;
-import java.text.*;
 
-import com.compendium.core.ICoreConstants;
 import com.compendium.core.datamodel.*;
 import com.compendium.core.datamodel.services.*;
-import com.compendium.core.CoreUtilities;
 
 import com.compendium.ProjectCompendium;
 import com.compendium.io.html.*;
-import com.compendium.ui.plaf.*;
 import com.compendium.ui.*;
 
 /**
@@ -53,25 +50,16 @@ import com.compendium.ui.*;
 public class UIExportViewDialog extends UIDialog implements IUIConstants, ActionListener, ItemListener {
 
 	/** The file holding the saved export properties.*/
-	public static final String	EXPORT_OPTIONS_FILE_NAME = "System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"ExportOptions.properties";
+	public static final String	EXPORT_OPTIONS_FILE_NAME = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"ExportOptions.properties";
 
 	/** The default export directory.*/
 	public static String		exportDirectory = ProjectCompendium.sHOMEPATH+ProjectCompendium.sFS+"Exports";
-
-	/** Loaded export option properties.*/
-	private Properties		optionsProperties = null;
-
-	/** The list of views to export.*/
-	private Vector			oViews  			= new Vector(51);
 
 	/** Holds information for the depth check.*/
 	private Hashtable		htCheckDepth 		= new Hashtable(51);
 
 	/** Holds child data when calculating export views data.*/
 	private Hashtable		htChildrenAdded 	= new Hashtable(51);
-
-	/** The parent view for this dialog.*/
-	private JFrame 			oParent 			= null;
 
 	/** The pane for the dialog's contents.*/
 	private Container 		oContentPane 		= null;
@@ -97,44 +85,8 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 	/** The button to open the views dialog.*/
 	private UIButton		pbViews 			= null;
 
-	/** The depth to export to.*/
-	private int				depth 				= 0;
-
 	/** Has the user cancelled the export.*/
 	private boolean 		exportCancelled 	= false;
-
-	/** Holds whether to include local reference file in the export.*/
-	private boolean			bIncludeReferences	= false;
-
-	/** Holds whether to export to a zip file.*/
-	private boolean 		bToZip 				= false;
-
-	/** Indicates whether to include a HTML title.*/
-	private boolean			bContentsTitle 		= false;
-
-	/** Indicates whether to export selected views only.*/
-	private boolean			bSelectedViewsOnly 	= false;
-
-	/** Indicates whether to export views selected from the view dialog.*/
-	private boolean			bOtherViews 		= false;
-
-	/** Indicates whether to sort the side menu item alphabetically or not.*/
-	private boolean			bSortMenu			= false;
-
-	/** Indicates whether to open the export file after completion (only if not zipped). */
-	private boolean			bOpenAfter			= false;
-	
-	/** open external refs and images in new window.*/
-	private boolean 		bOpenNew			= true;
-	
-	/** Holds whether to exclude detial popups for node with only anchor id info in them.*/
-	private boolean			bNoDetailPopup		= false; 
-
-	/** Holds whether to exclude detial popups for all nodes.*/
-	private boolean			bNoDetailPopupAtAll	= false; 
-
-	/** Store if the user wants heading on maps.*/
-	private boolean 		bAddTitle 			= false;	
 
 	/** Used to enter the label the user want as the title for the main html file.*/
 	private JTextField		titleField 			= null;
@@ -159,7 +111,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 
 	/** Lets the user specify if they want node links to be opened in a new window or not.*/
 	private JCheckBox		cbOpenNew			= null;
-	
+
 	/** Whether to exclude detail popups when they only contain the anchor id*/
 	private JCheckBox 		cbNoDetailPopup		= null;
 
@@ -207,7 +159,16 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 
 	/** The text area to list the views selected for export.*/
 	private JTextArea 		oTextArea  	= null;
-		
+
+    /** The check box which adds feedback function into exported files.*/
+    private JCheckBox       feedbackCheckBox    = null;
+
+    /** The label for the feedback email.*/
+    private JLabel          feedbackEmailLabel  = null;
+
+    /** The text field for feedback email.*/
+    private JTextField      feedbackEmailField  = null;
+
 
 	/**
 	 * Constructor.
@@ -223,7 +184,6 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		this.currentFrame = frame;
 		this.currentView = frame.getView();
 
-     	oParent = parent;
 		font = new Font("Dialog", Font.PLAIN, 12);
 
       	oContentPane = getContentPane();
@@ -232,8 +192,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		oContentPane.add(createContentPanel(), BorderLayout.CENTER);
 		oContentPane.add(createButtonPanel(), BorderLayout.SOUTH);
 
-		loadProperties();
-		applyLoadedProperties();
+		applyExportProperties();
 
 		pack();
 		setResizable(false);
@@ -267,203 +226,6 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 	}
 
 	/**
-	 * Draws the dialogs contents.
-	 */
-	/*private JPanel createContentPanel() {
-
-		JPanel contentPanel = new JPanel();
-		contentPanel.setBorder(new EmptyBorder(10,10,10,10));
-
-		GridBagLayout gb = new GridBagLayout();
-		GridBagConstraints gc = new GridBagConstraints();
-		contentPanel.setLayout(gb);
-
-		gc.anchor = GridBagConstraints.WEST;
-
-		int y=0;
-		Insets old = gc.insets;
-
-		allNodes = new JRadioButton("Export all nodes on current map");
-		allNodes.setSelected(false);
-		allNodes.addItemListener(this);
-		allNodes.setFont(font);
-		gc.gridy = y;
-		gc.gridwidth=2;
-		y++;
-		gb.setConstraints(allNodes, gc);
-		contentPanel.add(allNodes);
-
-		selectedViews = new JRadioButton("Export selected views on current view only");
-		selectedViews.setSelected(false);
-		selectedViews.addItemListener(this);
-		selectedViews.setFont(font);
-		gc.gridy = y;
-		gc.gridwidth=2;
-		y++;
-		gb.setConstraints(selectedViews, gc);
-		contentPanel.add(selectedViews);
-
-		otherViews = new JRadioButton("Export other views instead of current: ");
-		otherViews.setSelected(false);
-		otherViews.addItemListener(this);
-		otherViews.setFont(font);
-		gc.gridy = y;
-		gc.gridwidth=1;
-		gb.setConstraints(otherViews, gc);
-		contentPanel.add(otherViews);
-
-		pbViews = new UIButton("Select Other Views to Export");
-		pbViews.setEnabled(false);
-		pbViews.addActionListener(this);
-		pbViews.setFont(font);
-		gc.gridy = y;
-		gc.gridwidth=1;
-		y++;
-		gb.setConstraints(pbViews, gc);
-		contentPanel.add(pbViews);
-
-		ButtonGroup group1 = new ButtonGroup();
-		group1.add(allNodes);
-		group1.add(selectedViews);
-		group1.add(otherViews);
-
-		JSeparator sep = new JSeparator();
-		gc.gridy = y;
-		gc.gridwidth=2;
-		gc.insets = new Insets(7,0,0,0);
-		y++;
-		gc.fill = GridBagConstraints.HORIZONTAL;
-		gb.setConstraints(sep, gc);
-		contentPanel.add(sep);
-		gc.fill = GridBagConstraints.NONE;
-
-		gc.insets = old;
-
-		currentDepth = new JRadioButton("Export immediate depth only");
-		currentDepth.setSelected(true);
-		currentDepth.addItemListener(this);
-		currentDepth.setFont(font);
-		gc.gridy = y;
-		gc.gridwidth=1;
-		gb.setConstraints(currentDepth, gc);
-		contentPanel.add(currentDepth);
-
-		oneDepth = new JRadioButton("Export nodes to one depth level");
-		oneDepth.setSelected(true);
-		oneDepth.addItemListener(this);
-		oneDepth.setFont(font);
-		gc.gridy = y;
-		gc.gridwidth=1;
-		y++;
-		gb.setConstraints(oneDepth, gc);
-		contentPanel.add(oneDepth);
-
-		fullDepth = new JRadioButton("Export nodes to full depth");
-		fullDepth.setSelected(false);
-		fullDepth.addItemListener(this);
-		fullDepth.setFont(font);
-		gc.gridwidth=2;
-		gc.gridy = y;
-		y++;
-		gb.setConstraints(fullDepth, gc);
-		contentPanel.add(fullDepth);
-
-		ButtonGroup rgGroup = new ButtonGroup();
-		rgGroup.add(currentDepth);
-		rgGroup.add(oneDepth);
-		rgGroup.add(fullDepth);
-
-		sep = new JSeparator();
-		gc.gridy = y;
-		gc.gridwidth=2;
-		gc.insets = new Insets(0,0,7,0);
-		y++;
-		gc.fill = GridBagConstraints.HORIZONTAL;
-		gb.setConstraints(sep, gc);
-		contentPanel.add(sep);
-		gc.fill = GridBagConstraints.NONE;
-
-		gc.insets = old;
-
-		cbContentsTitle = new JCheckBox("Set Table of Contents Title");
-		cbContentsTitle.addItemListener(this);
-		cbContentsTitle.setFont(font);
-		gc.gridy = y;
-		gc.gridwidth=2;
-		y++;
-		gb.setConstraints(cbContentsTitle, gc);
-		contentPanel.add(cbContentsTitle);
-
-		titleLabel = new JLabel("HTML title for the base web page: ");
-		titleLabel.setFont(font);
-		titleLabel.setEnabled(false);
-		gc.gridy = y;
-		gc.gridwidth=1;
-		gb.setConstraints(titleLabel, gc);
-		contentPanel.add(titleLabel);
-
-		titleField = new JTextField("");
-		titleField.setEditable(false);
-		titleField.setColumns(20);
-		titleField.setMargin(new Insets(2,2,2,2));
-		titleField.setEnabled(true);
-		gc.gridy = y;
-		gc.gridwidth=1;
-		y++;
-		gb.setConstraints(titleField, gc);
-		contentPanel.add(titleField);
-
-		sep = new JSeparator();
-		gc.gridy = y;
-		gc.gridwidth=2;
-		gc.insets = new Insets(3,0,7,0);
-		y++;
-		gc.fill = GridBagConstraints.HORIZONTAL;
-		gb.setConstraints(sep, gc);
-		contentPanel.add(sep);
-		gc.fill = GridBagConstraints.NONE;
-
-		gc.insets = old;
-
-      	cbSortMenu = new JCheckBox("List Views Alphabetically on Menu?");
-      	cbSortMenu.setSelected(false);
-		cbSortMenu.addItemListener(this);
-		cbSortMenu.setFont(font);
-		gc.gridy = y;
-		y++;
-		gb.setConstraints(cbSortMenu, gc);
-      	contentPanel.add(cbSortMenu);
-
-      	cbWithRefs = new JCheckBox("Include referenced files?");
-      	cbWithRefs.setSelected(false);
-		cbWithRefs.addItemListener(this);
-		cbWithRefs.setFont(font);
-		gc.gridy = y;
-		y++;
-		gb.setConstraints(cbWithRefs, gc);
-      	contentPanel.add(cbWithRefs);
-
-      	cbToZip = new JCheckBox("Export to Zip Archive?");
-      	cbToZip.setSelected(false);
-		cbToZip.addItemListener(this);
-		cbToZip.setFont(font);
-		gc.gridy = y;
-		y++;
-		gb.setConstraints(cbToZip, gc);
-      	contentPanel.add(cbToZip);
-
-      	cbOpenAfter = new JCheckBox("Open Export after completion?");
-      	cbOpenAfter.setSelected(false);
-		cbOpenAfter.addItemListener(this);
-		cbOpenAfter.setFont(font);
-		gc.gridy = y;
-		gb.setConstraints(cbOpenAfter, gc);
-      	contentPanel.add(cbOpenAfter);
-
-		return contentPanel;
-	}*/
-
-	/**
 	 * Draw the first tabbed panel with the primary export options.
 	 */
 	private JPanel createContentPanel() {
@@ -472,7 +234,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		contentPanel.setBorder(new EmptyBorder(10,10,10,10));
 
 		//STAGE ONE
-		
+
 		GridBagLayout gb1 = new GridBagLayout();
 		GridBagConstraints gc1 = new GridBagConstraints();
 		contentPanel.setLayout(gb1);
@@ -481,7 +243,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 
 		JPanel innerpanel = new JPanel(gb1);
 		//innerpanel.setBorder(new TitledBorder("Views to Export"));
-		
+
 		JLabel lbltitle1 = new JLabel("Views to Export");
 		lbltitle1.setFont(font);
 		lbltitle1.setForeground(Color.blue);
@@ -490,14 +252,14 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		y++;
 		gb1.setConstraints(lbltitle1, gc1);
 		innerpanel.add(lbltitle1);
-		
+
 		allNodes = new JRadioButton("Current View only");
 		allNodes.setSelected(false);
 		allNodes.addItemListener(this);
 		allNodes.setFont(font);
 		gc1.gridy = y;
 		gc1.gridx = 0;
-		gc1.gridheight = 1;		
+		gc1.gridheight = 1;
 		gc1.gridwidth=2;
 		y++;
 		gb1.setConstraints(allNodes, gc1);
@@ -508,7 +270,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		selectedViews.addItemListener(this);
 		selectedViews.setFont(font);
 		gc1.gridy = y;
-		gc1.gridx = 0;		
+		gc1.gridx = 0;
 		gc1.gridheight = 1;
 		gc1.gridwidth=2;
 		y++;
@@ -520,8 +282,8 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		otherViews.addItemListener(this);
 		otherViews.setFont(font);
 		gc1.gridy = y;
-		gc1.gridx = 0;		
-		gc1.gridheight = 1;		
+		gc1.gridx = 0;
+		gc1.gridheight = 1;
 		gc1.gridwidth=1;
 		//y++;
 		gb1.setConstraints(otherViews, gc1);
@@ -541,40 +303,40 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 
 		JPanel textpanel = new JPanel(new BorderLayout());
 		textpanel.setBorder(new EmptyBorder(0,10,0,0));
-		
+
 		JLabel label = new JLabel("Chosen Views:");
 		label.setFont(font);
 		label.setAlignmentX(SwingConstants.LEFT);
 		textpanel.add(label, BorderLayout.NORTH);
-					
+
 		oTextArea = new JTextArea("");
 		oTextArea.setEditable(false);
 		JScrollPane scrollpane = new JScrollPane(oTextArea);
 		scrollpane.setPreferredSize(new Dimension(220,120));
 		textpanel.add(scrollpane, BorderLayout.CENTER);
-		
+
 		gc1.gridy = 0;
-		gc1.gridx = 2;		
+		gc1.gridx = 2;
 		gc1.gridwidth=1;
 		gc1.gridheight = 4;
-		gb1.setConstraints(textpanel, gc1);		
+		gb1.setConstraints(textpanel, gc1);
 		innerpanel.add(textpanel);
-		
+
 		ButtonGroup group1 = new ButtonGroup();
 		group1.add(allNodes);
 		group1.add(selectedViews);
 		group1.add(otherViews);
 
-		//STAGE TWO		
+		//STAGE TWO
 		GridBagLayout gb2 = new GridBagLayout();
 		GridBagConstraints gc2 = new GridBagConstraints();
 		contentPanel.setLayout(gb2);
 		y=0;
 		gc2.anchor = GridBagConstraints.WEST;
 		JPanel innerpanel2 = new JPanel(gb2);
-		
+
 		//innerpanel2.setBorder(new TitledBorder("Depth to Export Views at"));
-		
+
 		JSeparator sep2 = new JSeparator();
 		gc2.gridy = y;
 		gc2.gridwidth=2;
@@ -584,9 +346,9 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		gb2.setConstraints(sep2, gc2);
 		innerpanel2.add(sep2);
 		gc2.fill = GridBagConstraints.NONE;
-		
+
 		gc2.insets = new Insets(0,0,0,0);
-		
+
 		JLabel lbltitle2 = new JLabel("Depth To Export Views To");
 		lbltitle2.setFont(font);
 		lbltitle2.setForeground(Color.blue);
@@ -595,7 +357,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		y++;
 		gb2.setConstraints(lbltitle2, gc2);
 		innerpanel2.add(lbltitle2);
-		
+
 		currentDepth = new JRadioButton("Nodes in view only");
 		currentDepth.setSelected(true);
 		currentDepth.addItemListener(this);
@@ -612,8 +374,8 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		y++;
 		gb2.setConstraints(lbl, gc2);
 		innerpanel2.add(lbl);
-		
-		oneDepth = new JRadioButton("One level down"); 
+
+		oneDepth = new JRadioButton("One level down");
 		oneDepth.setSelected(true);
 		oneDepth.addItemListener(this);
 		oneDepth.setFont(font);
@@ -629,7 +391,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		y++;
 		gb2.setConstraints(lbl1, gc2);
 		innerpanel2.add(lbl1);
-		
+
 		fullDepth = new JRadioButton("Full depth");
 		fullDepth.setSelected(false);
 		fullDepth.addItemListener(this);
@@ -658,7 +420,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.anchor = GridBagConstraints.WEST;
 		y=0;
-						
+
 		gc.gridy = y;
 		gc.gridwidth=2;
 		y++;
@@ -670,7 +432,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		y++;
 		gb.setConstraints(innerpanel2, gc);
 		contentPanel.add(innerpanel2);
-		
+
 		JSeparator sep = new JSeparator();
 		gc.gridy = y;
 		gc.gridwidth=2;
@@ -689,7 +451,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		y++;
 		gb.setConstraints(cbContentsTitle, gc);
 		contentPanel.add(cbContentsTitle);
-		
+
 		titleLabel = new JLabel("HTML title for the base web page: ");
 		titleLabel.setFont(font);
 		titleLabel.setEnabled(false);
@@ -717,9 +479,11 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		gc.fill = GridBagConstraints.HORIZONTAL;
 		gb.setConstraints(sep, gc);
 		contentPanel.add(sep);
-		
+
 		gc.fill = GridBagConstraints.NONE;
 		gc.insets = new Insets(0,0,0,0);
+
+		y = addFeedbackSection(contentPanel, gb, gc, y);
 
      	cbNoDetailPopup = new JCheckBox("Exclude detail popups which only contain the node label & anchor id?");
      	cbNoDetailPopup.setToolTipText("If a node detail popup has no other details than the node label and anchor id, don't create it.");
@@ -769,7 +533,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		y++;
 		gb.setConstraints(cbSortMenu, gc);
       	contentPanel.add(cbSortMenu);
-		
+
       	cbWithRefs = new JCheckBox("Include referenced files?");
       	cbWithRefs.setSelected(false);
 		cbWithRefs.addItemListener(this);
@@ -798,8 +562,92 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 
 		return contentPanel;
 	}
-	
-	/**
+
+	private int addFeedbackSection(JPanel contentPanel, GridBagLayout gb,
+	        GridBagConstraints gc, int verticalOffset)
+	{
+	    int y = verticalOffset;
+
+        feedbackCheckBox = new JCheckBox("Add \"Send Feedback\" button to exported pages");
+        feedbackCheckBox.addItemListener(this);
+        feedbackCheckBox.setFont(font);
+        feedbackCheckBox.setSelected(EXPORT_PROPERTIES.isAddFeedback());
+
+        gc.gridy = y;
+        gc.gridwidth=2;
+        y++;
+        gb.setConstraints(feedbackCheckBox, gc);
+        contentPanel.add(feedbackCheckBox);
+
+        feedbackEmailLabel = new JLabel("Email address to receive feedback:");
+        feedbackEmailLabel.setFont(font);
+        feedbackEmailLabel.setEnabled(false);
+        gc.gridy = y;
+        gc.gridwidth=1;
+        gb.setConstraints(feedbackEmailLabel, gc);
+        contentPanel.add(feedbackEmailLabel);
+
+        feedbackEmailField = new JTextField("");
+        feedbackEmailField.setEditable(EXPORT_PROPERTIES.isAddFeedback());
+        feedbackEmailField.setColumns(20);
+        feedbackEmailField.setMargin(new Insets(2,2,2,2));
+        feedbackEmailField.setEnabled(true);
+        feedbackEmailField.setText(EXPORT_PROPERTIES.getFeedbackEmail());
+        feedbackEmailField.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent e) {
+            }
+
+            public void focusLost(FocusEvent e) {
+                if (!e.isTemporary()) {
+                    String content = feedbackEmailField.getText();
+                    if (content != null) {
+                        content = content.trim();
+                        feedbackEmailField.setText(content);
+                        if (!isValidEmailAddress(content)) {
+                            ProjectCompendium.APP.displayMessage(
+                                "Please enter valid Email Feebback.",
+                                "Warning");
+                            SwingUtilities.invokeLater(new FocusGrabber(
+                                    feedbackEmailField));
+                        } else {
+                            EXPORT_PROPERTIES.setFeedbackEmail(content);
+                        }
+                    }
+                }
+            }
+
+            private boolean isValidEmailAddress(String emailAddress) {
+                String expression =
+                    "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+                CharSequence inputStr = emailAddress;
+                Pattern pattern = Pattern.compile(
+                    expression, Pattern.CASE_INSENSITIVE);
+                Matcher matcher = pattern.matcher(inputStr);
+                return matcher.matches();
+            }
+        });
+        gc.gridy = y;
+        gc.gridwidth=1;
+        y++;
+        gb.setConstraints(feedbackEmailField, gc);
+        contentPanel.add(feedbackEmailField);
+
+        JSeparator sep = new JSeparator();
+        gc.gridy = y;
+        gc.gridwidth=2;
+        gc.insets = new Insets(3,0,5,0);
+        y++;
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gb.setConstraints(sep, gc);
+        contentPanel.add(sep);
+
+        gc.fill = GridBagConstraints.NONE;
+        gc.insets = new Insets(0,0,0,0);
+
+        return y;
+    }
+
+    /**
 	 * Open the views dialog.
 	 */
 	private void onViews() {
@@ -844,8 +692,8 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
     	Object source = e.getItemSelectable();
 
 		if (source == cbContentsTitle) {
-			bContentsTitle = cbContentsTitle.isSelected();
-			if (bContentsTitle) {
+		    EXPORT_PROPERTIES.setAddContentsTitle(cbContentsTitle.isSelected());
+			if (EXPORT_PROPERTIES.isAddContentsTitle()) {
 				if (titleField != null) {
 					titleField.setEditable(true);
 					titleLabel.setEnabled(true);
@@ -862,74 +710,110 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 			}
 		}
 		else if (source == cbWithRefs) {
-			bIncludeReferences = cbWithRefs.isSelected();
+			EXPORT_PROPERTIES.setIncludeRefs(cbWithRefs.isSelected());
 		}
 		else if (source == cbToZip) {
-			bToZip = cbToZip.isSelected();
-			if (bToZip) {
-				cbOpenAfter.setSelected(false);
-				cbOpenAfter.setEnabled(false);
-				bOpenAfter = false;
+		    EXPORT_PROPERTIES.setZip(cbToZip.isSelected());
+
+		    if (EXPORT_PROPERTIES.isZip()) {
+		        cbOpenAfter.setSelected(false);
 			}
-			else {
-				cbOpenAfter.setEnabled(true);
-			}
+            cbOpenAfter.setEnabled(!EXPORT_PROPERTIES.isZip());
+		    EXPORT_PROPERTIES.setOpenAfter(cbOpenAfter.isSelected());
 		}
 		else if (source == cbOpenAfter) {
-			bOpenAfter = cbOpenAfter.isSelected();
+		    EXPORT_PROPERTIES.setOpenAfter(cbOpenAfter.isSelected());
 		}
 		else if (source == fullDepth && fullDepth.isSelected()) {
-			depth = 2;
+			EXPORT_PROPERTIES.setDepth(2);
 		}
 		else if (source == oneDepth && oneDepth.isSelected()) {
-			depth = 1;
+		    EXPORT_PROPERTIES.setDepth(1);
 		}
 		else if (source == currentDepth && currentDepth.isSelected()) {
-			depth = 0;
+		    EXPORT_PROPERTIES.setDepth(0);
 		}
 		else if (source == selectedViews && selectedViews.isSelected()) {
-			bOtherViews = false;
-			bSelectedViewsOnly = true;
+		    EXPORT_PROPERTIES.setOtherViews(false);
+			EXPORT_PROPERTIES.setSelectedViewsOnly(true);
 
 			pbViews.setEnabled(false);
-			updateViewsList();			
+			updateViewsList();
 		}
 		else if (source == allNodes && allNodes.isSelected()) {
-			bOtherViews = false;
-			bSelectedViewsOnly = false;
+		    EXPORT_PROPERTIES.setOtherViews(false);
+			EXPORT_PROPERTIES.setSelectedViewsOnly(false);
 
 			pbViews.setEnabled(false);
-			updateViewsList();			
+			updateViewsList();
 		}
 		else if (source == otherViews && otherViews.isSelected()) {
-			bOtherViews = true;
-			bSelectedViewsOnly = false;
+		    EXPORT_PROPERTIES.setOtherViews(true);
+			EXPORT_PROPERTIES.setSelectedViewsOnly(false);
 
 			pbViews.setEnabled(true);
-			updateViewsList();			
+			updateViewsList();
 		}
 		else if (source == cbSortMenu) {
-			bSortMenu = cbSortMenu.isSelected();
+		    EXPORT_PROPERTIES.setSortMenu(cbSortMenu.isSelected());
 		}
 		else if (source == cbMapTitle) {
-			bAddTitle = cbMapTitle.isSelected();
-		}	
+		    EXPORT_PROPERTIES.setAddMapTitles(cbMapTitle.isSelected());
+		}
 		else if (source == cbOpenNew) {
-			bOpenNew = cbOpenNew.isSelected();
+		    EXPORT_PROPERTIES.setOpenInNew(cbOpenNew.isSelected());
 		}
 		else if (source == cbNoDetailPopup) {
-			bNoDetailPopup = cbNoDetailPopup.isSelected();
-			if (bNoDetailPopup) {
-				bNoDetailPopupAtAll = false;
+		    EXPORT_PROPERTIES.setNoDetailPopup(cbNoDetailPopup.isSelected());
+			if (EXPORT_PROPERTIES.isNoDetailPopup()) {
+			    EXPORT_PROPERTIES.setNoDetailPopupAtAll(false);
 				cbNoDetailPopupAtAll.setSelected(false);
 			}
-		} else if (source == cbNoDetailPopupAtAll) {			
-			bNoDetailPopupAtAll = cbNoDetailPopupAtAll.isSelected();
-			if (bNoDetailPopupAtAll) {
-				bNoDetailPopup = false;
+		} else if (source == cbNoDetailPopupAtAll) {
+		    EXPORT_PROPERTIES.setNoDetailPopupAtAll(
+		        cbNoDetailPopupAtAll.isSelected());
+			if (EXPORT_PROPERTIES.isNoDetailPopupAtAll()) {
+			    EXPORT_PROPERTIES.setNoDetailPopup(false);
 				cbNoDetailPopup.setSelected(false);
 			}
-		}		
+        } else if (source == feedbackCheckBox) {
+            EXPORT_PROPERTIES.setAddFeedback(feedbackCheckBox.isSelected());
+            if (feedbackCheckBox.isSelected()) {
+                if (feedbackEmailField != null) {
+                    feedbackEmailField.setEditable(true);
+                    feedbackEmailLabel.setEnabled(true);
+                    feedbackEmailField.repaint();
+
+                    cbNoDetailPopup.setSelected(false);
+                    cbNoDetailPopup.setEnabled(false);
+
+                    cbNoDetailPopupAtAll.setSelected(false);
+                    cbNoDetailPopupAtAll.setEnabled(false);
+
+                    EXPORT_PROPERTIES.setFeedbackEmail(feedbackEmailField.getText());
+                    EXPORT_PROPERTIES.setNoDetailPopup(cbNoDetailPopup.isSelected());
+                    EXPORT_PROPERTIES.setNoDetailPopupAtAll(
+                        cbNoDetailPopupAtAll.isSelected());
+                }
+            } else {
+                if (feedbackEmailField != null) {
+                    feedbackEmailField.setText("");
+                    feedbackEmailField.setEditable(false);
+                    feedbackEmailLabel.setEnabled(false);
+                    feedbackEmailField.repaint();
+
+                    cbNoDetailPopup.setEnabled(true);
+                    cbNoDetailPopupAtAll.setEnabled(true);
+
+                    EXPORT_PROPERTIES.setFeedbackEmail(feedbackEmailField.getText());
+                    EXPORT_PROPERTIES.setNoDetailPopup(cbNoDetailPopup.isSelected());
+                    EXPORT_PROPERTIES.setNoDetailPopupAtAll(
+                        cbNoDetailPopupAtAll.isSelected());
+                }
+            }
+        } else if (source == feedbackEmailField) {
+            EXPORT_PROPERTIES.setFeedbackEmail(feedbackEmailField.getText());
+        }
   	}
 
 	/**
@@ -943,9 +827,9 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 			View view = (View)views.elementAt(i);
 			sViews += view.getLabel()+"\n";
 		}
-		oTextArea.setText(sViews);											
+		oTextArea.setText(sViews);
 	}
-	
+
 	/** Return true if any views are selected, else false;*/
 	private boolean hasSelectedViews() {
 
@@ -996,7 +880,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 				}
 			}
 		}
-		else if (bSelectedViewsOnly) {
+		else if (EXPORT_PROPERTIES.isSelectedViewsOnly()) {
 			Enumeration nodes = null;
 			Vector vtTemp = new Vector();
 			if (currentFrame instanceof UIMapViewFrame) {
@@ -1019,7 +903,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 					}
 				}
 			}
-			
+
 			//SORT VIEWS VECTOR BY DECENDING Y POSITION
 			for (int i = 0; i < vtTemp.size(); i++) {
 				int yPosition = ((NodePosition)vtTemp.elementAt(i)).getYPos();
@@ -1039,15 +923,15 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 				NodePosition nodePos = (NodePosition)vtTemp.elementAt(j);
 				View innerview = (View)nodePos.getNode();
 				selectedViews.addElement(innerview);
-			}			
+			}
 		}
 		else {
 			selectedViews.addElement(currentView);
 		}
-		
+
 		return selectedViews;
-	}	
-	
+	}
+
 	/**
 	 * Process an export request.
 	 */
@@ -1140,9 +1024,9 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 			final String fsUserTitle = sUserTitle;
 			Thread thread = new Thread("UIExportViewDialog.onExport") {
 				public void run() {
-					htmlViews = new HTMLViews(exportDirectory, fFileName, fsUserTitle, bIncludeReferences, bToZip, bSortMenu, bAddTitle, bOpenNew, bNoDetailPopup, bNoDetailPopupAtAll);
-					htmlViews.processViews(selectedViews, bOpenAfter);
-					if (bOpenAfter) {
+					htmlViews = new HTMLViews(exportDirectory, fFileName, fsUserTitle, EXPORT_PROPERTIES.isIncludeRefs(), EXPORT_PROPERTIES.isZip(), EXPORT_PROPERTIES.isSortMenu(), EXPORT_PROPERTIES.isOpenInNew(), EXPORT_PROPERTIES.isNoDetailPopup(), EXPORT_PROPERTIES.isNoDetailPopupAtAll());
+					htmlViews.processViews(selectedViews, EXPORT_PROPERTIES.isOpenAfter());
+					if (EXPORT_PROPERTIES.isOpenAfter()) {
 						ExecuteControl.launch(exportDirectory +ProjectCompendium.sFS+fFileName);
 					}
 					onCancel();
@@ -1174,22 +1058,22 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 				selectedViews.addElement(view);
 			}
 
-			if (depth == 1) {
+			if (EXPORT_PROPERTIES.getDepth() == 1) {
 				for (int i = 0; i < selection.length; i++) {
 					View view = (View)table.getModel().getValueAt(selection[i],0);
-					htCheckDepth.put((Object)view.getId(), view);
+					htCheckDepth.put(view.getId(), view);
 					selectedViews = getChildViews(view, selectedViews, false);
 				}
 			}
-			else if (depth == 2) {
+			else if (EXPORT_PROPERTIES.getDepth() == 2) {
 				for (int i = 0; i < selection.length; i++) {
 					View view = (View)table.getModel().getValueAt(selection[i],0);
-					htCheckDepth.put((Object)view.getId(), view);
+					htCheckDepth.put(view.getId(), view);
 					selectedViews = getChildViews(view, selectedViews, true);
 				}
 			}
 		}
-		else if (bSelectedViewsOnly) {
+		else if (EXPORT_PROPERTIES.isSelectedViewsOnly()) {
 
 			Enumeration nodes = null;
 
@@ -1238,7 +1122,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 				selectedViews.addElement(innerview);
 			}
 
-			if (depth == 1) {
+			if (EXPORT_PROPERTIES.getDepth() == 1) {
 				for (int i = 0; i < vtTemp.size(); i++) {
 					NodePosition nodePos = (NodePosition)vtTemp.elementAt(i);
 					View view = (View)nodePos.getNode();
@@ -1246,7 +1130,7 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 					selectedViews = getChildViews(view, selectedViews, false);
 				}
 			}
-			if (depth == 2) {
+			if (EXPORT_PROPERTIES.getDepth() == 2) {
 				for (int i = 0; i < vtTemp.size(); i++) {
 					NodePosition nodePos = (NodePosition)vtTemp.elementAt(i);
 					View view = (View)nodePos.getNode();
@@ -1258,11 +1142,11 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 		else {
 			selectedViews.addElement(currentView);
 
-			if (depth == 1) {
+			if (EXPORT_PROPERTIES.getDepth() == 1) {
 				htCheckDepth.put((Object)currentView.getId(), currentView);
 				selectedViews = getChildViews(currentView, selectedViews, false);
 			}
-			else if (depth == 2) {
+			else if (EXPORT_PROPERTIES.getDepth() == 2) {
 				htCheckDepth.put((Object)currentView.getId(), currentView);
 				selectedViews = getChildViews(currentView, selectedViews, true);
 			}
@@ -1371,166 +1255,50 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 	/**
 	 * Apply the loaded export properties to the interface elements.
 	 */
-	private void applyLoadedProperties() {
+	private void applyExportProperties() {
 
-		cbContentsTitle.setSelected(bContentsTitle);
+		cbContentsTitle.setSelected(EXPORT_PROPERTIES.isAddContentsTitle());
 
-		if (depth == 2) {
+		if (EXPORT_PROPERTIES.getDepth() == 2) {
 			fullDepth.setSelected(true);
 		}
-		else if (depth == 1) {
+		else if (EXPORT_PROPERTIES.getDepth() == 1) {
 			oneDepth.setSelected(true);
 		}
 		else {
 			currentDepth.setSelected(true);
 		}
 
-		cbOpenAfter.setSelected(bOpenAfter);
-		cbToZip.setSelected(bToZip);
-		cbSortMenu.setSelected(bSortMenu);
-		cbMapTitle.setSelected(bAddTitle);
-		cbOpenNew.setSelected(bOpenNew);
-		cbNoDetailPopup.setSelected(bNoDetailPopup);		
-		cbNoDetailPopupAtAll.setSelected(bNoDetailPopupAtAll);
-		cbWithRefs.setSelected(bIncludeReferences);
+		cbOpenAfter.setSelected(EXPORT_PROPERTIES.isOpenAfter());
+		cbToZip.setSelected(EXPORT_PROPERTIES.isZip());
+		cbSortMenu.setSelected(EXPORT_PROPERTIES.isSortMenu());
+		cbMapTitle.setSelected(EXPORT_PROPERTIES.isAddMapTitles());
+		cbOpenNew.setSelected(EXPORT_PROPERTIES.isOpenInNew());
+		feedbackCheckBox.setSelected(EXPORT_PROPERTIES.isAddFeedback());
+		if (EXPORT_PROPERTIES.isAddFeedback()) {
+		    feedbackEmailLabel.setEnabled(true);
+		    feedbackEmailField.setText(EXPORT_PROPERTIES.getFeedbackEmail());
+            cbNoDetailPopup.setSelected(false);
+            cbNoDetailPopup.setEnabled(false);
+            cbNoDetailPopupAtAll.setSelected(false);
+            cbNoDetailPopupAtAll.setEnabled(false);
+		} else {
+    		cbNoDetailPopup.setSelected(EXPORT_PROPERTIES.isNoDetailPopup());
+    		cbNoDetailPopupAtAll.setSelected(EXPORT_PROPERTIES.isNoDetailPopupAtAll());
+		}
+		cbWithRefs.setSelected(EXPORT_PROPERTIES.isIncludeRefs());
 
 		if (!hasSelectedViews()) {
-			bSelectedViewsOnly = false;
+		    EXPORT_PROPERTIES.setSelectedViewsOnly(false);
 			selectedViews.setEnabled(false);
-		} 
-		selectedViews.setSelected(bSelectedViewsOnly);		
-		otherViews.setSelected(bOtherViews);
+		}
+		selectedViews.setSelected(EXPORT_PROPERTIES.isSelectedViewsOnly());
+		otherViews.setSelected(EXPORT_PROPERTIES.isOtherViews());
 
-		if (!bSelectedViewsOnly && !bOtherViews)
-			allNodes.setSelected(true);		
-	}
-
-	/**
-	 * Load the saved properties for exporting.
-	 */
-	private void loadProperties() {
-
-		File optionsFile = new File(EXPORT_OPTIONS_FILE_NAME);
-		optionsProperties = new Properties();
-		if (optionsFile.exists()) {
-			try {
-				optionsProperties.load(new FileInputStream(EXPORT_OPTIONS_FILE_NAME));
-
-				String value = optionsProperties.getProperty("includerefs");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bIncludeReferences = true;
-					} else {
-						bIncludeReferences = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("zip");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bToZip = true;
-					} else {
-						bToZip = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("depth");
-				if (value != null) {
-					if (value.equals("1")) {
-						depth = 1;
-					} else if (value.equals("2")) {
-						depth = 2;
-					} else {
-						depth = 0;
-					}
-				}
-
-				value = optionsProperties.getProperty("selectedviewsonly");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bSelectedViewsOnly = true;
-					}
-					else {
-						bSelectedViewsOnly = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("otherviews");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bOtherViews = true;
-					}
-					else {
-						bOtherViews = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("contentstitle");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bContentsTitle = true;
-					} else {
-						bContentsTitle = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("sortmenu");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bSortMenu = true;
-					} else {
-						bSortMenu = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("openafter");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bOpenAfter = true;
-					} else {
-						bOpenAfter = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("addmaptitles");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bAddTitle = true;
-					} else {
-						bAddTitle = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("openinnew");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bOpenNew = true;
-					} else {
-						bOpenNew = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("nodetailpopup");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bNoDetailPopup = true;
-					} else {
-						bNoDetailPopup = false;
-					}
-				}
-
-				value = optionsProperties.getProperty("nodetailpopupatall");
-				if (value != null) {
-					if (value.toLowerCase().equals("yes")) {
-						bNoDetailPopupAtAll = true;
-					} else {
-						bNoDetailPopupAtAll = false;
-					}
-				}
-				
-			} catch (IOException e) {
-				ProjectCompendium.APP.displayError("Error reading export options properties. Default values will be used");
-			}
+		if (!EXPORT_PROPERTIES.isSelectedViewsOnly()
+		        && !EXPORT_PROPERTIES.isOtherViews())
+		{
+		    allNodes.setSelected(true);
 		}
 	}
 
@@ -1543,90 +1311,9 @@ public class UIExportViewDialog extends UIDialog implements IUIConstants, Action
 			viewsDialog.dispose();
 
 		setVisible(false);
-
-		try {
-			if (bIncludeReferences == true) {
-				optionsProperties.put("includerefs", "yes");
-			} else {
-				optionsProperties.put("includerefs", "no");
-			}
-
-			if (bToZip == true) {
-				optionsProperties.put("zip", "yes");
-			} else {
-				optionsProperties.put("zip", "no");
-			}
-
-			if (depth == 2) {
-				optionsProperties.put("depth", "2");
-			} else if (depth == 1) {
-				optionsProperties.put("depth", "1");
-			} else {
-				optionsProperties.put("depth", "0");
-			}
-
-			if (bSelectedViewsOnly == true) {
-				optionsProperties.put("selectedviewsonly", "yes");
-			} else {
-				optionsProperties.put("selectedviewsonly", "no");
-			}
-
-			if (bOtherViews == true) {
-				optionsProperties.put("otherviews", "yes");
-			} else {
-				optionsProperties.put("otherviews", "no");
-			}
-
-			if (bContentsTitle == true) {
-				optionsProperties.put("contentstitle", "yes");
-			} else {
-				optionsProperties.put("contentstitle", "no");
-			}
-
-			if (bSortMenu == true) {
-				optionsProperties.put("sortmenu", "yes");
-			} else {
-				optionsProperties.put("sortmenu", "no");
-			}
-
-			if (bOpenAfter == true) {
-				optionsProperties.put("openafter", "yes");
-			} else {
-				optionsProperties.put("openafter", "no");
-			}
-
-			if (bAddTitle == true) {
-				optionsProperties.put("addmaptitles", "yes");
-			} else {
-				optionsProperties.put("addmaptitles", "no");
-			}
-
-			if (bOpenNew == true) {
-				optionsProperties.put("openinnew", "yes");
-			} else {
-				optionsProperties.put("openinnew", "no");
-			}
-	
-			if (bNoDetailPopup == true) {
-				optionsProperties.put("nodetailpopup", "yes");
-			} else {
-				optionsProperties.put("nodetailpopup", "no");
-			}
-
-			if (bNoDetailPopupAtAll == true) {
-				optionsProperties.put("nodetailpopupatall", "yes");
-			} else {
-				optionsProperties.put("nodetailpopupatall", "no");
-			}
-
-			optionsProperties.store(new FileOutputStream(EXPORT_OPTIONS_FILE_NAME), "Export Options");
-		}
-		catch (IOException e) {
-			ProjectCompendium.APP.displayError("IO error occured while saving export options.");
-		}
-
 		ProjectCompendium.APP.setDefaultCursor();
-
 		dispose();
+
+		EXPORT_PROPERTY_MANAGER.save();
 	}
 }

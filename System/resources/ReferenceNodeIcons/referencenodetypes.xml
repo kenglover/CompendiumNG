@@ -69,24 +69,34 @@ type (starts_with|ends_with|contains|length_equals|length_less|length_more|isDir
 	<reference_node_type name="Word File" icon="word.gif" icon_small="word_sm.gif">
 		<match_group appended_operator="or">
 			<match term=".doc" type="ends_with" />
+			<match term=".docx" type="ends_with" />
+			<match term=".docm" type="ends_with" />
 			<match term=".odt" type="ends_with" />			
 		</match_group>
 	</reference_node_type>	
 	<reference_node_type name="Access File" icon="access.gif" icon_small="access_sm.gif">
 		<match_group appended_operator="or">
 			<match term=".mdb" type="ends_with" />
+			<match term=".accdb" type="ends_with" />
 			<match term=".odb" type="ends_with" />			
 		</match_group>
 	</reference_node_type>
 	<reference_node_type name="Excel File" icon="excel.gif" icon_small="excel_sm.gif">
 		<match_group appended_operator="or">
 			<match term=".xls" type="ends_with" />
+			<match term=".xlsx" type="ends_with" />
+			<match term=".xlsm" type="ends_with" />
 			<match term=".ods" type="ends_with" />			
 		</match_group>
 	</reference_node_type>
 	<reference_node_type name="PowerPoint File" icon="powerpoint.gif" icon_small="powerpoint_sm.gif">
 		<match_group appended_operator="or">
 			<match term=".ppt" type="ends_with" />
+			<match term=".pptx" type="ends_with" />
+			<match term=".pptm" type="ends_with" />
+			<match term=".pps" type="ends_with" />
+			<match term=".ppsx" type="ends_with" />
+			<match term=".ppsm" type="ends_with" />
 			<match term=".odp" type="ends_with" />			
 		</match_group>
 	</reference_node_type>

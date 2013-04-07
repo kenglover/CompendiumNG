@@ -22,11 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.sql.SQLException;
-import java.util.Enumeration;
 import java.util.*;
 
 import com.compendium.core.datamodel.services.*;
@@ -54,7 +52,7 @@ public interface IModel {
 	 * @throws SQLExcpetion
 	 */
 	public void loadProjectPreferences() throws SQLException;
-	
+
 	/**
 	 * Save all project preferneces to the database.
 	 * @return true if all went well.
@@ -67,20 +65,34 @@ public interface IModel {
 	 * @return
 	 */
 	//public String getProjectPreference(String sPreference);
-	
+
 	/**
 	 * Set the value for the given preference both locally AND in the DATABASE
 	 * @param sPreference the preference property name.
 	 * @param sValue the preference property value.
 	 */
 	public void setProjectPreference(String sPreference, String sValue) throws SQLException;
-	
+
 	/**
 	 *	Returns the model name of this model object.
 	 *
 	 *	@return String, the model name or "".
 	 */
 	public String getModelName();
+
+	/**
+	 * Returns the linkedFilesPath value
+	 *
+	 * @return String, the value of the linkedFilesPath setting
+	 */
+	public String getlinkedFilesPath();
+
+	/**
+	 * Returns the linkedFilesFlat value
+	 *
+	 * @return boolean, the value of the linkedFilesFlat setting
+	 */
+	public boolean getlinkedFilesFlat();
 
 	/**
 	 * Set the session id for this model.
@@ -360,19 +372,35 @@ public interface IModel {
 	 * @return Vector of all users
 	 */
 	public Vector getUsers();
-	
+
 	/**
 	 * Load the list of all users.
 	 */
-	public void loadUsers() throws SQLException;	
-	
+	public void loadUsers() throws SQLException;
+
 	/**
 	 * Get the list of all users home view and inbox ids
 	 * @return Hashtable of all user home and link ids as the keys and user names as the values.
 	 */
 	public Hashtable getUserViews();
-	
-	
+
+	/**
+	 * Remove a specific User Profile from the vtUsers list.  This gets called when
+	 * a user ID gets deleted via the UIUserManagerDialog
+	 *
+	 * @param String sUserID - UserID of the person being removed
+	 */
+	public void removeUserProfile(String sUserID);
+
+
+	/**
+	 * Updates info for the given User in the in-memory UserProfile cache
+	 *
+	 * @param UserProfile up - tehUserProfile to update (or add)
+	 */
+	public void updateUserProfile(UserProfile up);
+
+
 // NODES - NODE CACHE NOT USED AT PRESENT
 
 
@@ -457,7 +485,7 @@ public interface IModel {
 // CODES
 
 	/**
-	 * Checks if a code with the passed name already exists in the data 
+	 * Checks if a code with the passed name already exists in the data
 	 * and does not have the the given code id.
 	 * @param sCodeID the code id to ignore
 	 * @param sName the code name to check.
@@ -592,4 +620,5 @@ public interface IModel {
 	 * Help to clear up variables used by this object to assist with garbage collection.
 	 */
 	public void cleanUp();
+
 }

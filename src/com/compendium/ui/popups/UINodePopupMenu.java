@@ -22,10 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.popups;
 
+import static com.compendium.ProjectCompendium.*;
+
 import java.awt.event.*;
+import java.net.URLEncoder;
 import java.util.*;
 import java.awt.*;
 import java.sql.SQLException;
@@ -48,6 +50,7 @@ import com.compendium.ui.dialogs.UIImportDialog;
 import com.compendium.ui.dialogs.UIImportFlashMeetingXMLDialog;
 import com.compendium.ui.dialogs.UIReadersDialog;
 import com.compendium.ui.dialogs.UITrashViewDialog;
+import com.compendium.ui.dialogs.UISendMailDialog;
 import com.compendium.io.udig.UDigClientSocket;
 
 /**
@@ -116,13 +119,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 
 	/** The JMenuItem to change the selected nodes to Map nodes.*/
 	private JMenuItem		miTypeMap				= null;
-
-	/** The JMenu to send information to IX Panels.*/
-	private JMenu			mnuSendToIX				= null;
-
-	/** The JMenu to send information to a Jabber client.*/
-	private JMenu			mnuSendToJabber			= null;
-
+	
 	/** The JMenu which holds the import options.*/
 	private JMenu			mnuImport				= null;
 
@@ -143,19 +140,20 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 
 	/** The JMenuItem to export to a HTML Views.*/
 	private JMenuItem		miExportHTMLView		= null;
+	private JMenuItem		miExportWordDoc			= null;
 
 	/** The JMenuItem to export to XML.*/
 	private JMenuItem		miExportXMLView			= null;
 
 	/** The JMenuItem to import XML.*/
 	private JMenuItem		miImportXMLView			= null;
-	
+
 	/** The menu item to export a HTML view with the XML included.*/
-	private JMenuItem		miExportHTMLViewXML		= null;	
-	
+	private JMenuItem		miExportHTMLViewXML		= null;
+
 	/** The menu item to import Flashmeeting XML.*/
 	private JMenuItem		miImportXMLFlashmeeting = null;
-	
+
 	/** The JMenuItem to move the node's detail text into its label.*/
 	private JMenuItem		miMoveDetail			= null;
 
@@ -197,16 +195,16 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 	//private JMenuItem		miMediaStream			= null;
 
 	/** The JMenu item that holds CaliMaker search options.*/
-	private JMenu			mnuClaiMaker			= null;
+//	private JMenu			mnuClaiMaker			= null;
 
 	/** The JMenuItem to opena browser window and run a ClaiMaker concept search for the current node's labale text.*/
-	private JMenuItem		miClaiConcepts			= null;
+	//private JMenuItem		miClaiConcepts			= null;
 
 	/** The JMenuItem to opena browser window and run a ClaiMaker neightbourhood search for the current node's labale text.*/
-	private JMenuItem		miClaiNeighbourhood		= null;
+//	private JMenuItem		miClaiNeighbourhood		= null;
 
 	/** The JMenuItem to opena browser window and run a ClaiMaker document search for the current node's labale text.*/
-	private JMenuItem		miClaiDocuments			= null;
+	//private JMenuItem		miClaiDocuments			= null;
 
 	/** Open a broswer window and run a search on Goolge for the current node's label text.*/
 	private JMenuItem		miGoogleSearch			= null;
@@ -214,18 +212,15 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 	/** The JMenu to holds links to Reference nodes contained in the node if it is a map or a view.*/
 	private JMenu			mnuRefNodes				= null;
 
-	/** The JMenuItem which communicates with the meeting replay Jabber account.*/
-	private JMenuItem		miMeetingReplay			= null;
-
 	/** The JJMenuItem which assigns the media index of the focused node to all other selected nodes.*/
 	private JMenuItem		miAssignMediaIndex		= null;
-	
+
 	/** The menu item to open a map in UDIG.*/
 	private JMenuItem		miUDIGMap				= null;
 
 	/** The menu item to add node label as property to parent udig map point in UDIG.*/
 	private JMenuItem		miUDIGProperty			= null;
-	
+
 	/** The menu item to format all transclusion of this node to this node's formatting.*/
 	private JMenuItem		miFormatTransclusions 	= null;
 
@@ -235,9 +230,9 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 	/** The menu item to create an internal reference node to this node.*/
 	private JMenuItem		miInternalReference		= null;
 
-	/** The menu to list users to to select from to sent node to thier in box.*/
-	private JMenu			mnuToInBox				= null;
-	
+	/** The menu to send node to user's in boxes.*/
+	private JMenuItem		miToInBox				= null;
+
 
 	/** The x value for the location of this popup menu.*/
 	private int				nX						= 0;
@@ -254,12 +249,9 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 	/** The ViewPaneUI object associated with this popup menu.*/
 	private ViewPaneUI		oViewPaneUI				= null;
 
-	/** The base url string to sun claimaker searches.*/
-	private String 		claiMakerServer 			= "";
-
 	/** The platform specific shortcut key used to access menus and thier options.*/
 	private int 		shortcutKey;
-	
+
 	/** Holds the check data when looping to update formats.*/
 	private	Hashtable  htCheckFormatNodes 			= new Hashtable();
 
@@ -277,10 +269,10 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 
 		shortcutKey = ProjectCompendium.APP.shortcutKey;
 		setNode(nodeui);
-		
+
 		int nType = nodeui.getUINode().getNode().getType();
 
-		/*String sId = nodeui.getUINode().getNode().getId();		
+		/*String sId = nodeui.getUINode().getNode().getId();
 		String sInbox = ProjectCompendium.APP.getInBoxID();
 		if (sId.equals(sInbox)) {
 			miMenuItemOpen = new JMenuItem("Contents");
@@ -296,19 +288,19 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			miMenuItemViews = new JMenuItem("Views");
 			miMenuItemViews.addActionListener(this);
 			miMenuItemViews.setMnemonic(KeyEvent.VK_V);
-			add(miMenuItemViews);			
-			
-			if (ProjectCompendium.isMac && (FormatProperties.macMenuBar 
+			add(miMenuItemViews);
+
+			if (ProjectCompendium.isMac && (FormatProperties.macMenuBar
 					|| (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) ) {
 				UIUtilities.removeMenuMnemonics(getSubElements());
 			}
-			
+
 			pack();
 			setSize(WIDTH,HEIGHT);
-			
+
 			return;
 		}
-		
+
 		if( nType == ICoreConstants.TRASHBIN) {
 
 			miMenuItemOpen = new JMenuItem("Open Trashbin");
@@ -322,11 +314,11 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			miMenuItemEmpty.addActionListener(this);
 			add(miMenuItemEmpty);
 
-			if (ProjectCompendium.isMac && (FormatProperties.macMenuBar 
+			if (ProjectCompendium.isMac && (FormatProperties.macMenuBar
 					|| (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) ) {
 				UIUtilities.removeMenuMnemonics(getSubElements());
 			}
-			
+
 			pack();
 			setSize(WIDTH,HEIGHT);
 			return;
@@ -338,14 +330,14 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			miAssignMediaIndex.setToolTipText("Assign the Video Index of this node to the other select nodes");
 			miAssignMediaIndex.addActionListener(this);
 			add(miAssignMediaIndex);
-
+/*          commented out with jabber
 			if (ProjectCompendium.APP.oMeetingManager.getMeetingType() == MeetingManager.REPLAY) {
 				miMeetingReplay = new JMenuItem("Replay Video");
 				miMeetingReplay.addActionListener(this);
 				add(miMeetingReplay);
 			}
-			addSeparator();
-		}
+			addSeparator();  */
+		}  
 
 		miMenuItemOpen = new JMenuItem("Contents");
 		miMenuItemOpen.setMnemonic(KeyEvent.VK_O);
@@ -424,62 +416,21 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		add(miNewMap);
 
 		String sSource = nodeui.getUINode().getNode().getSource();
-		
+
 		if (!sSource.startsWith(ICoreConstants.sINTERNAL_REFERENCE)) {
 			miInternalReference = new JMenuItem("Create Internal Reference Node");
 			miInternalReference.setToolTipText("Create a Reference node with an internal reference to this node");
 			miInternalReference.setMnemonic(KeyEvent.VK_I);
 			miInternalReference.addActionListener(this);
 			add(miInternalReference);
-				
-			mnuToInBox = new JMenu("Send To Inbox Of...");
-			mnuToInBox.setToolTipText("Send Internal Reference node pointing to this node to selected User's Inbox");
-			mnuToInBox.setMnemonic(KeyEvent.VK_B);
-			mnuToInBox.addActionListener(this);		
-			
-			View oHomeView = ProjectCompendium.APP.getHomeView();
-			boolean isHomeView = false;
-			if (oHomeView.getId().equals(oViewPane.getView().getId())) {
-				isHomeView = true;
-			}
-			
-			IModel oModel = ProjectCompendium.APP.getModel();	
-			UserProfile up = null;
-			
-			if (isHomeView) {
-				up = oModel.getUserProfile();
-				final View foView = up.getLinkView();				
-				final UserProfile fup = up;
-				JMenuItem item = new JMenuItem(up.getUserName());
-				item.setToolTipText("Add as 'Go To' node in your Inbox");				
-				item.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						onCreateInternalLinkInView(foView, fup);
-					}
-				});
-				mnuToInBox.add(item);	
-			} else {
-				Vector vtUsers = oModel.getUsers();
-				int count = vtUsers.size();
-				for (int i=0; i<count; i++) {
-					up = (UserProfile)vtUsers.elementAt(i);
-					JMenuItem item = new JMenuItem(up.getUserName());
-					item.setToolTipText("Add as 'Go To' node in this user's Inbox");
-					
-					final View foView = up.getLinkView();				
-					final UserProfile fup = up;
-					item.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							onCreateInternalLinkInView(foView, fup);
-						}
-					});
-					mnuToInBox.add(item);	
-				}
-			}
-			
-			add(mnuToInBox);
+
+			miToInBox = new JMenuItem("Send Node via C-Mail");
+			miToInBox.setToolTipText("Send Internal Reference node pointing to this node to selected Users' Inbox");
+			miToInBox.setMnemonic(KeyEvent.VK_B);
+			miToInBox.addActionListener(this);
+			add(miToInBox);
 		}
-		
+
 		miFormatTransclusions = new JMenuItem("Apply Format To All Transclusions");
 		miFormatTransclusions.setToolTipText("Apply this node's formatting to all its transclusions");
 		miFormatTransclusions.setMnemonic(KeyEvent.VK_F);
@@ -500,14 +451,14 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 
 		View parentView = oViewPane.getView();
 		String sParentSource = parentView.getSource();
-		if (sParentSource.startsWith("UDIG") && FormatProperties.startUDigCommunications) {
+		if (sParentSource.startsWith("UDIG") && APP_PROPERTIES.isStartUDigCommunications()) {
 			miUDIGProperty = new JMenuItem("Add Label To Parent Map Point", UIImages.get(IUIConstants.UDIG_ICON));
 			miUDIGProperty.addActionListener(this);
 			miUDIGProperty.setMnemonic(KeyEvent.VK_I);
-			add(miUDIGProperty);	
+			add(miUDIGProperty);
 			addSeparator();
 		}
-		
+
 		if (nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT ||
 			nType == ICoreConstants.LISTVIEW || nType == ICoreConstants.LIST_SHORTCUT ) {
 
@@ -517,17 +468,17 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			}
 			else {
 				view = (View)nodeui.getUINode().getNode();
-			} 
+			}
 
 			sSource = view.getSource();
-			if (sSource.startsWith("UDIG") && FormatProperties.startUDigCommunications) {
+			if (sSource.startsWith("UDIG") && APP_PROPERTIES.isStartUDigCommunications()) {
 				miUDIGMap = new JMenuItem("Open uDig Map", UIImages.get(IUIConstants.UDIG_ICON));
 				miUDIGMap.addActionListener(this);
 				miUDIGMap.setMnemonic(KeyEvent.VK_M);
-				add(miUDIGMap);	
+				add(miUDIGMap);
 				addSeparator();
 			}
-			
+
 			try {view.initializeMembers();}
 			catch(Exception ex) {}
 
@@ -587,7 +538,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		miImportXMLFlashmeeting.setMnemonic(KeyEvent.VK_F);
 		miImportXMLFlashmeeting.addActionListener(this);
 		mnuImport.add(miImportXMLFlashmeeting);
-		
+
 		miFileImport = new JMenu("Questmap File...");
 		miFileImport.setMnemonic(KeyEvent.VK_Q);
 		miFileImport.addActionListener(this);
@@ -625,6 +576,11 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		miExportHTMLOutline.addActionListener(this);
 		mnuExport.add(miExportHTMLOutline);
 
+		miExportWordDoc = new JMenuItem("Word doc...");
+		//miExportWordDoc.setMnemonic(KeyEvent.VK_O);
+		miExportWordDoc.addActionListener(this);
+		mnuExport.add(miExportWordDoc);
+
 		miExportHTMLView = new JMenuItem("Web Maps...");
 		miExportHTMLView.setMnemonic(KeyEvent.VK_M);
 		miExportHTMLView.addActionListener(this);
@@ -635,7 +591,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		miExportHTMLViewXML.setMnemonic(KeyEvent.VK_P);
 		miExportHTMLViewXML.addActionListener(this);
 		mnuExport.add(miExportHTMLViewXML);
-		
+
 		miSaveAsJpeg = new JMenuItem("Jpeg File...");
 		miSaveAsJpeg.setMnemonic(KeyEvent.VK_J);
 		miSaveAsJpeg.addActionListener(this);
@@ -643,7 +599,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 
 		add(mnuExport);
 		addSeparator();
-		
+
 		miGoogleSearch = new JMenuItem("Search Google");
 		miGoogleSearch.addActionListener(this);
 		miGoogleSearch.setMnemonic(KeyEvent.VK_G);
@@ -652,26 +608,6 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		// SEND TO OPTIONS
 
 		boolean addSep = false;
-		if (ProjectCompendiumFrame.jabber != null &&
-								ProjectCompendiumFrame.jabber.getRoster().hasMoreElements()) {
-			addSep = true;
-			mnuSendToJabber = new JMenu("Send To Jabber");
-			mnuSendToJabber.setMnemonic(KeyEvent.VK_J);
-			mnuSendToJabber.setEnabled(false);
-			add(mnuSendToJabber);
-			ProjectCompendium.APP.drawJabberRoster( mnuSendToJabber, oNode.getUINode().getNode() );
-		}
-
-		if (ProjectCompendiumFrame.ixPanel != null &&
-								ProjectCompendiumFrame.ixPanel.getRoster().hasMoreElements()) {
-			addSep = true;
-			mnuSendToIX = new JMenu("Send To IX");
-			mnuSendToIX.setMnemonic(KeyEvent.VK_X);
-			mnuSendToIX.setEnabled(false);
-			add(mnuSendToIX);
-			ProjectCompendium.APP.drawIXRoster( mnuSendToIX, oNode.getUINode().getNode() );
-		}
-
 		if ( addSep )
 			addSeparator();
 
@@ -701,7 +637,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		add(miFavorites);
 
 		addSeparator();
-
+/*
 		if (ProjectCompendium.APP.isClaiMakerConnected()) {
 
 			claiMakerServer = ProjectCompendium.APP.getClaiMakerServer();
@@ -726,7 +662,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			mnuClaiMaker.add(miClaiDocuments);
 			addSeparator();
 		}
-
+*/
 		miMoveDetail = new JMenuItem("Move Detail Into Label");
 		miMoveDetail.addActionListener(this);
 		miMoveDetail.setMnemonic(KeyEvent.VK_E);
@@ -738,25 +674,25 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		add(miMoveLabel);
 
 		addSeparator();
-		
+
 		miMenuItemReaders = new JMenuItem("Readers");
 		miMenuItemReaders.addActionListener(this);
 		miMenuItemReaders.setMnemonic(KeyEvent.VK_R);
 		add(miMenuItemReaders);
-		
+
 		miMenuItemMarkSeen = new JMenuItem("Mark Seen");
 		miMenuItemMarkSeen.addActionListener(this);
 		miMenuItemMarkSeen.setMnemonic(KeyEvent.VK_M);
-		add(miMenuItemMarkSeen);				
-		
+		add(miMenuItemMarkSeen);
+
 		miMenuItemMarkUnseen = new JMenuItem("Mark Unseen");
 		miMenuItemMarkUnseen.addActionListener(this);
 		miMenuItemMarkUnseen.setMnemonic(KeyEvent.VK_N);
-		add(miMenuItemMarkUnseen);		
+		add(miMenuItemMarkUnseen);
 		//Lakshmi (4/25/06) - if node is in read state enable mark unseen
 		// and disable mark seen and vice versa
 		int state = oNode.getUINode().getNode().getState();
-		
+
 		if(state == ICoreConstants.READSTATE){
 			miMenuItemMarkSeen.setEnabled(false);
 		} else if(state == ICoreConstants.UNREADSTATE) {
@@ -777,7 +713,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 		/**
 		 * If on the Mac OS and the Menu bar is at the top of the OS screen, remove the menu shortcut Mnemonics.
 		 */
-		if (ProjectCompendium.isMac && (FormatProperties.macMenuBar || (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) )
+		if (ProjectCompendium.isMac && (APP_PROPERTIES.isMacMenuBar() || (!APP_PROPERTIES.isMacMenuBar() && !APP_PROPERTIES.isMacMenuUnderline())) )
 			UIUtilities.removeMenuMnemonics(getSubElements());
 
 		pack();
@@ -802,10 +738,11 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 
 		ProjectCompendium.APP.setWaitCursor();
 
-		if (source.equals(miMeetingReplay)) {
-			ProjectCompendium.APP.oMeetingManager.sendMeetingReplay(oNode);
-			oNode.getUINode().requestFocus();
-		} else if (source.equals(miImportCurrentView)) {
+		//if (source.equals(miMeetingReplay)) {
+		//	ProjectCompendium.APP.oMeetingManager.sendMeetingReplay(oNode);
+		//	oNode.getUINode().requestFocus();
+		//} else
+		if (source.equals(miImportCurrentView)) {
 			onImportFile(false);
 		} else if (source.equals(miImportMultipleViews)) {
 			onImportFile(true);
@@ -815,21 +752,26 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			ProjectCompendium.APP.onSaveAsJpeg();
 		} else if (source.equals(miExportHTMLOutline)) {
 			onExportFile();
+		} else if (source.equals(miExportWordDoc)) {
+			onExportWordDoc();
 		} else if (source.equals(miExportHTMLView)) {
 			onExportView();
 		} else if (source.equals(miExportXMLView)) {
 			onXMLExport(false);
 		} else if (source.equals(miImportXMLView)) {
-			onXMLImport();		
+			onXMLImport();
 		} else if (source.equals(miExportHTMLViewXML)) {
 			ProjectCompendium.APP.onFileExportPower();
 		} else if (source.equals(miImportXMLFlashmeeting)) {
 			UIImportFlashMeetingXMLDialog dlg = new UIImportFlashMeetingXMLDialog(ProjectCompendium.APP);
 			UIUtilities.centerComponent(dlg, ProjectCompendium.APP);
-			dlg.setVisible(true);							
+			dlg.setVisible(true);
 		} else if (source.equals(miInternalReference)) {
 			onCreateInternalLink();
-		}		
+		} else if (source.equals(miToInBox)) {
+			pickInBoxRecipients();
+		}
+
 		else if (source.equals(miUDIGMap)) {
 			if (ProjectCompendium.APP.oUDigCommunicationManager != null) {
 				String mapid = oNode.getUINode().getNode().getSource();
@@ -842,9 +784,9 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 				String sNotSent = "";
 				String sDate = CoreCalendar.getCurrentDateStringFull();
 				String sDetail = "";
-				IModel model = ProjectCompendium.APP.getModel();				
+				IModel model = ProjectCompendium.APP.getModel();
 				String sAuthor = model.getUserProfile().getUserName();
-				Code oCode = null;				
+				Code oCode = null;
 				try {
 					oCode = CoreUtilities.checkCreateCode("UDIG", model, model.getSession(), sAuthor);
 				} catch(Exception e) {
@@ -852,8 +794,8 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 				}
 
 				if(oViewPane.getNumberOfSelectedNodes() > 1) {
-					String sData = "";					
-					Vector vtMatches = new Vector(10);					
+					String sData = "";
+					Vector vtMatches = new Vector(10);
 					for(Enumeration e = oViewPane.getSelectedNodes();e.hasMoreElements();) {
 						UINode uinode = (UINode)e.nextElement();
 						String sLabel = uinode.getText();
@@ -862,7 +804,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 						if (index == -1) {
 							sNotSent+=sLabel+"\n";
 						} else if (index != last) {
-							sNotSent+=sLabel+"\n";					
+							sNotSent+=sLabel+"\n";
 						} else {
 							if (sData.equals("")) {
 								sData = sLabel;
@@ -870,34 +812,34 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 								sData += "%%"+sLabel;
 							}
 							vtMatches.add(uinode);
-						}		
-					}	
-					
+						}
+					}
+
 					if (!sData.equals("")) {
 						View view = oViewPane.getView();
 						String mapid = view.getSource();
 						mapid = mapid.substring(5);
-						String reply = ProjectCompendium.APP.oUDigCommunicationManager.addProperty(mapid+"&&"+sData);						
+						String reply = ProjectCompendium.APP.oUDigCommunicationManager.addProperty(mapid+"&&"+sData);
 						if (reply.equals(UDigClientSocket.OK)) {
 							int count = vtMatches.size();
 							for(int i=0; i<count; i++) {
-								UINode uinode = (UINode)vtMatches.elementAt(i);									
+								UINode uinode = (UINode)vtMatches.elementAt(i);
 								sDetail = uinode.getNode().getDetail();
 								sDetail += "\nLabel: "+uinode.getText()+" Sent To UDIG: "+sDate;
 								try {
 									uinode.getNode().setDetail(sDetail, sAuthor, sAuthor);
 									if (oCode != null) {
 										uinode.getNode().addCode(oCode);
-									}								
-								} catch (Exception io) {								
-									ProjectCompendium.APP.displayError("Problem encountered: \n"+io.getMessage());								
-								}										
+									}
+								} catch (Exception io) {
+									ProjectCompendium.APP.displayError("Problem encountered: \n"+io.getMessage());
+								}
 							}
 						}
 					}
 					if (!sNotSent.equals("")) {
 						ProjectCompendium.APP.displayError("Label was not correctly formated.\n'Key = Value' format expected.\n\n"+sNotSent);
-					}					
+					}
 				}
 				else {
 					UINode uinode = oNode.getUINode();
@@ -907,7 +849,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 					if (index == -1) {
 						sNotSent+=sLabel+"\n";
 					} else if (index != last) {
-						sNotSent+=sLabel+"\n";					
+						sNotSent+=sLabel+"\n";
 					} else {
 						View view = oViewPane.getView();
 						String mapid = view.getSource();
@@ -920,19 +862,19 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 								uinode.getNode().setDetail(sDetail, sAuthor, sAuthor);
 								if (oCode != null) {
 									uinode.getNode().addCode(oCode);
-								}								
-							} catch (Exception io) {								
-								ProjectCompendium.APP.displayError("Problem encountered: \n"+io.getMessage());								
+								}
+							} catch (Exception io) {
+								ProjectCompendium.APP.displayError("Problem encountered: \n"+io.getMessage());
 							}
 						}
 					}
-					
+
 					if (!sNotSent.equals("")) {
 						ProjectCompendium.APP.displayError("Label was not correctly formated.\n'Key = Value' format expected.\n\n"+sNotSent);
 					}
-				}					
+				}
 			}
-		}				
+		}
 		else if (source.equals(miAssignMediaIndex)) {
 			onAssignMediaIndex();
 		}
@@ -961,24 +903,24 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			//};
 			//thread.start();
 		}
-		else if (source.equals(miFormatTransclusions)) {			
+		else if (source.equals(miFormatTransclusions)) {
 	   		int answer = JOptionPane.showConfirmDialog(this, "This action cannot be undone.\n\nAre you sure you wish to apply this node's formatting to all its transclusions?\n", "Warning",
 					JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
-			if (answer == JOptionPane.YES_OPTION) {							
+			if (answer == JOptionPane.YES_OPTION) {
 				NodePosition pos = oNode.getUINode().getNodePosition();
 				IModel oModel = ProjectCompendium.APP.getModel();
 				PCSession oSession = oModel.getSession();
 				try {
 					oModel.getViewService().updateTransclusionFormatting(oSession, pos.getNode().getId(),
-						new Date(), pos.getShowTags(), pos.getShowText(), pos.getShowTrans(), 
+						new Date(), pos.getShowTags(), pos.getShowText(), pos.getShowTrans(),
 						pos.getShowWeight(), pos.getShowSmallIcon(), pos.getHideIcon(),
 						pos.getLabelWrapWidth(), pos.getFontSize(), pos.getFontFace(),
 						pos.getFontStyle(), pos.getForeground(), pos.getBackground());
 				} catch (SQLException e) {
 					ProjectCompendium.APP.displayError("The node formats could node be updated due to: \n\n"+e.getMessage());
 				}
-				
+
 				try {
 					NodeSummary node = oNode.getUINode().getNode();
 					JInternalFrame[] frames = ProjectCompendium.APP.getDesktop().getAllFrames();
@@ -1000,23 +942,23 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 								npos.setFontStyle(pos.getFontStyle());
 								npos.setFontFace(pos.getFontFace());
 								npos.setForeground(pos.getForeground());
-								npos.setBackground(pos.getBackground());							
+								npos.setBackground(pos.getBackground());
 							}
 						}
 					}
 				} catch(Exception ex) {
-					ex.printStackTrace();					
+					ex.printStackTrace();
 				}
 			}
 		}
-		else if (source.equals(miFormatAll)) {			
+		else if (source.equals(miFormatAll)) {
 	   		int answer = JOptionPane.showConfirmDialog(this, "This action cannot be undone.\n\nAre you sure you wish to apply this node's formatting to all\nits child nodes and views and their nodes and views to full depth?\n", "Warning",
 					JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
-			if (answer == JOptionPane.YES_OPTION) {							
+			if (answer == JOptionPane.YES_OPTION) {
 				View view = (View)oNode.getUINode().getNode();
-				NodePosition mainpos = oNode.getUINode().getNodePosition();		
-				
+				NodePosition mainpos = oNode.getUINode().getNodePosition();
+
 				String sFontFace = mainpos.getFontFace();
 				int nFontSize = mainpos.getFontSize();
 				int nFontStyle = mainpos.getFontStyle();
@@ -1029,31 +971,31 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 				boolean bShowWeight = mainpos.getShowWeight();
 				boolean bSmallIcon = mainpos.getShowSmallIcon();
 				boolean bHideIcon = mainpos.getHideIcon();
-				
+
 				IModel model = ProjectCompendium.APP.getModel();
 				PCSession session = model.getSession();
 
 				String sViewID = view.getId();
-				
+
 				htCheckFormatNodes.clear();
 				htCheckFormatNodes.put(sViewID, sViewID);
-				
+
 				try {
 					Vector vtNodes = new Vector();
-					Enumeration e = view.getPositions();		
+					Enumeration e = view.getPositions();
 					int count = vtNodes.size();
-					
+
 					NodePosition pos = null;
-					String sNextID = ""; 		
+					String sNextID = "";
 					for (Enumeration nodes = e; nodes.hasMoreElements();) {
 						pos = (NodePosition) nodes.nextElement();
 						sNextID = pos.getNode().getId();
-					
+
 						model.getViewService().updateFormatting(session, sViewID, sNextID,
-									new Date(), bShowTags, bShowText, bShowTrans, bShowWeight, 
+									new Date(), bShowTags, bShowText, bShowTrans, bShowWeight,
 										bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace,
 											nFontStyle, nForeground, nBackground);
-										
+
 						pos.setBackground(nBackground);
 						pos.setFontFace(sFontFace);
 						pos.setFontStyle(nFontStyle);
@@ -1066,21 +1008,21 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 						pos.setShowText(bShowText);
 						pos.setShowTrans(bShowTrans);
 						pos.setShowWeight(bShowWeight);
-						
+
 						if (pos.getNode() instanceof View && !htCheckFormatNodes.containsKey(sNextID)) {
-							this.setFormattting((View)pos.getNode(), bShowTags, bShowText, bShowTrans, bShowWeight, 
+							this.setFormattting((View)pos.getNode(), bShowTags, bShowText, bShowTrans, bShowWeight,
 									bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace,
 									nFontStyle, nForeground, nBackground);
 						}
 					}
-					
+
 				} catch (SQLException e) {
 					ProjectCompendium.APP.displayError("The node formats could node be updated due to: \n\n"+e.getMessage());
 				} catch (ModelSessionException ex) {
-					ProjectCompendium.APP.displayError("The node formats could node be updated due to: \n\n"+ex.getMessage());					
+					ProjectCompendium.APP.displayError("The node formats could node be updated due to: \n\n"+ex.getMessage());
 				}
 			}
-		}		
+		}
 		else if(source.equals(miMenuItemShortCut)) {
 
 			int nOffset = 55;
@@ -1314,15 +1256,15 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			ExecuteControl.launch( "http://www.google.com/search?hl=en&lr=&ie=UTF-8&oe=UTF-8&q="+sLabel );
 			oNode.getUINode().requestFocus();
 		}
-		else if (source.equals(miClaiConcepts)) {
+/*		else if (source.equals(miClaiConcepts)) {
 			String sLabel = oNode.getUINode().getText();
 			try {
 				sLabel = CoreUtilities.cleanURLText(sLabel);
 			} catch (Exception e) {}
 			ExecuteControl.launch( claiMakerServer+"search-concept.php?op=search&inputWord="+sLabel );
 			oNode.getUINode().requestFocus();
-		}
-		else if (source.equals(miClaiNeighbourhood)) {
+		}*/
+	/*(	else if (source.equals(miClaiNeighbourhood)) {
 			String sLabel = oNode.getUINode().getText();
 			try {
 				sLabel = CoreUtilities.cleanURLText(sLabel);
@@ -1338,7 +1280,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			ExecuteControl.launch( claiMakerServer+"search-document.php?op=search&Title="+sLabel );
 			oNode.getUINode().requestFocus();
 		}
-
+*/
 		/*else if (source.equals(miMediaStream)) {
 			NodeSummary nodeSum = oNode.getUINode().getNode();
 			ProjectCompendium.APP.sendMediaStream(nodeSum);
@@ -1405,7 +1347,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			UIReadersDialog readers = new UIReadersDialog(ProjectCompendium.APP, nodeId);
 			UIUtilities.centerComponent(readers, ProjectCompendium.APP);
 			readers.setVisible(true);
-		}		
+		}
 		else if(source.equals(miMenuItemMarkSeen)) {
 			try {
 				Enumeration e = oViewPane.getSelectedNodes();
@@ -1417,9 +1359,9 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			}
 			catch(Exception io) {
 				System.out.println("Unable to mark as read");
-			}			
+			}
 			/*try {
-				(oNode.getUINode()).getNode().setState(ICoreConstants.READSTATE);						
+				(oNode.getUINode()).getNode().setState(ICoreConstants.READSTATE);
 			} catch(Exception io) {
 				System.out.println("Unable to mark as read");
 			}*/
@@ -1436,7 +1378,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			catch(Exception io) {
 				System.out.println("Unable to mark as un-read");
 			}
-			
+
 			/*try {
 				(oNode.getUINode()).getNode().setState(ICoreConstants.UNREADSTATE);
 			} catch(Exception io) {
@@ -1543,30 +1485,30 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			boolean bShowText, boolean bShowTrans, boolean bShowWeight, boolean bSmallIcon,
 			boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 			int nFontStyle, int nForeground, int nBackground) throws ModelSessionException, SQLException {
-		
+
 		IModel model = ProjectCompendium.APP.getModel();
 		PCSession session = model.getSession();
-		
+
 		if (!view.isMembersInitialized()) {
 			view.initialize(model.getSession(), model);
-			view.initializeMembers();				
+			view.initializeMembers();
 		}
-		
+
 		String sViewID = view.getId();
 		htCheckFormatNodes.put(sViewID, sViewID);
-		
-		Enumeration e = view.getPositions();					
+
+		Enumeration e = view.getPositions();
 		NodePosition pos = null;
-		String sNextID = ""; 		
+		String sNextID = "";
 		for (Enumeration nodes = e; nodes.hasMoreElements();) {
 			pos = (NodePosition) nodes.nextElement();
 			sNextID = pos.getNode().getId();
-			
+
 			model.getViewService().updateFormatting(session, sViewID, sNextID,
-			new Date(), bShowTags, bShowText, bShowTrans, bShowWeight, 
+			new Date(), bShowTags, bShowText, bShowTrans, bShowWeight,
 			bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace,
 			nFontStyle, nForeground, nBackground);
-							
+
 			pos.setBackground(nBackground);
 			pos.setFontFace(sFontFace);
 			pos.setFontStyle(nFontStyle);
@@ -1579,15 +1521,15 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			pos.setShowText(bShowText);
 			pos.setShowTrans(bShowTrans);
 			pos.setShowWeight(bShowWeight);
-			
+
 			if (pos.getNode() instanceof View && !htCheckFormatNodes.containsKey(sNextID)) {
-				this.setFormattting((View)pos.getNode(), bShowTags, bShowText, bShowTrans, bShowWeight, 
+				this.setFormattting((View)pos.getNode(), bShowTags, bShowText, bShowTrans, bShowWeight,
 						bSmallIcon, bHideIcon, nWrapWidth, nFontSize, sFontFace,
 						nFontStyle, nForeground, nBackground);
 			}
 		}
 	}
-	
+
 	/**
 	 * Change the selected nodes/current node to the given node type.
 	 * (Map and List node types have separate functions).
@@ -1623,8 +1565,8 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 
 		UINode uiNode = oNode.getUINode();
 		NodePosition oNodePos = uiNode.getNodePosition();
-		IModel model = ProjectCompendium.APP.getModel(); 
-		oNodePos.initialize(model.getSession(), model);		
+		IModel model = ProjectCompendium.APP.getModel();
+		oNodePos.initialize(model.getSession(), model);
 		String id = uiNode.getNode().getId();
 		String meetingid = ProjectCompendium.APP.oMeetingManager.getMeetingID();
 		MediaIndex index = oNodePos.getMediaIndex(meetingid);
@@ -1704,79 +1646,47 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 	}
 
 	/**
-	 * Create a Reference node with internal link to this node 
-	 * and put it in the inbox for the given View and user.
-	 * @param view the view to add the reference to.
-	 * @param up the UserProfile for the chosen user
-	 */
-	private void onCreateInternalLinkInView(View view, UserProfile up) {				
-		if (view == null) {
-			view = ProjectCompendium.APP.createInBox(up);
-			if (view == null) {				
-				ProjectCompendium.APP.displayError("Could not get reference to user's Inbox");						
-				return;
-			}
-		}
-		
-		UINode uinode = oNode.getUINode();		
+	 * Create a recipient dialog box so the user can choose multiple people to send the INR to
+	*/
+	private void pickInBoxRecipients() {
 
-		IModel model = ProjectCompendium.APP.getModel();
-		UserProfile currentUser = model.getUserProfile();
-		
-		view.initialize(model.getSession(), model);
-		
-		UIViewPane oViewPane = uinode.getViewPane();		
-		String sRef = ICoreConstants.sINTERNAL_REFERENCE+oViewPane.getView().getId()+"/"+uinode.getNode().getId();
-		String sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
-		try{
-			NodePosition node = view.addMemberNode(ICoreConstants.REFERENCE,
-					 "",
-					 "",
-					 sAuthor,
-					 "GO TO: "+uinode.getText(),
-					 "( "+oViewPane.getView().getLabel()+" )\n\n"+				 
-					 "Sent by "+currentUser.getUserName(),
-					 0, ((view.getNodeCount() + 1) *10));   
-			
-			node.getNode().setSource(sRef, "", sAuthor);
-			node.getNode().setState(ICoreConstants.UNREADSTATE);
-			view.setState(ICoreConstants.MODIFIEDSTATE);
-		} catch (Exception e) {
-			ProjectCompendium.APP.displayError("Could not add to InBox due to:\n\n"+e.getMessage());			
+		View oHomeView = ProjectCompendium.APP.getHomeView();
+		if (oHomeView.getId().equals(oViewPane.getView().getId())) {
+			JOptionPane.showMessageDialog(this, "Cannot send items that are in your Home window.", "Blocked operation", JOptionPane.INFORMATION_MESSAGE);
+			return;
 		}
-		
-		// If the view is open (it's your in box and you have it open), refresh the view.
-		UIViewFrame oViewFrame = ProjectCompendium.APP.getInternalFrame(view);
-		if (oViewFrame != null) {
-			UIListViewFrame listFrame = (UIListViewFrame)oViewFrame;
-			listFrame.getUIList().updateTable();
-		}	
-		
-		ProjectCompendium.APP.refreshNodeIconIndicators(ProjectCompendium.APP.getInBoxID());
-	}	
-	
+
+		UISendMailDialog dlg = new UISendMailDialog(ProjectCompendium.APP,
+													oNode.getUINode().getViewPane().getView(),
+													oNode.getUINode().getNode());
+		UIUtilities.centerComponent(dlg, ProjectCompendium.APP);
+		dlg.setVisible(true);
+
+	}
+
+
 	/**
 	 * Create a Reference node with internal link to this node.
 	 */
 	private void onCreateInternalLink() {
 
-		UINode uinode = oNode.getUINode();		
+		UINode uinode = oNode.getUINode();
 		double scale = uinode.getScale();
 
 		UINode newNode = null;
 
 		UIViewPane oViewPane = uinode.getViewPane();
 		View view = oViewPane.getView();
-		
+
 		String sRef = ICoreConstants.sINTERNAL_REFERENCE+view.getId()+"/"+uinode.getNode().getId();
 
 		// Do all calculations at 100% scale and then scale back down if required.
 		if (oViewPane != null) {
-			
+
 			if (scale != 1.0) {
 				oViewPane.scaleNode(uinode, 1.0);
 			}
-			
+
 			ViewPaneUI oViewPaneUI = oViewPane.getViewPaneUI();
 			if (oViewPaneUI != null) {
 
@@ -1797,7 +1707,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 								 loc.y,
 								 sRef
 								 );
-				
+
 				if (scale != 1.0) {
 					oViewPane.scaleNode(newNode, 1.0);
 				}
@@ -1827,25 +1737,25 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 					oViewPane.scaleNode(newNode, scale);
 				}
 			}
-			
+
 			if (scale != 1.0) {
 				oViewPane.scaleNode(uinode, scale);
-			}			
+			}
 		}
-	}		
-	
+	}
+
 	/**
 	 * Create a Reference node with internal link to this node.
 	 */
 	private void onCreateBookmark() {
 
-		UINode uinode = oNode.getUINode();	
+		UINode uinode = oNode.getUINode();
 		NodeSummary node = uinode.getNode();
 		UIViewPane oViewPane = uinode.getViewPane();
-		View view = oViewPane.getView();		
+		View view = oViewPane.getView();
 		ProjectCompendium.APP.createFavorite(node.getId(), view.getId(), view.getLabel()+"&&&"+node.getLabel(), node.getType());
 	}
-	
+
 	/**
 	 * Transclude this node into a new map and link map to this node.
 	 */
@@ -1872,7 +1782,7 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 			}
 		}
 	}
-	
+
 	/**
 	 * Handle a Questmap import request.
 	 * @param showViewList, true if importing to mulitpl views, else false.
@@ -1888,6 +1798,12 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
 	 */
 	public void onExportFile() {
 		UIExportDialog export = new UIExportDialog(ProjectCompendium.APP, oViewPane.getViewFrame());
+		export.setVisible(true);
+	}
+
+	public void onExportWordDoc() {
+		UIExportDialog export = new UIExportDialog(ProjectCompendium.APP, oViewPane.getViewFrame());
+		export.setWordDocExportOptions();
 		export.setVisible(true);
 	}
 
@@ -1913,5 +1829,5 @@ public class UINodePopupMenu extends JPopupMenu implements ActionListener {
         UIExportViewDialog dialog2 = new UIExportViewDialog(ProjectCompendium.APP, oViewPane.getViewFrame());
         UIUtilities.centerComponent(dialog2, ProjectCompendium.APP);
 		dialog2.setVisible(true);
-	}	
+	}
 }

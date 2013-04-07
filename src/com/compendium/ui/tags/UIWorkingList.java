@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.tags;
 
 import java.awt.*;
@@ -50,8 +49,8 @@ import com.compendium.ui.panels.UIHintNodeViewsPanel;
  *
  * @author	Michelle Bachler
  */
-public class UIWorkingList implements TableModelListener, MouseListener, MouseMotionListener, PropertyChangeListener /*, 
-											DragSourceListener, DragGestureListener, Transferable*/ { 
+public class UIWorkingList implements TableModelListener, MouseListener, MouseMotionListener, PropertyChangeListener /*,
+											DragSourceListener, DragGestureListener, Transferable*/ {
 
 	/** Table that holds the list data for this list view.*/
 	private JTable 			table;
@@ -64,26 +63,26 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 
 	/** The crop target reference for this list instance.*/
 	//private DropTarget 		dropTarget 				= null;
-		
+
 	/** The dialog used for the rollover hints.*/
-	private JDialog dialog				= null;		
-	
+	private JDialog dialog				= null;
+
 	/** The last row the rollover hint was for.*/
 	int		lastRow				= -1;
-	
+
 	/** The last column the rollover hint was for.*/
 	int		lastColumn			= -1;
-	
+
 	/** The data flavors supported by this class.*/
     public static final 		DataFlavor[] supportedFlavors = { null };
 	static    {
 		try { supportedFlavors[0] = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType); }
 		catch (Exception ex) { ex.printStackTrace(); }
-	}		
+	}
 	/** The DragSource object associated with this node list.*/
 	private DragSource 			dragSource;
-	
-	
+
+
 	/**
 	 * Constructor. Initializes and table and options for this list.
 	 */
@@ -93,31 +92,31 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 		sorter = new TableSorter(model);
 		sorter.addTableModelListener(this);
 		table = new JTable(sorter);
-		
+
 		//CSH.setHelpIDString(table,"node.views");
-		
+
 		table.getColumn("Img").setPreferredWidth(10);
 		table.getColumn("Tags").setPreferredWidth(10);
-		table.getColumn("Views").setPreferredWidth(10);		
+		table.getColumn("Views").setPreferredWidth(10);
 		table.getColumn("Label").setPreferredWidth(300);
 		table.getColumn("Mod Date").setPreferredWidth(150);
 
 		table.getColumn("Img").setMaxWidth(60);
 		table.getColumn("Tags").setMaxWidth(60);
-		table.getColumn("Views").setMaxWidth(60);		
+		table.getColumn("Views").setMaxWidth(60);
 		table.getColumn("Mod Date").setMaxWidth(200);
-		
+
 		table.getTableHeader().setReorderingAllowed(false);
-		
+
 		sorter.addMouseListenerToHeaderInTable(table);
 
-		table.addMouseMotionListener(this);		
-		table.addMouseListener(this);	
-		
+		table.addMouseMotionListener(this);
+		table.addMouseListener(this);
+
 		table.setFont(ProjectCompendiumFrame.labelFont);
 		FontMetrics metrics = table.getFontMetrics(ProjectCompendiumFrame.labelFont);
-		table.setRowHeight(table.getRowMargin()+metrics.getHeight());				
-		
+		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
+
 		setRenderers();
 
 		((TableSorter)table.getModel()).setSelectedColumn(3);
@@ -132,109 +131,119 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 	 */
 	public void onReturnTextAndZoom(int zoom) {
 		Font font = table.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+zoom);
 		table.setFont(newFont);
 		FontMetrics metrics = table.getFontMetrics(newFont);
-		table.setRowHeight(table.getRowMargin()+metrics.getHeight());				
+		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
 	}
-	
+
 	/**
-	 * Return the font size to its default 
+	 * Return the font size to its default
 	 * (To the default specificed by the user in the Project Options)
 	 */
 	public void onReturnTextToActual() {
 		table.setFont(ProjectCompendiumFrame.labelFont);
 		FontMetrics metrics = table.getFontMetrics(ProjectCompendiumFrame.labelFont);
-		table.setRowHeight(table.getRowMargin()+metrics.getHeight());				
+		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
 	}
-	
+
 	/**
 	 * Increase the currently dislayed font size by one point.
 	 */
 	public void onIncreaseTextSize() {
 		Font font = table.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);
 		table.setFont(newFont);
 		FontMetrics metrics = table.getFontMetrics(newFont);
 		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
 	}
-	
+
 	/**
 	 * Reduce the currently dislayed font size by one point.
 	 */
 	public void onReduceTextSize() {
 		Font font = table.getFont();
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);			
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);
 		table.setFont(newFont);
 		FontMetrics metrics = table.getFontMetrics(newFont);
 		table.setRowHeight(table.getRowMargin()+metrics.getHeight());
 	}
-	
-	public void clearPopup() {
-		if (dialog != null) {
-    		dialog.setVisible(false);
-	    	dialog.dispose();
-    		dialog = null;
-	    	lastRow = -1;		
-	    	lastColumn = -1;		    					
-		}
-	}
-	
+
 	public void mousePressed(MouseEvent e) {}
 	public void mouseReleased(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e){}
-	
+
 	public void mouseClicked(MouseEvent e) {
-    	if (lastColumn == UITagsListTableModel.VIEWS_COLUMN) {
-    		clearPopup();
-    	}				
+    	if (lastColumn == UITagsListTableModel.VIEWS_COLUMN && dialog != null) {
+    		dialog.setVisible(false);
+	    	dialog.dispose();
+    		dialog = null;
+	    	lastRow = -1;
+	    	lastColumn = -1;
+    	}
 	}
-	
+
 	public void mouseExited(MouseEvent e) {
-    	if (lastColumn == UITagsListTableModel.TAGS_COLUMN) {
-    		clearPopup();
-    	}				
+    	if (lastColumn == UITagsListTableModel.TAGS_COLUMN && dialog != null) {
+    		dialog.setVisible(false);
+	    	dialog.dispose();
+    		dialog = null;
+	    	lastRow = -1;
+	    	lastColumn = -1;
+    	}
 	}
-	
+
 	public void mouseDragged(MouseEvent e){}
-	
-	public void mouseMoved(MouseEvent e) {				
+
+	public void mouseMoved(MouseEvent e) {
 		int column = table.columnAtPoint( e.getPoint() );
-		int row = table.rowAtPoint( e.getPoint() );		
-		int ind = sorter.getRealRow(row);		
+		int row = table.rowAtPoint( e.getPoint() );
+		int ind = sorter.getRealRow(row);
 		if (ind == -1) {
 			return;
 		}
-		
+
 		if (ind == lastRow && column == lastColumn) {
 			e.consume();
 			return;
 		}
-		
+
 	    if (column == UITagsListTableModel.TAGS_COLUMN) {
-    		clearPopup();
+			if (dialog != null) {
+		    	dialog.setVisible(false);
+		    	dialog.dispose();
+		    	dialog = null;
+		    	lastRow = -1;
+		    	lastColumn = -1;
+			}
 			NodeSummary summary = getNodeAt(row);
 			try {
-				if (summary.getCodeCount() > 0 ) {							
+				if (summary.getCodeCount() > 0 ) {
 					UIHintNodeCodePanel pop = new UIHintNodeCodePanel(summary, 0, 0);
 					dialog = new JDialog(ProjectCompendium.APP);
 					lastRow = ind;
 					lastColumn = column;
 					dialog.add(pop);
 					dialog.setUndecorated(true);
-					dialog.pack();	
+					dialog.pack();
 					Point point = e.getPoint();
-					SwingUtilities.convertPointToScreen(point, table);					
+					SwingUtilities.convertPointToScreen(point, table);
 					//Point point = SwingUtilities.convertPoint(table, e.getPoint(), ProjectCompendium.APP);
 					dialog.setLocation(point.x+5, point.y);
 					dialog.setVisible(true);
-				} 
+				}
 			}
 			catch(Exception ex) {
 				System.out.println("Error: (UIWorkingList.showCodes)\n\n"+ex.getMessage());
-			}			    
+			}
 	    } if (column == UITagsListTableModel.VIEWS_COLUMN) {
-    		clearPopup();
+			if (dialog != null) {
+		    	dialog.setVisible(false);
+		    	dialog.dispose();
+		    	dialog = null;
+		    	lastRow = -1;
+		    	lastColumn = -1;
+			}
 	    	NodeSummary summary = getNodeAt(row);
 			try {
 				UIHintNodeViewsPanel pop = new UIHintNodeViewsPanel(summary, 0, 0);
@@ -243,25 +252,35 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 				lastColumn = column;
 				dialog.add(pop);
 				dialog.setUndecorated(true);
-				dialog.pack();		
+				dialog.pack();
 				Point point = e.getPoint();
 				SwingUtilities.convertPointToScreen(point, table);
 				//Point point = SwingUtilities.convertPoint(table, e.getPoint(), ProjectCompendium.APP);
 				dialog.setLocation(point.x+5, point.y);
-				dialog.setVisible(true); 
+				dialog.setVisible(true);
 			}
 			catch(Exception ex) {
 				System.out.println("Error: (UIWorkingList.showViews)\n\n"+ex.getMessage());
 			}
-	    }			    
-	}	
+	    }
+	}
 	
+	public void hideHint() {
+		if (dialog != null) {
+	    	dialog.setVisible(false);
+	    	dialog.dispose();
+	    	dialog = null;
+	    	lastRow = -1;
+	    	lastColumn = -1;
+		}
+	}
+
 	/*private class myViewsPanel extends UIHintNodeViewsPanel {
-		
+
 		public myViewsPanel(NodeSummary node, int xPos, int yPos) {
 			super(node, xPos, yPos);
 		}
-		
+
 		protected MouseListener createMouseListener() {
 			MouseListener mouse = new MouseAdapter() {
 				public void mouseClicked(MouseEvent e) {
@@ -270,7 +289,7 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 					View view = (View)views.elementAt(index);
 					id = view.getId();
 					if ( !id.equals(currentView.getId())) {
-						if (!htUserViews.containsKey(view.getId()) 							
+						if (!htUserViews.containsKey(view.getId())
 							|| id.equals(ProjectCompendium.APP.getInBoxID())) {
 							UIViewFrame oUIViewFrame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 							Vector history = new Vector();
@@ -296,36 +315,36 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 								if (ind > -1) {
 									oUIList.getList().addRowSelectionInterval(ind, ind);
 								}
-							}								
+							}
 						}
 					}
 				}
-				
+
 				public void mouseExited(MouseEvent evt) {
 			    	dialog.setVisible(false);
 			    	dialog.dispose();
 			    	dialog = null;
-			    	lastRow = -1;		
+			    	lastRow = -1;
 			    	lastColumn = -1;
-				}			
+				}
 			};
 			return mouse;
 		}
 	}*/
-	
+
 	/**
 	 * Update the table after a change.
 	 */
 	public void updateTable() {
 		sorter.fireTableChanged(new TableModelEvent(table.getModel()));
 	}
-	
+
 	/**
 	 * Display the new data.
 	 * @param vtData
 	 */
 	public void refreshTable(Vector vtData) {
-		
+
 		// REMOVE PropertyChangeListener from old data and add to new incoming data.
 		NodeSummary node = null;
 		Vector vtOldData = model.getData();
@@ -334,13 +353,13 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 			node = (NodeSummary)vtOldData.elementAt(i);
 			node.removePropertyChangeListener(this);
 		}
-		
+
 		count = vtData.size();
 		for (int i=0; i<count; i++) {
 			node = (NodeSummary)vtData.elementAt(i);
 			node.addPropertyChangeListener(this);
 		}
-		
+
 		int sort = sorter.getSelectedColumn();
 		model.removeAllElements();
 		model.setData(vtData);
@@ -350,9 +369,9 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 		}
 		updateTable();
 		table.revalidate();
-		table.repaint();		
+		table.repaint();
 	}
-	
+
 	public NodeSummary getNodeAt(int row) {
 		int realRow = sorter.getRealRow(row);
 		if (realRow == -1) {
@@ -360,8 +379,8 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 		} else {
 			return model.getNodeAt(realRow);
 		}
-	}		
-	
+	}
+
 	/**
 	 * Process a TableModelEvent, when something has changed in the data.
 	 * Refresh the table and repaint.
@@ -371,27 +390,27 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 		table.invalidate();
 		table.repaint();
 	}
-	
+
 	/**
 	 * Set the header renderers for the table column headers and the table cells.
 	 */
     public void setRenderers() {
     	int count = table.getModel().getColumnCount();
-    	
+
         for (int i = 0; i < count; i++) {
         	TableColumn aColumn = table.getColumnModel().getColumn(i);
-        	
+
         	// Set the cell renderer for the column headers
         	UITableHeaderRenderer headerRenderer = new UITableHeaderRenderer();
             aColumn.setHeaderRenderer(headerRenderer);
-            
+
             // Set the cell renderer for column cells
             CellRenderer cellRenderer = new CellRenderer();
             aColumn.setCellRenderer(cellRenderer);
     	}
  	}
 
- 
+
 	/**
 	 * The helper class renderers the table cells.
 	 */
@@ -401,10 +420,10 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
         	super();
         	setHorizontalAlignment(SwingConstants.LEFT);
  		}
-    	
-    	public Component getTableCellRendererComponent(JTable table, Object value, 
+
+    	public Component getTableCellRendererComponent(JTable table, Object value,
     			boolean isSelected, boolean hasFocus, int row, int column) {
-        		
+
 			setFont(table.getFont());
 			setBorder( isSelected ?UIManager.getBorder("List.focusCellHighlightBorder") : new EmptyBorder(1,1,1,1));
 			if (isSelected) {
@@ -416,11 +435,11 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 					setHorizontalAlignment(CENTER);
 					setVerticalAlignment(CENTER);
 					value = "";
-			 	} 
+			 	}
 			}
 			else {
 				setBackground(table.getBackground());
-				setForeground(table.getForeground());				
+				setForeground(table.getForeground());
 				if (column == UITagsListTableModel.IMAGE_COLUMN) {
 					setIcon( (Icon) value);
 					setHorizontalAlignment(CENTER);
@@ -428,15 +447,15 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 					value = "";
 				}
 			}
-    		
-			setValue(value);			     	
+
+			setValue(value);
         	return this;
 		}
 
         protected void setValue(Object value) {
-        	setText((value == null) ? "" : value.toString());        	
+        	setText((value == null) ? "" : value.toString());
         }
-	}    	
+	}
 
 	/**
 	 * Return the JTable that holds the view list.
@@ -467,10 +486,10 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 	 */
 	public int getNumberOfNodes() {
 		return table.getRowCount();
-	}    
-    
+	}
+
 // PROERTY CHANGE EVENT METHOD
-	
+
 	/**
 	 * Handle a PropertyChangeEvent.
 	 * @param evt, the associated PropertyChangeEvent to handle.
@@ -481,13 +500,13 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
    		Object source = evt.getSource();
 	    //Object oldvalue = evt.getOldValue();
 	    //Object newvalue = evt.getNewValue();
-	    
+
 		if (source instanceof NodeSummary) {
 		    if (prop.equals(NodeSummary.LABEL_PROPERTY) || prop.equals(View.CHILDREN_PROPERTY)) {
 				table.revalidate();
-				table.repaint();		
-		    } 
-		    
+				table.repaint();
+		    }
+
 		    /*if (prop.equals(NodeSummary.TAG_PROPERTY)) {
 		    	firePropertyChange(NodeSummary.TAG_PROPERTY, oldvalue, newvalue);
 		    }
@@ -503,8 +522,8 @@ public class UIWorkingList implements TableModelListener, MouseListener, MouseMo
 				firePropertyChange(CHILDREN_PROPERTY, oldvalue, newvalue);
 		    }*/
 		}
-	}	
-	
+	}
+
 // DRAG AND DROP METHODS
 
 	   /**

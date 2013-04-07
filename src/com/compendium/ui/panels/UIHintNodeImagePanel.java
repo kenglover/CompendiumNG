@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.panels;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -72,7 +73,7 @@ public class UIHintNodeImagePanel extends JPanel {
 
 		JLabel label = new JLabel();
 
-		if (FormatProperties.scaleImageRollover) {
+		if (APP_PROPERTIES.isScaleImageRollover()) {
 
 			if ( UIImages.isImage(ref) ) {
 

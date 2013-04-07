@@ -44,6 +44,7 @@
 	<mapID target="node.views-deletedviews" url="HelpTopics/nodes/views.htm#deletedviews"/>	
 	<mapID target="node.views-all" url="HelpTopics/nodes/views.htm#all"/>
 	<mapID target="node.views-view" url="HelpTopics/nodes/views.htm#view"/>			
+	<mapID target="node.preferences" url="HelpTopics/nodes/preferences.htm"/>	
 	<mapID target="tag.tags" url="HelpTopics/tags/tags.htm"/>
 	<mapID target="tag.maintenance" url="HelpTopics/tags/tag_maintenance.htm"/>
 	<mapID target="tag.maintenance-usage" url="HelpTopics/tags/tag_maintenance.htm#usage"/>	
@@ -68,7 +69,7 @@
 	<mapID target="basics.admin" url="HelpTopics/basics/database-administration.htm"/>	
 	<mapID target="basics.overview" url="HelpTopics/basics/overview.htm"/>
 	<mapID target="basics.options" url="HelpTopics/basics/options.htm"/>
-	<mapID target="basics.projectoptions" url="HelpTopics/basics/project-options.htm"/>	              
+	<mapID target="basics.projectoptions" url="HelpTopics/basics/project-options.htm"/>	
 	<mapID target="basics.search" url="HelpTopics/basics/search.htm"/>
 	<mapID target="basics.search-results" url="HelpTopics/basics/search.htm#results"/>	
 	<mapID target="basics.users" url="HelpTopics/basics/users.htm"/>

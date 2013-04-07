@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.util.*;
@@ -61,25 +60,29 @@ public class DBViewLink {
 	/** SQL statement to set the status as deleted on a record in the ViewLink table for the given ViewID and LinkID.*/
 	public final static String DELETE_VIEWLINK_QUERY =
 		"UPDATE ViewLink "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ? AND LinkID = ?";
 
 	/** SQL statement to set the status as deleted on records in the ViewLink table for the given ViewID.*/
 	public final static String DELETE_VIEW_QUERY =
 		"UPDATE ViewLink "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_DELETE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ?";
 
 	/** SQL statement to set the status as active on a record in the ViewLink table for the given ViewID and LinkID.*/
 	public final static String RESTORE_VIEWLINK_QUERY =
 		"UPDATE ViewLink "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ? AND LinkID = ?";
 
 	/** SQL statement to set the status as active on records in the ViewLink table for the given ViewID.*/
 	public final static String RESTORE_VIEW_QUERY =
 		"UPDATE ViewLink "+
-		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+
+		"SET CurrentStatus = "+ICoreConstants.STATUS_ACTIVE+"," +
+		"ModificationDate = ? " +
 		" WHERE ViewID = ?";
 
 	/** SQL statement to set the purge the records in the ViewLink table for the given ViewID and LinkID.*/
@@ -102,6 +105,15 @@ public class DBViewLink {
 		"FROM ViewLink " +
 		"WHERE ViewID = ? "+
 		"AND CurrentStatus = "+ICoreConstants.STATUS_ACTIVE;
+
+	// SQL statement to return all the records for a given ViewID & NodeID, if the record status is active.*/
+	public final static String GET_VIEWLINKSFORNODE_QUERY =
+		"SELECT ViewLink.ViewID, ViewLink.LinkID " +
+		"FROM ViewLink, ViewNode " +
+		"WHERE ViewLink.ViewID = ViewNode.ViewID " +
+		"AND ViewLink.ViewID = ? " +
+		"AND ViewNode.NodeID = ? " +
+		"AND ViewLink.CurrentStatus = "+ICoreConstants.STATUS_ACTIVE;
 
 	// SQL statement to return all the records for a given LinkID, if the record status is active.*/
 	public final static String GET_VIEWS_QUERY =
@@ -154,7 +166,12 @@ public class DBViewLink {
 		pstmt.setDouble(4, new Long(dDate.getTime()).doubleValue());
 		pstmt.setInt(5, ICoreConstants.STATUS_ACTIVE);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
@@ -192,7 +209,12 @@ public class DBViewLink {
 		pstmt.setDouble(4, new Long(dModificationDate.getTime()).doubleValue());
 		pstmt.setInt(5, nCurrentStatus);
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
@@ -220,11 +242,16 @@ public class DBViewLink {
 			return false;
 
 		PreparedStatement pstmt = con.prepareStatement(DELETE_VIEWLINK_QUERY);
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID);
+		pstmt.setString(3, sLinkID);
 
-		pstmt.setString(1, sViewID);
-		pstmt.setString(2, sLinkID);
-
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn())
@@ -251,9 +278,15 @@ public class DBViewLink {
 			return false ;
 
 		PreparedStatement pstmt = con.prepareStatement(DELETE_VIEW_QUERY);
-		pstmt.setString(1, sViewID) ;
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID) ;
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn()) {
@@ -285,11 +318,16 @@ public class DBViewLink {
 			return false ;
 
 		PreparedStatement pstmt = con.prepareStatement(RESTORE_VIEWLINK_QUERY);
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID) ;
+		pstmt.setString(3, sLinkID) ;
 
-		pstmt.setString(1, sViewID) ;
-		pstmt.setString(2, sLinkID) ;
-
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn())
@@ -316,9 +354,15 @@ public class DBViewLink {
 			return false ;
 
 		PreparedStatement pstmt = con.prepareStatement(RESTORE_VIEW_QUERY) ;
-		pstmt.setString(1, sViewID) ;
+		pstmt.setDouble(1, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(2, sViewID) ;
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 
 		if (nRowCount > 0) {
@@ -357,7 +401,12 @@ public class DBViewLink {
 		pstmt.setString(1, sViewID) ;
 		pstmt.setString(2, sLinkID) ;
 
-		int nRowCount = pstmt.executeUpdate();
+		int nRowCount = 0;
+		try {
+			nRowCount = pstmt.executeUpdate();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		pstmt.close();
 		if (nRowCount > 0) {
 			if (DBAudit.getAuditOn())
@@ -391,7 +440,12 @@ public class DBViewLink {
 		PreparedStatement pstmt = con.prepareStatement(GET_ACTIVEVIEWSCOUNT_QUERY);
 		pstmt.setString(1, sLinkID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		if (rs != null) {
 			while (rs.next()) {
 				views.addElement(rs.getString(1));
@@ -421,7 +475,12 @@ public class DBViewLink {
 		pstmt.setString(1, sViewID);
 		pstmt.setString(2, sLinkID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		Link link = null;
 		if (rs != null) {
@@ -454,7 +513,12 @@ public class DBViewLink {
 		PreparedStatement pstmt = con.prepareStatement(GET_VIEWS_QUERY);
 		pstmt.setString(1, sLinkID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		Vector vtViews = new Vector(51);
 		if (rs != null) {
@@ -489,7 +553,13 @@ public class DBViewLink {
 
 		pstmt.setString(1, sViewID);
 
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		Vector vtLinks = new Vector(51);
 		if (rs != null) {
@@ -501,6 +571,48 @@ public class DBViewLink {
 				//View view = View.getView(sViewId) ;
 				Link link = DBLink.getLink(dbcon, sLinkId);
 
+				vtLinks.addElement(link);
+			}
+		}
+		pstmt.close();
+		return vtLinks;
+	}
+
+	/**
+	 *	Returns the array of Links objects in the given view that involve the given node.
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@param sViewID, the id of the view whose Links to return.
+	 *	@param sNodeID, the id of the node in sViewID whose links we're looking for
+	 *	@return Enumeration, of <code>Link</code> objects that the View with the given id contains.
+	 *	@throws java.sql.SQLException
+	 */
+	public static Vector getLinks(DBConnection dbcon, String sViewID, String sNodeID) throws SQLException {
+
+		Connection con = dbcon.getConnection();
+		if (con == null)
+			return null;
+
+		PreparedStatement pstmt = con.prepareStatement(GET_VIEWLINKSFORNODE_QUERY);
+
+		pstmt.setString(1, sViewID);
+		pstmt.setString(2, sNodeID);
+
+		ResultSet rs = null;
+
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+		Vector vtLinks = new Vector(51);
+		if (rs != null) {
+			while (rs.next()) {
+
+				String	sViewId	= rs.getString(1);
+				String	sLinkId	= rs.getString(2);
+				Link link = DBLink.getLink(dbcon, sLinkId);
 				vtLinks.addElement(link);
 			}
 		}
@@ -525,7 +637,12 @@ public class DBViewLink {
 
 		PreparedStatement pstmt = con.prepareStatement(GET_VIEWLINKS_QUERY);
 		pstmt.setString(1, sViewID) ;
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 
 		Vector vtLinks = new Vector(51);
 		if (rs != null) {

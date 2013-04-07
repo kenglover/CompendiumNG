@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -33,6 +34,7 @@ import javax.help.*;
 import javax.swing.*;
 import javax.swing.undo.*;
 
+import com.compendium.ProjectCompendium;
 import com.compendium.ui.*;
 import com.compendium.ui.toolbars.system.*;
 import com.compendium.core.datamodel.*;
@@ -48,16 +50,16 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 
 	/** Indicates whether the node format toolbar is switched on or not by default.*/
 	private final static boolean DEFAULT_STATE			= true;
-	
+
 	/** Indicates the default orientation for this toolbars ui object.*/
-	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;	
-	
+	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;
+
 	/** This indicates the type of the toolbar.*/
 	private	int 					nType			= -1;
-	
+
 	/** The parent frame for this class.*/
 	private ProjectCompendiumFrame	oParent			= null;
-	
+
 	/** The overall toolbar manager.*/
 	private IUIToolBarManager 		oManager		= null;
 
@@ -108,13 +110,13 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 
 	/** The image rollover toobar button.*/
 	private JButton				pbImageRollover   	= null;
-	
+
 	/** Holds the history of views opened.*/
-	private UIHistory history = new UIHistory();	
-	
+	private UIHistory history = new UIHistory();
+
 	/**Indicates whether this menu is draw as a Simple interface or a advance user inteerface.*/
-	private boolean bSimpleInterface					= false;	
-	
+	private boolean bSimpleInterface					= false;
+
 	/**
 	 * Create a new instance of UIToolBarMain, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
@@ -128,19 +130,19 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		this.oManager = oManager;
 		this.nType = nType;
 		this.bSimpleInterface = isSimple;
-		
+
 		tbrToolBar = new UIToolBar("Main Toolbar");
 		tbrToolBar.setOrientation(DEFAULT_ORIENTATION);
-		
-		createToolBarItems();		
+
+		createToolBarItems();
 	}
-	
+
 	/**
 	 * Create a new instance of UIToolBarMain, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
 	 * @param parent the parent frame for the application.
 	 * @param nType the unique identifier for this toolbar.
-	 * @param orientation the orientation of this toolbars ui object. 
+	 * @param orientation the orientation of this toolbars ui object.
 	 * @param isSimple is the user in simple interface mode. True for yes, false for advanced mode.
 	 */
 	public UIToolBarMain(IUIToolBarManager oManager, ProjectCompendiumFrame parent, int nType, int orientation, boolean isSimple) {
@@ -149,11 +151,11 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		this.oManager = oManager;
 		this.nType = nType;
 		this.bSimpleInterface = isSimple;
-		
+
 		tbrToolBar = new UIToolBar("Main Toolbar");
 		tbrToolBar.setOrientation(orientation);
-		
-		createToolBarItems();		
+
+		createToolBarItems();
 	}
 
 	/**
@@ -165,7 +167,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		 tbrToolBar.removeAll();
 		 createToolBarItems();
 	}
-	
+
 	/**
 	 * Creates and return the main toolbar (for example, cut/copy/paste/open/close etc.).
 	 * @return UIToolBar, the toolbar with all the main options.
@@ -177,7 +179,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		pbOpen.setEnabled(false);
 		tbrToolBar.add(pbOpen);
 		CSH.setHelpIDString(pbOpen,"toolbars.main");
-	
+
 		pbClose = tbrToolBar.createToolBarButton("Close", UIImages.get(CLOSE_ICON));
 		pbClose.addActionListener(this);
 		pbClose.setEnabled(true);
@@ -299,17 +301,17 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 	    pbSearch.setIcon(UIImages.get(SEARCH_ICON));
 	    pbHelp.setIcon(UIImages.get(HELP_ICON));
 
-		if (FormatProperties.imageRollover) {
+		if (APP_PROPERTIES.isImageRollover()) {
 			pbImageRollover.setIcon(UIImages.get(IMAGE_ROLLOVER_ICON));
 		}
 		else {
 			pbImageRollover.setIcon(UIImages.get(IMAGE_ROLLOVEROFF_ICON));
 		}
-		
+
 		if (tbrToolBar != null)
 			SwingUtilities.updateComponentTreeUI(tbrToolBar);
 	}
-	
+
 	/**
 	 * Handles toolbar action event for this toolbar.
 	 *
@@ -361,7 +363,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 			oParent.onSearch();
 		}
 		else if (source.equals(pbImageRollover)) {
-			oParent.onImageRollover(!FormatProperties.imageRollover);
+			oParent.onImageRollover(!APP_PROPERTIES.isImageRollover());
 		}
 
 		oParent.setDefaultCursor();
@@ -389,8 +391,8 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 			oParent.addViewToDesktop(view, view.getLabel());
 
 		enableHistoryButtons();
-	}	
-	
+	}
+
 	/**
 	 * Display the backwards window history in a menu.
 	 */
@@ -512,7 +514,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		hist.setPopupMenuVisible(true);
 		pop.show(oParent.getDesktop(), x, y);
 	}
-	
+
 	/**
 	 * Refreshes the undo/redo icons with the last action performed.
 	 * @param oUndoManager, the manager to use to check for undo/redo possibilities.
@@ -526,7 +528,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		// refresh redo
 		pbRedo.setToolTipText(oUndoManager.getRedoPresentationName());
 		pbRedo.setEnabled(oUndoManager.canRedo());
-	}	
+	}
 
 	/**
 	 * Enalbe all the view history related toolbar icons.
@@ -561,7 +563,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 	public void addToHistory(View view) {
 		history.add(view);
 	}
-	
+
 	/**
 	 * Enable/disable paste button.
 	 * @param enabled, true to enalbe, false to disable.
@@ -591,8 +593,8 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		else {
 			pbImageRollover.setIcon(UIImages.get(IMAGE_ROLLOVEROFF_ICON));
 		}
-	}	
-	
+	}
+
 	/**
 	 * Updates the menu when a new database project is opened.
 	 */
@@ -613,7 +615,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 	/**
 	 * Updates the menu when the current database project is closed.
 	 */
-	public void onDatabaseClose() {		
+	public void onDatabaseClose() {
 		if (pbUndo != null)
 			pbUndo.setEnabled(false);
 		if (pbRedo != null)
@@ -628,7 +630,7 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 			pbSearch.setEnabled(false);
 		if (pbImageRollover != null)
 			pbImageRollover.setEnabled(false);
-		
+
 		history.clear();
 	}
 
@@ -649,13 +651,13 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 		if (pbCut != null)
 			pbCut.setEnabled(selected);
 		if (pbDelete != null)
-			pbDelete.setEnabled(selected);	
+			pbDelete.setEnabled(selected);
 	}
 
 	public UIToolBar getToolBar() {
 		return tbrToolBar;
 	}
-	
+
 	/**
 	 * Enable/disable the toolbar.
 	 * @param enabled true to enable, false to disable.
@@ -663,20 +665,20 @@ public class UIToolBarMain implements IUIToolBar, IUIConstants, ActionListener {
 	public void setEnabled(boolean enabled) {
 		tbrToolBar.setEnabled(enabled);
 	}
-	
+
 	/**
 	 * Return true if this toolbar is active by default, or false if it must be switched on by the user.
 	 * @return true if the toolbar is active by default, else false.
 	 */
 	public boolean getDefaultActiveState() {
 		return DEFAULT_STATE;
-	}	
-	
+	}
+
 	/**
 	 * Return a unique integer identifier for this toolbar.
 	 * @return a unique integer identifier for this toolbar.
 	 */
 	public int getType() {
 		return nType;
-	}		
+	}
 }

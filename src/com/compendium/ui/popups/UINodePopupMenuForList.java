@@ -22,10 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.popups;
 
+import static com.compendium.ProjectCompendium.*;
+
 import java.awt.event.*;
+import java.net.URLEncoder;
 import java.util.*;
 import javax.swing.*;
 
@@ -42,6 +44,7 @@ import com.compendium.ui.dialogs.UIExportViewDialog;
 import com.compendium.ui.dialogs.UIImportDialog;
 import com.compendium.ui.dialogs.UIImportFlashMeetingXMLDialog;
 import com.compendium.ui.dialogs.UIReadersDialog;
+import com.compendium.ui.dialogs.UISendMailDialog;
 
 /**
  * This class draws and handles events for the right-click menu for nodes in a list.
@@ -103,12 +106,6 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 
 	/** The JMenuItem to add the node associated with this popup to the favorites list.*/
 	private JMenuItem		miFavorites				= null;
-	
-	/** The JMenu to send information to IX Panels.*/
-	private JMenu			mnuSendToIX				= null;
-
-	/** The JMenu to send information to a Jabber client.*/
-	private JMenu			mnuSendToJabber			= null;
 
 	/** The JMenu which holds the import options.*/
 	private JMenu			mnuImport				= null;
@@ -136,13 +133,13 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 
 	/** The JMenuItem to export to XML.*/
 	private JMenuItem		miExportXMLView			= null;
-	
+
 	/** The menu item to export a HTML view with the XML included.*/
 	private JMenuItem		miExportHTMLViewXML		= null;
-	
+
 	/** The menu item to import Flashmeeting XML.*/
 	private JMenuItem		miImportXMLFlashmeeting = null;
-	
+
 	/** The JMenuItem to create a shortcut of the currently selected nodes, or the node associated with this popup.*/
 	private JMenuItem		miMenuItemShortCut		= null;
 
@@ -168,29 +165,29 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 	private JMenuItem		miMenuItemProperties	= null;
 
 	/** The JMenu item that holds CaliMaker search options.*/
-	private JMenu			mnuClaiMaker			= null;
+	//private JMenu			mnuClaiMaker			= null;
 
 	/** The JMenuItem to opena browser window and run a ClaiMaker concept search for the current node's labale text.*/
-	private JMenuItem		miClaiConcepts			= null;
+//	private JMenuItem		miClaiConcepts			= null;
 
 	/** The JMenuItem to opena browser window and run a ClaiMaker neightbourhood search for the current node's labale text.*/
-	private JMenuItem		miClaiNeighbourhood		= null;
+//	private JMenuItem		miClaiNeighbourhood		= null;
 
 	/** The JMenuItem to opena browser window and run a ClaiMaker document search for the current node's labale text.*/
-	private JMenuItem		miClaiDocuments			= null;
+//	private JMenuItem		miClaiDocuments			= null;
 
 	/** Open a broswer window and run a search on Goolge for the current node's label text.*/
 	private JMenuItem		miGoogleSearch			= null;
 
 	/** The JMenu to holds links to Reference nodes contained in the node if it is a map or a view.*/
 	private JMenu			mnuRefNodes				= null;
-	
+
 	/** The menu item to create an internal reference node to this node.*/
 	private JMenuItem		miInternalReference		= null;
 
 	/** The menu to list users to to select from to sent node to thier in box.*/
-	private JMenu			mnuToInBox				= null;
-	
+	private JMenuItem		miToInBox				= null;
+
 	/** The x value for the location of this popup menu.*/
 	private int				nX						= 0;
 
@@ -209,9 +206,6 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 	/** The ListUI obnject associated with this popup menu.*/
 	private ListUI			listui					= null;
 
-	/** The base url string to sun claimaker searches.*/
-	private String claiMakerServer 					= "";
-	
 	/**
 	 * Constructor. Create the menus and items and draws the popup menu.
 	 * @param title, the title for this popup menu.
@@ -298,64 +292,67 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		addSeparator();
 
 		String sSource = oNode.getSource();
-		
+
 		if (!sSource.startsWith(ICoreConstants.sINTERNAL_REFERENCE)) {
 			miInternalReference = new JMenuItem("Create Internal Reference Node");
 			miInternalReference.setToolTipText("Create a Reference node with an internal reference to this node");
 			miInternalReference.setMnemonic(KeyEvent.VK_I);
 			miInternalReference.addActionListener(this);
 			add(miInternalReference);
-				
-			mnuToInBox = new JMenu("Send To Inbox Of...");
-			mnuToInBox.setToolTipText("Send Internal Reference node pointing to this node to selected User's Inbox");
-			mnuToInBox.setMnemonic(KeyEvent.VK_B);
-			mnuToInBox.addActionListener(this);		
 
+			miToInBox = new JMenuItem("Send Node via C-Mail");
+			miToInBox.setToolTipText("Send Internal Reference node pointing to this node to selected User's Inbox");
+			miToInBox.setMnemonic(KeyEvent.VK_B);
+			miToInBox.addActionListener(this);
+			add(miToInBox);
+/*
 			View oHomeView = ProjectCompendium.APP.getHomeView();
 			boolean isHomeView = false;
 			if (oHomeView.getId().equals(listui.getUIList().getView())) {
 				isHomeView = true;
 			}
-	
-			IModel oModel = ProjectCompendium.APP.getModel();	
+
+			IModel oModel = ProjectCompendium.APP.getModel();
 			UserProfile up = null;
-			
+
 			if (isHomeView) {
 				up = oModel.getUserProfile();
-				final View foView = up.getLinkView();				
+				final View foView = up.getLinkView();
 				final UserProfile fup = up;
 				JMenuItem item = new JMenuItem(up.getUserName());
-				item.setToolTipText("Add as 'Go To' node in your Inbox");				
+				item.setToolTipText("Add as 'Go To' node in your Inbox");
 				item.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						onCreateInternalLinkInView(foView, fup);
 					}
 				});
-				mnuToInBox.add(item);	
+				mnuToInBox.add(item);
 			} else {
 				Vector vtUsers = oModel.getUsers();
 				int count = vtUsers.size();
 				for (int i=0; i<count; i++) {
 					up = (UserProfile)vtUsers.elementAt(i);
-					JMenuItem item = new JMenuItem(up.getUserName());
-					item.setToolTipText("Add as 'Go To' node in this user's Inbox");
-					
-					final View foView = up.getLinkView();				
-					final UserProfile fup = up;
-					item.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							onCreateInternalLinkInView(foView, fup);
-						}
-					});
-					mnuToInBox.add(item);	
+					if (up.isActive()) {
+						JMenuItem item = new JMenuItem(up.getUserName());
+						item.setToolTipText("Add as 'Go To' node in this user's Inbox");
+
+						final View foView = up.getLinkView();
+						final UserProfile fup = up;
+						item.addActionListener(new ActionListener() {
+							public void actionPerformed(ActionEvent e) {
+								onCreateInternalLinkInView(foView, fup);
+							}
+						});
+						mnuToInBox.add(item);
+					}
 				}
 			}
+
 			
-			add(mnuToInBox);
-			
+*/
 			addSeparator();
 		}
-		
+
 		if (nType == ICoreConstants.MAPVIEW || nType == ICoreConstants.MAP_SHORTCUT ||
 			nType == ICoreConstants.LISTVIEW || nType == ICoreConstants.LIST_SHORTCUT ) {
 
@@ -418,7 +415,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		miImportXMLFlashmeeting.setMnemonic(KeyEvent.VK_F);
 		miImportXMLFlashmeeting.addActionListener(this);
 		mnuImport.add(miImportXMLFlashmeeting);
-		
+
 		mnuImport.add(miImportXMLView);
 
 		miFileImport = new JMenu("Questmap File...");
@@ -463,10 +460,10 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		miExportHTMLViewXML.setMnemonic(KeyEvent.VK_P);
 		miExportHTMLViewXML.addActionListener(this);
 		mnuExport.add(miExportHTMLViewXML);
-		
+
 		add(mnuExport);
 		addSeparator();
-		
+
 		miGoogleSearch = new JMenuItem("Search Google");
 		miGoogleSearch.addActionListener(this);
 		miGoogleSearch.setMnemonic(KeyEvent.VK_G);
@@ -474,26 +471,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 
 		// SEND TO OPTIONS
 		boolean addSep = false;
-		if (ProjectCompendium.APP.jabber != null &&
-									ProjectCompendium.APP.jabber.getRoster().hasMoreElements()) {
-			addSep = true;
-			mnuSendToJabber = new JMenu("Send To Jabber");
-			mnuSendToJabber.setEnabled(false);
-			mnuSendToJabber.setMnemonic(KeyEvent.VK_J);
-			add(mnuSendToJabber);
-			ProjectCompendium.APP.drawJabberRoster( mnuSendToJabber, oNode );
-		}
-
-		if (ProjectCompendium.APP.ixPanel != null &&
-									ProjectCompendium.APP.ixPanel.getRoster().hasMoreElements()) {
-			addSep = true;
-			mnuSendToIX = new JMenu("Send To IX");
-			mnuSendToIX.setEnabled(false);
-			mnuSendToIX.setMnemonic(KeyEvent.VK_X);
-			add(mnuSendToIX);
-			ProjectCompendium.APP.drawIXRoster( mnuSendToIX, oNode );
-		}
-
+		
 		if ( addSep )
 			addSeparator();
 
@@ -516,14 +494,14 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		miFavorites.setMnemonic(KeyEvent.VK_F);
 		add(miFavorites);
 
-		addSeparator();		
-		
-		if (ProjectCompendium.APP.isClaiMakerConnected()) {
+		addSeparator();
+
+		/*if (ProjectCompendium.APP.isClaiMakerConnected()) {
 
 			claiMakerServer = ProjectCompendium.APP.getClaiMakerServer();
 
 			mnuClaiMaker = new JMenu("Search ClaiMaker");
-			mnuClaiMaker.setMnemonic(KeyEvent.VK_A);			
+			mnuClaiMaker.setMnemonic(KeyEvent.VK_A);
 			add(mnuClaiMaker);
 
 			miClaiConcepts = new JMenuItem("Concepts");
@@ -543,13 +521,13 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 
 			addSeparator();
 		}
-		
+*/
 		miMenuItemReaders = new JMenuItem("Readers");
 		miMenuItemReaders.addActionListener(this);
 		miMenuItemReaders.setMnemonic(KeyEvent.VK_R);
 		miMenuItemReaders.setEnabled(true);
 		add(miMenuItemReaders);
-		
+
 		miMenuItemMarkSeen = new JMenuItem("Mark Seen");
 		miMenuItemMarkSeen.addActionListener(this);
 		miMenuItemMarkSeen.setMnemonic(KeyEvent.VK_M);
@@ -561,7 +539,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		miMenuItemMarkUnseen.setMnemonic(KeyEvent.VK_N);
 		add(miMenuItemMarkUnseen);
 		miMenuItemMarkUnseen.setEnabled(true);
-	
+
 		int state = oNode.getState();
 		if(state == ICoreConstants.READSTATE){
 			miMenuItemMarkSeen.setEnabled(false);
@@ -570,7 +548,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		}
 		addSeparator();
 
-		
+
 		miMenuItemProperties = new JMenuItem("Properties");
 		miMenuItemProperties.addActionListener(this);
 		miMenuItemProperties.setMnemonic(KeyEvent.VK_P);
@@ -584,7 +562,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		/**
 		 * If on the Mac OS and the Menu bar is at the top of the OS screen, remove the menu shortcut Mnemonics.
 		 */
-		if (ProjectCompendium.isMac && (FormatProperties.macMenuBar || (!FormatProperties.macMenuBar && !FormatProperties.macMenuUnderline)) )
+		if (ProjectCompendium.isMac && (APP_PROPERTIES.isMacMenuBar() || (!APP_PROPERTIES.isMacMenuBar() && !APP_PROPERTIES.isMacMenuUnderline())) )
 			UIUtilities.removeMenuMnemonics(getSubElements());
 
 		pack();
@@ -616,7 +594,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 					ProjectCompendium.APP.setTrashBinIcon();
 			//	}
 			//};
-			//thread.start();						
+			//thread.start();
 		} else if (source.equals(miInternalReference)) {
 			onCreateInternalLink();
 		} else if(source.equals(miMenuItemShortCut)) {
@@ -625,8 +603,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 			int[] selectedList = list.getSelectedRows();
 			listui.getUIList().createShortCutNodes(selectedList);
 			list.clearSelection();
-			list.addRowSelectionInterval(list.getRowCount(),
-										 list.getRowCount() + selectedList.length - 1);
+			list.addRowSelectionInterval(list.getRowCount()-selectedList.length, list.getRowCount()-1);
 		} else if(source.equals(miMenuItemClone)) {
 			listui.createCloneNode(oNode);
 		} else if (source.equals(miFavorites)) {
@@ -643,13 +620,13 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 		} else if (source.equals(miExportXMLView)) {
 			onXMLExport(false);
 		} else if (source.equals(miExportHTMLViewXML)) {
-			ProjectCompendium.APP.onFileExportPower();						
+			ProjectCompendium.APP.onFileExportPower();
 		} else if (source.equals(miImportXMLView)) {
 			onXMLImport();
 		} else if (source.equals(miImportXMLFlashmeeting)) {
 			UIImportFlashMeetingXMLDialog dlg = new UIImportFlashMeetingXMLDialog(ProjectCompendium.APP);
 			UIUtilities.centerComponent(dlg, ProjectCompendium.APP);
-			dlg.setVisible(true);						
+			dlg.setVisible(true);
 		} else if(source.equals(miMenuItemCopy)) {
 			listui.copyToClipboard();
 		}
@@ -670,14 +647,14 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 			UIReadersDialog readers = new UIReadersDialog(ProjectCompendium.APP, nodeId);
 			UIUtilities.centerComponent(readers, ProjectCompendium.APP);
 			readers.setVisible(true);
-		}		
+		}
 		else if(source.equals(miMenuItemMarkSeen)) {
 			try {
 				Enumeration e = listui.getUIList().getSelectedNodes();
 				for(;e.hasMoreElements();){
 					NodePosition np = (NodePosition) e.nextElement();
 					NodeSummary oNode = np.getNode();
-					oNode.setState(ICoreConstants.READSTATE);	
+					oNode.setState(ICoreConstants.READSTATE);
 				}
 			}
 			catch(Exception io) {
@@ -690,7 +667,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 				for(;e.hasMoreElements();){
 					NodePosition np = (NodePosition) e.nextElement();
 					NodeSummary oNode = np.getNode();
-					oNode.setState(ICoreConstants.UNREADSTATE);	
+					oNode.setState(ICoreConstants.UNREADSTATE);
 				}
 			}
 			catch(Exception io) {
@@ -704,7 +681,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 			} catch (Exception e) {}
 			ExecuteControl.launch( "http://www.google.com/search?hl=en&lr=&ie=UTF-8&oe=UTF-8&q="+sLabel );
 		}
-		else if (source.equals(miClaiConcepts)) {
+	/*	else if (source.equals(miClaiConcepts)) {
 			String sLabel = oNode.getLabel();
 			try {
 				sLabel = CoreUtilities.cleanURLText(sLabel);
@@ -725,12 +702,21 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 			} catch (Exception e) {}
 			ExecuteControl.launch( claiMakerServer+"search-document.php?op=search&Title="+sLabel );
 		}
-
+*/
 		else if(source.equals(miMenuItemViews)) {
 			listui.getUIList().showViewsDialog(oNodePosition);
 		}
+		else if(source.equals(miMenuItemMarkSeen)) {
+			// mark it seen
+		}
+		else if(source.equals(miMenuItemMarkUnseen)) {
+			// mark it unseen
+		}
 		else if(source.equals(miMenuItemProperties)) {
 			listui.getUIList().showPropertiesDialog(oNodePosition);
+		}
+		else if (source.equals(miToInBox)) {
+			pickInBoxRecipients();
 		}
 
 		/*
@@ -838,74 +824,42 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 
 		ProjectCompendium.APP.setDefaultCursor();
 	}
-	
-	
+
 	/**
-	 * Create a Reference node with internal link to this node 
-	 * and put it in the inbox for the given View and user.
-	 * @param view the view to add the reference to.
-	 * @param up the UserProfile for the chosen user
-	 */
-	private void onCreateInternalLinkInView(View view, UserProfile up) {				
-		if (view == null) {
-			view = ProjectCompendium.APP.createInBox(up);
-			if (view == null) {				
-				ProjectCompendium.APP.displayError("Could not get reference to user's Inbox");						
-				return;
-			}
-		}
-		
-		UIList uilist = listui.getUIList();
-		
-		IModel model = ProjectCompendium.APP.getModel();
-		UserProfile currentUser = model.getUserProfile();		
-		view.initialize(model.getSession(), model);
-		
-		String sRef = ICoreConstants.sINTERNAL_REFERENCE+uilist.getView().getId()+"/"+oNode.getId();
-		String sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
-		try{
-			NodePosition node = view.addMemberNode(ICoreConstants.REFERENCE,
-					 "",
-					 "",
-					 sAuthor,
-					 "GO TO: "+oNode.getLabel(),
-					 "( "+uilist.getView().getLabel()+" )\n\n"+				 
-					 "Sent by "+currentUser.getUserName(),
-					 0, ((view.getNodeCount() + 1) *10));
+	 * Create a recipient dialog box so the user can choose multiple people to send the INR to
+	*/
+	private void pickInBoxRecipients() {
 			
-			node.getNode().setSource(sRef, "", sAuthor);
-			node.getNode().setState(ICoreConstants.UNREADSTATE);
-			view.setState(ICoreConstants.MODIFIEDSTATE);
-		} catch (Exception e) {
-			ProjectCompendium.APP.displayError("Could not add to InBox due to:\n\n"+e.getMessage());			
-		}
+		View oInBoxView = ProjectCompendium.APP.getInBoxView();
+		if (oInBoxView.getId().equals(listui.getUIList().getView().getId())) {
+			JOptionPane.showMessageDialog(this, "Cannot send links to items in your InBox.", "Blocked operation", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		} 
 		
-		// If the view is open (it's your in box and you have it open), refresh the view.
-		UIViewFrame oViewFrame = ProjectCompendium.APP.getInternalFrame(view);
-		if (oViewFrame != null) {
-			UIListViewFrame listFrame = (UIListViewFrame)oViewFrame;
-			listFrame.getUIList().updateTable();
-		}	
-		
-		ProjectCompendium.APP.refreshNodeIconIndicators(ProjectCompendium.APP.getInBoxID());
-	}	
-	
+		UISendMailDialog dlg = new UISendMailDialog(ProjectCompendium.APP, 
+													listui.getUIList().getView(),
+													oNode);
+		UIUtilities.centerComponent(dlg, ProjectCompendium.APP);
+		dlg.setVisible(true);
+
+	}
+
 	/**
 	 * Create a Reference node with internal link to this node.
 	 */
 	private void onCreateInternalLink() {
 
 		UIList uilist = listui.getUIList();
-		View view = uilist.getView();		
-		
+		View view = uilist.getView();
+
 		String sRef = ICoreConstants.sINTERNAL_REFERENCE+view.getId()+"/"+oNode.getId();
 		String sAuthor = ProjectCompendium.APP.getModel().getUserProfile().getUserName();
 
 		// Do all calculations at 100% scale and then scale back down if required.
 		if (uilist != null) {
-			try {			
+			try {
 				// CREATE NEW NODE RIGHT OF THE GIVEN NODE WITH THE GIVEN LABEL
-				
+
 				NodePosition nodePos = listui.createNode(ICoreConstants.REFERENCE,
 								 "",
 								 ProjectCompendium.APP.getModel().getUserProfile().getUserName(),
@@ -913,23 +867,23 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 								 "( "+view.getLabel()+" )",
 								 0, ((view.getNodeCount()+1)*10)
 								 );
-				
+
 				nodePos.getNode().setSource(sRef, "", sAuthor);
-				
+
 				uilist.updateTable();
 			} catch (Exception e) {
-				ProjectCompendium.APP.displayError("Could not create internal link due to:\n\n"+e.getMessage());							
-			}				
+				ProjectCompendium.APP.displayError("Could not create internal link due to:\n\n"+e.getMessage());
+			}
 		}
-	}		
-	
+	}
+
 	/**
 	 * Create a Reference node with internal link to this node.
 	 */
 	private void onCreateBookmark() {
-		View view = listui.getUIList().getView();				
+		View view = listui.getUIList().getView();
 		ProjectCompendium.APP.createFavorite(oNode.getId(), view.getId(), view.getLabel()+"&&&"+oNode.getLabel(), oNode.getType());
-	}	
+	}
 
 	/**
 	 * Set the location to draw this popup menu at.
@@ -947,7 +901,7 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
 	public void onCancel() {
 		setVisible(false);
 	}
-	
+
 	/**
 	 * Handle a Questmap import request.
 	 * @param showViewList, true if importing to mulitpl views, else false.
@@ -989,5 +943,5 @@ public class UINodePopupMenuForList extends JPopupMenu implements ActionListener
         UIExportViewDialog dialog2 = new UIExportViewDialog(ProjectCompendium.APP, listui.getUIList().getViewFrame());
 		UIUtilities.centerComponent(dialog2, ProjectCompendium.APP);
 		dialog2.setVisible(true);
-	}	
+	}
 }

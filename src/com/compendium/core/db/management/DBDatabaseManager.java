@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -21,7 +21,6 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 
 package com.compendium.core.db.management;
 
@@ -46,10 +45,13 @@ import com.compendium.core.*;
 public class DBDatabaseManager {
 
 	/** A hashtable of database names and references to the connection manager objects for a database.*/
-	private Hashtable htDatabases = new Hashtable() ;
+	//private Hashtable htDatabases = new Hashtable() ;
+	private DBConnectionManager db_conn_mgr;
+
+	private String current_db_name;
 
 	/** The name of the file in which to find the list of any old Compendium Access database*/
-	private final String file = "database.ini";
+	//private final String file = "database.ini";
 
 	/** The name to use whn accessing the database */
 	private String sDatabaseUserName = ICoreConstants.sDEFAULT_DATABASE_USER;
@@ -109,94 +111,6 @@ public class DBDatabaseManager {
 	}
 
 	/**
-	 * Check to see if there is a Database.ini file referencing Access Databases.
-	 * This is needed for crossover from Access to MySQL.
-	 *
-	 * @return true if the file exists, false if it does not.
-	 */
-	// MB: 7th April 2005 - NOT USED ANYMORE. LEFT FOR A WHILE IN CASE NEED TO RETURN IT.
-	public boolean hasAccessDatabases() {
-
-		try {
-			File databaseFile = new File(file);
-			if (databaseFile.exists())
-				return true;
-		}
-		catch (Exception e) {
-			System.out.println("Exception: (DBDatabaseManager.hasAccessDatabases) \n\n"+e.getMessage());
-		}
-
-		return false;
-	}
-
-	/**
-	 * Load the Access database references from the database.ini file.
-	 */
-	// MB: 7th April 2005 - NOT USED ANYMORE. LEFT FOR A WHILE IN CASE NEED TO RETURN IT.
-	private void loadAccessDatabases() {
-
-		htDatabases.clear();
-
-		BufferedReader reader = null;
-		try {
-			reader = new BufferedReader(new FileReader(file));
-		}
-		catch (FileNotFoundException e) {
-			return;
-		}
-
-		try {
-			while (reader.ready()) {
-				String line = reader.readLine();
-				if (line == null) {
-					break;
-				}
-				if (line.startsWith("DB")) {
-					String dbinfo = line.substring(line.indexOf((int)'=')+1);
-
-					int index = dbinfo.lastIndexOf((int)'\\');
-					String odbcname = dbinfo.substring(index+1,dbinfo.indexOf((int)','));
-					String display = (dbinfo.substring(line.indexOf((int)',')-1)).trim();
-
-					htDatabases.put(display, odbcname);
-				}
-			}
-			reader.close();
-		}
-		catch (IOException e) {}
-	}
-
-	/**
-	 *	This method returns a list of all Compendium Access databases available.
-	 *
-	 *	@return String of project database names.
-	 */
-	// MB: 7th April 2005 - NOT USED ANYMORE. LEFT FOR A WHILE IN CASE NEED TO RETURN IT.
-	public String getAccessProjects() {
-
-		if (htDatabases.isEmpty())
-			loadAccessDatabases();
-
-		// SORT THE DATABASES NAME ALPHABETICALLY FIRST
-		Vector databases = new Vector();
-		for(Enumeration e = htDatabases.keys();e.hasMoreElements();) {
-			databases.addElement((String)e.nextElement());
-		}
-		databases = CoreUtilities.sortList(databases);
-
-		String projects = "";
-		int count = databases.size();
-		for (int i=0; i<count; i++) {
-			if (i < count-1)
-				projects = projects + (String)databases.elementAt(i)+",";
-			else
-				projects = projects + (String)databases.elementAt(i);
-		}
-
-		return projects;
-	}
-
-	/**
 	 * This method opens a project by setting up a DBConnectionManager for the project.
 	 *
 	 * @param String sDatabaseName, the name of the database project to open a connection for.
@@ -204,24 +118,39 @@ public class DBDatabaseManager {
 	 */
 	public boolean openProject(String sDatabaseName) {
 
-		if (htDatabases.containsKey(sDatabaseName)) {
+		//System.out.println("119 DBDatabaseManager entered openProject for name " + sDatabaseName + " current_db_name is " + current_db_name);
+		//System.out.flush();
+
+		if ( (current_db_name != null) && current_db_name.equals(sDatabaseName) )
+		{
+			//same db name as last time, skip
 			return true;
 		}
-		else {
+
+		current_db_name = sDatabaseName;
+
+//		if (htDatabases.containsKey(sDatabaseName)) {
+//			return true;
+//		}
+//		else {
 			DBConnectionManager con = null;
 			try {
 				if (nDatabaseType == ICoreConstants.DERBY_DATABASE)
 					con = new DBConnectionManager(nDatabaseType, sDatabaseName);
 				else
 					con = new DBConnectionManager(nDatabaseType, sDatabaseName, sDatabaseUserName, sDatabasePassword, sDatabaseIP);
+
+				db_conn_mgr = con;
 			}
 			catch(Exception ex) {
 				System.out.println("Exception (DBDatabaseManager.openProject) \n\n"+ex.getMessage());
+				System.out.flush();
 				return false;
 			}
-			htDatabases.put(sDatabaseName, con) ;
+//			htDatabases.put(sDatabaseName, con) ;
+			System.out.println("140 DBDatabaseManager exiting openProject returning true");
 			return true ;
-		}
+//		}
 	}
 
 	/**
@@ -233,8 +162,11 @@ public class DBDatabaseManager {
 	 */
 	public DBConnection requestConnection(String sDatabaseName) {
 
+		//System.out.println("154 DBDatabaseManager entered requestConnection, sDatabaseName is " + sDatabaseName);
+		//System.out.flush();
+
 		// If the database has not been opened with connections, open it
-		if (!htDatabases.containsKey(sDatabaseName)) {
+/*		if (!htDatabases.containsKey(sDatabaseName)) {
 			if(!openProject(sDatabaseName))
 				return null ;	//could not get connection
 		}
@@ -243,7 +175,18 @@ public class DBDatabaseManager {
 		DBConnectionManager conSet = (DBConnectionManager)htDatabases.get(sDatabaseName);
 
 		// returns the free connection
+		System.out.println("247 DBDatabaseManager exiting requestConnection for db " + sDatabaseName + ", DBConnection good ");
 		return conSet.getConnection();
+		*/
+		openProject(sDatabaseName);
+
+		//System.out.println("172 DBDatabaseManager exiting requestConnection, sDatabaseName is " + sDatabaseName);
+		//System.out.flush();
+
+		if (db_conn_mgr == null)
+			return null;
+		else
+			return db_conn_mgr.getConnection();
 	}
 
 	/**
@@ -255,13 +198,18 @@ public class DBDatabaseManager {
 	 */
 	public boolean releaseConnection(String sDatabaseName, DBConnection dbcon) {
 
-		if (htDatabases.containsKey(sDatabaseName)) {
+		//System.out.println("265 DBDatabaseManager entered releaseConnection, sDatabaseName is " + sDatabaseName);
+
+/*		if (htDatabases.containsKey(sDatabaseName)) {
 			DBConnectionManager conSet = (DBConnectionManager)htDatabases.get(sDatabaseName) ;
 			conSet.releaseConnection(dbcon) ;
 			return true;
 		}
 		else
 			return false;
+			*/
+		//db_conn_mgr.releaseConnection(dbcon);
+		return true;
 	}
 
 	/**
@@ -273,6 +221,8 @@ public class DBDatabaseManager {
 	 */
 	public boolean removeAllConnections(String sDatabaseName) {
 
+/*		System.out.println("280 DBDatabaseManager entered removeAllConnections, sDatabaseName is " + sDatabaseName);
+
 		if (htDatabases.containsKey(sDatabaseName)) {
 			DBConnectionManager conSet = (DBConnectionManager)htDatabases.get(sDatabaseName);
 			conSet.removeAllConnections();
@@ -281,5 +231,8 @@ public class DBDatabaseManager {
 		}
 		else
 			return false;
+			*/
+			//db_conn_mgr.removeAllConnections();
+			return true;
 	}
 }

@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -22,17 +22,16 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
-import java.sql.Connection;
 import java.util.*;
 import java.io.File;
 
 import org.apache.derby.jdbc.*;
 
 import com.compendium.core.*;
+import com.compendium.core.db.management.*;
 
 /**
  * The class manages a set of connections for a given database
@@ -51,10 +50,11 @@ public class DBConnectionManager {
 	public final static String DERBY_URL 		= "jdbc:derby:";
 
 	/** Holds references to all DBConnections currently created.*/
-	private Vector 	vtDBConnections = null;
+	//private Vector vtDBConnections = new Vector(100);
+	private DBConnection db_conn = null;
 
 	/** The name of the current database this ConnectionManager is managing connection for.*/
-	private String 	sDatabaseName 	= "";
+	private static String 	sDatabaseName 	= "";
 
 	/** The Driver obejct used to communicate with the database.*/
 	private Driver	oDriver			= null;
@@ -139,6 +139,8 @@ public class DBConnectionManager {
 		//Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
 		Driver oDriver = new org.apache.derby.jdbc.EmbeddedDriver();
 
+		System.out.println(" 142 DBConnection Manager DERBY_URL is " + DERBY_URL + " and sDatabaseName is " + sDatabaseName);
+
 		String databaseURL = DERBY_URL+sDatabaseName+";create=true;";
 
 		//if (sDatabaseIP != null && !sDatabaseIP.equals(""))
@@ -184,9 +186,12 @@ public class DBConnectionManager {
 	public static Connection getDerbyConnection(String sDatabaseName) throws SQLException, ClassNotFoundException {
 
 		Driver driver = new org.apache.derby.jdbc.EmbeddedDriver();
+		System.out.println("188 reading DERBY_URL " + DERBY_URL);
 		String databaseURL = DERBY_URL;
 		//if (sDatabaseIP != null && !sDatabaseIP.equals(""))
 		//	databaseURL += "//"+sDatabaseIP+"/";
+		System.out.println("192 DBConnectionManager database name is " + sDatabaseName);
+		System.out.println("193 DBConnectionManager getting connection for " + databaseURL + sDatabaseName);
 
 		Connection connection = DriverManager.getConnection(databaseURL + sDatabaseName);
 		return connection;
@@ -206,10 +211,11 @@ public class DBConnectionManager {
 	public static Connection getDerbyConnection(String sDatabaseName, String sDatabaseUserName, String sDatabasePassword, String sDatabaseIP) throws SQLException, ClassNotFoundException {
 
 		Driver driver = new org.apache.derby.jdbc.EmbeddedDriver();
+		System.out.println("212 reading DERBY_URL " + DERBY_URL);
 		String databaseURL = DERBY_URL;
 		//if (sDatabaseIP != null && !sDatabaseIP.equals(""))
 		//	databaseURL += "//"+sDatabaseIP+"/";
-
+		System.out.println("217 DBConnectionManager database name is " + sDatabaseName);
 		Connection connection = DriverManager.getConnection(databaseURL + sDatabaseName);
 		return connection;
 	}
@@ -227,30 +233,93 @@ public class DBConnectionManager {
 	 */
 	public static Connection getMySQLConnection(String sDatabaseName, String sDatabaseUserName, String sDatabasePassword, String sDatabaseIP) throws SQLException, ClassNotFoundException {
 
-		Driver driver = new org.gjt.mm.mysql.Driver();
+		Driver driver = new com.mysql.jdbc.Driver();
 		String databaseURL = JDBC_MYSQL_URL;
 
 		if (sDatabaseIP != null && !sDatabaseIP.equals(""))
 			databaseURL += "//"+sDatabaseIP+"/";
 
 		Connection connection = DriverManager.getConnection(databaseURL + sDatabaseName, sDatabaseUserName, sDatabasePassword);
+
+		long lTimeout = lgetMySQLServerTimeout(connection);
+		if (lTimeout > 0) {
+			DBConnection.setTimeouts((lTimeout/2)*1000);	// Cut server timeout in half, convert to milliseconds
+		}
+
+
 		return connection;
+	}
+
+	/**
+	 * Get the lesser interactive/wait timeout from the MySQL server
+	 * @param connection - the database connection
+	 * @return lTimeout - the lesser of the interactive_timeout & the wait_timeout vars
+	 */
+	private static long lgetMySQLServerTimeout(Connection connection) throws SQLException {
+
+		long lTimeout = 0;
+
+		PreparedStatement pstmt = connection.prepareStatement("SHOW VARIABLES LIKE 'interactive_timeout'");
+		ResultSet rs = null;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			System.out.println("DBConnectionManager Error during 'SHOW VARIABLES LIKE 'interactive_timeout''");
+			e.printStackTrace();
+		}
+		while (rs.next()) {
+	        lTimeout = Long.parseLong(rs.getString(2));
+		}
+		pstmt.close();
+
+		pstmt = connection.prepareStatement("SHOW VARIABLES LIKE 'wait_timeout'");
+		try {
+			rs = pstmt.executeQuery();
+		} catch (Exception e){
+			System.out.println("DBConnectionManager Error during 'SHOW VARIABLES LIKE 'wait_timeout''");
+			e.printStackTrace();
+		}
+		while (rs.next()) {
+			if (lTimeout > Long.parseLong(rs.getString(2))) {
+				lTimeout = Long.parseLong(rs.getString(2));
+			}
+		}
+		pstmt.close();
+
+		return lTimeout;
 	}
 
 	/**
 	 * Shutdown the derby database application.
 	 * @param nDatabaseType, the type opf the database to shutdown.
 	 */
-	public static void shutdownDerby(int nDatabaseType) {
+	public static void shutdownDerby(int nDatabaseType)
+	{
+		System.out.println("295 DBConnectionManager entered shutdownDerby, DERBY_URL is " + DERBY_URL);
 
 		if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-			try {
+			try
+			{
 				DriverManager.getConnection(DERBY_URL+";shutdown=true");
 			}
 			catch(Exception ex) {
-				System.out.println("Unable to shutdown Derby: "+ex.getMessage());
+				System.out.println("303 DBConnectionManager Unable to shutdown Derby: "+ex.getMessage());
 			}
 		}
+
+		System.out.println("307 DBConnectionManager sDatabaseName is " + sDatabaseName);
+
+		if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
+			try
+			{
+				DriverManager.getConnection(DERBY_URL+sDatabaseName+";shutdown=true");
+				System.out.println("Successful derby shutdown on " + DERBY_URL+sDatabaseName+";shutdown=true");
+			}
+			catch(Exception ex) {
+				System.out.println("315 DBConnectionManager Unable to shutdown Derby: "+ex.getMessage());
+			}
+		}
+		System.out.println("350 DBConnectionManager exiting shutdownDerby");
 	}
 
 
@@ -264,14 +333,20 @@ public class DBConnectionManager {
 	 * @see com.compendium.core.ICoreConstants#sDEFAULT_DATABASE_PASSWORD
 	 */
 	public DBConnectionManager(int nDatabaseType, String sDatabaseName) {
+		//System.out.println("336 DBConnectionManager entered constructor, in params are " + nDatabaseType + " and " + sDatabaseName);
+
 		this.nDatabaseType = nDatabaseType;
 		this.sDatabaseName = sDatabaseName;
-		vtDBConnections = new Vector(100);
+		//vtDBConnections = new Vector(100);
 
 		if (nDatabaseType == ICoreConstants.MYSQL_DATABASE)
 			this.sDatabaseURL = JDBC_MYSQL_URL+"//localhost/";
 		else {
+			System.out.println("345 DBConnectionManager constructor reading DERBY_URL " + DERBY_URL);
 			this.sDatabaseURL = DERBY_URL;
+
+		System.out.println("348 DBConnectionManager exiting constructor");
+		System.out.flush();
 		}
 	}
 
@@ -284,11 +359,12 @@ public class DBConnectionManager {
 	 * @param sDatabasePassword, the password to use when connection to the database
 	 */
 	public DBConnectionManager(int nDatabaseType, String sDatabaseName, String sDatabaseUserName, String sDatabasePassword) {
+		//System.out.println("362 DBConnectionManager entered constructor 4 params, in sDatabaseName is " + sDatabaseName);
 		this.nDatabaseType = nDatabaseType;
 		this.sDatabaseName = sDatabaseName;
 		this.sDatabaseUserName = sDatabaseUserName;
 		this.sDatabasePassword = sDatabasePassword;
-		vtDBConnections = new Vector(100);
+		//vtDBConnections = new Vector(100);
 		if (nDatabaseType == ICoreConstants.MYSQL_DATABASE)
 			this.sDatabaseURL = JDBC_MYSQL_URL+"//localhost/";
 		else {
@@ -307,15 +383,17 @@ public class DBConnectionManager {
 	 * @param sDatabaseIP, the ip address or host name to use when connection to the database
 	 */
 	public DBConnectionManager(int nDatabaseType, String sDatabaseName, String sDatabaseUserName, String sDatabasePassword, String sDatabaseIP) {
+		//System.out.println("382 DBConnectionManager entered constructor 5 params, in sDatabaseName is " + sDatabaseName);
 		this.nDatabaseType = nDatabaseType;
 		this.sDatabaseName = sDatabaseName;
 		this.sDatabaseUserName = sDatabaseUserName;
 		this.sDatabasePassword = sDatabasePassword;
-		vtDBConnections = new Vector(100);
+		//vtDBConnections = new Vector(100);
 
 		if (nDatabaseType == ICoreConstants.MYSQL_DATABASE)
 			this.sDatabaseURL = JDBC_MYSQL_URL+"//"+sDatabaseIP+"/";
 		else {
+			//System.out.println("372 reading DERBY_URL " + DERBY_URL);
 			this.sDatabaseURL = DERBY_URL;
 		}
 	}
@@ -335,14 +413,20 @@ public class DBConnectionManager {
 	 * @return DBConnection, the new DBConnection object created
 	 */
 	private DBConnection newConnection() throws SQLException, ClassNotFoundException {
+		//System.out.println("416 DBConnectionManager entered newConnection, this.sDatabaseName is " + sDatabaseName);
 
-		String url = sDatabaseURL + sDatabaseName;	
-		
-		//System.out.println("url connecting to: "+url);
-		
+		String url = sDatabaseURL + sDatabaseName;
+
+		//System.out.println("420 DBConnectionManager url connecting to: "+url);
+
 		Connection con = connect(url);
 		DBConnection dbcon = new DBConnection(con, true, this.nDatabaseType);
-		vtDBConnections.addElement(dbcon);
+
+		//System.out.println("425 DBConnectionManager adding to vtDBConnections");
+		//vtDBConnections.addElement(dbcon);
+		db_conn = dbcon;
+
+		//System.out.println("429 DBConnectionManager exiting newConnection");
 
 		return dbcon;
 	}
@@ -357,22 +441,42 @@ public class DBConnectionManager {
 	 */
 	private Connection connect(String url) throws SQLException, ClassNotFoundException {
 
-		//System.out.println("connection url ="+url);
-		
+		//System.out.println("435 DBConnectionManager entered connect url is "+url);
+
+		if (db_conn != null)
+			return db_conn.getConnection();
+		else
+			System.out.println("449 DBConnectionManager db_conn is null");
+
+		System.out.flush();
+
 		// Attempt to connect to the database for which the driver is loaded.
 		Driver driver = getDriver();
 
 		Connection connection = null;
+		if (driver == null)
+			System.out.println("451 DBConnectionManager driver is null");
+
 		if (driver != null) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE)
 	  	        connection = DriverManager.getConnection(url);
 	  	    else {
-	  	        connection = DriverManager.getConnection(url, sDatabaseUserName, sDatabasePassword);
+				System.out.println("464 DBConnectionManager sDatabaseUserName, sDatabasePassword are " +
+					sDatabaseUserName + " and " + sDatabasePassword);
+				System.out.flush();
+
+	  	    	connection = DriverManager.getConnection(url, sDatabaseUserName, sDatabasePassword);
+	  			long lTimeout = lgetMySQLServerTimeout(connection);
+	  			if (lTimeout > 0) {
+	  				DBConnection.setTimeouts((lTimeout/2)*1000);	// Cut server timeout in half, convert to milliseconds
+	  			}
 			}
 		}
-		else {
-			throw new SQLException("Maximum number of connections exceeded");
-		}
+		//else {
+		//	throw new SQLException("Maximum number of connections exceeded");
+		//}
+
+		//System.out.println("435 DBConnectionManager exiting connect");
 
 		return connection;
 	}
@@ -394,7 +498,7 @@ public class DBConnectionManager {
 		}
 		else {
 			//Class.forName("org.gjt.mm.mysql.Driver");
-			oDriver = new org.gjt.mm.mysql.Driver();
+			oDriver = new com.mysql.jdbc.Driver();
 		}
 	}
 
@@ -421,7 +525,7 @@ public class DBConnectionManager {
 	public DBConnection getConnection() {
 
 		DBConnection dbcon = null;
-		int count = vtDBConnections.size();
+/*		int count = vtDBConnections.size();
 
 		try {
 			for(int i=0; i<count; i++) {
@@ -435,7 +539,7 @@ public class DBConnectionManager {
 					count--;
 				}
 				else {
-					if (dbcon.busyTimedOut()) {					
+					if (dbcon.busyTimedOut()) {
 						// JUST IN CASE LEFT LOCKING ROWS. FIXED DERBY BUG
 						try {
 							dbcon.getConnection().close();
@@ -482,9 +586,11 @@ public class DBConnectionManager {
 			e.printStackTrace();
 			System.out.flush();
 		}
-
+*/
 		try {
+
 			dbcon = newConnection();
+
 		}
 		catch(Exception ex) {
 			ex.printStackTrace();
@@ -492,6 +598,7 @@ public class DBConnectionManager {
 			System.out.flush();
 		}
 
+		db_conn = dbcon;
 		return dbcon;
 	}
 
@@ -506,7 +613,7 @@ public class DBConnectionManager {
 
 		if (dbcon != null) {
 			if (dbcon.sessionTimedOut()) {
-				vtDBConnections.remove(dbcon);
+				//vtDBConnections.remove(dbcon);
 				dbcon = null;
 			} else 	if (dbcon.busyTimedOut()) {
 				try {
@@ -515,13 +622,14 @@ public class DBConnectionManager {
 				catch(Exception ex) {
 					ex.printStackTrace();
 				}
-				vtDBConnections.remove(dbcon);
+				//vtDBConnections.remove(dbcon);
 				dbcon = null;
 			}
 			else {
 				dbcon.setIsBusy(false);
 			}
 		}
+		db_conn = null;
 	}
 
 	/**
@@ -529,6 +637,8 @@ public class DBConnectionManager {
 	 */
 	public boolean removeAllConnections() {
 
+		System.out.println("614 DBConnectionManager entered removeAllConnections");
+/*
 		int count = vtDBConnections.size();
 		for(int i=0; i<count; i++) {
 			DBConnection dbcon = (DBConnection) vtDBConnections.elementAt(i);
@@ -538,11 +648,15 @@ public class DBConnectionManager {
 			}
 			catch(Exception ex) {
 				ex.printStackTrace();
+				System.out.println("633 DBConnectionManager exiting removeAllConnections with Exception, returning FALSE");
 				return false;
 			}
 		}
 
 		vtDBConnections.removeAllElements();
+		System.out.println("633 DBConnectionManager exiting removeAllConnections ok, returning true");
+*/
+		db_conn = null;
 		return true;
 	}
 }

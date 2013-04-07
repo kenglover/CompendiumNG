@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 
@@ -34,8 +33,8 @@ package com.compendium.core.datamodel;
  */
 public class ViewProperty implements java.io.Serializable {
 
-	//public final static long 	serialVersionUID	=	
-	
+	//public final static long 	serialVersionUID	=
+
 	/** The user id of the user who created this ViewProperty record.*/
 	protected String			sUserID							= "";
 
@@ -65,19 +64,19 @@ public class ViewProperty implements java.io.Serializable {
 
 	/** Whether the view in this ViewProperty record is maximized.*/
 	protected boolean			bIsMaximum						= false;
-	
+
 	/** Whether to display the Tags node indicator.*/
 	//protected boolean 			bShowTags						= false;
-	
+
 	/** Whether to display the detail text node indicator.*/
 	//protected boolean 			bShowText						= false;
-	
+
 	/** Whether to display the map weight node indicator.*/
 	//protected boolean			bShowWeight						= false;
-	
+
 	/** Whether to show the parent view (transclusion history) node indicator.*/
 	//protected boolean 			bShowTrans						= false;
-	
+
 	/** Whether to show small node icons.*/
 	//protected boolean			bShowSmallIcons					= false;
 
@@ -86,16 +85,16 @@ public class ViewProperty implements java.io.Serializable {
 
 	/** Indicates the label length before employing auto popup details box.*/
 	//protected int				nLabelLength					= 100;
-	
+
 	/** Indicates the label wrap width for this map.*/
 	//protected int				nLabelWrapWidth					= 15;
-	
+
 	/** Indicates the llabel fon size for this map.*/
 	//protected int				nFontSize						= 12;
-	
+
 	/** Indicates the label font face for nodes.*/
 	//protected String			sFontFace						="Arial";
-	
+
 	/** Indicates the label font style for nodes.*/
 	//protected int				nFontStyle						=0;
 
@@ -286,7 +285,7 @@ public class ViewProperty implements java.io.Serializable {
 	public void setIsMaximum(boolean bIsMaximum) {
 		this.bIsMaximum = bIsMaximum;
 	}
-	
+
 	/**
 	 * Returns whether this View should show the tags node indicators.
 	 *
@@ -303,8 +302,8 @@ public class ViewProperty implements java.io.Serializable {
 	 */
 	//public void setShowTags(boolean bShowTags) {
 	//	this.bShowTags = bShowTags;
-	//}	
-	
+	//}
+
 	/**
 	 * Returns whether this View should show the detail text node indicators.
 	 *
@@ -321,7 +320,7 @@ public class ViewProperty implements java.io.Serializable {
 	 */
 	//public void setShowText(boolean bShowText) {
 	//	this.bShowText = bShowText;
-	//}	
+	//}
 
 	/**
 	 * Returns whether this View should show the transclusion history node indicators.
@@ -339,8 +338,8 @@ public class ViewProperty implements java.io.Serializable {
 	 */
 	//public void setShowTrans(boolean bShowTrans) {
 	//	this.bShowTrans = bShowTrans;
-	//}	
-	
+	//}
+
 	/**
 	 * Returns whether this View should show the map weight node indicators.
 	 *
@@ -357,8 +356,8 @@ public class ViewProperty implements java.io.Serializable {
 	 */
 	//public void setShowWeight(boolean bShowWeight) {
 	//	this.bShowWeight = bShowWeight;
-	//}	
-	
+	//}
+
 	/**
 	 * Returns whether this View should show the map weight node indicators.
 	 *
@@ -376,7 +375,7 @@ public class ViewProperty implements java.io.Serializable {
 	//public void setShowSmallIcons(boolean bShowSmallIcons) {
 	//	this.bShowSmallIcons = bShowSmallIcons;
 	//}
-	
+
 	/**
 	 * Returns whether this View should hide node icons.
 	 *
@@ -393,8 +392,8 @@ public class ViewProperty implements java.io.Serializable {
 	 */
 	//public void setHideIcons(boolean bHideIcons) {
 	//	this.bHideIcons = bHideIcons;
-	//}	
-	
+	//}
+
 	/**
 	 * Returns the label default length before going to details of this View
 	 *
@@ -412,7 +411,7 @@ public class ViewProperty implements java.io.Serializable {
 	//public void setLabelLength(int nWidth) {
 	//	this.nLabelLength = nWidth;
 	//}
-	
+
 	/**
 	 * Returns the label wrap width of this View
 	 *
@@ -430,7 +429,7 @@ public class ViewProperty implements java.io.Serializable {
 	//public void setLabelWrapWidth(int nWidth) {
 	//	this.nLabelWrapWidth = nWidth;
 	//}
-	
+
 	/**
 	 * Returns the font size for this View
 	 *
@@ -448,7 +447,7 @@ public class ViewProperty implements java.io.Serializable {
 	//public void setFontSize(int nFontSize) {
 	//	this.nFontSize = nFontSize;
 	//}
-	
+
 	/**
 	 * Returns the the font face for node labels in this View
 	 *
@@ -465,8 +464,8 @@ public class ViewProperty implements java.io.Serializable {
 	 */
 	//public void setFontFace(String sFontFace) {
 	//	this.sFontFace = sFontFace;
-	//}	
-	
+	//}
+
 	/**
 	 * Returns the font style for this View
 	 *

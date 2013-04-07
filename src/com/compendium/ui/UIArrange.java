@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.util.*;
@@ -91,7 +90,7 @@ public class UIArrange implements IUIConstants {
 
 	/** The maximum indent level.*/
 	private int						nMaxLevel = 0;
-	
+
 	/**
 	 * Constructor. Does nothng.
 	 */

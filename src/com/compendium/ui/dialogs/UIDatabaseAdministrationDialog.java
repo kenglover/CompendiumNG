@@ -22,12 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -36,7 +36,6 @@ import javax.swing.border.*;
 import com.compendium.*;
 import com.compendium.core.*;
 import com.compendium.core.datamodel.*;
-import com.compendium.core.datamodel.services.*;
 import com.compendium.core.db.management.*;
 import com.compendium.ui.*;
 
@@ -136,7 +135,7 @@ public class UIDatabaseAdministrationDialog extends UIDialog implements ActionLi
 		rbDisplayFullPath.addItemListener(this);
 		oDatabaseTypePanel.add(rbDisplayFullPath);
 
-		if (FormatProperties.displayFullPath)
+		if (APP_PROPERTIES.isDisplayFullPath())
 			rbDisplayFullPath.setSelected(true);
 
 		rbDerby = new JRadioButton("Use default Derby database");
@@ -383,18 +382,9 @@ public class UIDatabaseAdministrationDialog extends UIDialog implements ActionLi
 			}
 		}
 		else if (source == rbDisplayFullPath) {
-			if (rbDisplayFullPath.isSelected()) {
-				FormatProperties.displayFullPath = true;
-				FormatProperties.setFormatProp("displayFullPath", "true");
-				FormatProperties.saveFormatProps();
-			}
-			else {
-				FormatProperties.displayFullPath = false;
-				FormatProperties.setFormatProp("displayFullPath", "false");
-				FormatProperties.saveFormatProps();
-			}
+		    APP_PROPERTIES.setDisplayFullPath(rbDisplayFullPath.isSelected());
 
-			if (nType == ICoreConstants.MYSQL_DATABASE) {
+		    if (nType == ICoreConstants.MYSQL_DATABASE) {
 				ProjectCompendium.APP.setTitle(ICoreConstants.MYSQL_DATABASE, oCurrentConnection.getServer(), oCurrentConnection.getProfile(), "");
 			}
 			else {

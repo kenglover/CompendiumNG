@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
@@ -142,7 +141,7 @@ public class DBRestoreDatabase implements DBConstants, DBProgressListener {
 	 *
 	 * @param String sFriendlyName, the name of the new database to create and restore to.
 	 * @param File file, the file holding the sql statements to restore from.
-	 * @param boolean fullRecreation, idicates whether to drop an recreate all tables - not currently used.
+	 * @param boolean fullRecreation, indicates whether to drop an recreate all tables - not currently used.
 	 */
 	public boolean restoreDatabaseAsNew(String sFriendlyName, File file, boolean fullRecreation) throws ClassNotFoundException, SQLException, DBDatabaseNameException, DBDatabaseTypeException {
 
@@ -279,48 +278,40 @@ public class DBRestoreDatabase implements DBConstants, DBProgressListener {
 		String version = "";
 		String line = "";
 		String header = "";
+		int		nLines = 0;
+
+// Make a first pass through the file, counting the number of lines in it
+// and picking out the header and version for later use
+
 		try {
-			fireProgressUpdate(increment, "Reading data..");
-			boolean canAdd = false;
+			fireProgressUpdate(increment, "Scanning data..");
 			int ind = 0;
 
 			while (reader.ready()) {
 				line = reader.readLine();
-				canAdd = true;
-				if (line != null) {
-					line = line.trim();
-					if (!line.equals("")) {		
-						if (line.startsWith(DBBackupDatabase.MYSQL_DATABASE_HEADER_CHECK) 
+				nLines++;
+//				if (line != null) {
+//					line = line.trim();
+//					if (!line.equals("")) {
+						if (line.startsWith(DBBackupDatabase.MYSQL_DATABASE_HEADER_CHECK)
 								|| line.startsWith(DBBackupDatabase.DERBY_DATABASE_HEADER_CHECK)) {
 							header = line;
-							
+
 							// Compendium 1.4.2 and later only this was introduced
 							ind = line.indexOf(":");
 							if (ind != -1) {
 								version = line.substring(ind+1);
 							}
-						}
-						// Filter out DROP and CREATE statements from older backups
-						// They are not required and are too complicated - fail a lot.					
-						else if (!line.startsWith("DROP") && !line.startsWith("CREATE")) {
-							line = line.replace("\\\\n", "\n");
-							line = line.replace("\\\\r", "\r");
-							statements.addElement(line);					
-						}
-					}
-				}				
+//						}
+//					}
+				}
 			}
+// Close and reopen the file (do it this way since you can't 'seek' or 'rewind' a BufferedReader
+// Error checking not necessary since we've already successfully opened it once
+
 			reader.close();
+			reader = new BufferedReader(new FileReader(file));
 
-			/*if (version.equals("1.3.9")) { // == 1.4.2
-				JOptionPane.showMessageDialog(null, "This backup file is from a previous version\nof the Compendium database.\n\nIt cannot be used to restore from.", "Restoration error", JOptionPane.INFORMATION_MESSAGE);
-				return false;
-			}*/
-
-			// RUN DATA
-			fireProgressUpdate(increment, "Loading data..");
-
-			String next = "";
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE && header.startsWith(DBBackupDatabase.MYSQL_DATABASE_HEADER_CHECK)) {
 				fireProgressAlert("This backup file is for a MySQL database project");
 				return false;
@@ -329,28 +320,45 @@ public class DBRestoreDatabase implements DBConstants, DBProgressListener {
 				fireProgressAlert("This backup file is for a Derby database project");
 				return false;
 			}
+			fireProgressCount(nLines);
 
-			int count = statements.size();
-			fireProgressCount(count+nCount);
-			
 			Statement stmt = con.createStatement();
 			int nRowCount = 0;
+			int	Lines = 0;
 
-			for (int i=0; i<count; i++) {
-				fireProgressUpdate(increment, "Loading data..");
-				next = (String)statements.elementAt(i);
-				nRowCount = 0;
-				try {
-					nRowCount = stmt.executeUpdate(next);
-				}
-				catch(Exception ex) {
-					System.out.println("Problem with restoring = "+ex.getMessage());
-					ex.printStackTrace();
+			deleteAllData(stmt);		// Purge all tables of existing data before reloading
+
+			while (reader.ready()) {
+				line = reader.readLine();
+				Lines++;
+				fireProgressUpdate(increment, "Adding database records...");
+				if (line != null) {
+					line = line.trim();
+					if (!line.equals("")) {
+						if (!line.startsWith("DROP") && !line.startsWith("CREATE")) {		// Skip over troublesome statements
+							line = line.replace("\\\\n", "\n");
+							line = line.replace("\\\\r", "\r");
+							nRowCount = 0;
+							try {
+								nRowCount = stmt.executeUpdate(line);
+							}
+							catch(Exception ex) {
+								System.out.println("Problem with restoring = "+ex.getMessage());
+								ex.printStackTrace();
+							}
+						}
+					}
 				}
 			}
+			reader.close();
+
+			/*if (version.equals("1.3.9")) { // == 1.4.2
+				JOptionPane.showMessageDialog(null, "This backup file is from a previous version\nof the Compendium database.\n\nIt cannot be used to restore from.", "Restoration error", JOptionPane.INFORMATION_MESSAGE);
+				return false;
+			}*/
+
 
 			stmt.close();
-
 			return true;
 		}
 		catch (IOException e) {
@@ -363,6 +371,71 @@ public class DBRestoreDatabase implements DBConstants, DBProgressListener {
   			e.printStackTrace();
 			return false;
   		}
+	}
+
+	private void deleteAllData(Statement stmt) throws SQLException {
+		String line;
+
+		line = "Delete from System";
+		stmt.executeUpdate(line);
+		line = "Delete from Preference";
+		stmt.executeUpdate(line);
+		line = "Delete from Connections";
+		stmt.executeUpdate(line);
+		line = "Delete from ViewLayer";
+		stmt.executeUpdate(line);
+		line = "Delete from ShortCutNode";
+		stmt.executeUpdate(line);
+		line = "Delete from NodeDetail";
+		stmt.executeUpdate(line);
+		line = "Delete from ViewProperty";
+		stmt.executeUpdate(line);
+		line = "Delete from Permission";
+		stmt.executeUpdate(line);
+		line = "Delete from GroupUser";
+		stmt.executeUpdate(line);
+		line = "Delete from UserGroup";
+		stmt.executeUpdate(line);
+		line = "Delete from ExtendedTypeCode";
+		stmt.executeUpdate(line);
+		line = "Delete from Clone";
+		stmt.executeUpdate(line);
+		line = "Delete from Audit";
+		stmt.executeUpdate(line);
+		line = "Delete from WorkspaceView";
+		stmt.executeUpdate(line);
+		line = "Delete from Favorite";
+		stmt.executeUpdate(line);
+		line = "Delete from GroupCode";
+		stmt.executeUpdate(line);
+		line = "Delete from NodeCode";
+		stmt.executeUpdate(line);
+		line = "Delete from ViewLink";
+		stmt.executeUpdate(line);
+		line = "Delete from NodeUserState";
+		stmt.executeUpdate(line);
+		line = "Delete from ViewNode";
+		stmt.executeUpdate(line);
+		line = "Delete from ReferenceNode";
+		stmt.executeUpdate(line);
+		line = "Delete from ExtendedNodeType";
+		stmt.executeUpdate(line);
+		line = "Delete from Workspace";
+		stmt.executeUpdate(line);
+		line = "Delete from CodeGroup";
+		stmt.executeUpdate(line);
+		line = "Delete from Code";
+		stmt.executeUpdate(line);
+		line = "Delete from Link";
+		stmt.executeUpdate(line);
+		line = "Delete from MediaIndex";
+		stmt.executeUpdate(line);
+		line = "Delete from Meeting";
+		stmt.executeUpdate(line);
+		line = "Delete from Node";
+		stmt.executeUpdate(line);
+		line = "Delete from Users";
+		stmt.executeUpdate(line);
 	}
 
 	/**

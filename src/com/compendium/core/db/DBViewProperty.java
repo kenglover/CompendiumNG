@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.awt.*;
@@ -45,12 +44,12 @@ public class DBViewProperty {
 	// AUDITED
 	/** SQL statement to insert a new ViewProperty record into the ViewProperty table.*/
 	public final static String INSERT_VIEWPROPERTY_QUERY =
-		"INSERT INTO ViewProperty (UserID, ViewID, HorizontalScroll, VerticalScroll, Width, Height, XPosition, YPosition, IsIcon, IsMaximum) "+
-		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		"INSERT INTO ViewProperty (UserID, ViewID, HorizontalScroll, VerticalScroll, Width, Height, XPosition, YPosition, IsIcon, IsMaximum, ModificationDate) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 	/** SQL statement to update a ViewProperty recrod for the given UserID and ViewID.*/
 	public final static String UPDATE_VIEWPROPERTY_QUERY =
-		"UPDATE ViewProperty set HorizontalScroll = ?, VerticalScroll = ?, Width = ?, Height = ?, XPosition = ?, YPosition = ?, IsIcon = ?, IsMaximum = ? "+
+		"UPDATE ViewProperty set HorizontalScroll = ?, VerticalScroll = ?, Width = ?, Height = ?, XPosition = ?, YPosition = ?, IsIcon = ?, IsMaximum = ?, ModificationDate = ? "+
 		"WHERE UserID = ? AND ViewID = ?";
 
 	/** SQL statement to delete a ViewProperty record for the given UserID and ViewID.*/
@@ -106,6 +105,7 @@ public class DBViewProperty {
 		pstmt.setInt(8, view.getYPosition());
 		pstmt.setString(9, view.getIsIcon() ? "Y" : "N");
 		pstmt.setString(10, view.getIsMaximum() ? "Y" : "N");
+		pstmt.setDouble(11, new Long((new java.util.Date()).getTime()).doubleValue());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();
@@ -145,8 +145,9 @@ public class DBViewProperty {
 		pstmt.setInt(6, view.getYPosition());
 		pstmt.setString(7, view.getIsIcon() ? "Y" : "N");
 		pstmt.setString(8, view.getIsMaximum() ? "Y" : "N");
-		pstmt.setString(9, sUserID);
-		pstmt.setString(10, view.getViewID());
+		pstmt.setDouble(9, new Long((new java.util.Date()).getTime()).doubleValue());
+		pstmt.setString(10, sUserID);
+		pstmt.setString(11, view.getViewID());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close();

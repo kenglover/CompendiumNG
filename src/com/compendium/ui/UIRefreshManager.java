@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -78,9 +79,7 @@ public class UIRefreshManager {
 			oTimer.schedule(oTask, new Date(), nMillis);
 			bTimerRunning = true;
 
-			FormatProperties.refreshTimerRunning = true;
-			FormatProperties.setFormatProp("timerRunning", "true");
-			FormatProperties.saveFormatProps();
+			APP_PROPERTIES.setRefreshTimerRunning(true);
 
 			return true;
 		} catch (IllegalArgumentException iae) {
@@ -99,9 +98,7 @@ public class UIRefreshManager {
 	public void stopTimer() {
 
 		bTimerRunning = false;
-		FormatProperties.refreshTimerRunning = false;
-		FormatProperties.setFormatProp("timerRunning", "false");
-		FormatProperties.saveFormatProps();
+		APP_PROPERTIES.setRefreshTimerRunning(false);
 
 		if (oTimer != null) {
 			oTimer.cancel();
@@ -127,7 +124,7 @@ public class UIRefreshManager {
 		public RefreshCache() {}
 
 		public void run() {
-			ProjectCompendium.APP.reloadProjectData();
+			ProjectCompendium.APP.checkProjectDirty();
 		}
 	}
 }

@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -48,6 +49,8 @@ import com.compendium.ui.*;
  * Search Dialog
  *
  * @author	Mohammed S Ali / Michelle Bachler
+ *
+ * 11/07 M.Begeman - Bug fix - Before/After fields for Date Modified fields were reversed
  */
 public class UISearchDialog extends UIDialog implements ActionListener {
 
@@ -103,13 +106,13 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 	private	static	String			sSavedKeywords		= "";		//keywords
 
 	/** NOT CURRENTLY USED.*/
-	private static	int				iSavedMatchKeywords	= DBSearch.MATCH_ANY;
+	private static	int				iSavedMatchKeywords	= DBSearch.MATCH_ALL;
 
 	/** NOT CURRENTLY USED.*/
 	private static boolean			bSavedLookInLabel	= true;
 
 	/** NOT CURRENTLY USED.*/
-	private static boolean			bSavedLookInDetail	= true;
+	private static boolean			bSavedLookInDetail	= false;
 
 
 
@@ -178,6 +181,9 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 
 	/** Select to search on any of the select codes.*/
 	private JRadioButton	rbMatchAnyCodes		= null;
+
+	/** Select to "match whole word" search.*/
+	private JCheckBox		cbMatchWholeWord	= null;
 
 	/** Select to search for keywords in the label fiedl.*/
 	private JCheckBox		cbLabel				= null;
@@ -337,7 +343,7 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 		int y=0;
 
 		// Keywords Text field
-		JLabel lblLabel = new JLabel("Keywords:  (Case sensitive)");
+		JLabel lblLabel = new JLabel("Keywords:");
 		lblLabel.setFont(new Font("ARIAL", Font.BOLD, 12));
 		gc.gridy=y;
 		y++;
@@ -374,6 +380,15 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 		ButtonGroup rgGroup = new ButtonGroup();
 		rgGroup.add(rbMatchAny);
 		rgGroup.add(rbMatchAll);
+
+		cbMatchWholeWord = new JCheckBox("Match Whole Word");
+		gc.gridwidth=2;
+		gc.gridx=0;
+		gc.gridy=y;
+		y++;
+		gb.setConstraints(cbMatchWholeWord, gc);
+		panel.add(cbMatchWholeWord);
+
 
 		//Check boxes for label and detail search
 		lblLabel = new JLabel("Look in:");
@@ -541,22 +556,22 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 		gb.setConstraints(lblLabel, gc);
 		panel.add(lblLabel);
 
-		txtModifiedBefore = new JTextField(sSavedMDateBefore);
-		txtModifiedBefore.setColumns(15);
-		txtModifiedBefore.setMargin(new Insets(2,2,2,2));
-		gc.gridy=y;
-		gc.gridx=0;
-		gb.setConstraints(txtModifiedBefore, gc);
-		panel.add(txtModifiedBefore);
-
 		txtModifiedAfter = new JTextField(sSavedMDateAfter);
 		txtModifiedAfter.setColumns(15);
 		txtModifiedAfter.setMargin(new Insets(2,2,2,2));
 		gc.gridy=y;
-		gc.gridx=1;
-		y++;
+		gc.gridx=0;
 		gb.setConstraints(txtModifiedAfter, gc);
 		panel.add(txtModifiedAfter);
+
+		txtModifiedBefore = new JTextField(sSavedMDateBefore);
+		txtModifiedBefore.setColumns(15);
+		txtModifiedBefore.setMargin(new Insets(2,2,2,2));
+		gc.gridy=y;
+		gc.gridx=1;
+		y++;
+		gb.setConstraints(txtModifiedBefore, gc);
+		panel.add(txtModifiedBefore);
 
 		// Author List
 		lblLabel = new JLabel("Author:");
@@ -675,7 +690,6 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 	 * @param keywords, the words to check and clean.
 	 */
 	private static Vector parseKeywords(String keywords) {
-
 		Vector vKeywords = new Vector(10);
 
 		StringTokenizer st = new StringTokenizer(keywords, ", ;\t\n\r\f");
@@ -684,7 +698,7 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 			String token = (String)st.nextToken();
 
 			// CLEAN TO ESCAPE SPECHMARKS ETC..
-			token = CoreUtilities.cleanSQLText(token, FormatProperties.nDatabaseType);
+			token = CoreUtilities.cleanSQLText(token, APP_PROPERTIES.getDatabaseType());
 
 			if(!vKeywords.contains(token))
 				vKeywords.addElement(token);
@@ -819,6 +833,7 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 		ProjectCompendium.APP.setWaitCursor();
 		activeFrame.setCursor(new Cursor(java.awt.Cursor.WAIT_CURSOR));
 		this.setCursor(new Cursor(java.awt.Cursor.WAIT_CURSOR));
+		Boolean bDoQuery = false;
 
 		Vector vtSelectedCodes = new Vector(10);
 		Vector vtSelectedAuthors = new Vector(10);
@@ -886,8 +901,11 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 
 		// get selected Authors - vtSelectedAuthors
 		selected = lstAuthors.getSelectedIndices();
+		System.out.println("904 UISearchDialog selected length " + selected.length);
 
 		for(int i=0;i<selected.length;i++) {
+			System.out.println("907 UISearchDialog selected i is " + selected[i]);
+
 			vtSelectedAuthors.addElement((UserProfile)vtAuthors.elementAt(selected[i]));
 		}
 
@@ -923,51 +941,77 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 		IModel model = ProjectCompendium.APP.getModel();
 		PCSession session = model.getSession();
 		String author = "";
-		
+
 		Vector vKeywords = parseKeywords(txtKeyword.getText());
 		Vector vtNodes = new Vector(51);
 
-		try {
-			vtNodes = model.getQueryService().searchNode(session,
-														   sContextCondition,
-														   sViewId,
-														   vtSelectedNodeTypes,
-														   vtSelectedAuthors,
-														   vtSelectedCodes,
-														   iMatchCodesCondition,
-														   vKeywords,
-														   iMatchKeywordCondition,
-														   vtAttrib,
-														   beforeCreationDate, afterCreationDate,
-														   beforeModificationDate,
-														   afterModificationDate
-														   );
-
-			//close this window only when the search results in nodes
-			if(vtNodes.size() > 0) {
-				setVisible(false);
-
-				this.setCursor(Cursor.getDefaultCursor());
-				activeFrame.setCursor(Cursor.getDefaultCursor());
-				ProjectCompendium.APP.setDefaultCursor();
-
-				UISearchResultDialog dlgResult = new UISearchResultDialog(oParent, this, vtNodes);
-				UIUtilities.centerComponent(dlgResult, ProjectCompendium.APP);
-				dlgResult.setVisible(true);
-			}
-			else {
-				ProjectCompendium.APP.displayMessage("No search results found for the parameters set.\n\nPlease try again", "Search Results");
+		bDoQuery = ((sContextCondition != "contextAllViews") ||		// Check to prevent accidental whole-database search
+					(sViewId != "") ||
+					(vtSelectedNodeTypes.size() > 0) ||
+					(vtSelectedAuthors.size() > 0) ||
+					(vtSelectedCodes.size() > 0) ||
+					(vKeywords.size() > 0) ||
+					(iMatchCodesCondition != 0) ||
+					(iMatchKeywordCondition != 0) ||
+					(beforeCreationDate != null) ||
+					(afterCreationDate != null) ||
+					(beforeModificationDate != null) ||
+					(afterModificationDate != null));
+		if (!bDoQuery) {
+			int answer = JOptionPane.showConfirmDialog(this, "No search parameters set - continue with search?\n\n", "Search",
+						JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			if (answer == JOptionPane.YES_OPTION) {
+				bDoQuery = true;
 			}
 		}
-		catch(SQLException ex) {
-			ex.printStackTrace();
-			ProjectCompendium.APP.displayError("Exception:" + ex.getMessage());
-		}
 
+		if (bDoQuery) {
+			SearchParams searchParams = new SearchParams();
+			searchParams.setContextCondition(sContextCondition);
+			searchParams.setViewId(sViewId);
+			searchParams.setSelectedNodeTypes(vtSelectedNodeTypes);
+			searchParams.setSelectedAuthors(vtSelectedAuthors);
+			searchParams.setSelectedCodes(vtSelectedCodes);
+			searchParams.setMatchCodesCondition(iMatchCodesCondition);
+			searchParams.setKeywords(vKeywords);
+			searchParams.setMatchKeywordCondition(iMatchKeywordCondition);
+			searchParams.setAttrib(vtAttrib);
+			searchParams.setBeforeCreationDate(beforeCreationDate);
+			searchParams.setAfterCreationDate(afterCreationDate);
+			searchParams.setBeforeModificationDate(beforeModificationDate);
+			searchParams.setAfterModificationDate(afterModificationDate);
+			searchParams.setMatchWholeWords(cbMatchWholeWord.isSelected());
+
+			try {
+				vtNodes = model.getQueryService().searchNode(session, searchParams);
+
+				//close this window only when the search results in nodes
+				if(vtNodes.size() > 0) {
+					setVisible(false);
+
+					this.setCursor(Cursor.getDefaultCursor());
+					activeFrame.setCursor(Cursor.getDefaultCursor());
+					ProjectCompendium.APP.setDefaultCursor();
+
+					UISearchResultDialog dlgResult = new UISearchResultDialog(oParent, this, vtNodes);
+					UIUtilities.centerComponent(dlgResult, ProjectCompendium.APP);
+					dlgResult.setVisible(true);
+				}
+				else {
+					ProjectCompendium.APP.displayMessage("No search results found for the parameters set.\n\nPlease try again", "Search Results");
+				}
+			}
+			catch(SQLException ex) {
+				ex.printStackTrace();
+				ProjectCompendium.APP.displayError("Exception:" + ex.getMessage());
+			}
+		}
 		this.setCursor(Cursor.getDefaultCursor());
 		activeFrame.setCursor(Cursor.getDefaultCursor());
 		ProjectCompendium.APP.setDefaultCursor();
 	}
+
+
 
 	/**
 	 * Initalize the data for the list of authors.
@@ -980,11 +1024,18 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 		IModel model = ProjectCompendium.APP.getModel();
 		String modelName = model.getModelName();
 		String userID = model.getUserProfile().getId() ;
-		try {
-			for(Enumeration e = (model.getUserService().getUsers(modelName, userID)).elements();e.hasMoreElements();) {
+//
+// Following code changed to get user list from cache instead of the database
+//		try {
+//			for(Enumeration e = (model.getUserService().getUsers(modelName, userID)).elements();e.hasMoreElements();) {
+			for(Enumeration e = (ProjectCompendium.APP.getModel().getUsers()).elements();e.hasMoreElements();) {
 				UserProfile up = (UserProfile)e.nextElement();
 				ImageIcon img = null;
+				if (up.isActive()) {
 					img = UIImages.get(IUIConstants.NEW_ICON);
+				} else {
+					img = UIImages.get(IUIConstants.INACTIVE_USER);
+				}
 
 				String authorName = up.getUserName();
 				String displayText = authorName;
@@ -1002,10 +1053,10 @@ public class UISearchDialog extends UIDialog implements ActionListener {
 				((DefaultListModel)lstAuthors.getModel()).addElement(lblAuthorsList);
 				vtAuthors.addElement(up);
 			}
-		}
-		catch(SQLException ex) {
-			ProjectCompendium.APP.displayError("Exception:" + ex.getMessage());
-		}
+//		}
+//		catch(SQLException ex) {
+//			ProjectCompendium.APP.displayError("Exception:" + ex.getMessage());
+//		}
 
 		lstAuthors.setSelectedIndex(0);
 	}

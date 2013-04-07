@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -81,7 +80,7 @@ public class UIImportDialog extends UIDialog implements ActionListener, IUIConst
 
 	/** Select to preserve transclusion when importing.*/
 	private JCheckBox				cbTransclude = null;
-	
+
 	/** Select to mark all nodes seen /unseen  on import.*/
 	private JCheckBox			cbMarkSeen 	= null;
 
@@ -259,18 +258,18 @@ public class UIImportDialog extends UIDialog implements ActionListener, IUIConst
 		gridyStart++;
 		gb.setConstraints(cbTransclude, gc);
 		oCenterPanel.add(cbTransclude);
-		
+
 		// flag to mark seen/unseen on import
 		cbMarkSeen = new JCheckBox("Mark nodes seen");
 		cbMarkSeen.setSelected(false);
 		cbMarkSeen.addActionListener(this);
-		
+
 		gc.insets = new Insets(5,5,5,5);
 		gc.gridy = gridyStart;
 		gridyStart++;
 		gb.setConstraints(cbMarkSeen, gc);
 		oCenterPanel.add(cbMarkSeen);
-		
+
 		// Add spacer label
 		JLabel spacer = new JLabel(" ");
 		gc.gridy = gridyStart;
@@ -336,7 +335,7 @@ public class UIImportDialog extends UIDialog implements ActionListener, IUIConst
 	 * If the file does not exist cancel the action.
 	 */
 	public void onImport()  {
-
+/*
 		//set the import profile
 		boolean normalProfile 	= rbNormal.isSelected();
 		boolean includeInDetail = cbInclude.isSelected();
@@ -429,7 +428,7 @@ public class UIImportDialog extends UIDialog implements ActionListener, IUIConst
 					}
 				}
 			}
-		}
+		}  */
 	}
 
 	/**

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars.system;
 
 import java.util.*;
@@ -76,21 +75,21 @@ public class UIToolBarFloater extends JDialog implements ActionListener {
 
 	/** The button to dock the toolbar on the east.*/
 	private JButton				rightButton		= null;
-	
+
 	/** The choicebox for the node label font size.*/
 	private JComboBox 			cbRows			= null;
 
 	/** The panel for the font size choice box.*/
 	private JPanel 				rowsPanel 		= null;
-	
+
 	/** the row that the toolbar was in before being floated.*/
 	private int					nRow			= 0;
 
 	/** The main panel the contents is drawn in.*/
 	protected JPanel 			mainPanel		= null;
 
-	
-	
+
+
 	/**
 	 * Initializes and sets up this toolbar floating dialog palette.
 	 */
@@ -207,7 +206,7 @@ public class UIToolBarFloater extends JDialog implements ActionListener {
 
 		BorderLayout layout = new BorderLayout();
 		layout.setHgap(0);
-		layout.setVgap(0);		
+		layout.setVgap(0);
 		rowsPanel = new JPanel(layout);
 		CSH.setHelpIDString(rowsPanel,"toolbars.format");
 
@@ -218,8 +217,8 @@ public class UIToolBarFloater extends JDialog implements ActionListener {
 		cbRows.setEditable(false);
 		cbRows.setEnabled(true);
 		cbRows.setMaximumRowCount(10);
-		cbRows.setFont( new Font("Dialog", Font.PLAIN, 10 ));		
-				
+		cbRows.setFont( new Font("Dialog", Font.PLAIN, 10 ));
+
 		cbRows.validate();
 
 		cbRows.setSelectedIndex(nRow);
@@ -250,14 +249,14 @@ public class UIToolBarFloater extends JDialog implements ActionListener {
 
 		cbRows.setRenderer(fontSizeRenderer);
 
-		rowsPanel.add(new JLabel(" "), BorderLayout.WEST);		
+		rowsPanel.add(new JLabel(" "), BorderLayout.WEST);
         rowsPanel.add(cbRows, BorderLayout.CENTER);
-        rowsPanel.add(new JLabel(" "), BorderLayout.EAST);     
-        
+        rowsPanel.add(new JLabel(" "), BorderLayout.EAST);
+
         cbRows.setSize(new Dimension(cbRows.getWidth()/2, cbRows.getHeight()));
 		return rowsPanel;
-	}		
-	
+	}
+
 	/**
 	 * Process a button pushed event.
 	 *
@@ -278,14 +277,14 @@ public class UIToolBarFloater extends JDialog implements ActionListener {
 			dispose();
 		}
 		else if (source.equals(leftButton)) {
-			nRow = ((Integer)cbRows.getSelectedItem()).intValue()-1;			
+			nRow = ((Integer)cbRows.getSelectedItem()).intValue()-1;
 			UIToolBarController leftController = oManager.getLeftToolBarController();
 			leftController.addToolBar(oToolBar, nType, true, true, true, nRow);
 			setVisible(false);
 			dispose();
 		}
 		else if (source.equals(rightButton)) {
-			nRow = ((Integer)cbRows.getSelectedItem()).intValue()-1;			
+			nRow = ((Integer)cbRows.getSelectedItem()).intValue()-1;
 			UIToolBarController rightController = oManager.getRightToolBarController();
 			rightController.addToolBar(oToolBar, nType, true, true, true, nRow);
 			setVisible(false);

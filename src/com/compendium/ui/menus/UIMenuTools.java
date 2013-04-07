@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.menus;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.event.*;
 import java.io.*;
@@ -46,7 +47,7 @@ import com.compendium.meeting.*;
  * @author	Michelle Bachler
  */
 public class UIMenuTools implements IUIMenu, ActionListener {
-	
+
 	/** The Tools menu.*/
 	private JMenu				mnuMainMenu				= null;
 
@@ -127,34 +128,34 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 
 	/** The menu item to open a list of nodes not in a view - NOT CURRENTLY USED.*/
 	private JMenuItem			miLimboNode				= null;
-	
+
 	/** Focus the top frame.*/
 	private JMenuItem			miFocusFrames			= null;
-	
+
 	/** Focus the Tabbed Area.*/
 	private JMenuItem			miFocusTabs				= null;
-	
+
 	/** The platform specific shortcut key to use.*/
 	private int shortcutKey;
 
 	/**Indicates whether this menu is draw as a Simple interface or a advance user inteerface.*/
-	private boolean bSimpleInterface					= false;	
-	
+	private boolean bSimpleInterface					= false;
+
 	/**
 	 * Constructor.
-	 * @param bSimple true if the simple interface should be draw, false if the advanced. 	 * 	 * 
+	 * @param bSimple true if the simple interface should be draw, false if the advanced. 	 * 	 *
 	 */
 	public UIMenuTools(boolean bSimple) {
-		this.bSimpleInterface = bSimple;		
+		this.bSimpleInterface = bSimple;
 		shortcutKey = ProjectCompendium.APP.shortcutKey;
 
-		mnuMainMenu = new JMenu("Tools");  //$NON-NLS-1$
+		mnuMainMenu = new JMenu(Messages.getString("UIMenuManager.94")); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuMainMenu,"menus.tools"); //$NON-NLS-1$
 		mnuMainMenu.setMnemonic(KeyEvent.VK_T);
-		
+
 		createMenuItems();
 	}
-	
+
 	/**
 	 * If true, redraw the simple form of this menu, else redraw the complex form.
 	 * @param isSimple true for the simple menu, false for the advanced.
@@ -170,50 +171,50 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 	private void recreateMenu() {
 		mnuMainMenu.removeAll();
 		createMenuItems();
-		onDatabaseOpen();				
-	}	
-	
+		onDatabaseOpen();
+	}
+
 	/**
 	 * Create and return the Tools menu.
 	 * @return JMenu the Tools menu.
 	 */
 	private JMenu createMenuItems() {
 
-		miUsers = new JMenuItem("User Manager...");  //$NON-NLS-1$
+		miUsers = new JMenuItem(Messages.getString("UIMenuManager.96")); //$NON-NLS-1$
 		miUsers.setMnemonic(KeyEvent.VK_U);
 		miUsers.addActionListener(this);
 		mnuMainMenu.add(miUsers);
 
-		miCodes = new JMenuItem("Tags...");  //$NON-NLS-1$
+		miCodes = new JMenuItem(Messages.getString("UIMenuManager.97")); //$NON-NLS-1$
 		miCodes.setMnemonic(KeyEvent.VK_T);
 		miCodes.addActionListener(this);
 		//mnuMainMenu.add(miCodes);
 
 		mnuMainMenu.addSeparator();
-			
+
 		mnuTemplates = new JTemplateMenu();
-		mnuTemplates.setText("Templates"); 
+		mnuTemplates.setText("Templates");
 		//CSH.setHelpIDString(mnuMemetic,"menus.memetic");
 		mnuTemplates.setMnemonic(KeyEvent.VK_P);
-			
+
 		/*mnuTemplates.addMouseListener(new MouseAdapter() {
 			public void mouseEntered(MouseEvent e) {
 				File main = new File("Templates");
 				File templates[] = main.listFiles();
-				if (templates.length > 0) {			
+				if (templates.length > 0) {
 					mnuTemplates.removeAll();
 					processTemplateFolder(templates, mnuTemplates);
 				}
 			}
 		});*/
-				
+
 		//processTemplateFolder(templates, mnuTemplates);
-			
+
 		mnuMainMenu.add(mnuTemplates);
-		
+
 		mnuMainMenu.addSeparator();
 
-		mnuMemetic = new JMenu("memetic");  //$NON-NLS-1$
+		mnuMemetic = new JMenu(Messages.getString("UIMenuManager.98")); //$NON-NLS-1$
 		CSH.setHelpIDString(mnuMemetic,"menus.memetic"); //$NON-NLS-1$
 		mnuMemetic.setMnemonic(KeyEvent.VK_M);
 		mnuMainMenu.add(mnuMemetic);
@@ -223,8 +224,8 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		//miMeetingSetup.addActionListener(this);
 		//mnuMemetic.add(miMeetingSetup);
 
-		miMeetingRecording = new JMenuItem("Manual Stop");  //$NON-NLS-1$
-		miMeetingRecording.setToolTipText("Use this ONLY if Meeting Manager is unable to stop Compendium recording");  //$NON-NLS-1$
+		miMeetingRecording = new JMenuItem(Messages.getString("UIMenuManager.100")); //$NON-NLS-1$
+		miMeetingRecording.setToolTipText(Messages.getString("UIMenuManager.101")); //$NON-NLS-1$
 		miMeetingRecording.setMnemonic(KeyEvent.VK_S);
 		miMeetingRecording.addActionListener(this);
 		mnuMemetic.add(miMeetingRecording);
@@ -234,19 +235,19 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		//miMeetingReplay.addActionListener(this);
 		//mnuMemetic.add(miMeetingReplay);
 
-		miMeetingUpload = new JMenuItem("Manual Upload");  //$NON-NLS-1$
-		miMeetingUpload.setToolTipText("Use this if the auto-upload procedure fails");  //$NON-NLS-1$
+		miMeetingUpload = new JMenuItem(Messages.getString("UIMenuManager.102")); //$NON-NLS-1$
+		miMeetingUpload.setToolTipText(Messages.getString("UIMenuManager.103")); //$NON-NLS-1$
 		miMeetingUpload.setMnemonic(KeyEvent.VK_U);
 		miMeetingUpload.addActionListener(this);
 		CSH.setHelpIDString(miMeetingUpload,"menus.memetic");		 //$NON-NLS-1$
 		mnuMemetic.add(miMeetingUpload);
 
-		mnuMainMenu.addSeparator();			
-		miUDIGLaunch = new JMenuItem("Launch UDig");  //$NON-NLS-1$
+		mnuMainMenu.addSeparator();
+		miUDIGLaunch = new JMenuItem(Messages.getString("UIMenuManager.118")); //$NON-NLS-1$
 		miUDIGLaunch.setMnemonic(KeyEvent.VK_U);
 		miUDIGLaunch.addActionListener(this);
 		mnuMainMenu.add(miUDIGLaunch);
-		if (FormatProperties.startUDigCommunications) {
+		if (APP_PROPERTIES.isStartUDigCommunications()) {
 			miUDIGLaunch.setEnabled(true);
 		} else {
 			miUDIGLaunch.setEnabled(false);
@@ -269,53 +270,53 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		*/
 
 		// STENCILS
-		miStencilManagement = new JMenuItem("Manage Stencils...");  //$NON-NLS-1$
+		miStencilManagement = new JMenuItem(Messages.getString("UIMenuManager.105")); //$NON-NLS-1$
 		miStencilManagement.setMnemonic(KeyEvent.VK_S);
 		miStencilManagement.addActionListener(this);
 		mnuMainMenu.add(miStencilManagement);
 
-		mnuStencils	= new JMenu("Open Stencil");  //$NON-NLS-1$
+		mnuStencils	= new JMenu(Messages.getString("UIMenuManager.106")); //$NON-NLS-1$
 		mnuStencils.setMnemonic(KeyEvent.VK_E);
 		mnuMainMenu.add(mnuStencils);
 		createStencilMenu();
 
 		mnuMainMenu.addSeparator();
 
-		miLinkGroupManagement = new JMenuItem("Manage Link Groups...");  //$NON-NLS-1$
+		miLinkGroupManagement = new JMenuItem(Messages.getString("UIMenuManager.107")); //$NON-NLS-1$
 		miLinkGroupManagement.setMnemonic(KeyEvent.VK_L);
 		miLinkGroupManagement.addActionListener(this);
 		mnuMainMenu.add(miLinkGroupManagement);
 
-		miLinkGroupDefault = new JMenuItem("Restore Default Link Group");  //$NON-NLS-1$
+		miLinkGroupDefault = new JMenuItem(Messages.getString("UIMenuManager.108")); //$NON-NLS-1$
 		miLinkGroupDefault.setMnemonic(KeyEvent.VK_G);
 		miLinkGroupDefault.addActionListener(this);
 		mnuMainMenu.add(miLinkGroupDefault);
 
 		mnuMainMenu.addSeparator();
 
-		mnuScribble	= new JMenu("Scribble Pad"); 
+		mnuScribble	= new JMenu("Scribble Pad");
 		mnuScribble.setMnemonic(KeyEvent.VK_A);
 		mnuMainMenu.add(mnuScribble);
 
-		miShowScribblePad = new JMenuItem("Activate Scribble Pad");  //$NON-NLS-1$
+		miShowScribblePad = new JMenuItem(Messages.getString("UIMenuManager.109")); //$NON-NLS-1$
 		miShowScribblePad.setMnemonic(KeyEvent.VK_A);
 		miShowScribblePad.setEnabled(false);
 		miShowScribblePad.addActionListener(this);
 		mnuScribble.add(miShowScribblePad);
 
-		miHideScribblePad = new JMenuItem("De-activate Scribble Pad");  //$NON-NLS-1$
+		miHideScribblePad = new JMenuItem(Messages.getString("UIMenuManager.110")); //$NON-NLS-1$
 		miHideScribblePad.setMnemonic(KeyEvent.VK_D);
 		miHideScribblePad.setEnabled(false);
 		miHideScribblePad.addActionListener(this);
 		mnuScribble.add(miHideScribblePad);
 
-		miSaveScribblePad = new JMenuItem("Save Scribble Pad");  //$NON-NLS-1$
+		miSaveScribblePad = new JMenuItem(Messages.getString("UIMenuManager.111")); //$NON-NLS-1$
 		miSaveScribblePad.setEnabled(false);
 		miSaveScribblePad.setMnemonic(KeyEvent.VK_V);
 		miSaveScribblePad.addActionListener(this);
 		mnuScribble.add(miSaveScribblePad);
 
-		miClearScribblePad = new JMenuItem("Clear Scribble Pad");  //$NON-NLS-1$
+		miClearScribblePad = new JMenuItem(Messages.getString("UIMenuManager.112")); //$NON-NLS-1$
 		miClearScribblePad.setMnemonic(KeyEvent.VK_C);
 		miClearScribblePad.setEnabled(false);
 		miClearScribblePad.addActionListener(this);
@@ -323,7 +324,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 
 		mnuMainMenu.addSeparator();
 
-		//miLimboNode = new JMenuItem("Show Lost Nodes..."); //$NON-NLS-1$
+		//miLimboNode = new JMenuItem(Messages.getString("UIMenuManager.113")); //$NON-NLS-1$
 		//miLimboNode.setMnemonic(KeyEvent.VK_I);
 		//miLimboNode.addActionListener(this);
 		//mnuMainMenu.add(miLimboNode);
@@ -339,7 +340,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		//miHideCodes.addActionListener(this);
 		//mnuMainMenu.add(miHideCodes);
 
-		//miRefreshCache = new JMenuItem("Refresh Data"); //$NON-NLS-1$
+		//miRefreshCache = new JMenuItem(Messages.getString("UIMenuManager.115")); //$NON-NLS-1$
 		//miRefreshCache.setMnemonic(KeyEvent.VK_U);
 		//miRefreshCache.addActionListener(this);
 		//mnuMainMenu.add(miRefreshCache);
@@ -347,45 +348,45 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		//mnuMainMenu.addSeparator();
 
 		if (ProjectCompendium.isMac)
-			miProjectOptions = new JMenuItem("Project Preferences...");  
+			miProjectOptions = new JMenuItem("Project Preferences...");
 		else
-			miProjectOptions = new JMenuItem("Project Options...");  
+			miProjectOptions = new JMenuItem("Project Options...");
 		miProjectOptions.setMnemonic(KeyEvent.VK_J);
 		miProjectOptions.addActionListener(this);
 		mnuMainMenu.add(miProjectOptions);
-		
+
 		if (ProjectCompendium.isMac)
-			miOptions = new JMenuItem("User Preferences...");  //$NON-NLS-1$
+			miOptions = new JMenuItem(Messages.getString("UIMenuManager.116")); //$NON-NLS-1$
 		else
-			miOptions = new JMenuItem("User Options...");  //$NON-NLS-1$
+			miOptions = new JMenuItem(Messages.getString("UIMenuManager.117")); //$NON-NLS-1$
 		miOptions.setMnemonic(KeyEvent.VK_O);
 		miOptions.addActionListener(this);
 		mnuMainMenu.add(miOptions);
 
 		mnuMainMenu.addSeparator();
 
-		miFocusFrames = new JMenuItem("Focus The Desktop Area");  
-		miFocusFrames.setToolTipText("Will move the focus to the current top view frame"); 
+		miFocusFrames = new JMenuItem("Focus The Desktop Area");
+		miFocusFrames.setToolTipText("Will move the focus to the current top view frame");
 		miFocusFrames.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_F11, shortcutKey));
 		miFocusFrames.setMnemonic(KeyEvent.VK_F);
 		miFocusFrames.addActionListener(this);
 		mnuMainMenu.add(miFocusFrames);
-		
-		miFocusTabs = new JMenuItem("Focus The Left Tabbed Area"); 
-		miFocusFrames.setToolTipText("Will move the focus to the left tabbed frame if open");		 
+
+		miFocusTabs = new JMenuItem("Focus The Left Tabbed Area");
+		miFocusFrames.setToolTipText("Will move the focus to the left tabbed frame if open");
 		miFocusTabs.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_F12, shortcutKey));
 		miFocusTabs.setMnemonic(KeyEvent.VK_C);
 		miFocusTabs.addActionListener(this);
 		mnuMainMenu.add(miFocusTabs);
-		
+
 		return mnuMainMenu;
 	}
-	
+
 	/**
 	 * Create the menus holding the currently available stemplate sets.
 	 */
 	private void processTemplateFolder(File[] templates, JMenu mnuNext) {
-		
+
 		Vector vtTemplates = new Vector(templates.length);
 		for (int i=0; i< templates.length; i++) {
 			vtTemplates.add(templates[i]);
@@ -397,7 +398,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		for (int i=0; i< count; i++) {
 			final File nextFile = (File)vtTemplates.elementAt(i);
 			String sName = nextFile.getName();
-			
+
 			if (nextFile.isDirectory()) {
 				File subs[] = nextFile.listFiles();
 				if (subs.length > 0) {
@@ -407,7 +408,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 				}
 			}
 			else {
-				if ((sName.toLowerCase()).endsWith(".xml")) { 
+				if ((sName.toLowerCase()).endsWith(".xml")) {
 					JMenuItem item = new JMenuItem(sName);
 					ActionListener oAction = new ActionListener() {
 						public void actionPerformed(ActionEvent evt) {
@@ -420,7 +421,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 			}
 		}
 	}
-	
+
 	/**
 	 * Create the menu holding the currently available stencil sets.
 	 */
@@ -429,7 +430,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		if (mnuStencils == null) {
 			return;
 		}
-		
+
 		Vector vtStencils = ProjectCompendium.APP.oStencilManager.getStencilNames();
 		vtStencils = CoreUtilities.sortList(vtStencils);
 
@@ -440,8 +441,8 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 
 			JMenuItem item = new JMenuItem(sName);
 			ActionListener oAction = new ActionListener() {
-				public void actionPerformed(ActionEvent evt) {					
-					ProjectCompendium.APP.oStencilManager.openStencilSet(sName);					
+				public void actionPerformed(ActionEvent evt) {
+					ProjectCompendium.APP.oStencilManager.openStencilSet(sName);
 				}
 			};
 			item.addActionListener(oAction);
@@ -455,16 +456,16 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		public void setPopupMenuVisible(boolean vis) {
 			if (vis) {
 				removeAll();
-				File main = new File("Templates"); 
+				File main = new File("Templates");
 				File templates[] = main.listFiles();
-				if (templates.length > 0) {			
+				if (templates.length > 0) {
 					processTemplateFolder(templates, this);
 				}
 			}
 			super.setPopupMenuVisible(vis);
 		}
 	}
-	
+
 	/**
 	 * Handles most menu action event for this application.
 	 *
@@ -635,7 +636,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 		}
 		catch (Exception ex) {
 			ex.printStackTrace();
-			ProjectCompendium.APP.displayError("" + ex.getMessage()); 
+			ProjectCompendium.APP.displayError(Messages.getString("UIMenuManager.175") + ex.getMessage()); //$NON-NLS-1$
 		}
 	}
 
@@ -645,11 +646,13 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 	public void onDatabaseOpen() {
 		if (ProjectCompendium.APP.getModel() != null) {
 			mnuMainMenu.setEnabled(true);
-			
+
 			if (ProjectCompendium.APP.getModel().getUserProfile().isAdministrator()) {
 				miUsers.setEnabled(true);
+				miProjectOptions.setEnabled(true);
 			} else {
 				miUsers.setEnabled(false);
+				miProjectOptions.setEnabled(false);
 			}
 		}
 	}
@@ -667,7 +670,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
   	 * @param selected true for selected false for deselected.
 	 */
 	public void setNodeSelected(boolean selected) {}
-	
+
 	/**
 	 * Enable/disable the scribblepad option.
 	 * @param enabled true to enable, false to disable.
@@ -688,7 +691,7 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 	 * @param enabled true to enable, false to disable.
 	 */
 	public void setScribblePadActive(boolean enabled) {
-		
+
 		if (mnuScribble != null) {
 			miShowScribblePad.setEnabled(!enabled);
 			miHideScribblePad.setEnabled(enabled);
@@ -706,26 +709,26 @@ public class UIMenuTools implements IUIMenu, ActionListener {
 			miUDIGLaunch.setEnabled(enabled);
 		}
 	}
-	
+
 	public void openUserOptions() {
 		if (miOptions != null) {
 			miOptions.doClick();
 		}
 	}
-	
+
 	/**
 	 * Update the look and feel of the menu.
 	 */
 	public void updateLAF() {
 		if (mnuMainMenu != null)
 			SwingUtilities.updateComponentTreeUI(mnuMainMenu);
-	}	
-	
+	}
+
 	/**
 	 * Return a reference to the main menu.
 	 * @return JMenu a reference to the main menu.
 	 */
 	public JMenu getMenu() {
 		return mnuMainMenu;
-	}	
+	}
 }

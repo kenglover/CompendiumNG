@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.awt.*;
@@ -80,7 +79,7 @@ public class UILink extends UILine implements PropertyChangeListener {
 	 */
   	public UILink(Link link, UINode fromNode, UINode toNode) {
 	    setFont(ProjectCompendiumFrame.labelFont);
-  		
+
 		oLink = link;
 	    oLink.addPropertyChangeListener(this);
 
@@ -119,7 +118,7 @@ public class UILink extends UILine implements PropertyChangeListener {
 
 		updateUI();
 		//setBorder(new LineBorder(Color.black, 1));
-		
+
 	    addFocusListener( new FocusListener() {
 			public void focusGained(FocusEvent e) {
 			    repaint();
@@ -153,12 +152,17 @@ public class UILink extends UILine implements PropertyChangeListener {
 		setMinWidth(12);
 
 		// set line color
+		System.out.println("UILink 155 setting line color");
 		if (type.equals(ICoreConstants.DEFAULT_LINK))
 			setForeground(Color.gray);
 		else if (type.equals(ICoreConstants.SUPPORTS_LINK))
+		{
+			System.out.println("UILink 160 setting foreground green");
 			setForeground(Color.green);
+		}
 		else if (type.equals(ICoreConstants.OBJECTS_TO_LINK))
 			setForeground(Color.red);
+		System.out.println("UILink 165 set line color finished");
 
 		// set selected color;
 		setSelectedColor(SELECTED_COLOR);
@@ -188,13 +192,13 @@ public class UILink extends UILine implements PropertyChangeListener {
 	public int increaseFontSize() {
 		Font font = getFont();
 		int newSize = font.getSize()+1;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);	
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()+1);
 		super.setFont(newFont);
 		((LinkUI)getUI()).getPreferredSize(this);
-		repaint(10);		
+		repaint(10);
 		return newSize;
 	}
-	
+
 	/**
 	 * Decrease the font size displayed by one point.
 	 * This does not change the setting in the database.
@@ -203,13 +207,13 @@ public class UILink extends UILine implements PropertyChangeListener {
 	public int decreaseFontSize() {
 		Font font = getFont();
 		int newSize = font.getSize()-1;
-		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);	
+		Font newFont = new Font(font.getName(), font.getStyle(), font.getSize()-1);
 		super.setFont(newFont);
 		((LinkUI)getUI()).getPreferredSize(this);
 		repaint(10);
 	   	return newSize;
 	}
-	
+
 	/**
 	 * Restore the font to the default settings.
 	 *
@@ -219,7 +223,7 @@ public class UILink extends UILine implements PropertyChangeListener {
 		((LinkUI)getUI()).getPreferredSize(this);
 		repaint(10);
 	}
-	
+
 	/**
 	 * Returns the text string that the link displays.
 	 * <p>
@@ -692,7 +696,10 @@ public class UILink extends UILine implements PropertyChangeListener {
 			if (type.equals(ICoreConstants.RESPONDS_TO_LINK))
 				linkColor = Color.magenta;
 			else if (type.equals(ICoreConstants.SUPPORTS_LINK))
+			{
+				System.out.println("UILink 700 getting green for link color");
 				linkColor = Color.green;
+			}
 			else if (type.equals(ICoreConstants.OBJECTS_TO_LINK))
 				linkColor = Color.red;
 			else if (type.equals(ICoreConstants.CHALLENGES_LINK))

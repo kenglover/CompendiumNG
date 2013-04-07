@@ -22,9 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
+import java.sql.SQLException;
 import java.util.*;
 
 import java.awt.*;
@@ -34,6 +34,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import com.compendium.ProjectCompendium;
+import com.compendium.core.datamodel.UserProfile;
 import com.compendium.ui.*;
 
 /**
@@ -60,7 +61,7 @@ public class UIReadersDialog extends UIDialog implements ActionListener {
 
 	/** The title for this dialog.*/
 	private String				sTitle			= "Readers";
-	
+
 	/** The ID of the node whose readers are required.*/
 	private String				sNodeID			=  null;
 
@@ -72,7 +73,7 @@ public class UIReadersDialog extends UIDialog implements ActionListener {
 	public UIReadersDialog(JFrame parent, String nodeId) {
 
 	  	super(parent, true);
-		
+
 		setNodeID(nodeId);
 		setTitle(sTitle);
 		drawDialog();
@@ -84,7 +85,7 @@ public class UIReadersDialog extends UIDialog implements ActionListener {
 	private void drawDialog() {
 
 		oContentPane = getContentPane();
-		
+
 		BoxLayout layout = new BoxLayout(oContentPane, BoxLayout.Y_AXIS);
 		oContentPane.setLayout(layout);
 
@@ -96,7 +97,7 @@ public class UIReadersDialog extends UIDialog implements ActionListener {
 
 		// Create the list
 		lstViews = new UINavList(new DefaultListModel());
-		
+
 		lstViews.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		lstViews.setCellRenderer(new LabelListCellRenderer());
 		lstViews.setBackground(Color.white);
@@ -121,11 +122,11 @@ public class UIReadersDialog extends UIDialog implements ActionListener {
 
 		JPanel oButtonPanel = new JPanel();
 
-		
+
 		pbClose = new UIButton("Close");
 		pbClose.setMnemonic(KeyEvent.VK_C);
 		pbClose.addActionListener(this);
-		getRootPane().setDefaultButton(pbClose); 
+		getRootPane().setDefaultButton(pbClose);
 		oButtonPanel.add(pbClose, BorderLayout.CENTER);
 
 		return oButtonPanel;
@@ -147,25 +148,43 @@ public class UIReadersDialog extends UIDialog implements ActionListener {
 	}
 
 	/**
-	 * Updates the list view with the available views from the database.
+	 * Gets the User Names of all the object's readers and puts them into the dialog.
 	 */
 	private void updateListView() {
 
 		((DefaultListModel)lstViews.getModel()).removeAllElements();
 		vtViews.removeAllElements();
-		Vector vtSort = new Vector(51);
 
+		String readers = "";
+		Vector readerIDs = new Vector();
+		UserProfile up = null;
+
+		// Get the list of readers (ID's) from the database
 		try {
-			Vector users = ProjectCompendium.APP.getModel().getNodeService().getReaders(ProjectCompendium.APP.getModel().getSession(), sNodeID);
-			for(Enumeration e = users.elements();e.hasMoreElements();) {
-				((DefaultListModel)lstViews.getModel()).addElement(e.nextElement());
-			}
+			readerIDs = ProjectCompendium.APP.getModel().getNodeService().getReaderIDs(ProjectCompendium.APP.getModel().getSession(), sNodeID);
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
 
-			lstViews.setSelectedIndex(0);
+		// Get the existing list of UserProfile objects
+		Vector userProfiles = ProjectCompendium.APP.getModel().getUsers();
+		Vector readernames = new Vector();
+
+		// For each ID, find its corresponding UserProfile, and extract the User Name
+		for(Enumeration id = readerIDs.elements();id.hasMoreElements();) {
+			String sReaderID = (String) id.nextElement();
+			for(Enumeration id2 = userProfiles.elements();id2.hasMoreElements();) {
+				up = (UserProfile)id2.nextElement();
+				if (sReaderID.compareTo(up.getUserID())== 0) {
+					readernames.addElement(up.getUserName());
+				}
+			}
 		}
-		catch(Exception io) {
-			ProjectCompendium.APP.displayError("Exception: (UIReadersDialog.updateListView) \n");//+io.getMessage());
+		Collections.sort(readernames);  // Sort the readers list, then stuff it in the display
+		for(Enumeration id = readernames.elements(); id.hasMoreElements();) {
+			((DefaultListModel)lstViews.getModel()).addElement(id.nextElement());
 		}
+		lstViews.setSelectedIndex(0);
 	}
 
 	/**

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.linkgroups;
 
 import java.awt.*;
@@ -62,7 +61,8 @@ import com.compendium.core.datamodel.*;
 public class UILinkGroupManager implements IUIConstants, ICoreConstants {
 
 	/**A reference to the system file path separator*/
-	private final static String	sFS					= System.getProperty("file.separator");
+	private final static String	sFS			= System.getProperty("file.separator");
+	private final static String sSYSPATH	= System.getenv("CompendiumSysPath");
 
 	/** A list of all stencils.*/
 	private Hashtable htLinkGroups = new Hashtable(10);
@@ -242,7 +242,8 @@ public class UILinkGroupManager implements IUIConstants, ICoreConstants {
 		htLinkGroups.clear();
 
 		try {
-			File main = new File("System"+sFS+"resources"+sFS+"LinkGroups");
+			String file_name = sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"LinkGroups";
+			File main = new File(file_name);
 			File oLinkGroups[] = main.listFiles();
 
 			for (int i=0; i< oLinkGroups.length; i++) {
@@ -375,7 +376,7 @@ public class UILinkGroupManager implements IUIConstants, ICoreConstants {
 		data.append("]>\n");
 
 		data.append("<linkgroup name=\"Issue-Based Information System (IBIS)\" id=\"1\" default=\"39\">\n");
-		data.append("\t<linktypes>\n");		
+		data.append("\t<linktypes>\n");
 		data.append("\t\t<linktype id=\"39\" name=\"Responds To\" colour=\"-13434727\" label=\"\"/>\n");
 		data.append("\t\t<linktype id=\"40\" name=\"Supports\" colour=\"-16711936\" label=\"\"/>\n");
 		data.append("\t\t<linktype id=\"41\" name=\"Objects To\" colour=\"-65536\" label=\"\"/>\n");
@@ -389,10 +390,10 @@ public class UILinkGroupManager implements IUIConstants, ICoreConstants {
 		data.append("</linkgroup>\n");
 
 		try {
-			FileWriter fileWriter = new FileWriter("System"+sFS+"resources"+sFS+"LinkGroups"+sFS+"Default.xml");
+			FileWriter fileWriter = new FileWriter(sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"LinkGroups"+sFS+"Default.xml");
 			fileWriter.write(data.toString());
 			fileWriter.close();
-			loadFile("System"+sFS+"resources"+sFS+"LinkGroups"+sFS+"Default.xml", "Default.xml");
+			loadFile(sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"LinkGroups"+sFS+"Default.xml", "Default.xml");
 		}
 		catch (Exception e) {
 			ProjectCompendium.APP.displayError("Exception: (UILinkGroup.createDefaultLinkGroup) \n\n" + e.getMessage());

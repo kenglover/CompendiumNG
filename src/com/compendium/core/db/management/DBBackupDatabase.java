@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db.management;
 
 import java.sql.*;
@@ -70,16 +69,10 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	/** An integer representing the increment to use for the progress updates */
 	private int					increment = 1;
 
-	/** A StringBuffer to hold the SQL statements of the backedup data */
-	StringBuffer data 			= null;
+	private  StringBuffer				data = null;
+	private FileWriter					dumpfile = null;
 
-	/** A StringBuffer array to hold the SQL statements of the backedup data */
-	//StringBuffer[] data 			= null;
-
-	/** The count of which buffer we are currently saving data to.*/
-	//private int		nBufferCount		= 0;
-
-	/** The name to use whn accessing the MySQL database */
+	/** The name to use when accessing the MySQL database */
 	private String sDatabaseUserName = ICoreConstants.sDEFAULT_DATABASE_USER;
 
 	/** The password to use when accessing the MySQL database */
@@ -88,7 +81,7 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	/** The password to use when accessing the MySQL database */
 	private String sDatabaseIP = ICoreConstants.sDEFAULT_DATABASE_ADDRESS;
 
-	/** The type of the databasse application to create an empty database for.*/
+	/** The type of the database application to create an empty database for.*/
 	private int nDatabaseType = -1;
 
 	/** This Hashtable will hold a list of all associated references when backing up */
@@ -110,7 +103,8 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	private String sResourcePath = "";
 
 	/** The system file separator */
-	private String sFS = System.getProperty("file.separator");
+	private String sFS 			= System.getProperty("file.separator");
+	private String 	sSYSPATH	= System.getenv("CompendiumSysPath");
 
 	/** Indicates if one or more external resources being backed up could not be found*/
 	private boolean bNotFound = false;
@@ -154,6 +148,8 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 		if (connection == null)
 			throw new DBDatabaseTypeException("Database type "+nDatabaseType+" not found");
 
+		dumpfile = new FileWriter(file);		// open the dump file
+
 		data = new StringBuffer(3000);
 
 		//if (fullRecreation) {
@@ -171,27 +167,9 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 			System.out.println("Exception closing connection for backup database:\n\n"+io.getMessage());
 		}
 
-		// Due to size limit somewhere in write(String), I now do it this way.
-		// Also allows a progress bar to be shown.
-
-		FileWriter fileWriter = new FileWriter(file);
-		//fileWriter.write(data.toString());
-
-		char[] chars = new char[data.length()];
-		data.getChars(0, data.length(), chars, 0);
-		int count = chars.length;
-
-		fireProgressCount(count+1);
-		fireProgressUpdate(increment, "Saving to file..");
-
-		for (int i=0; i< count; i++) {
-			fireProgressUpdate(increment, "Saving to file..");
-			fileWriter.write(chars[i]);
-		}
-
-		fileWriter.close();
-
-        data = null;
+		dumpfile.flush();
+		dumpfile.close();
+		data = null;
 
 		fireProgressComplete();
 	}
@@ -210,7 +188,7 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @exception java.lang.ClassNotFoundException
 	 * @exception java.sql.SQLException
 	 */
-	public void backupDatabaseToZip(String sName, String sFriendlyName, File file, 
+	public void backupDatabaseToZip(String sName, String sFriendlyName, File file,
 			boolean fullRecreation, boolean bKeepPaths, UserProfile oUser) throws DBDatabaseTypeException, IOException, SQLException, ClassNotFoundException {
 
 		this.bWithResources = true;
@@ -222,8 +200,6 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	    Connection connection = DBConnectionManager.getPlainConnection(nDatabaseType, sName, sDatabaseUserName, sDatabasePassword, sDatabaseIP);
 		if (connection == null)
 			throw new DBDatabaseTypeException("Database type "+nDatabaseType+" not found");
-
-		data = new StringBuffer(3000);
 
 		//if (fullRecreation) {
 		//	data.append("CREATE DATABASE IF NOT EXISTS "+sName+";\n\n");
@@ -242,10 +218,10 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 		if (index != -1) {
 			sResourcePath = path.substring(0, index+1);
 			// ALWAYS USE UNIX SLASH AS IT WORKS ON ALL THREE PLATFFORMS
-			
-			String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);						
+
+			String sDatabaseName = CoreUtilities.cleanFileName(ProjectCompendium.APP.sFriendlyName);
 			String sUserDir = CoreUtilities.cleanFileName(oUser.getUserName())+"_"+oUser.getId();
-			sBackupPath = "Linked Files/"+sDatabaseName+"/"+sUserDir;			
+			sBackupPath = "Linked Files/"+sDatabaseName+"/"+sUserDir;
 		}
 
 		backupTables(connection, fullRecreation);
@@ -351,7 +327,6 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 			e.printStackTrace();
 		}
 
-   	    data = null;
 		fireProgressComplete();
 	}
 
@@ -369,7 +344,8 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 
 		fireProgressUpdate(increment, "Backing up Link Groups");
 
-		File main = new File("System"+sFS+"resources"+sFS+"LinkGroups");
+		String file_name = sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"LinkGroups";
+		File main = new File(file_name);
 		File oLinkGroups[] = main.listFiles();
 		String sOldLinkGroupPath = "";
 		String sNewLinkGroupPath = "";
@@ -379,7 +355,7 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 			nextLinkGroup = oLinkGroups[i];
 			sOldLinkGroupPath = nextLinkGroup.getAbsolutePath();
 			if (!htResources.containsKey(sOldLinkGroupPath)) {
-				sNewLinkGroupPath = "System"+sFS+"resources"+sFS+"LinkGroups"+sFS+ nextLinkGroup.getName();
+				sNewLinkGroupPath = file_name+sFS+nextLinkGroup.getName();
 				htResources.put(sOldLinkGroupPath, sNewLinkGroupPath);
 			}
 		}
@@ -392,8 +368,8 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 
 		fireProgressUpdate(increment, "Backing up Stencils");
 
-		String sStencilPath = "System"+sFS+"resources"+sFS+"Stencils/";
-		File main = new File("System"+sFS+"resources"+sFS+"Stencils");
+		String sStencilPath = sSYSPATH+sFS+"System"+sFS+"resources"+sFS+"Stencils/";
+		File main = new File(sStencilPath);
 		File oStencils[] = main.listFiles();
 
 		String sOldStencilName = "";
@@ -449,12 +425,12 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupTables(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupTables(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (nDatabaseType == ICoreConstants.DERBY_DATABASE)
-			data.append(DERBY_DATABASE_HEADER+"\n");
+			 dumpfile.write(DERBY_DATABASE_HEADER+"\n");
 		else
-			data.append(MYSQL_DATABASE_HEADER+"\n");
+			 dumpfile.write(MYSQL_DATABASE_HEADER+"\n");
 
 		fireProgressUpdate(increment, "Backing up System Table");
 		backupSystemTable(con, fullRecreation);
@@ -639,15 +615,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupSystemTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupSystemTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_SYSTEM_TABLE+"\n\n");
-				data.append(DBConstantsDerby.CREATE_SYSTEM_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_SYSTEM_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_SYSTEM_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_SYSTEM_TABLE+";\n\n");				
-				data.append(DBConstantsMySQL.MYSQL_CREATE_SYSTEM_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_SYSTEM_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_SYSTEM_TABLE+";\n\n");
 			}
 		}
 
@@ -661,13 +637,14 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sProperty		= rs.getString(1);
 				String	sContents		= rs.getString(2);
 
-				data.append(INSERT_SYSTEM_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+CoreUtilities.cleanSQLText(sProperty, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sContents, nDatabaseType)+"\'");
-				data.append(")\n");
+
+				dumpfile.write(INSERT_SYSTEM_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sProperty, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sContents, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -679,15 +656,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupUserTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupUserTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_USER_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_USER_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_USER_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_USER_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_USER_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_USER_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_USER_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_USER_TABLE+";\n\n");
 			}
 		}
 
@@ -709,29 +686,29 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	homeViewId	= rs.getString(9);
 				String  admin 		= rs.getString(10);
 				int nCurrentStatus	= rs.getInt(11);
-				String	linkViewId	= rs.getString(12);				
+				String	linkViewId	= rs.getString(12);
 
 				if (linkViewId == null) {
 					linkViewId="";
 				}
-				
-				data.append(INSERT_USER_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(loginName, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(userName, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(password, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(userDesc, nDatabaseType)+"\',");
-				data.append("\'"+homeViewId+"\',");
-				data.append("\'"+admin+"\',");
-				data.append(String.valueOf(nCurrentStatus)+",");
-				data.append("\'"+linkViewId+"\'");				
-				data.append(")\n");
+
+				dumpfile.write(INSERT_USER_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(loginName, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(userName, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(password, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(userDesc, nDatabaseType)+"\',");
+				dumpfile.write("\'"+homeViewId+"\',");
+				dumpfile.write("\'"+admin+"\',");
+				dumpfile.write(String.valueOf(nCurrentStatus)+",");
+				dumpfile.write("\'"+linkViewId+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -743,22 +720,24 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupNodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupNodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_NODE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_NODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_NODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_NODE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_NODE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_NODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_NODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_NODE_TABLE+";\n\n");
 			}
 		}
 
  		PreparedStatement pstmt1 = con.prepareStatement(GET_NODE_QUERY);
+
 		ResultSet rs = pstmt1.executeQuery();
 
 		if (rs != null) {
+
 
 			while (rs.next()) {
 
@@ -773,27 +752,27 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sDetail 	= rs.getString(9);
 				int		nCurrentStatus	= rs.getInt(10);
 				String	sLastModAuthor	= rs.getString(11);
-				
+
 				if (sLastModAuthor == null) {
 					sLastModAuthor=sAuthor;
 				}
 
-				data.append(INSERT_NODE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append(String.valueOf(nType)+",");
-				data.append("\'"+sOriginalID+"\',");
-				data.append("\'"+nXNodeType+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sLabel, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sDetail, nDatabaseType)+"\',");
-				data.append(String.valueOf(nCurrentStatus)+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sLastModAuthor, nDatabaseType)+"\'");				
-				data.append(")\n");
+				dumpfile.write(INSERT_NODE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write(String.valueOf(nType)+",");
+				dumpfile.write("\'"+sOriginalID+"\',");
+				dumpfile.write("\'"+nXNodeType+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sLabel, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sDetail, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nCurrentStatus)+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sLastModAuthor, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -805,15 +784,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupLinkTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupLinkTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_LINK_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_LINK_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_LINK_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_LINK_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_LINK_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_LINK_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_LINK_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_LINK_TABLE+";\n\n");
 			}
 		}
 
@@ -836,22 +815,22 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				int		nArrow		= rs.getInt(10);
 				int		nCurrentStatus	= rs.getInt(11);
 
-				data.append(INSERT_LINK_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sLinkID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append("\'"+sType+"\',");
-				data.append("\'"+sOriginalID+"\',");
-				data.append("\'"+sFrom+"\',");
-				data.append("\'"+sTo+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sLabel, nDatabaseType)+"\',");
-				data.append(String.valueOf(nArrow)+",");
-				data.append(String.valueOf(nCurrentStatus));
-				data.append(")\n");
+				dumpfile.write(INSERT_LINK_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sLinkID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write("\'"+sType+"\',");
+				dumpfile.write("\'"+sOriginalID+"\',");
+				dumpfile.write("\'"+sFrom+"\',");
+				dumpfile.write("\'"+sTo+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sLabel, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nArrow)+",");
+				dumpfile.write(String.valueOf(nCurrentStatus));
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -863,15 +842,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupCodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupCodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_CODE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_CODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_CODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_CODE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_CODE_TABLE+";\n\n");				
-				data.append(DBConstantsMySQL.MYSQL_CREATE_CODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_CODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_CODE_TABLE+";\n\n");
 			}
 		}
 
@@ -890,18 +869,18 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sDesc	 	= rs.getString(6);
 				String 	sBehaviour 	= rs.getString(7);
 
-				data.append(INSERT_CODE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sCodeID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sBehaviour, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_CODE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sCodeID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sBehaviour, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -913,15 +892,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupGroupCodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupGroupCodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_GROUPCODE_TABLE+"\n\n");
-				data.append(DBConstantsDerby.CREATE_GROUPCODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_GROUPCODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_GROUPCODE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_GROUPCODE_TABLE+";\n\n");				
-				data.append(DBConstantsMySQL.MYSQL_CREATE_GROUPCODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_GROUPCODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_GROUPCODE_TABLE+";\n\n");
 			}
 		}
 
@@ -938,16 +917,19 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				double	dbCDate		= rs.getDouble(4);
 				double	dbMDate		= rs.getDouble(5);
 
-				data.append(INSERT_GROUPCODE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sCodeID+"\',");
-				data.append("\'"+sCodeGroupID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write(INSERT_GROUPCODE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sCodeID+"\',");
+				dumpfile.write("\'"+sCodeGroupID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				data.delete(0, data.length());
 				data.append(new Double(dbCDate).longValue()+",");
 				data.append(new Double(dbMDate).longValue());
 				data.append(")\n");
+				dumpfile.write(data.toString());
+				data.delete(0, data.length());
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -959,15 +941,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupCodeGroupTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupCodeGroupTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_CODEGROUP_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_CODEGROUP_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_CODEGROUP_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_CODEGROUP_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_CODEGROUP_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_CODEGROUP_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_CODEGROUP_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_CODEGROUP_TABLE+";\n\n");
 			}
 		}
 
@@ -985,17 +967,20 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				double	dbCDate			= rs.getDouble(5);
 				double	dbMDate			= rs.getDouble(6);
 
-				data.append(INSERT_CODEGROUP_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sCodeGroupID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\',");
+				dumpfile.write(INSERT_CODEGROUP_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sCodeGroupID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\',");
+				data.delete(0, data.length());
 				data.append(new Double(dbCDate).longValue()+",");
 				data.append(new Double(dbMDate).longValue());
 				data.append(")\n");
+				dumpfile.write(data.toString());
+				data.delete(0, data.length());
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1007,15 +992,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupNodeCodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupNodeCodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_NODECODE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_NODECODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_NODECODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_NODECODE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_NODECODE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_NODECODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_NODECODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_NODECODE_TABLE+";\n\n");
 			}
 		}
 
@@ -1029,13 +1014,13 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sNodeID		= rs.getString(1);
 				String	sCodeID		= rs.getString(2);
 
-				data.append(INSERT_NODECODE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+sCodeID+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_NODECODE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+sCodeID+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1047,15 +1032,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupReferenceNodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupReferenceNodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_REFERENCE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_REFERENCE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_REFERENCE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_REFERENCE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_REFERENCE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_REFERENCE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_REFERENCE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_REFERENCE_TABLE+";\n\n");
 			}
 		}
 
@@ -1101,7 +1086,7 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 							else {
 								sSourceImage = CoreUtilities.unixPath(sSourceImage);
 							}
-							
+
 							if (!htResources.containsKey(sOldSourceImage)) {
 								htResources.put(sOldSourceImage, sSourceImage);
 							}
@@ -1113,16 +1098,16 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 					}
 				}
 
-				data.append(INSERT_REFERENCE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sSource, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sSourceImage, nDatabaseType)+"\',");
-				data.append(String.valueOf(nImageWidth)+",");
-				data.append(String.valueOf(nImageHeight));
-				data.append(")\n");
+				dumpfile.write(INSERT_REFERENCE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sSource, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sSourceImage, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nImageWidth)+",");
+				dumpfile.write(String.valueOf(nImageHeight));
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1134,15 +1119,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupViewNodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupViewNodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_VIEWNODE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_VIEWNODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_VIEWNODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_VIEWNODE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_VIEWNODE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_VIEWNODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_VIEWNODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_VIEWNODE_TABLE+";\n\n");
 			}
 		}
 
@@ -1173,31 +1158,31 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				int		nForeground = rs.getInt(18);
 				int 	nBackground = rs.getInt(19);
 
-				data.append(INSERT_VIEWNODE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sViewID+"\',");
-				data.append("\'"+sNodeID+"\',");
-				data.append(String.valueOf(nXPos)+",");
-				data.append(String.valueOf(nYPos)+",");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append(String.valueOf(nStatus)+",");
-				data.append("\'"+sShowTags+"\',");
-				data.append("\'"+sShowText+"\',");
-				data.append("\'"+sShowTrans+"\',");
-				data.append("\'"+sShowWeight+"\',");
-				data.append("\'"+sSmallIcons+"\',");
-				data.append("\'"+sHideIcons+"\',");
-				data.append(String.valueOf(nLabelWidth)+",");
-				data.append(String.valueOf(nFontSize)+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sFontFace, nDatabaseType)+"\',");
-				data.append(String.valueOf(nFontStyle)+",");
-				data.append(String.valueOf(nForeground)+",");
-				data.append(String.valueOf(nBackground));
-								
-				data.append(")\n");
+				dumpfile.write(INSERT_VIEWNODE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sViewID+"\',");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write(String.valueOf(nXPos)+",");
+				dumpfile.write(String.valueOf(nYPos)+",");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write(String.valueOf(nStatus)+",");
+				dumpfile.write("\'"+sShowTags+"\',");
+				dumpfile.write("\'"+sShowText+"\',");
+				dumpfile.write("\'"+sShowTrans+"\',");
+				dumpfile.write("\'"+sShowWeight+"\',");
+				dumpfile.write("\'"+sSmallIcons+"\',");
+				dumpfile.write("\'"+sHideIcons+"\',");
+				dumpfile.write(String.valueOf(nLabelWidth)+",");
+				dumpfile.write(String.valueOf(nFontSize)+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sFontFace, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nFontStyle)+",");
+				dumpfile.write(String.valueOf(nForeground)+",");
+				dumpfile.write(String.valueOf(nBackground));
+
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1209,15 +1194,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupShortCutNodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupShortCutNodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_SHORTCUT_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_SHORTCUT_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_SHORTCUT_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_SHORTCUT_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_SHORTCUT_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_SHORTCUT_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_SHORTCUT_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_SHORTCUT_TABLE+";\n\n");
 			}
 		}
 
@@ -1231,13 +1216,13 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sNodeID		= rs.getString(1);
 				String	sReferenceID= rs.getString(2);
 
-				data.append(INSERT_SHORTCUT_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+sReferenceID+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_SHORTCUT_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+sReferenceID+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1249,15 +1234,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupNodeDetailTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupNodeDetailTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_NODEDETAIL_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_NODEDETAIL_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_NODEDETAIL_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_NODEDETAIL_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_NODEDETAIL_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_NODEDETAIL_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_NODEDETAIL_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_NODEDETAIL_TABLE+";\n\n");
 			}
 		}
 
@@ -1275,17 +1260,17 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				double	dbMDate			= rs.getDouble(5);
 				String	sDetail			= rs.getString(6);
 
-				data.append(INSERT_NODEDETAIL_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append(String.valueOf(nPage)+",");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sDetail, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_NODEDETAIL_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nPage)+",");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sDetail, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1297,15 +1282,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupViewPropertyTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupViewPropertyTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_VIEWPROPERTY_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_VIEWPROPERTY_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_VIEWPROPERTY_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_VIEWPROPERTY_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_VIEWPROPERTY_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_VIEWPROPERTY_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_VIEWPROPERTY_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_VIEWPROPERTY_TABLE+";\n\n");
 			}
 		}
 
@@ -1338,32 +1323,32 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sFontFace			= rs.getString(20);
 				int		nFontStyle			= rs.getInt(21);
 
-				data.append(INSERT_VIEWPROPERTY_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+sViewID+"\',");
-				data.append(String.valueOf(nHorizontalScroll)+",");
-				data.append(String.valueOf(nVerticalScroll)+",");
-				data.append(String.valueOf(nWidth)+",");
-				data.append(String.valueOf(nHeight)+",");
-				data.append(String.valueOf(nXPos)+",");
-				data.append(String.valueOf(nYPos)+",");
-				data.append("\'"+sIcon+"\',");
-				data.append("\'"+sMax+"\',");
-				data.append("\'"+sShowTags+"\',");
-				data.append("\'"+sShowText+"\',");
-				data.append("\'"+sShowTrans+"\',");
-				data.append("\'"+sShowWeight+"\',");
-				data.append("\'"+sSmallIcons+"\',");
-				data.append("\'"+sHideIcons+"\',");
-				data.append(String.valueOf(nLabelLength)+",");
-				data.append(String.valueOf(nLabelWidth)+",");
-				data.append(String.valueOf(nFontSize)+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sFontFace, nDatabaseType)+"\',");
-				data.append(String.valueOf(nFontStyle));
-				data.append(")\n");
+				dumpfile.write(INSERT_VIEWPROPERTY_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+sViewID+"\',");
+				dumpfile.write(String.valueOf(nHorizontalScroll)+",");
+				dumpfile.write(String.valueOf(nVerticalScroll)+",");
+				dumpfile.write(String.valueOf(nWidth)+",");
+				dumpfile.write(String.valueOf(nHeight)+",");
+				dumpfile.write(String.valueOf(nXPos)+",");
+				dumpfile.write(String.valueOf(nYPos)+",");
+				dumpfile.write("\'"+sIcon+"\',");
+				dumpfile.write("\'"+sMax+"\',");
+				dumpfile.write("\'"+sShowTags+"\',");
+				dumpfile.write("\'"+sShowText+"\',");
+				dumpfile.write("\'"+sShowTrans+"\',");
+				dumpfile.write("\'"+sShowWeight+"\',");
+				dumpfile.write("\'"+sSmallIcons+"\',");
+				dumpfile.write("\'"+sHideIcons+"\',");
+				dumpfile.write(String.valueOf(nLabelLength)+",");
+				dumpfile.write(String.valueOf(nLabelWidth)+",");
+				dumpfile.write(String.valueOf(nFontSize)+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sFontFace, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nFontStyle));
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1375,15 +1360,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupFavoriteTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupFavoriteTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_FAVORITE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_FAVORITE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_FAVORITE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_FAVORITE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_FAVORITE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_FAVORITE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_FAVORITE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_FAVORITE_TABLE+";\n\n");
 			}
 		}
 
@@ -1399,20 +1384,20 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				int		nType		= rs.getInt(4);
 				double	dbCDate		= rs.getDouble(5);
 				double	dbMDate		= rs.getDouble(6);
-				String	sViewID		= rs.getString(7);				
+				String	sViewID		= rs.getString(7);
 
-				data.append(INSERT_FAVORITE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sLabel, nDatabaseType)+"\',");
-				data.append(String.valueOf(nType)+",");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append("\'"+sViewID+"\'");				
-				data.append(")\n");
+				dumpfile.write(INSERT_FAVORITE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sLabel, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nType)+",");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write("\'"+sViewID+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1424,15 +1409,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupWorkspaceTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupWorkspaceTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_WORKSPACE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_WORKSPACE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_WORKSPACE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_WORKSPACE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_WORKSPACE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_WORKSPACE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_WORKSPACE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_WORKSPACE_TABLE+";\n\n");
 			}
 		}
 
@@ -1448,16 +1433,19 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				double	dbCDate			= rs.getDouble(4);
 				double	dbMDate			= rs.getDouble(5);
 
-				data.append(INSERT_WORKSPACE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sWorkspaceID+"\',");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
+				dumpfile.write(INSERT_WORKSPACE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sWorkspaceID+"\',");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
+				data.delete(0, data.length());
 				data.append(new Double(dbCDate).longValue()+",");
 				data.append(new Double(dbMDate).longValue());
 				data.append(")\n");
+				dumpfile.write(data.toString());
+				data.delete(0, data.length());
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1469,15 +1457,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupWorkspaceViewTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupWorkspaceViewTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_WORKSPACEVIEW_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_WORKSPACEVIEW_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_WORKSPACEVIEW_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_WORKSPACEVIEW_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_WORKSPACEVIEW_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_WORKSPACEVIEW_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_WORKSPACEVIEW_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_WORKSPACEVIEW_TABLE+";\n\n");
 			}
 		}
 
@@ -1498,21 +1486,21 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String 	sIcon		 		= rs.getString(9);
 				String 	sMax 				= rs.getString(10);
 
-				data.append(INSERT_WORKSPACEVIEW_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sWorkspaceID+"\',");
-				data.append("\'"+sViewID+"\',");
-				data.append(String.valueOf(nHorizontalScroll)+",");
-				data.append(String.valueOf(nVerticalScroll)+",");
-				data.append(String.valueOf(nWidth)+",");
-				data.append(String.valueOf(nHeight)+",");
-				data.append(String.valueOf(nXPos)+",");
-				data.append(String.valueOf(nYPos)+",");
-				data.append("\'"+sIcon+"\',");
-				data.append("\'"+sMax+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_WORKSPACEVIEW_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sWorkspaceID+"\',");
+				dumpfile.write("\'"+sViewID+"\',");
+				dumpfile.write(String.valueOf(nHorizontalScroll)+",");
+				dumpfile.write(String.valueOf(nVerticalScroll)+",");
+				dumpfile.write(String.valueOf(nWidth)+",");
+				dumpfile.write(String.valueOf(nHeight)+",");
+				dumpfile.write(String.valueOf(nXPos)+",");
+				dumpfile.write(String.valueOf(nYPos)+",");
+				dumpfile.write("\'"+sIcon+"\',");
+				dumpfile.write("\'"+sMax+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1524,20 +1512,21 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupViewLinkTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupViewLinkTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_VIEWLINK_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_VIEWLINK_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_VIEWLINK_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_VIEWLINK_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_VIEWLINK_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_VIEWLINK_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_VIEWLINK_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_VIEWLINK_TABLE+";\n\n");
 			}
 		}
 
 		PreparedStatement pstmt1 = con.prepareStatement(GET_VIEWLINK_QUERY);
 		ResultSet rs = pstmt1.executeQuery();
+
 
 		if (rs != null) {
 			while (rs.next()) {
@@ -1548,16 +1537,16 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				double	dbMDate		= rs.getDouble(4);
 				int		nStatus		= rs.getInt(5);
 
-				data.append(INSERT_VIEWLINK_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sViewID+"\',");
-				data.append("\'"+sLinkID+"\',");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append(String.valueOf(nStatus));
-				data.append(")\n");
+				dumpfile.write(INSERT_VIEWLINK_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sViewID+"\',");
+				dumpfile.write("\'"+sLinkID+"\',");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write(String.valueOf(nStatus));
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1569,20 +1558,21 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupNodeUserStateTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupNodeUserStateTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_NODEUSERSTATE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_NODEUSERSTATE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_NODEUSERSTATE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_NODEUSERSTATE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_NODEUSERSTATE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_NODEUSERSTATE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_NODEUSERSTATE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_NODEUSERSTATE_TABLE+";\n\n");
 			}
 		}
 
 		PreparedStatement pstmt1 = con.prepareStatement(GET_NODEUSERSTATE_QUERY);
 		ResultSet rs = pstmt1.executeQuery();
+
 
 		if (rs != null) {
 			while (rs.next()) {
@@ -1591,14 +1581,14 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sUserID		= rs.getString(2);
 				int		nState		= rs.getInt(3);
 
-				data.append(INSERT_NODEUSERSTATE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+sUserID+"\',");
-				data.append(String.valueOf(nState));
-				data.append(")\n");
+				dumpfile.write(INSERT_NODEUSERSTATE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write(String.valueOf(nState));
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1610,15 +1600,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupAuditTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupAuditTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_AUDIT_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_AUDIT_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_AUDIT_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_AUDIT_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_AUDIT_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_AUDIT_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_AUDIT_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_AUDIT_TABLE+";\n\n");
 			}
 		}
 
@@ -1636,18 +1626,18 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				int		nAction		= rs.getInt(6);
 				String	sData		= rs.getString(7);
 
-				data.append(INSERT_AUDIT_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sAuditID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append("\'"+sItemID+"\',");
-				data.append(new Double(dbDate).longValue()+",");
-				data.append("\'"+sCategory+"\',");
-				data.append(String.valueOf(nAction)+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sData, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_AUDIT_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sAuditID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write("\'"+sItemID+"\',");
+				dumpfile.write(new Double(dbDate).longValue()+",");
+				dumpfile.write("\'"+sCategory+"\',");
+				dumpfile.write(String.valueOf(nAction)+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sData, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1659,15 +1649,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupPermissionTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupPermissionTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_PERMISSION_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_PERMISSION_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_PERMISSION_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_PERMISSION_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_PERMISSION_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_PERMISSION_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_PERMISSION_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_PERMISSION_TABLE+";\n\n");
 			}
 		}
 
@@ -1681,14 +1671,14 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sGroupID	= rs.getString(2);
 				int	nPermission		= rs.getInt(3);
 
-				data.append(INSERT_PERMISSION_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sItemID+"\',");
-				data.append("\'"+sGroupID+"\',");
-				data.append(String.valueOf(nPermission));
-				data.append(")\n");
+				dumpfile.write(INSERT_PERMISSION_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sItemID+"\',");
+				dumpfile.write("\'"+sGroupID+"\',");
+				dumpfile.write(String.valueOf(nPermission));
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1700,15 +1690,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupCloneTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupCloneTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_CLONE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_CLONE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_CLONE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_CLONE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_CLONE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_CLONE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_CLONE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_CLONE_TABLE+";\n\n");
 			}
 		}
 
@@ -1721,13 +1711,13 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sParentNodeID	= rs.getString(1);
 				String	sChildNodeID	= rs.getString(2);
 
-				data.append(INSERT_CLONE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sParentNodeID+"\',");
-				data.append("\'"+sChildNodeID+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_CLONE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sParentNodeID+"\',");
+				dumpfile.write("\'"+sChildNodeID+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1739,15 +1729,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupExtendedNodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupExtendedNodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_EXTENDEDNODE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_EXTENDEDNODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_EXTENDEDNODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_EXTENDEDNODE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_EXTENDEDNODE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_EXTENDEDNODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_EXTENDEDNODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_EXTENDEDNODE_TABLE+";\n\n");
 			}
 		}
 
@@ -1766,19 +1756,19 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				int		nBaseNodeType	= rs.getInt(7);
 				String	sIcon			= rs.getString(8);
 
-				data.append(INSERT_EXTENDEDNODE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sExtendedNodeTypeID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\',");
-				data.append(String.valueOf(nBaseNodeType)+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sIcon, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_EXTENDEDNODE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sExtendedNodeTypeID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sAuthor, nDatabaseType)+"\',");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nBaseNodeType)+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sIcon, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1790,15 +1780,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupExtendedCodeTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupExtendedCodeTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_EXTENDEDCODE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_EXTENDEDCODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_EXTENDEDCODE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_EXTENDEDCODE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_EXTENDEDCODE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_EXTENDEDCODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_EXTENDEDCODE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_EXTENDEDCODE_TABLE+";\n\n");
 			}
 		}
 
@@ -1811,13 +1801,13 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sExtendedNodeTypeID	= rs.getString(1);
 				String	sCodeID	= rs.getString(2);
 
-				data.append(INSERT_EXTENDEDCODE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sExtendedNodeTypeID+"\',");
-				data.append("\'"+sCodeID+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_EXTENDEDCODE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sExtendedNodeTypeID+"\',");
+				dumpfile.write("\'"+sCodeID+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1829,15 +1819,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupUserGroupTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupUserGroupTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_USERGROUP_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_USERGROUP_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_USERGROUP_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_USERGROUP_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_USERGROUP_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_USERGROUP_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_USERGROUP_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_USERGROUP_TABLE+";\n\n");
 			}
 		}
 
@@ -1854,17 +1844,17 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sName		= rs.getString(5);
 				String	sDesc		= rs.getString(6);
 
-				data.append(INSERT_USERGROUP_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sGroupID+"\',");
-				data.append("\'"+sUserID+"\',");
-				data.append(new Double(dbCDate).longValue()+",");
-				data.append(new Double(dbMDate).longValue()+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_USERGROUP_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sGroupID+"\',");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write(new Double(dbCDate).longValue()+",");
+				dumpfile.write(new Double(dbMDate).longValue()+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sDesc, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1876,15 +1866,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupGroupUserTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupGroupUserTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_GROUPUSER_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_GROUPUSER_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_GROUPUSER_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_GROUPUSER_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_GROUPUSER_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_GROUPUSER_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_GROUPUSER_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_GROUPUSER_TABLE+";\n\n");
 			}
 		}
 
@@ -1897,13 +1887,13 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sUserID		= rs.getString(1);
 				String	sGroupID	= rs.getString(2);
 
-				data.append(INSERT_GROUPUSER_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+sGroupID+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_GROUPUSER_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+sGroupID+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1915,15 +1905,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupViewLayerTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupViewLayerTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_VIEWLAYER_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_VIEWLAYER_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_VIEWLAYER_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_VIEWLAYER_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_VIEWLAYER_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_VIEWLAYER_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_VIEWLAYER_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_VIEWLAYER_TABLE+";\n\n");
 			}
 		}
 
@@ -1962,17 +1952,17 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 					}
 				}
 
-				data.append(INSERT_VIEWLAYER_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+sViewID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sScribble, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sBackground, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sGrid, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sShapes, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_VIEWLAYER_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+sViewID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sScribble, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sBackground, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sGrid, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sShapes, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -1984,15 +1974,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupConnectionTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupConnectionTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_CONNECTION_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_CONNECTION_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_CONNECTION_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_CONNECTION_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_CONNECTION_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_CONNECTION_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_CONNECTION_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_CONNECTION_TABLE+";\n\n");
 			}
 		}
 
@@ -2012,20 +2002,20 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				int		nPort		= rs.getInt(8);
 				String	sResource	= rs.getString(9);
 
-				data.append(INSERT_CONNECTION_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sProfile, nDatabaseType)+"\',");
-				data.append(String.valueOf(nType)+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sServer, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sLogin, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sPassword, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
-				data.append(String.valueOf(nPort)+",");
-				data.append("\'"+CoreUtilities.cleanSQLText(sResource, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_CONNECTION_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sProfile, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nType)+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sServer, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sLogin, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sPassword, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sName, nDatabaseType)+"\',");
+				dumpfile.write(String.valueOf(nPort)+",");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sResource, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -2037,15 +2027,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupPreferenceTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupPreferenceTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_PREFERENCE_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_PREFERENCE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_PREFERENCE_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_PREFERENCE_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_PREFERENCE_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_PREFERENCE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_PREFERENCE_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_PREFERENCE_TABLE+";\n\n");
 			}
 		}
 
@@ -2059,14 +2049,14 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				String	sProperty	= rs.getString(2);
 				String	sContents	= rs.getString(3);
 
-				data.append(INSERT_PREFERENCE_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sUserID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sProperty, nDatabaseType)+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sContents, nDatabaseType)+"\'");
-				data.append(")\n");
+				dumpfile.write(INSERT_PREFERENCE_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sUserID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sProperty, nDatabaseType)+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sContents, nDatabaseType)+"\'");
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -2078,15 +2068,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupMeetingTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupMeetingTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_MEETING_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_MEETING_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_MEETING_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_MEETING_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_MEETING_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_MEETING_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_MEETING_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_MEETING_TABLE+";\n\n");
 			}
 		}
 
@@ -2102,16 +2092,16 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				double	dbMeetingDate	= rs.getDouble(4);
 				int		nStatus			= rs.getInt(5);
 
-				data.append(INSERT_MEETING_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sMeetingID+"\',");
-				data.append("\'"+sMeetingMapID+"\',");
-				data.append("\'"+CoreUtilities.cleanSQLText(sMeetingName, nDatabaseType)+"\',");
-				data.append(new Double(dbMeetingDate).longValue()+",");
-				data.append(String.valueOf(nStatus));
-				data.append(")\n");
+				dumpfile.write(INSERT_MEETING_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sMeetingID+"\',");
+				dumpfile.write("\'"+sMeetingMapID+"\',");
+				dumpfile.write("\'"+CoreUtilities.cleanSQLText(sMeetingName, nDatabaseType)+"\',");
+				dumpfile.write(new Double(dbMeetingDate).longValue()+",");
+				dumpfile.write(String.valueOf(nStatus));
+				dumpfile.write(")\n");
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();
@@ -2123,15 +2113,15 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 	 * @param Connection con, the connection object to use to read the data from the database.
 	 * @param boolean fullRecreation, indicates if the table drop and create statement should be stored to file.
 	 */
-	private void backupMediaIndexTable(Connection con, boolean fullRecreation) throws SQLException {
+	private void backupMediaIndexTable(Connection con, boolean fullRecreation) throws SQLException, IOException {
 
 		if (fullRecreation) {
 			if (nDatabaseType == ICoreConstants.DERBY_DATABASE) {
-				data.append(DBConstantsDerby.DROP_MEDIAINDEX_TABLE+"\n\n");				
-				data.append(DBConstantsDerby.CREATE_MEDIAINDEX_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.DROP_MEDIAINDEX_TABLE+"\n\n");
+				dumpfile.write(DBConstantsDerby.CREATE_MEDIAINDEX_TABLE+"\n\n");
 			} else {
-				data.append(DBConstantsMySQL.MYSQL_DROP_MEDIAINDEX_TABLE+";\n\n");								
-				data.append(DBConstantsMySQL.MYSQL_CREATE_MEDIAINDEX_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_DROP_MEDIAINDEX_TABLE+";\n\n");
+				dumpfile.write(DBConstantsMySQL.MYSQL_CREATE_MEDIAINDEX_TABLE+";\n\n");
 			}
 		}
 
@@ -2148,17 +2138,20 @@ public class DBBackupDatabase implements DBConstants, DBConstantsMySQL, DBConsta
 				double  dbCreationDate = rs.getDouble(5);
 				double	dbModificationDate = rs.getDouble(6);
 
-				data.append(INSERT_MEDIAINDEX_QUERY_BASE);
-				data.append("(");
-				data.append("\'"+sViewID+"\',");
-				data.append("\'"+sNodeID+"\',");
-				data.append("\'"+sMeetingID+"\',");
-				data.append(new Double(dbMediaIndex).longValue()+",");
-				data.append(new Double(dbCreationDate).longValue()+",");
+				dumpfile.write(INSERT_MEDIAINDEX_QUERY_BASE);
+				dumpfile.write("(");
+				dumpfile.write("\'"+sViewID+"\',");
+				dumpfile.write("\'"+sNodeID+"\',");
+				dumpfile.write("\'"+sMeetingID+"\',");
+				dumpfile.write(new Double(dbMediaIndex).longValue()+",");
+				dumpfile.write(new Double(dbCreationDate).longValue()+",");
+				data.delete(0, data.length());
 				data.append(new Double(dbModificationDate).longValue());
 				data.append(")\n");
+				dumpfile.write(data.toString());
+				data.delete(0, data.length());
 			}
-			data.append("\n");
+			dumpfile.write("\n");
 		}
         pstmt1.close();
         rs.close();

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting;
 
 import javax.swing.JTable;
@@ -205,7 +204,7 @@ public class UIMeetingRecorderDialog extends UIDialog implements ActionListener 
 		oTable.clearSelection();
 		sorter.addMouseListenerToHeaderInTable(oTable);
 		setRenderers();
-		
+
 		oScrollpane = new JScrollPane(oTable);
 		oScrollpane.setPreferredSize(new Dimension(350,150));
 		gc.gridy = 2;

@@ -30,7 +30,7 @@ package com.compendium.io.questmap.util;
  * @author ?
  */
 public class Message {
-
+/*
     protected String msg;
 
     public String toString() {
@@ -52,5 +52,5 @@ public class Message {
 
     public String getMessage() {
         return msg;
-    }
+    }  */
 }

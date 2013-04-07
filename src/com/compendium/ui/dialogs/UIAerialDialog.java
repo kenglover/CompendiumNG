@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -100,7 +99,7 @@ public class UIAerialDialog extends UIDialog implements ComponentListener {
 		oAerialPanel = new JPanel();
 		oAerialPanel.setVisible(true);
 		oAerialPanel.setLayout(new BorderLayout());
-		oAerialPanel.setBorder(new EmptyBorder(5,5,5,5));
+//		oAerialPanel.setBorder(new EmptyBorder(5,5,5,5));
 		oAerialPanel.setBackground(Color.white);
 		oAerialPanel.setOpaque(true);
 
@@ -118,60 +117,10 @@ public class UIAerialDialog extends UIDialog implements ComponentListener {
 		}
 		scaleToFit();
 
-		//double nscale = 0.30;
-		//oAerialViewPane.setZoom(nscale);
-		//oAerialViewPane.scale();
-		//Dimension size = oAerialViewPane.calculateSize();
-		//oAerialPanel.setPreferredSize(new Dimension(size.width+10, size.height+10));
 		oContentPane.add(oAerialPanel, BorderLayout.CENTER);
 
-		setSize(new Dimension(oAerialPanel.getWidth()+10, oAerialPanel.getHeight()+10));
-		pack();
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param parent, the parent frame for this dialog.
-	 * @param frame, the object instance that draws the aerial view held in this dialog.
-	 * @param view, the view the aerial view is of.
-	 */
-	public UIAerialDialog(JFrame parent, UIMapViewFrame frame, View view) {
-
-		super(parent, false);
-
-		oParent = parent;
-		oMapFrame = frame;
-		oView = view;
-		String userID = ProjectCompendium.APP.getModel().getUserProfile().getId() ;
-		this.addComponentListener(this);
-		setTitle("[Aerial]: "+oView.getLabel());
-
-		oContentPane = getContentPane();
-		oContentPane.setLayout(new BorderLayout());
-
-		oAerialPanel = new JPanel();
-		oAerialPanel.setVisible(true);
-		oAerialPanel.setLayout(new BorderLayout());
-		oAerialPanel.setBorder(new EmptyBorder(5,5,5,5));
-		oAerialPanel.setBackground(Color.white);
-		oAerialPanel.setOpaque(true);
-
-		oAerialViewPane = new UIAerialViewPane(oView, frame);
-		oAerialViewPane.setBackground(Color.white);
-		oAerialPanel.add(oAerialViewPane, BorderLayout.CENTER);
-		oAerialPanel.setPreferredSize(new Dimension(nAerialWidth, nAerialHeight));
-		oAerialPanel.setSize(new Dimension(nAerialWidth, nAerialHeight));
-		scaleToFit();
-
-		//double nscale = 0.30;
-		//oAerialViewPane.setZoom(nscale);
-		//oAerialViewPane.scale();
-		//Dimension size = oAerialViewPane.calculateSize();
-		//oAerialPanel.setPreferredSize(new Dimension(size.width+10, size.height+10));
-		oContentPane.add(oAerialPanel, BorderLayout.CENTER);
-
-		setSize(new Dimension(oAerialPanel.getWidth()+10, oAerialPanel.getHeight()+10));
+//		setSize(new Dimension(oAerialPanel.getWidth()+10, oAerialPanel.getHeight()+10));
+		setSize(new Dimension(oAerialPanel.getWidth(), oAerialPanel.getHeight()));
 		pack();
 	}
 
@@ -188,9 +137,10 @@ public class UIAerialDialog extends UIDialog implements ComponentListener {
 	}
 
 	/**
-	 * Update the given node in the areail view.
+	 * Update the given node in the aerail view.
 	 * @param newnode, the node to refresh in the aerial view.
 	 */
+/*********************************************************************************************************	
 	public void refreshNode(NodeSummary newnode) {
 		try {
 			View view = oAerialViewPane.getView();
@@ -210,7 +160,7 @@ public class UIAerialDialog extends UIDialog implements ComponentListener {
 			System.out.println("Exception )UIMapViewPane.refreshAerialPane())\n\n"+ex.getMessage());
 		}
 	}
-
+*********************************************************************************************************/
 
 	/**
 	 * Rescale and size this dialog.
@@ -219,16 +169,8 @@ public class UIAerialDialog extends UIDialog implements ComponentListener {
 	 */
 	public void rescale(Point oPoint) {
 
-		//Point location = getLocation();
 		if (oPoint.x > oAerialPanel.getWidth()-10 || oPoint.y > oAerialPanel.getHeight()-10) {
 			scaleToFit();
-
-			//oAerialViewPane.scale();
-			//Dimension size = oAerialViewPane.calculateSize();
-			//oAerialPanel.setPreferredSize(new Dimension(size.width+10, size.height+10));
-			//setSize(new Dimension(size.width+10, size.height+10));
-			//pack();
-			//setLocation(location);
 		}
 	}
 
@@ -237,13 +179,25 @@ public class UIAerialDialog extends UIDialog implements ComponentListener {
 	 */
 	public void scaleToFit() {
 
-		oAerialViewPane.setZoom(1.0);
-		oAerialViewPane.scale();
- 		Dimension panesize = oAerialViewPane.calculateSize();
+		double mapScale  = oMapFrame.getViewPane().getZoom();
+		Dimension mapSize = oMapFrame.getViewPane().calculateSize();
+		int mapWidth = (int) (mapSize.width / mapScale);
+		int mapHeight = (int) (mapSize.height / mapScale);		
+ 		
+ 		Point scrollPoint = oMapFrame.getViewPosition();
+ 		int maxX = scrollPoint.x + oMapFrame.getViewport().getWidth();
+ 		int maxY = scrollPoint.y + oMapFrame.getViewport().getHeight();
+ 		maxX = (int) (maxX / mapScale);
+ 		maxY = (int) (maxY / mapScale);
+		
+		if (mapWidth > maxX) maxX = mapWidth;
+		if (mapHeight > maxY) maxY = mapHeight;
+		
 		Dimension viewsize = oAerialPanel.getSize();
-
-		double xscale = CoreUtilities.divide(viewsize.width-15, panesize.width);
-		double yscale = CoreUtilities.divide(viewsize.height-15, panesize.height);
+//		double xscale = CoreUtilities.divide(viewsize.width - 10, maxX);
+//		double yscale = CoreUtilities.divide(viewsize.height - 10, maxY);
+		double xscale = CoreUtilities.divide(viewsize.width, maxX);
+		double yscale = CoreUtilities.divide(viewsize.height, maxY);
 
 		double scale = xscale;
 		if (yscale < xscale)
@@ -251,9 +205,11 @@ public class UIAerialDialog extends UIDialog implements ComponentListener {
 
 		if (scale > 1.0)
 			scale = 1.0;
-
-		oAerialViewPane.setZoom(scale);
-		oAerialViewPane.scale();
+		
+		if (scale != oAerialViewPane.getZoom()) {
+			oAerialViewPane.setZoom(scale);
+			oAerialViewPane.scale();
+		}
 	}
 
 	/**

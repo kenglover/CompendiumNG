@@ -22,12 +22,12 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.io.*;
 
-import javax.sound.midi.*;
 import javax.sound.sampled.*;
 
 import com.compendium.ProjectCompendium;
@@ -80,7 +80,7 @@ import com.compendium.ProjectCompendium;
 	 */
 	public void playAudio(int action) {
 
-		String	sPATH = "System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"Audio"+ProjectCompendium.sFS;
+		String	sPATH = ProjectCompendium.sSYSPATH+ProjectCompendium.sFS+"System"+ProjectCompendium.sFS+"resources"+ProjectCompendium.sFS+"Audio"+ProjectCompendium.sFS;
 		String file = "";
 		int playTime = 0;
 
@@ -168,8 +168,7 @@ import com.compendium.ProjectCompendium;
 	 */
 	public void setAudio(boolean state) {
 		bPlayAudio = state;
-		FormatProperties.setFormatProp( "audioOn", new Boolean(bPlayAudio).toString() );
-		FormatProperties.saveFormatProps();
+		APP_PROPERTIES.setAudioOn(bPlayAudio);
 	}
 
 	/**

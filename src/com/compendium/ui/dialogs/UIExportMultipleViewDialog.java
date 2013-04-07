@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -182,7 +181,7 @@ public class UIExportMultipleViewDialog extends UIDialog implements ActionListen
 
 		} else if (oParent instanceof UIExportViewDialog) {
 			UIExportViewDialog dlg = (UIExportViewDialog)oParent;
-			dlg.updateViewsList();			
+			dlg.updateViewsList();
 		}
 	}
 

@@ -22,16 +22,16 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.io.html;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.util.*;
 import java.util.zip.*;
 import java.awt.*;
 import java.io.*;
+import java.net.URLEncoder;
 import java.awt.geom.*;
-import sun.awt.*;
-import sun.awt.image.*;
 
 import javax.imageio.*;
 import javax.imageio.stream.*;
@@ -102,9 +102,6 @@ public class HTMLViews implements IUIConstants {
 	/** Should the side menu map titles be sorted alphabetically.*/
 	private boolean				bSortMenu			= false;
 
-	/** Should each map have the title at the top when exported.*/
-	private boolean				bAddTitle			= false;
-	
 	/** Indicates of external files should be opened in a new window or not.*/
 	private boolean				bOpenNew			= true;
 
@@ -177,7 +174,7 @@ public class HTMLViews implements IUIConstants {
 
 	/** A list of the image map files created for this export.*/
 	private Hashtable			htMapFiles			= new Hashtable();
- 	
+
 	/** A counter used by the HTML menu page creation code.*/
 	private int 				counter 			= 2;
 
@@ -198,8 +195,8 @@ public class HTMLViews implements IUIConstants {
 
 	/** Holds messages about missing reference files.*/
 	private Vector 				vtMessages				= new Vector();
-	
-	
+
+
 	/**
 	 * Constructor.
 	 *
@@ -208,14 +205,13 @@ public class HTMLViews implements IUIConstants {
 	 * @param userTitle java.lang.String, the title for the main export file.
 	 * @param bIncludeReferences boolean, export any associated reference and image files.
 	 * @param bToZip boolean, export all files to a zip file.
-	 * @param addMapTitles indicates whether to add titles to map and list pages. 
 	 * @param openInNew indicates whether external urls file or images should be opened in a new window ot not.
 	 * @param bNoDetailPopup whether to exclude the detail popups for nodes with only anchor id info in them.
 	 * @param bNoDetailPopupAtAll whether to exclude the detail popups totally from this export.
 	 */
-  	public HTMLViews(String directory, String fileName, String userTitle, boolean bIncludeReferences, 
-  			boolean bToZip, boolean bSortMenu, boolean addMapTitles, boolean openInNew, 
-  			boolean bNoDetailPopup, boolean bNoDetailPopupAtAll) {
+  	public HTMLViews(String directory, String fileName, String userTitle, boolean bIncludeReferences,
+  			boolean bToZip, boolean bSortMenu, boolean openInNew, boolean bNoDetailPopup,
+  			boolean bNoDetailPopupAtAll) {
 
 		this.sDirectory = directory;
 		this.sMainFileName = fileName;
@@ -223,11 +219,10 @@ public class HTMLViews implements IUIConstants {
 		this.bIncludeReferences = bIncludeReferences;
 		this.bZipUp = bToZip;
 		this.bSortMenu = bSortMenu;
-		this.bAddTitle = addMapTitles;
 		this.bOpenNew = openInNew;
 		this.bNoDetailPopup = bNoDetailPopup;
 		this.bNoDetailPopupAtAll = bNoDetailPopupAtAll;
-		
+
 		String name = new File(fileName).getName();
 		int ind = name.lastIndexOf(".");
 		if (ind != -1) {
@@ -309,10 +304,10 @@ public class HTMLViews implements IUIConstants {
 		if (sLabel.length()> 20) {
 			sLabel = sLabel.substring(0, 20);
 		}
-		String sViewFileName = CoreUtilities.cleanFileName(sLabel)+"_"+view.getId()+".html";			
+		String sViewFileName = CoreUtilities.cleanFileName(sLabel)+"_"+view.getId()+".html";
 		return sViewFileName;
 	}
-	
+
 	/**
 	 * This method sets up the progress bar and then loops through the given list of views
 	 * creating the relevant HTML pages and addint each view the the side menu.
@@ -321,7 +316,9 @@ public class HTMLViews implements IUIConstants {
 	 * @param selectedViews the list of views to export.
 	 * @param bOpenAfter Open the html page after completion.
 	 */
-	public void processViews(Vector selectedViews, boolean bOpenAfter) {
+	public void processViews(Vector selectedViews, boolean bOpenAfter)
+	{
+		showTrace("Entered HTMLViews processViews");
 
 		if (selectedViews == null || selectedViews.size() == 0)
 			return;
@@ -341,7 +338,7 @@ public class HTMLViews implements IUIConstants {
 		else
 			oProgressBar.setMaximum(totalCount);
 
-		String sFileName = "";		
+		String sFileName = "";
 		for(int i = 0; i < selectedViews.size(); i ++){
 
 			if (checkProgress()) {
@@ -351,8 +348,8 @@ public class HTMLViews implements IUIConstants {
 
 			View view = (View)selectedViews.elementAt(i);
 			view.initialize(session, model);
-			sFileName = createFileName(view);						
-			createHTML(view, sFileName);			
+			sFileName = createFileName(view);
+			createHTML(view, sFileName);
 			vtMenuItems.addElement((View) view);
 
 			nCount += 1;
@@ -371,24 +368,24 @@ public class HTMLViews implements IUIConstants {
 		oProgressDialog.dispose();
 
 		// Display Messages
-		
+
 		if (vtMessages.size() > 0) {
 			UITextArea txtLabel = new UITextArea(800, 800);
 			int count = vtMessages.size();
 			for (int i=0; i<count; i++) {
 				txtLabel.append((String)vtMessages.elementAt(i));
-				txtLabel.append("\n\n");					
+				txtLabel.append("\n\n");
 			}
 			//txtLabel.setAutoscrolls(true);
 			txtLabel.setEditable(false);
 			JScrollPane scrollpane = new JScrollPane(txtLabel);
-			scrollpane.setPreferredSize(new Dimension(600,300));					
+			scrollpane.setPreferredSize(new Dimension(600,300));
 			JOptionPane.showMessageDialog(ProjectCompendium.APP,
 					scrollpane,
                     "Export Problems Encountered",
-                    JOptionPane.WARNING_MESSAGE);				
-		}		
-				
+                    JOptionPane.WARNING_MESSAGE);
+		}
+
   		if ( sMainFileName != null && !(sMainFileName.equals("")) ) {
 			if (!bOpenAfter) {
 	    		ProjectCompendium.APP.displayMessage("Finished exporting into " + sDirectory + ProjectCompendium.sFS+ sMainFileName, "Export Finished");
@@ -397,6 +394,9 @@ public class HTMLViews implements IUIConstants {
 
 		ProjectCompendium.APP.setDefaultCursor();
 		ProjectCompendium.APP.setStatus("");
+
+		showTrace("Exiting HTMLViews processViews");
+
 	}
 
 	/**
@@ -424,7 +424,7 @@ public class HTMLViews implements IUIConstants {
 
 		oProgressBar.setMaximum(totalCount+3);
 
-		String sFileName = "";		
+		String sFileName = "";
 		for(int i = 0; i < selectedViews.size(); i ++){
 
 			if (checkProgress()) {
@@ -434,8 +434,8 @@ public class HTMLViews implements IUIConstants {
 
 			View view = (View)selectedViews.elementAt(i);
 			view.initialize(session, model);
-			sFileName = createFileName(view);		
-			createHTML(view, sFileName);			
+			sFileName = createFileName(view);
+			createHTML(view, sFileName);
 			vtMenuItems.addElement((View) view);
 
 			nCount += 1;
@@ -446,37 +446,37 @@ public class HTMLViews implements IUIConstants {
 		writeMenuPage();
 
 		oProgressDialog.setMessage("About to create Zip file");
-		
+
 		// ADD THE XML ZIP TO RESOURCES LOADED INTO ZIP
-		htExportFiles.put(sXMLZipFile, (new File(sXMLZipFile)).getName());				
-		zipUpExport(sDirectory+ProjectCompendium.sFS+sMainFileName);		
-		CoreUtilities.deleteFile(new File(sXMLZipFile));	
-		
+		htExportFiles.put(sXMLZipFile, (new File(sXMLZipFile)).getName());
+		zipUpExport(sDirectory+ProjectCompendium.sFS+sMainFileName);
+		CoreUtilities.deleteFile(new File(sXMLZipFile));
+
 		oProgressDialog.setVisible(false);
 		oProgressDialog.dispose();
 
-		// Display Messages		
+		// Display Messages
 		if (vtMessages.size() > 0) {
 			UITextArea txtLabel = new UITextArea(800, 800);
 			int count = vtMessages.size();
 			for (int i=0; i<count; i++) {
 				txtLabel.append((String)vtMessages.elementAt(i));
-				txtLabel.append("\n\n");					
+				txtLabel.append("\n\n");
 			}
 			//txtLabel.setAutoscrolls(true);
 			txtLabel.setEditable(false);
 			JScrollPane scrollpane = new JScrollPane(txtLabel);
-			scrollpane.setPreferredSize(new Dimension(600,300));					
+			scrollpane.setPreferredSize(new Dimension(600,300));
 			JOptionPane.showMessageDialog(ProjectCompendium.APP,
 					scrollpane,
                     "Export Problems Encountered",
-                    JOptionPane.WARNING_MESSAGE);				
-		}		
-				
+                    JOptionPane.WARNING_MESSAGE);
+		}
+
 		ProjectCompendium.APP.setDefaultCursor();
 		ProjectCompendium.APP.setStatus("");
-	}	
-	
+	}
+
 	/**
 	 * Calls the appropriate method to process the given view as a list of a map, depending on its node type.
 	 *
@@ -504,8 +504,9 @@ public class HTMLViews implements IUIConstants {
 	 * @param view the map view to process.
 	 * @param the filename for the main map file for this view.
 	 */
+	@SuppressWarnings("deprecation")
 	private void processMap(View view, String sFileName){
-		
+
 		StringBuffer htmlString = new StringBuffer(2000);
 		StringBuffer divString = new StringBuffer(2000);
 
@@ -521,7 +522,7 @@ public class HTMLViews implements IUIConstants {
 
 		// CREATE THE JPEG IMAGE
 		String viewID = view.getId();
-		
+
 		boolean wasOpen = false;
 		int count = allFrames.size();
 		for (int i=0; i<count; i++) {
@@ -531,7 +532,7 @@ public class HTMLViews implements IUIConstants {
 				break;
 			}
 		}
-		
+
 		UIViewFrame frame = ProjectCompendium.APP.addViewToDesktop(view, view.getLabel());
 		UIViewPane pane = ((UIMapViewFrame)frame).getViewPane();
 		Dimension size = pane.calculateSize();
@@ -547,20 +548,20 @@ public class HTMLViews implements IUIConstants {
         //f.setContentPane(pane);
         //f.pack();
 		//Dimension size = pane.calculateSize();
-		
-		try {						
+
+		try {
 			if (size.width > 0 && size.height > 0) {
 				GraphicsConfiguration fig = pane.getGraphicsConfiguration();
 				if (fig != null) {
 					BufferedImage img = fig.createCompatibleImage(size.width, size.height, Transparency.OPAQUE);
 					Graphics2D graphics = img.createGraphics();
 					pane.paint(graphics);
-	
+
 					if (bZipUp) {
 						mapFileName = sDirectory + ProjectCompendium.sFS + view.getId()+"_map.jpg";
 						htMapFiles.put(mapFileName, "images/"+view.getId()+"_map.jpg");
 					}
-	
+
 					if (ProjectCompendium.isLinux) {
 						Iterator iter = ImageIO.getImageWritersByFormatName("JPG");
 						if (iter.hasNext()) {
@@ -580,18 +581,18 @@ public class HTMLViews implements IUIConstants {
 						BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(mapFileName));
 						JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
 						JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(img);
-	
+
 						param.setQuality(1.0f, false);
 						encoder.setJPEGEncodeParam(param);
 						encoder.encode(img);
 						out.close();
 					}
 				} else {
-					String sMessage = new String("Unable to create map jpg image for: "+view.getLabel()+"\n");				
+					String sMessage = new String("Unable to create map jpg image for: "+view.getLabel()+"\n");
 					if (!vtMessages.contains(sMessage)) {
 						vtMessages.addElement(sMessage);
 					}
-				}				
+				}
 			} else {
 				File file = new File(mapFileName);
 				FileWriter writer = new FileWriter(file);
@@ -605,7 +606,7 @@ public class HTMLViews implements IUIConstants {
 			return;
 		}
 
-		htmlString.append(setupFileHeader((String)view.getLabel()));
+		htmlString.append(setupFileHeader(view));
 		htmlString.append("<img Suppress=true src=\""+mapHTMLName);
 		htmlString.append("\" width=\""+size.width+"\" height=\""+size.height+"\"");
 		htmlString.append(" hspace=0 vspace=0 border=0 usemap=\"#"+viewID+"_map\">\n");
@@ -623,7 +624,7 @@ public class HTMLViews implements IUIConstants {
 			int xpos = 0;
 			int ypos = 0;
 
-			int detailBoxHeight = 450;
+			int detailBoxHeight = 530;
 
 			String nodeID = "";
 			NodeSummary node = null;
@@ -632,16 +633,16 @@ public class HTMLViews implements IUIConstants {
 			boolean hasReference = false;
 			boolean isInternalReference = false;
 			String sInternalView = "";
-			String sInternalNode = "";				
+			String sInternalNode = "";
 			String image = "";
 			String source = "";
 			String inner = "";
 
 			// now, for each node found in the view...
 			for(int i = 0; i<vtTemp.size(); i++){
-								
+
 				// RESET VARIABLES
-				detailBoxHeight = 450;
+				detailBoxHeight = 530;
 				hasReference = false;
 				hasExternalImage = false;
 				isInternalReference = false;
@@ -651,10 +652,10 @@ public class HTMLViews implements IUIConstants {
 				source = "";
 				inner = "";
 
-				NodePosition oPos = (NodePosition)vtTemp.elementAt(i);				
+				NodePosition oPos = (NodePosition)vtTemp.elementAt(i);
 				UINode cn = new UINode( oPos, sAuthor);
 				node = (NodeSummary)nodeList.elementAt(i);
-								
+
 				nodeID = node.getId();
 				node.initialize(session, model);
 
@@ -679,27 +680,34 @@ public class HTMLViews implements IUIConstants {
 				String htmlDetailPath = "details/"+detailName;
 				detailPath1 = sDirectory + ProjectCompendium.sFS + detailLoc;
 
-				int detailItemCount = 1; // 1 = just label and anchor				
+				int detailItemCount = 1; // 1 = just label and anchor
 				if (!bNoDetailPopupAtAll) {
-					detailItemCount = createDetailFile(detailPath1, htmlDetailPath, node, viewID);
+					detailItemCount = createDetailFile(detailPath1, htmlDetailPath, node, view);
 				}
 
-				boolean includeDetail = (!bNoDetailPopupAtAll && (detailItemCount > 1 || !bNoDetailPopup));
-				
+				boolean includeDetail =
+				    (!bNoDetailPopupAtAll && (detailItemCount > 1 || !bNoDetailPopup));
+				if (includeDetail
+				        && (node.isReference() || node.isReferenceShortcut())
+				        && node.getDetail().isEmpty())
+				{
+				    includeDetail = false;
+				}
+
 				if (detailItemCount == 3 ) {
-					detailBoxHeight = 480;
+					detailBoxHeight = detailBoxHeight + 30;
 				}
 				else if (detailItemCount == 4 ) {
-					detailBoxHeight = 530;
+					detailBoxHeight = detailBoxHeight + 80;
 				}
 				else if (detailItemCount > 4) {
-					detailBoxHeight = 580;
+					detailBoxHeight = detailBoxHeight + 130;
 				}
 
 				int type = node.getType();
 				String path = UIImages.getPath(type, uinode.getNodePosition().getShowSmallIcon());
 
-				String nodeName = (String)node.getLabel();
+				String nodeName = node.getLabel();
 
 				String newPath = null;
 
@@ -715,8 +723,8 @@ public class HTMLViews implements IUIConstants {
 								sInternalView = inner.substring(0, ind);
 								sInternalNode = inner.substring(ind+1);
 								isInternalReference = true;
-							}		
-						} 
+							}
+						}
 						if ( !UIImages.isImage(source) ) {
 							hasReference = true;
 						}
@@ -725,17 +733,17 @@ public class HTMLViews implements IUIConstants {
 					if (image != null && !image.equals("")) {
 						if (image.startsWith("www.")) {
 							image = "http://"+image;
-						}																										
+						}
 						path = image;
 						hasExternalImage = true;
 					}
 					else if(source != null && source.equals("")) //if no ref, leave ref icon (path)
 						path = path;
-					else{						
+					else{
 						if (source != null) {
 							if (source.startsWith("www.")) {
 								source = "http://"+source;
-							}																					
+							}
 							if ( UIImages.isImage(source) ) {
 								hasExternalImage = true;
 								path = source;
@@ -752,21 +760,21 @@ public class HTMLViews implements IUIConstants {
 					if (image != null && !image.equals("")) {
 						if (image.startsWith("www.")) {
 							image = "http://"+image;
-						}																										
+						}
 						path = image;
 						hasExternalImage = true;
 					}
 				}
-				
+
 				// NODE LABEL IMAGE MAPPING FOR OPENING DETAILS WINDOW
 				int labelX = nodeloc.x+labelRectangle.x;
 				int labelY = nodeloc.y+labelRectangle.y;
 				int labelWidth = labelX+labelRectangle.width;
 				int labelHeight = labelY+labelRectangle.height;
 
-				if (path != null && hasIcon) {					
+				if (path != null && hasIcon) {
 					String htmlImagePath = path;
-					
+
 					boolean isImageURL = false;
 					String sLowerCasePath = path.toLowerCase();
 					if (sLowerCasePath.startsWith("http:") || sLowerCasePath.startsWith("https:")) {
@@ -777,7 +785,7 @@ public class HTMLViews implements IUIConstants {
 					if (sLowerCaseSource.startsWith("http:") || sLowerCaseSource.startsWith("https:")) {
 						isURL = true;
 					}
-					
+
 					File imageFile = new File(path);
 					String imageName = "";
 					if (imageFile.exists() && !isImageURL && (bIncludeReferences || !hasExternalImage)) {
@@ -800,96 +808,96 @@ public class HTMLViews implements IUIConstants {
 						View match = mapOkay(nodeID);
 						if( match != null ) {
 							String sViewFileName = createFileName((View) node);
-							
-							htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"rect\" coords=\""+labelX+","+labelY+","+labelWidth+","+labelHeight+"\"");							
+
+							htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"rect\" coords=\""+labelX+","+labelY+","+labelWidth+","+labelHeight+"\"");
 							if (includeDetail) {
 								htmlString.append(" href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+node.getId()+"',");
 								htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 								htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/>\n");
 							} else {
 								htmlString.append(" href=\"\"");
-								htmlString.append("/>\n");								
+								htmlString.append("/>\n");
 							}
-							
+
 							htmlString.append("<area shape=\"rect\" coords=\""+iconX+","+iconY+","+iconWidth+","+iconHeight+"\"");
 							htmlString.append(" href=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\" onClick=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\"");
 							htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
 
 							if (includeDetail) {
 								if (type == ICoreConstants.MAPVIEW || type == ICoreConstants.MAP_SHORTCUT) {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents<br>Click label to view this node's details"));															
-									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view map contents<br>Click label to view this node's details"));															
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents<br>Click label to view this node's details"));
+									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view map contents<br>Click label to view this node's details"));
 								} else {
 									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view list contents<br>Click label to view this node's details"));
-									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view list contents<br>Click label to view this node's details"));																															
-								}	
+									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view list contents<br>Click label to view this node's details"));
+								}
 							} else {
 								if (type == ICoreConstants.MAPVIEW || type == ICoreConstants.MAP_SHORTCUT) {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents"));															
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents"));
 								} else {
 									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view list contents"));
-								}									
+								}
 							}
 						}
 						else {
 							htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"poly\" coords=\""+iconX+","+iconY+","+(iconX+iconRectangle.width)+","+iconY+", ");
 							htmlString.append((iconX+iconRectangle.width)+","+labelY+","+(labelX+labelRectangle.width)+","+labelY+", ");
 							htmlString.append((labelX+labelRectangle.width)+","+(labelY+labelRectangle.height)+","+labelX+","+(labelY+labelRectangle.height)+", ");
-							htmlString.append(labelX+","+labelY+","+iconX+","+labelY+"\" ");						
-							
+							htmlString.append(labelX+","+labelY+","+iconX+","+labelY+"\" ");
+
 							if (includeDetail) {
 								htmlString.append(" href=\"\" onclick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"',");
-	 							htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");									
+	 							htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 								htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon or label to view this node's details"));
 							} else {
-								htmlString.append("/>\n");								
+								htmlString.append("/>\n");
 							}
 						}
 					}
 					else {
 						if (isInternalReference) {
 							View match = mapOkay(sInternalView);
-							if( match != null ) {							
+							if( match != null ) {
 								String sViewFileName = createFileName(match);
 								sViewFileName += "#nid"+sInternalView+"_"+sInternalNode;
 								htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"rect\" coords=\""+labelX+","+labelY+","+labelWidth+","+labelHeight+"\"");
-								
+
 								if (includeDetail) {
 									htmlString.append(" href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"',");
-									htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");									
+									htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 									htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/>\n");
 								} else {
-									htmlString.append("/>\n");									
+									htmlString.append("/>\n");
 								}
 								htmlString.append("<area shape=\"rect\" coords=\""+iconX+","+iconY+","+iconWidth+","+iconHeight+"\"");
 								htmlString.append(" href=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\" onclick=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\"");
-								htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");	
-								
+								htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
+
 								if (includeDetail) {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view<br>Click label to view this node's details"));															
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view<br>Click label to view this node's details"));
 									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to GOTO referenced view<br>Click label to view this node's details"));
 								} else {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view"));															
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view"));
 								}
 							}
 							else {
 								htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"poly\" coords=\""+iconX+","+iconY+","+(iconX+iconRectangle.width)+","+iconY+", ");
 								htmlString.append((iconX+iconRectangle.width)+","+labelY+","+(labelX+labelRectangle.width)+","+labelY+", ");
 								htmlString.append((labelX+labelRectangle.width)+","+(labelY+labelRectangle.height)+","+labelX+","+(labelY+labelRectangle.height)+", ");
-								htmlString.append(labelX+","+labelY+","+iconX+","+labelY+"\" ");						
-	 							
+								htmlString.append(labelX+","+labelY+","+iconX+","+labelY+"\" ");
+
 								if (includeDetail) {
 									htmlString.append(" href=\"\" onclick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"',");
-		 							htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");									
+		 							htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 									htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
 									divString.append(createHintDiv(nodeID+"imagehint", "Click icon or label to view this node's details"));
 								} else {
-									htmlString.append("/>\n");									
+									htmlString.append("/>\n");
 								}
-							}														
+							}
 						} else if (hasReference && (bIncludeReferences || isURL)) {
-							
+
 							File refFile = new File(source);
 							String refName = refFile.getName();
 							String newSourcePath = "";
@@ -903,21 +911,21 @@ public class HTMLViews implements IUIConstants {
 								newSourcePath = source;
 
 							htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"rect\" Coords=\""+labelX+","+labelY+","+labelWidth+","+labelHeight+"\"");
-							
+
 							if (includeDetail) {
 								htmlString.append(" href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+node.getId()+"',");
-								htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");								
+								htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 								htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/>\n");
 							} else {
-								htmlString.append("/>\n");								
+								htmlString.append("/>\n");
 							}
 
 							htmlString.append("<area shape=\"rect\" coords=\""+iconX+","+iconY+","+iconWidth+","+iconHeight+"\"");
-							
+
 							if (bOpenNew) {
 								htmlString.append(" href=\""+newSourcePath+"\" target=\"_blank\" onClick=\"openFile('"+newSourcePath+"', '"+nodeID+"')\"");
 							} else {
-								htmlString.append(" href=\""+newSourcePath+"\" onClick=\"loadFile('"+newSourcePath+"', '"+nodeID+"')\"");								
+								htmlString.append(" href=\""+newSourcePath+"\" onClick=\"loadFile('"+newSourcePath+"', '"+nodeID+"')\"");
 							}
 							htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
 
@@ -925,48 +933,52 @@ public class HTMLViews implements IUIConstants {
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to follow hyperlink<br>Click label to view this node's details"));
 								divString.append(createHintDiv(nodeID+"labelhint", "Click icon to follow hyperlink<br>Click label to view this node's details"));
 							} else {
-								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to follow hyperlink"));								
+								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to follow hyperlink"));
 							}
-							
-						} else if (hasExternalImage && (bIncludeReferences || isImageURL)) {							
+
+						} else if (hasExternalImage && bIncludeReferences && !includeDetail) {
 							htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"rect\" coords=\""+labelX+","+labelY+","+labelWidth+","+labelHeight+"\"");
+							//TODO: This "else if" branch has "!includeDetail" condition
+							//      so the the next "if" has become redundant
 							if (includeDetail) {
 								htmlString.append(" href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"',");
-								htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");								
+								htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 								htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/>\n");
 							} else {
 								htmlString.append("/>\n");
 							}
-							
+
 							htmlString.append("<area shape=\"rect\" coords=\""+iconX+","+iconY+","+iconWidth+","+iconHeight+"\"");
-							
+
 							if (bOpenNew) {
 								htmlString.append(" href=\""+htmlImagePath+"\" target=\"_blank\" onClick=\"openFile('"+htmlImagePath+"', '"+nodeID+"')\"");
 							} else {
-								htmlString.append(" href=\""+htmlImagePath+"\" onClick=\"loadFile('"+htmlImagePath+"', '"+nodeID+"')\"");								
+								htmlString.append(" href=\""+htmlImagePath+"\" onClick=\"loadFile('"+htmlImagePath+"', '"+nodeID+"')\"");
 							}
 							htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
 
+                            //TODO: This "else if" branch has "!includeDetail" condition
+                            //      so the the next "if" has become redundant.
 							if (includeDetail) {
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view full size image<br>Click label to view this node's details"));
 								divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view full size image<br>Click label to view this node's details"));
 							} else {
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view full size image"));
-							}							
-						} else {							
+							}
+						} else {
 							if (includeDetail) {
 								htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" shape=\"poly\" coords=\""+iconX+","+iconY+","+(iconX+iconRectangle.width)+","+iconY+", ");
 								htmlString.append((iconX+iconRectangle.width)+","+labelY+","+(labelX+labelRectangle.width)+","+labelY+", ");
 								htmlString.append((labelX+labelRectangle.width)+","+(labelY+labelRectangle.height)+","+labelX+","+(labelY+labelRectangle.height)+", ");
-								htmlString.append(labelX+","+labelY+","+iconX+","+labelY+"\" ");						
+								htmlString.append(labelX+","+labelY+","+iconX+","+labelY+"\" ");
 								htmlString.append(" href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"',");
-	 							htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");								
+	 							htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 								htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon or label to view this node's details"));
-							} 
+							}
 						}
-					} 
-					
+					}
+
 					// ADD HIGHLIGHTER DIV
 					int xHigh = nodeloc.x;
 					int yHigh = nodeloc.y;
@@ -978,9 +990,9 @@ public class HTMLViews implements IUIConstants {
 					}
 					int widthHigh = nodesize.width;
 					int heightHigh = nodesize.height;
-						
+
 					divString.append("\n<div id=\"nid"+nodeID+"_"+viewID+"highlight\" style=\"position:absolute; z-index:15; visibility:hidden; left:"+xHigh+"px; top:"+yHigh+"px; width:"+widthHigh+"px; height:"+heightHigh+"px; border: 2px solid yellow\"></div>\n");
-					
+
 					// ICON TRANSCLUSION INDICATOR MAPPING
 					if (hasTrans) {
 						int transX = nodeloc.x+transRectangle.x;
@@ -1004,14 +1016,14 @@ public class HTMLViews implements IUIConstants {
 						for(int j=0; j<countj; j++) {
 							View tmpView = (View)views.elementAt(j);
 							//if (!tmpView.getId().equals(view.getId())) {
-							if (tmpView != null) {								
-								sMainFileName = createFileName(tmpView);	
+							if (tmpView != null) {
+								sMainFileName = createFileName(tmpView);
 								sViewID = tmpView.getId();
 								sLabel = sMainFileName;
 								if (oHomeViews.containsKey(tmpView.getId())) {
 									sLabel = sLabel + " - " + oHomeViews.get(tmpView.getId());
 								}
-							
+
 								if (sLabel.length() > 100)
 									sLabel = sLabel.substring(0, 97)+"...";
 
@@ -1028,7 +1040,7 @@ public class HTMLViews implements IUIConstants {
 							}
 						}
 						divString.append("\t</table>\n</div>\n");
-					} 
+					}
 
 					// ICON WEIGHT INDICATOR MAPPING - NOT USED AT THE MOMENT
 					//if (hasWeight) {
@@ -1052,9 +1064,9 @@ public class HTMLViews implements IUIConstants {
 							htmlString.append(" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"','width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes')\" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"text'); return false;\"/>\n");
 						} else {
 							htmlString.append("<area shape=\"rect\" coords=\""+textX+","+textY+","+textWidth+","+textHeight+"\"");
-							htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"text'); return false;\"/>\n");														
+							htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"text'); return false;\"/>\n");
 						}
-						
+
 						divString.append("<div id=\""+nodeID+"text\" style=\"position: absolute; z-index: 20; visibility: hidden; left: 0; top: 0;\">\n");
 						divString.append("\t<table width=\"250\" border=1 cellpadding=1 cellspacing=0 bgcolor=\""+hintcolor+"\">\n");
 						divString.append("\t\t<tr width=\"250\">\n");
@@ -1062,9 +1074,9 @@ public class HTMLViews implements IUIConstants {
 
 						String detail = node.getDetail();
 						detail = detail.trim();
-						
-						if (detail.length() > FormatProperties.detailRolloverLength) {
-							detail = detail.substring(0, FormatProperties.detailRolloverLength)+"...";
+
+						if (detail.length() > APP_PROPERTIES.getDetailRolloverLength()) {
+							detail = detail.substring(0, APP_PROPERTIES.getDetailRolloverLength())+"...";
 						}
 
 						divString.append("\t\t\t\t"+detail+"\n");
@@ -1099,11 +1111,11 @@ public class HTMLViews implements IUIConstants {
 								}
 	      					}
 							divString.append("\n\t\t\t</td>\n\t\t</tr>\n\t</table>\n</div>\n");
-							
+
 							htmlString.append("<area shape=\"rect\" coords=\""+codeX+","+codeY+","+codeWidth+","+codeHeight+"\"");
 							htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"tags'); return false;\"/>\n");
 						}
-					} 
+					}
 				} else { // IF NO ICON
 					if (includeDetail) {
 						divString.append(createHintDiv(nodeID+"labelhint", "Click label to view this node's details"));
@@ -1111,11 +1123,11 @@ public class HTMLViews implements IUIConstants {
 					htmlString.append("<area id=\"nid"+nodeID+"_"+viewID+"\" alt=\""+node.getLabel()+"\" Shape=\"rect\" Coords=\""+labelX+","+labelY+","+labelWidth+","+labelHeight+"\"");
 					if (includeDetail) {
 						htmlString.append(" href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+node.getId()+"',");
-						htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");					
+						htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 						htmlString.append(" onmouseout=\"hideHints(1); return false;\" onmouseover=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/></a>\n");
 					} else {
-						htmlString.append(" href=\"\"");					
-						htmlString.append("/>\n");						
+						htmlString.append(" href=\"\"");
+						htmlString.append("/>\n");
 					}
 				}
    			}
@@ -1149,7 +1161,7 @@ public class HTMLViews implements IUIConstants {
 				System.out.println("error closing open View "+frame.getView().getLabel());
 			}
 		}
- 	}	
+ 	}
 
 	/**
 	 * Process the export of a list view and create the HTML text require for the page.
@@ -1173,8 +1185,8 @@ public class HTMLViews implements IUIConstants {
     			nodeList.addElement( ((NodePosition)vtTemp.elementAt(i)).getNode() );
 			}
 
-			htmlString.append(setupFileHeader((String)view.getLabel()));
-			htmlString.append("<table width='100%' style='margin-left: 10px; margin-top: 10px;'>\n");		
+			htmlString.append(setupFileHeader(view));
+			htmlString.append("<table width='100%' style='margin-left: 10px; margin-top: 10px;'>\n");
 
 			int xpos = 0;
 			int ypos = 0;
@@ -1191,7 +1203,7 @@ public class HTMLViews implements IUIConstants {
 			String image = "";
 			String source = "";
 			String inner = "";
-			
+
 			// now, for each node found in the view...
 			for(int i = 0; i<vtTemp.size(); i++){
 
@@ -1239,16 +1251,16 @@ public class HTMLViews implements IUIConstants {
 								sInternalView = inner.substring(0, ind);
 								sInternalNode = inner.substring(ind+1);
 								isInternalReference = true;
-							}		
-						} 
+							}
+						}
 						if ( !UIImages.isImage(source) ) {
 							hasReference = true;
 						}
-					}					
+					}
 					if (image != null && !image.equals("")) {
 						if ((image.toLowerCase()).startsWith("www.")) {
 							image = "http://"+image;
-						}																										
+						}
 						path = image;
 						hasExternalImage = true;
 					}
@@ -1258,7 +1270,7 @@ public class HTMLViews implements IUIConstants {
 						if (source != null) {
 							if ((source.toLowerCase()).startsWith("www.")) {
 								source = "http://"+source;
-							}																					
+							}
 							if ( UIImages.isImage(source) ) {
 								hasExternalImage = true;
 								path = source;
@@ -1274,7 +1286,7 @@ public class HTMLViews implements IUIConstants {
 					if (image != null && !image.equals("")) {
 						if ((image.toLowerCase()).startsWith("www.")) {
 							image = "http://"+image;
-						}																										
+						}
 						path = image;
 						hasExternalImage = true;
 					}
@@ -1298,8 +1310,8 @@ public class HTMLViews implements IUIConstants {
 					}
 
 					// PREPARE ICON IMAGE PATH AND IF THE IMAGE IS A LOCAL FILE COPY FOR EXPORT
-					String htmlImagePath = path;	
-					
+					String htmlImagePath = path;
+
 					boolean isImageURL = false;
 					String sLowerCasePath = path.toLowerCase();
 					if (sLowerCasePath.startsWith("http:") || sLowerCasePath.startsWith("https:")) {
@@ -1310,17 +1322,17 @@ public class HTMLViews implements IUIConstants {
 					if (sLowerCaseSource.startsWith("http:") || sLowerCaseSource.startsWith("https:")) {
 						isURL = true;
 					}
-					
+
 					File imageFile = new File(path);
 					if (imageFile.exists() && !isImageURL && (bIncludeReferences || !hasExternalImage)) {
 						String imageName = imageFile.getName();
 						htmlImagePath = "images/"+imageName;
 						String newPath = sDirectory + ProjectCompendium.sFS + "images" +  ProjectCompendium.sFS + imageName;
-						createImageFile(path, newPath);						
+						createImageFile(path, newPath);
 					} else if (!imageFile.exists() && hasExternalImage && !isImageURL ) {
 						htmlImagePath = "";
 					}
-					
+
 					Vector extraLinkInfo = new Vector(2);
 					extraLinkInfo.add(refDim);
 
@@ -1329,12 +1341,18 @@ public class HTMLViews implements IUIConstants {
 					String htmlDetailPath = "details/"+detailName;
 					detailPath1 = sDirectory + ProjectCompendium.sFS + detailLoc;
 
-					int detailItemCount = 1; // 1 = just label and anchor				
+					int detailItemCount = 1; // 1 = just label and anchor
 					if (!bNoDetailPopupAtAll) {
-						detailItemCount = createDetailFile(detailPath1, htmlDetailPath, node, viewID);
+						detailItemCount = createDetailFile(detailPath1, htmlDetailPath, node, view);
 					}
 
 					boolean includeDetail = (!bNoDetailPopupAtAll && (detailItemCount > 1 || !bNoDetailPopup));
+	                if (includeDetail
+	                        && (node.isReference() || node.isReferenceShortcut())
+	                        && node.getDetail().isEmpty())
+	                {
+	                    includeDetail = false;
+	                }
 
 					if (detailItemCount == 3 ) {
 						detailBoxHeight = 480;
@@ -1351,22 +1369,22 @@ public class HTMLViews implements IUIConstants {
 					String sViewFileName="";
 					if(type == ICoreConstants.MAPVIEW || type == ICoreConstants.MAP_SHORTCUT ||
 							type == ICoreConstants.LISTVIEW || type == ICoreConstants.LIST_SHORTCUT) {
-						
+
 						View match = mapOkay(nodeID);
-						if( match != null ) {						
-							sViewFileName = this.createFileName((View) node);			
+						if( match != null ) {
+							sViewFileName = this.createFileName((View) node);
 							htmlString.append("<tr><td width=\"50\"><a href=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\" onClick=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\"");
 							htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
-							
-							htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");							
+
+							htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
 							htmlString.append("src='" + htmlImagePath + "'/></a></td>");
 
 							if (type == ICoreConstants.MAPVIEW || type == ICoreConstants.MAP_SHORTCUT) {
 								if (includeDetail) {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents<br>Click label to view this node's details"));															
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents<br>Click label to view this node's details"));
 									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view map contents<br>Click label to view this node's details"));
 								} else {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents"));															
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view map contents"));
 								}
 							}
 							else {
@@ -1374,15 +1392,15 @@ public class HTMLViews implements IUIConstants {
 									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view list contents<br>Click label to view this node's details"));
 									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view list contents<br>Click label to view this node's details"));
 								} else {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view list contents"));									
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view list contents"));
 								}
-							}							
+							}
 						} else {
 							if (includeDetail) {
 								htmlString.append("<tr><td width=\"50\"><img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
-								htmlString.append("src='" + htmlImagePath + "' onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/></td>");								
+								htmlString.append("src='" + htmlImagePath + "' onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/></td>");
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon or label to view this node's details"));
-								divString.append(createHintDiv(nodeID+"labelhint", "Click icon or label to view this node's details"));	
+								divString.append(createHintDiv(nodeID+"labelhint", "Click icon or label to view this node's details"));
 							} else {
 								htmlString.append("<tr><td width=\"50\"><img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
 								htmlString.append("src='" + htmlImagePath + "'/></td>");
@@ -1393,35 +1411,35 @@ public class HTMLViews implements IUIConstants {
 							View match = mapOkay(sInternalView);
 							System.out.println("view="+view);
 							if( match != null ) {
-								sViewFileName = this.createFileName(match);		
+								sViewFileName = this.createFileName(match);
 								sViewFileName += "#nid"+sInternalView+"_"+sInternalNode;
 								htmlString.append("<tr><td width=\"50\"><a href=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\" onClick=\"javascript:loadFile('"+sViewFileName+"','"+nodeID+"')\"");
 								htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/>\n");
-								
-								htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");							
+
+								htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
 								htmlString.append("src='" + htmlImagePath + "'/></a></td>");
-								if (includeDetail) {								
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view<br>Click label to view this node's details"));															
+								if (includeDetail) {
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view<br>Click label to view this node's details"));
 									divString.append(createHintDiv(nodeID+"labelhint", "Click icon to GOTO referenced view<br>Click label to view this node's details"));
 								} else {
-									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view"));															
+									divString.append(createHintDiv(nodeID+"imagehint", "Click icon to GOTO referenced view"));
 								}
 							} else {
 								if (includeDetail) {
 									htmlString.append("<tr><td width=\"50\"><img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
-									htmlString.append("src='" + htmlImagePath + "' onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/></td>");								
+									htmlString.append("src='" + htmlImagePath + "' onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/></td>");
 									divString.append(createHintDiv(nodeID+"imagehint", "Click icon or label to view this node's details"));
 									divString.append(createHintDiv(nodeID+"labelhint", "Click icon or label to view this node's details"));
 								} else {
 									htmlString.append("<tr><td width=\"50\"><img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
-									htmlString.append("src='" + htmlImagePath + "'/></td>");								
+									htmlString.append("src='" + htmlImagePath + "'/></td>");
 								}
-							}														
+							}
 						} else if (hasReference && (bIncludeReferences || isURL)) {
 							File refFile = new File(source);
 							String refName = refFile.getName();
 							String newSourcePath = "";
-	
+
 							// If the source a local file or URL
 							// If URL, leave original source.
 							if (CoreUtilities.isFile(source)) {
@@ -1429,24 +1447,24 @@ public class HTMLViews implements IUIConstants {
 							}
 							else
 								newSourcePath = source;
-	
+
 							if (bOpenNew) {
 								htmlString.append("<tr><td width=\"50\"><a href=\""+newSourcePath+"\" target=\"_blank\" onClick=\"openFile('"+newSourcePath+"', '"+nodeID+"')\"");
 							} else {
-								htmlString.append("<tr><td width=\"50\"><a href=\""+newSourcePath+"\" onClick=\"loadFile('"+newSourcePath+"', '"+nodeID+"')\"");								
+								htmlString.append("<tr><td width=\"50\"><a href=\""+newSourcePath+"\" onClick=\"loadFile('"+newSourcePath+"', '"+nodeID+"')\"");
 							}
-							htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\">\n");						
+							htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\">\n");
 							htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
-							htmlString.append("src='" + htmlImagePath + "'></a></td>");		
-	
+							htmlString.append("src='" + htmlImagePath + "'></a></td>");
+
 							if (includeDetail) {
-								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to follow hyperlink<br>Click label to view this node's details"));							
+								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to follow hyperlink<br>Click label to view this node's details"));
 								divString.append(createHintDiv(nodeID+"labelhint", "Click icon to follow hyperlink<br>Click label to view this node's details"));
 							} else {
-								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to follow hyperlink"));															
-							}							
-						} else if (hasExternalImage && (bIncludeReferences || isImageURL)) {
-							
+								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to follow hyperlink"));
+							}
+						} else if (hasExternalImage && bIncludeReferences && !includeDetail) {
+
 							if (bOpenNew) {
 								htmlString.append("<tr><td width=\"50\"><a href=\""+htmlImagePath+"\" target=\"_blank\" onClick=\"openFile('"+htmlImagePath+"', '"+nodeID+"')\"");
 							} else {
@@ -1455,51 +1473,53 @@ public class HTMLViews implements IUIConstants {
 							htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\">\n");
 							htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
 							htmlString.append("src='" + htmlImagePath + "'></a></td>");
-							
+
+                            //TODO: This "else if" branch has "!includeDetail" condition
+                            //      so the the next "if" has become redundant.
 							if (includeDetail) {
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view full size image<br>Click label to view this node's details"));
 								divString.append(createHintDiv(nodeID+"labelhint", "Click icon to view full size image<br>Click label to view this node's details"));
 							} else {
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon to view full size image"));
-							}							
+							}
 						} else {
 							htmlString.append("<tr><td width=\"50\">");
-							
+
 							if (includeDetail) {
 								htmlString.append("<a href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"',");
-								htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");								
-								htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/>\n");																	
+								htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
+								htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/>\n");
 								htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
-								htmlString.append("src='" + htmlImagePath + "' onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/></a></td>");		
+								htmlString.append("src='" + htmlImagePath + "' onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"imagehint'); return false;\"/></a></td>");
 								divString.append(createHintDiv(nodeID+"imagehint", "Click icon or label to view this node's details"));
 								divString.append(createHintDiv(nodeID+"labelhint", "Click icon or label to view this node's details"));
 							} else {
 								htmlString.append("<img border='0' style='width:"+imageWidth+"px;height:"+imageHeight+"px;' ");
-								htmlString.append("src='" + htmlImagePath + "'/></td>");		
+								htmlString.append("src='" + htmlImagePath + "'/></td>");
 							}
 						}
 					}
-					
+
 					int textYPos = (ypos + 30 + (imageHeight / 2)) - (fm.getDescent()+4);
-					
+
 					htmlString.append("<td nowrap><font face='Arial, Helvetica'>");
 					if (includeDetail) {
 						htmlString.append("<a name=\"nid"+nodeID+"_"+viewID+"\" href=\"\" onClick=\"javascript:openNewWindow('"+ htmlDetailPath +"','"+nodeID+"',");
-						htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");											
+						htmlString.append("'width="+detailBoxWidth+", height="+detailBoxHeight+", scrollbars=yes, resizable=yes');\"");
 						htmlString.append(" onMouseOut=\"hideHints(1); return false;\" onMouseOver=\"showHint(event,'"+nodeID+"labelhint'); return false;\"/>"+nodeName+"</a>\n");
 					} else {
-						htmlString.append(nodeName);						
+						htmlString.append(nodeName);
 					}
-					htmlString.append("</font></td></tr>\n");	
-					
+					htmlString.append("</font></td></tr>\n");
+
 					// ADD HIGHLIGHTER DIV
 					int xHigh = 10;
 					int yHigh = yDivPos;
 					yDivPos += 36;
 					int widthHigh = 34;
-					int heightHigh = 34;						
+					int heightHigh = 34;
 					divString.append("\n<div id=\"nid"+nodeID+"_"+viewID+"highlight\" style=\"position:absolute; z-index:15; visibility:hidden; left:"+xHigh+"px; top:"+yHigh+"px; width:"+widthHigh+"px; height:"+heightHigh+"px; border: 2px solid yellow\"></div>\n");
-										
+
 					ypos += imageHeight+10;
 				}
 				else {
@@ -1508,7 +1528,7 @@ public class HTMLViews implements IUIConstants {
  			}
 
 			htmlString.append("</table>\n\n");
-			htmlString.append(divString.toString());			
+			htmlString.append(divString.toString());
 			htmlString.append("</body></html>");
 
 			if (!bZipUp) {
@@ -1530,7 +1550,7 @@ public class HTMLViews implements IUIConstants {
 			System.out.println("caught a hanger");
 		}
  	}
-	
+
 	/**
 	 * Create a div for a rollover hint message.
 	 * @param sID the div id.
@@ -1538,15 +1558,15 @@ public class HTMLViews implements IUIConstants {
 	 * @return the final div html string.
 	 */
 	private String createHintDiv(String sID, String sMessage) {
-		StringBuffer divString = new StringBuffer(300); 
-		
+		StringBuffer divString = new StringBuffer(300);
+
 		divString.append("<div id=\""+sID+"\" style=\"POSITION: absolute; Z-INDEX: 20; VISIBILITY: hidden; left: 0; top: 0;\">\n");
 		divString.append("\t<table width=\"200\" border=1 cellpadding=1 cellspacing=0 bgcolor=\""+hintcolor+"\">\n");
 		divString.append("\t\t<tr width=\"200\">\n");
 		divString.append("\t\t\t<td width=\"200\" style=\"hint\"><p>\n");
 		divString.append("\t\t\t\t"+sMessage+"\n");
-		divString.append("\t\t\t</p></td>\n\t\t</tr>\n\t</table>\n</div>\n");	
-		
+		divString.append("\t\t\t</p></td>\n\t\t</tr>\n\t</table>\n</div>\n");
+
 		return divString.toString();
 	}
 
@@ -1557,12 +1577,11 @@ public class HTMLViews implements IUIConstants {
  	 * @param sTitle java.lang.String, the title of the the map.
 	 * @return java.lang.String, the created HTML text.
 	 */
-	private String setupFileHeader(String sTitle) {
-
-		StringBuffer sf = new StringBuffer(1000);
+	private String setupFileHeader(View view) {
+	    StringBuffer sf = new StringBuffer(1000);
 
 		sf.append("<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1252\">\n");
-		sf.append("<title>"+sTitle+"</title>\n");
+		sf.append("<title>"+view.getLabel()+"</title>\n");
 
 		sf.append("<style>\n");
 		sf.append("td { font-family:Arial, Helvetica; font-size:8.0pt; font-weight:normal; }\n");
@@ -1630,7 +1649,7 @@ public class HTMLViews implements IUIConstants {
 		sf.append("\t\t}\n");
 		sf.append("\t}\n");
 		sf.append("}\n\n");
-    	
+
 		sf.append("function openNewWindow(url, name, features){\n");
       	sf.append("\thideHints(1);\n");
 		sf.append("\tvar popBox = window.open(url, name, features);\n");
@@ -1643,7 +1662,7 @@ public class HTMLViews implements IUIConstants {
 		sf.append("\twindow.location.href = url;\n");
 		sf.append("return;\n");
 		sf.append("}\n\n");
-		
+
 		sf.append("function openFile(url, name) {\n");
       	sf.append("\thideHints(1);\n");
 		sf.append("\tvar popBox = window.open(url, name);\n");
@@ -1702,11 +1721,46 @@ public class HTMLViews implements IUIConstants {
 
 		sf.append("//-->\n</script>\n</head>\n\n<body onClick=\"hideHints(0); hideHighlight(); return false;\"  style=\"margin:0px; padding: 0px;\">\n");
 
-		if (bAddTitle) {
-			sf.append("<h2>"+sTitle+"</h2>");
+		if (EXPORT_PROPERTIES.isAddMapTitles() || EXPORT_PROPERTIES.isAddFeedback()) {
+    		sf.append("<table width=\"100%\"><tr><td valign=\"top\">");
+            if (EXPORT_PROPERTIES.isAddMapTitles()) {
+                sf.append("<h2>"+view.getLabel()+"</h2>");
+            } else {
+                sf.append("&nbsp;");
+            }
+            if (EXPORT_PROPERTIES.isAddFeedback()) {
+                sf.append("</td>");
+                sf.append("<td align=\"right\"><FORM>");
+                sf.append("<INPUT TYPE=\"button\" VALUE=\"Send feedback\" onClick=\"parent.location=");
+                sf.append("'mailto:");
+                sf.append(encode(EXPORT_PROPERTIES.getFeedbackEmail()));
+                sf.append("?subject=Feedback%20on%20Compendium%20webmap:%20"
+                    + encode(view.getLabel()) + "&body=%0A%0A%0A");
+                sf.append("====%20CONTEXT%20(DO%20NOT%20MODIFY%20BELOW%20THIS%20LINE)%20====%0A");
+                sf.append("Project:%20" + encode(ProjectCompendium.APP.sFriendlyName) + "%0A");
+                sf.append("View:%20" + encode(view.getLabel()) + "%0A");
+
+                sf.append("Node:%20%0A");
+                sf.append("ID:%20comp://" + encode(view.getId()) + "/" + encode("0")+ "%0A");
+                sf.append("'\"></FORM></td></tr></table>");
+	        } else {
+                sf.append("&nbsp;");
+	        }
 		}
 
 		return sf.toString();
+	}
+
+	private static String encode(String text) {
+	    String result = text;
+	    try {
+            result = URLEncoder.encode(text, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            System.out.println("Unsupported encoding exception.");
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+        return result;
 	}
 
 	/**
@@ -1725,7 +1779,7 @@ public class HTMLViews implements IUIConstants {
 		      	view = (View)vtSelectedViews.elementAt(i);
 		    	String sID = view.getId();
 		        if( sID.equals(nodeID) ) {
-		        	match = view;		
+		        	match = view;
 		        	break;
 		        }
 		    }
@@ -1733,7 +1787,7 @@ public class HTMLViews implements IUIConstants {
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return match;
 	}
 
@@ -1919,8 +1973,8 @@ public class HTMLViews implements IUIConstants {
 			wrapWidth = ((Model)ProjectCompendium.APP.getModel()).labelWrapWidth;
 		}
 		wrapWidth = wrapWidth+1; // Needs this for some reason.
-		int textWidth = text.length();		
-		
+		int textWidth = text.length();
+
 		textR.width = textWidth;
 		int widestLine = 0;
 
@@ -1969,7 +2023,7 @@ public class HTMLViews implements IUIConstants {
 		}
 		else {
 			widestLine = fm.stringWidth( text );
-			textR.height += fm.getAscent()+fm.getDescent();			
+			textR.height += fm.getAscent()+fm.getDescent();
 		}
 
 		textR.width = widestLine;
@@ -1991,11 +2045,11 @@ public class HTMLViews implements IUIConstants {
 	 * @param node com.compendium.datamodel.NodeSummary, the node to create the detail page for.
 	 * @param sViewID the view id of the view this node is in.
 	 */
-	private int createDetailFile(String detPath, String htmlPath, NodeSummary node, String sViewID) {
+	private int createDetailFile(String detPath, String htmlPath, NodeSummary node, View view) {
 
 		// THE NUMBER OF ELEMENTS ADDED TO THE DETAILS BOX
 		// USED FOR A ROUGH IDEA OF HOW LARGE TO DRAW THE BOX
-		// AND WHETHER TO DRAW THE DETAIL AT ALL 
+		// AND WHETHER TO DRAW THE DETAIL AT ALL
 		int itemCount = 1; //label - default
 
 		// create the file
@@ -2007,7 +2061,7 @@ public class HTMLViews implements IUIConstants {
 			try {
 				StringBuffer detailInfo = new StringBuffer(500);
 				detailInfo.append("<html>\n");
-				detailInfo.append("<title>details for "+node.getLabel()+"</title>\n");								
+				detailInfo.append("<title>details for "+node.getLabel()+"</title>\n");
 				detailInfo.append("<style>\n");
 				detailInfo.append(".detail { font-family:Arial, Helvetica; font-size:10.0pt; font-weight:normal; }\n");
 				detailInfo.append("</style>\n");
@@ -2067,7 +2121,7 @@ public class HTMLViews implements IUIConstants {
 				int type = node.getType();
 				String image = "";
 				String source = "";
-								
+
 				if (type == ICoreConstants.REFERENCE || type == ICoreConstants.REFERENCE_SHORTCUT) {
 					image = node.getImage();
 					source = node.getSource();
@@ -2086,7 +2140,7 @@ public class HTMLViews implements IUIConstants {
 				if (sLowercaseImage.startsWith("www.")) {
 					image = "http://"+image;
 				}
-				
+
 				boolean isURLSource = false;
 				if (sLowercaseSource.startsWith("http:") || sLowercaseSource.startsWith("https:")) {
 					isURLSource = true;
@@ -2095,7 +2149,7 @@ public class HTMLViews implements IUIConstants {
 				if (sLowercaseImage.startsWith("http:") || sLowercaseImage.startsWith("https:")) {
 					isURLImage = true;
 				}
-				
+
 				if(source != null && UIImages.isImage(source)) {
 					File refFile = new File(source);
 					if (refFile.exists() && !isURLSource && bIncludeReferences) {
@@ -2124,7 +2178,7 @@ public class HTMLViews implements IUIConstants {
 									String sMessage = new String("Unable to copy reference file:" + e.getMessage());
 									if (!vtMessages.contains(sMessage)) {
 										vtMessages.addElement(sMessage);
-									}								
+									}
 								}
 							}
 						}
@@ -2132,7 +2186,7 @@ public class HTMLViews implements IUIConstants {
 						detailInfo.append("<a href=\""+source+"\" target='blank'>"+source+"</a></span><br/><br/>");
 					} else if (isURLSource) {
 						detailInfo.append("<span class=\"detail\"><b>Reference:</b><br/>");
-						detailInfo.append("<a href=\""+source+"\" target='blank'>"+source+"</a></span><br/><br/>");						
+						detailInfo.append("<a href=\""+source+"\" target='blank'>"+source+"</a></span><br/><br/>");
 					}
 
 					itemCount ++;
@@ -2163,7 +2217,7 @@ public class HTMLViews implements IUIConstants {
 									String sMessage = new String("Unable to copy reference file:" + e.getMessage());
 									if (!vtMessages.contains(sMessage)) {
 										vtMessages.addElement(sMessage);
-									}								
+									}
 								}
 							}
 						}
@@ -2171,7 +2225,7 @@ public class HTMLViews implements IUIConstants {
 						detailInfo.append("<a href=\""+source+"\" target='blank'>"+source+"</a></span><br/><br/>");
 					} else if (isURLSource) {
 						detailInfo.append("<span class=\"detail\"><b>Reference:</b><br/>");
-						detailInfo.append("<a href=\""+source+"\" target='blank'>"+source+"</a></span><br/><br/>");						
+						detailInfo.append("<a href=\""+source+"\" target='blank'>"+source+"</a></span><br/><br/>");
 					}
 
 					itemCount ++;
@@ -2182,7 +2236,7 @@ public class HTMLViews implements IUIConstants {
 					File imageFile = new File(image);
 					if (imageFile.exists() && !isURLImage && bIncludeReferences) {
 						String imageName = imageFile.getName();
-	
+
 						if (bZipUp) {
 							htExportFiles.put(image, "images/"+imageName);
 							image = "../images/"+imageName;
@@ -2207,15 +2261,15 @@ public class HTMLViews implements IUIConstants {
 									String sMessage = new String("Unable to create image:" + e.getMessage());
 									if (!vtMessages.contains(sMessage)) {
 										vtMessages.addElement(sMessage);
-									}																
+									}
 								}
 							}
 						}
 						detailInfo.append("<span class=\"detail\"><b>Image:</b></span><br/>");
-						detailInfo.append("<a href=\""+image+"\" target='blank'>"+image+"</a><br/><br/>");						
+						detailInfo.append("<a href=\""+image+"\" target='blank'>"+image+"</a><br/><br/>");
 					} else if (isURLImage) {
 						detailInfo.append("<span class=\"detail\"><b>Image:</b></span><br/>");
-						detailInfo.append("<a href=\""+image+"\" target='blank'>"+image+"</a><br/><br/>");						
+						detailInfo.append("<a href=\""+image+"\" target='blank'>"+image+"</a><br/><br/>");
 					}
 
 					itemCount ++;
@@ -2233,14 +2287,25 @@ public class HTMLViews implements IUIConstants {
 					}
 					first = false;
 					Code code = (Code)e.nextElement();
-	        		detailInfo.append("<span class=\"detail\">- " + (String)code.getName() + "</span><br/>");
+	        		detailInfo.append("<span class=\"detail\">- " + code.getName() + "</span><br/>");
 	      		}
 
-				// ANCHOR LINK INFO
-				detailInfo.append("<br/><span class=\"detail\"><a name=\"anchor\"><b>Anchor ID:</b></a></span>");
-        		detailInfo.append("<span class=\"detail\"> #nid"+node.getId()+"_"+sViewID + "</span><br/><br/>");				
-           		detailInfo.append("<span class=\"detail\">Copy and paste the above Anchor ID to the URL of the current map in order to have the address of this specific node.</span><br/>");        		
-				
+                if (EXPORT_PROPERTIES.isAddFeedback()) {
+                    detailInfo.append("<FORM>");
+                    detailInfo.append("<INPUT TYPE=\"button\" VALUE=\"Send feedback\" onClick=\"parent.location=");
+                    detailInfo.append("'mailto:");
+                    detailInfo.append(encode(EXPORT_PROPERTIES.getFeedbackEmail()));
+                    detailInfo.append("?subject=Feedback%20on%20Compendium%20webmap:%20"
+                        + encode(view.getLabel()) + "&body=%0A%0A%0A");
+                    detailInfo.append("====%20CONTEXT%20(DO%20NOT%20MODIFY%20BELOW%20THIS%20LINE)%20====%0A");
+                    detailInfo.append("Project:%20" + encode(ProjectCompendium.APP.sFriendlyName) + "%0A");
+                    detailInfo.append("View:%20" + encode(view.getLabel()) + "%0A");
+
+                    detailInfo.append("Node:%20" + encode(node.getLabel()) + "%0A");
+                    detailInfo.append("ID:%20comp://" + encode(view.getId()) + "/" + encode(node.getId())+ "%0A");
+                    detailInfo.append("'\"></FORM>");
+                }
+
 	      		detailInfo.append("</body></html>");
 
 	      		// Don't create a details file if it only contains the node label.
@@ -2251,7 +2316,7 @@ public class HTMLViews implements IUIConstants {
 			      		fw.close();
 					}
 					else {
-						File file = new File(detailPath1);	
+						File file = new File(detailPath1);
 						htCreatedFiles.put("details/"+file.getName(), detailInfo.toString());
 					}
 				}
@@ -2262,7 +2327,7 @@ public class HTMLViews implements IUIConstants {
 				String sMessage = new String("Unable to create detail file:" + e.getMessage());
 				if (!vtMessages.contains(sMessage)) {
 					vtMessages.addElement(sMessage);
-				}																				
+				}
 				//ProjectCompendium.APP.displayError("Unable to create detail file:" + e.getMessage());
 			}
 		}
@@ -2299,8 +2364,8 @@ public class HTMLViews implements IUIConstants {
 			if (i == 0) {
 				oStartView = view;
 			}
-		    int type = view.getType();		    
-			sFileName = this.createFileName(view);					    
+		    int type = view.getType();
+			sFileName = this.createFileName(view);
 		    String szIcon = UIImages.getSmallPath(type);
 			File tempFile = new File(szIcon);
 			String szIconName = tempFile.getName();
@@ -2330,7 +2395,7 @@ public class HTMLViews implements IUIConstants {
 			String szStartPage = "<html><head><title>StartPage</title></head><body>";
 			szStartPage += "<font size='6'>Links to views are provided in the lefthand frame.</font>";
 			szStartPage += "</body></html>";
-	
+
 			if (!bZipUp) {
 				try{
 					FileWriter fw = new FileWriter(sDirectory+ProjectCompendium.sFS+"StartPage.html");
@@ -2344,9 +2409,9 @@ public class HTMLViews implements IUIConstants {
 			}
 			sStartPage = "StartPage.html";
 		} else {
-			sStartPage = this.createFileName(oStartView);		
+			sStartPage = this.createFileName(oStartView);
 		}
-		
+
 		String szFinalPage = "";
 		szFinalPage += "<html>\n";
 		szFinalPage += "<head>\n";
@@ -2354,7 +2419,7 @@ public class HTMLViews implements IUIConstants {
 		szFinalPage += "<script Language=\"JavaScript1.2\">\n";
 		szFinalPage += "<!--\n";
 		szFinalPage += "window.onload = function(){\n";
-		szFinalPage += "\tvar specificNodeID = unescape(parent.document.location.hash.substring(1));	\n";	
+		szFinalPage += "\tvar specificNodeID = unescape(parent.document.location.hash.substring(1));	\n";
 		szFinalPage += "\t//if required, locate map and open\n";
 		szFinalPage += "\tif (specificNodeID != null && specificNodeID !=\"\" ){\n";
 		szFinalPage += "\t\tvar index = specificNodeID.lastIndexOf('_');\n";
@@ -2368,9 +2433,9 @@ public class HTMLViews implements IUIConstants {
 		szFinalPage += "\t}\n";
 		szFinalPage += "}\n";
 		szFinalPage += "//-->\n";
-		szFinalPage += "</script>\n\n";		
-		szFinalPage += "</head>\n";		
-		szFinalPage += "<frameset cols='25%,*'>\n";
+		szFinalPage += "</script>\n\n";
+		szFinalPage += "</head>\n";
+		szFinalPage += "<frameset cols='1%,*'>\n";
 		szFinalPage += "<frame name=\"menuFrame\" id=\"menuFrame\" src='TOC.html'>\n";
 		szFinalPage += "<frame name=\"mapFrame\" id=\"mapFrame\" src=\""+sStartPage+"\">\n";
 		szFinalPage += "</frameset>\n";
@@ -2392,7 +2457,7 @@ public class HTMLViews implements IUIConstants {
 
 		return true;
 	}
-	
+
 	/**
 	 * Move the passed image with the given 'path' to the export 'nPath'.
 	 * Unless zipping up when it is stored for later.
@@ -2432,7 +2497,7 @@ public class HTMLViews implements IUIConstants {
 						String sMessage = new String("File does not exist: " + path);
 						if (!vtMessages.contains(sMessage)) {
 							vtMessages.addElement(sMessage);
-						}																				
+						}
 					}
 	   		 	}
 				catch (Exception e) {
@@ -2457,13 +2522,13 @@ public class HTMLViews implements IUIConstants {
 
 			File exportFile = new File(fileName);
 			if (exportFile.exists()) {
-				out = addFilesFromExistingZip(exportFile);				
+				out = addFilesFromExistingZip(exportFile);
 			} else {
-				FileOutputStream dest = new FileOutputStream(exportFile.getAbsolutePath());				
+				FileOutputStream dest = new FileOutputStream(exportFile.getAbsolutePath());
 				out = new ZipOutputStream(new BufferedOutputStream(dest));
 				out.setMethod(ZipOutputStream.DEFLATED);
 			}
-				
+
 			byte data2[] = new byte[BUFFER];
 			ZipEntry entry = null;
 			int count = 0;
@@ -2560,28 +2625,28 @@ public class HTMLViews implements IUIConstants {
 	 * @return a reference to the new zip still open to finish adding to.
 	 */
 	public ZipOutputStream addFilesFromExistingZip(File zipFile) throws IOException {
-        
+
 		File tempFile = File.createTempFile(zipFile.getName(), null);
-		
+
         // DELETE IT OR YOU CAN'T RENAME EXISTING FILE TO IT.
 		tempFile.delete();
 		boolean renameOk=zipFile.renameTo(tempFile);
 		if (!renameOk) {
 			throw new RuntimeException("could not rename the file "+zipFile.getAbsolutePath()+" to "+tempFile.getAbsolutePath());
 		}
-		
-		byte[] BUFFER = new byte[2048];		
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(tempFile));		
-		FileOutputStream dest = new FileOutputStream(zipFile.getAbsolutePath());				
-		ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));		
+
+		byte[] BUFFER = new byte[2048];
+		ZipInputStream zin = new ZipInputStream(new FileInputStream(tempFile));
+		FileOutputStream dest = new FileOutputStream(zipFile.getAbsolutePath());
+		ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
 		out.setMethod(ZipOutputStream.DEFLATED);
-		
+
 		// ADD ONLY THOSE FILES FROM THE EXISTING ZIP WHICH ARE NOT IN THE LIST OF NEW RESOURCE FILES TO ADD
 		ZipEntry entry = zin.getNextEntry();
 		while (entry != null) {
 			String name = entry.getName();
 			boolean notInFiles = true;
-			
+
 			for (Enumeration e = htExportFiles.keys(); e.hasMoreElements() ;) {
 				String sOldFilePath = (String)e.nextElement();
 				String sNewFilePath = (String)htExportFiles.get(sOldFilePath);
@@ -2590,7 +2655,7 @@ public class HTMLViews implements IUIConstants {
 					break;
 				}
 			}
-			
+
 			if (notInFiles) {
 				out.putNextEntry(new ZipEntry(name));
 				int len;
@@ -2604,5 +2669,15 @@ public class HTMLViews implements IUIConstants {
 		tempFile.delete();
 
 		return out;
+	}
+
+	public static void showTrace(String msg)
+	{
+	  //if (msg.length() > 0) System.out.println(msg);
+	  System.out.println(
+			   new Throwable().getStackTrace()[1].getLineNumber() +
+			   " " + new Throwable().getStackTrace()[1].getFileName() +
+			   " " + new Throwable().getStackTrace()[1].getMethodName() +
+				   " " + msg);
 	}
 }

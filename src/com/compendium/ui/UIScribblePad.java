@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.awt.*;
@@ -56,7 +55,7 @@ public class UIScribblePad extends JComponent {
 
 	/** Indicates that the current draw tool is the rectangle.*/
 	public static int 		RECTANGLE 	= 3;
-	
+
 	/** The UIViewPane object associated with this scribble pad */
 	protected UIViewPane 	oViewPane		= null;
 
@@ -71,12 +70,12 @@ public class UIScribblePad extends JComponent {
 
 		setOpaque(false);
 		setBackground(null);
-		
+
 		setLocation(0,0);
         validate();
 		updateUI();
 	}
-	
+
 	/**
    	 * Returns the Look & Feel object that renders this component.
      *

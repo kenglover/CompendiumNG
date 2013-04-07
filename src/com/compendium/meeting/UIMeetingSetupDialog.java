@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting;
 
 import java.util.Vector;
@@ -113,7 +112,7 @@ public class UIMeetingSetupDialog extends UIDialog implements ActionListener {
 
 	/** The AccessGridData object holding the data for this dialog.*/
 	private AccessGridData 			oData	=	null;
-	
+
 	/**
 	 * Initializes and sets up the dialog.
 	 * @param parent, the parent frame for this dialog.
@@ -346,7 +345,7 @@ public class UIMeetingSetupDialog extends UIDialog implements ActionListener {
 		oData.setPassword(sPassword);
 		oData.setLocalProxyHostName(sLocalProxyHost);
 		oData.setLocalProxyPort(sLocalProxyPort);
-		
+
 		try {
 			oData.saveProperties();
 			if (ProjectCompendium.APP.oMeetingManager != null) {

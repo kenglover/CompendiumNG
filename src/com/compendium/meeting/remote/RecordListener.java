@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.meeting.remote;
 
 
@@ -45,9 +44,9 @@ import com.compendium.ProjectCompendium;
 public class RecordListener extends UnicastRemoteObject implements RemoteRecord {
 
     boolean startedRMIRegistry = false;
-    
+
     Registry rmiRegistry = null;
-    
+
     /**
      * Creates a new RecordListener instance.
      * @param instanceName The name used to represent this instance of the program
@@ -56,7 +55,7 @@ public class RecordListener extends UnicastRemoteObject implements RemoteRecord 
      * @throws MalformedURLException
      */
     public RecordListener(String instanceName, int port) throws RemoteException, MalformedURLException {
-        
+
         if (System.getSecurityManager() == null) {
             System.setSecurityManager (new RMISecurityManager() {
                 public void checkPermission(Permission perm) {
@@ -68,7 +67,7 @@ public class RecordListener extends UnicastRemoteObject implements RemoteRecord 
                 }
               });
         }
-        
+
         // Try to start an RMI registry
         try {
             rmiRegistry = LocateRegistry.createRegistry(port);
@@ -82,9 +81,9 @@ public class RecordListener extends UnicastRemoteObject implements RemoteRecord 
     }
 
  	/**
-	 * Start a meeting replay recording. Extract the setup data first, and the Jabber data.
+	 * Start a meeting replay recording. Extract the setup data first.
 	 * @param sSetupData the memetic setup data required to communicate with Area/Triplestore.
-	 * @param sReplayData the meeting replay Jabber account details required.
+	 * @param sReplayData the meeting.
 	 * @return true if the recording was started successfully, else false;
 	 */
    public boolean startRecording(String sSetupData,String sReplayData) throws RemoteException {
@@ -147,14 +146,14 @@ public class RecordListener extends UnicastRemoteObject implements RemoteRecord 
 			return true;
 		}
     }
-    
+
     /**
      * Returns true if the registry was started by us
      */
     public boolean startedRegistry() {
         return startedRMIRegistry;
     }
-    
+
     /**
      * Returns the rmi registry started by us
      */

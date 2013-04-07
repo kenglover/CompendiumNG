@@ -1,4 +1,4 @@
- /********************************************************************************
+/********************************************************************************
  *                                                                              *
  *  (c) Copyright 2009 Verizon Communications USA and The Open University UK    *
  *                                                                              *
@@ -22,14 +22,13 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel.services;
 
-import java.util.*;
 import java.sql.SQLException;
+import java.util.Vector;
 
-import com.compendium.core.datamodel.*;
-import com.compendium.core.db.*;
+import com.compendium.core.SearchParams;
+import com.compendium.core.datamodel.PCSession;
 
 /**
  *	The interface for the QueryService class
@@ -44,29 +43,12 @@ public interface IQueryService extends IService {
 	 * Returns a Vector of nodes given a keyword
 	 *
 	 * @param PCSession session, the session object for the database to use.
-	 * @param String sContextCondition, context of the search (just the given view, all views, deleted views)
-	 * @param String sViewID, the id of the curernt view.
-	 * @param Vector vtSelectedNodeTypes, a vector of the selected node type to run the search against.
-	 * @param Vector vtSelectedAuthors, a vector of author to run the search against.
-	 * @param Vector vtSelectedCodes, a vector of codes to run the search against.
-	 * @param Vector vKeywords, a vector of keywords to run the search against.
-	 * @param int nMatchKeywordCondition, match all or any keywords.
-	 * @param Vector attrib, match the keywords in the label, detail or both as specified.
-	 * @param java.util.Date beforeCreationDate, the end creation date to run the search against.
-	 * @param java.util.Date afterCreationDate, the start creation date to run the search against.
-	 * @param java.util.Date beforeModificationDate, the end modification date to run the search against.
-	 * @param java.util.Date afterModificationDate, the start modification date to run the search against.
+	 * @param SearchParams searchParams, the parameters of the user search.
 	 *
 	 * @return Vector, of NodeSummary objects resulting from executing the search.
 	 * @exception java.sql.SQLException
 	 */
-	public Vector searchNode(PCSession session, String sContextCondition,
-							 String sViewID, Vector vtSelectedNodeTypes, Vector vtSelectedAuthors,
-							 Vector vtSelectedCodes, int sMatchCodesCondition, Vector vKeywords,
-							 int nMatchKeywordCondition, Vector attrib,
-							 java.util.Date dBeforeCreationDate, java.util.Date dAfterCreationDate,
-							 java.util.Date dBeforeModificationDate,
-							 java.util.Date dAfterModificationDate) throws SQLException;
+	public Vector searchNode(PCSession session, SearchParams searchParams) throws SQLException;
 
 	/**
 	 * Return all nodes whose labels match exactly the given text.

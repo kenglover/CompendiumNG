@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
@@ -66,14 +65,15 @@ public class DBFavorite {
 		"FROM Favorite "+
 		"WHERE UserID = ? AND NodeID = ? AND ViewID = ?";
 
-	
+
 	// UNAUDITED
 
 	/** SQL statement to return all favorite records for a given user.*/
 	public final static String GET_FAVORITES_QUERY =
 		"SELECT NodeID, ViewID, Label, NodeType, CreationDate, ModificationDate " +
-		"FROM Favorite "+
+		"FROM Favorite " +
 		"WHERE UserID = ?";
+
 
 
 	/**
@@ -97,6 +97,11 @@ public class DBFavorite {
 
 		PreparedStatement pstmt = con.prepareStatement(INSERT_FAVORITE_QUERY);
 
+		//INSERT_FAVORITE_QUERY =
+		//"INSERT INTO Favorite (UserID, NodeID, ViewID, Label, NodeType, CreationDate, ModificationDate) "+
+		//"VALUES (?, ?, ?, ?, ?, ?, ?) ";
+
+		System.out.println("103 DBFavorite.java INSERT_FAVORITE_QUERY is " + INSERT_FAVORITE_QUERY);
 		Date oDate = new Date();
 		double time = oDate.getTime();
 
@@ -105,7 +110,8 @@ public class DBFavorite {
 		pstmt.setString(3, sViewID);
 
 		// THIS IS NOW A MEMO FIELD SO SAME PROBLEM WITH setString cutoff at 256 chars AS FOR BDNode.setDetail etc. - mb
-		if (sLabel != "") {
+		if (!sLabel.equals(""))
+		{
 			//ByteArrayInputStream bArrayLabel = new ByteArrayInputStream(sLabel.getBytes());
 			//pstmt.setAsciiStream(3, bArrayLabel, bArrayLabel.available());
 
@@ -156,7 +162,7 @@ public class DBFavorite {
 		PreparedStatement pstmt = null;
 		for (int i=0; i<count; i++) {
 			fav = (Favorite)vtFavorites.elementAt(i);
-		
+
 			pstmt = con.prepareStatement(DELETE_FAVORITE_QUERY);
 			pstmt.setString(1, sUserID);
 			pstmt.setString(2, fav.getNodeID());
@@ -169,7 +175,7 @@ public class DBFavorite {
 				if (DBAudit.getAuditOn()) {
 					DBAudit.auditFavorite(dbcon, DBAudit.ACTION_DELETE, fav);
 				}
-			}			
+			}
 		}
 	}
 
@@ -231,6 +237,8 @@ public class DBFavorite {
 			return null;
 
 		PreparedStatement pstmt = con.prepareStatement(GET_FAVORITES_QUERY);
+
+		System.out.println("239 DBFavorite GET_FAVORITES_QUERY is " + GET_FAVORITES_QUERY);
 
 		pstmt.setString(1, sUserID) ;
 		ResultSet rs = pstmt.executeQuery();

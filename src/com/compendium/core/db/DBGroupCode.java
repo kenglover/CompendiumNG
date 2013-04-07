@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
@@ -122,7 +121,7 @@ public class DBGroupCode {
 		pstmt.setString(2, sCodeGroupID);
 		pstmt.setString(3, sAuthor);
 		pstmt.setDouble(4, new Long(dCreationDate.getTime()).doubleValue());
-		pstmt.setDouble(5, new Long(dModificationDate.getTime()).doubleValue());
+		pstmt.setDouble(5, new Long((new java.util.Date()).getTime()).doubleValue());
 
 		int nRowCount = pstmt.executeUpdate();
 		pstmt.close() ;

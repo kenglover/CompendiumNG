@@ -21,10 +21,10 @@
  *  possibility of such damage.                                                 *
  *                                                                              *
  ********************************************************************************/
-
 package com.compendium.core.datamodel.services;
 
 import java.util.*;
+import java.util.Date;
 import java.awt.*;
 import java.sql.*;
 
@@ -92,7 +92,7 @@ public class ViewService extends ClientService implements IViewService, java.io.
 
 		return nodePos;
 	}
-	
+
 	/**
 	 * Adds a node to this view at the given x and y coordinate
 	 *
@@ -134,7 +134,7 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return nodePos;
-	}	
+	}
 
 	/**
 	 *  Update the formatting properties for the given node in the given view.
@@ -158,8 +158,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 	 *	@return boolean, true if it was successful, else false.
 	 *	@throws java.sql.SQLException
 	 */
-	public boolean updateFormatting(PCSession session, String sViewID, String sNodeID, 
-						java.util.Date modification, boolean bShowTags,	boolean bShowText, 
+	public boolean updateFormatting(PCSession session, String sViewID, String sNodeID,
+						java.util.Date modification, boolean bShowTags,	boolean bShowText,
 						boolean bShowTrans, boolean bShowWeight, boolean bSmallIcon,
 						boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 						int nFontStyle, int nForeground, int nBackground) throws SQLException  {
@@ -174,7 +174,7 @@ public class ViewService extends ClientService implements IViewService, java.io.
 
 		return success;
 	}
-	
+
 	/**
 	 *  Update the formatting properties for the given node in all its views.
 	 *
@@ -196,8 +196,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 	 *	@return boolean, true if it was successful, else false.
 	 *	@throws java.sql.SQLException
 	 */
-	public boolean updateTransclusionFormatting(PCSession session, String sNodeID, 
-						java.util.Date modification, boolean bShowTags,	boolean bShowText, 
+	public boolean updateTransclusionFormatting(PCSession session, String sNodeID,
+						java.util.Date modification, boolean bShowTags,	boolean bShowText,
 						boolean bShowTrans, boolean bShowWeight, boolean bSmallIcon,
 						boolean bHideIcon, int nWrapWidth, int nFontSize, String sFontFace,
 						int nFontStyle, int nForeground, int nBackground) throws SQLException  {
@@ -211,7 +211,7 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return success;
-	}	
+	}
 	/**
 	 *<p>
 	 * Marks for deletion the node with the given id from this view with the given view id.
@@ -296,6 +296,48 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return vtNodePos;
+	}
+
+	/**
+	 * Returns all the nodepositionssummary objects for this view
+	 *
+	 * @param session com.compendium.core.datamodel.PCSession, the session object for the current database Model.
+	 * @param sViewID, the id of the view to get the node position objects for.
+	 * @return java.util.Vector, a Vector of all the nodepositions in the given view.
+	 * @exception java.sql.SQLException
+	 * @see com.compendium.core.datamodel.NodePosition
+	 */
+	public Vector getNodePositionsSummary(PCSession session, String sViewID) throws SQLException {
+
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+
+		Vector vtNodePos = DBViewNode.getNodePositionsSummary(dbcon, sViewID, session.getUserID());
+
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		return vtNodePos;
+	}
+
+	/**
+	 *	Returns TRUE if the given view has been modified since it was last loaded.
+	 *
+	 *	@param DBConnection dbcon com.compendium.core.db.management.DBConnection, the DBConnection object to access the database with.
+	 *	@param sViewID, the id of the View to check.
+	 *	@param sUserName the current users's name
+	 *	@param dLastViewModDate - date od last modification by another user that we're aware of
+	 *	@return Boolean, TRUE if the view is 'dirty'.
+	 *	@throws java.sql.SQLException
+	 */
+	public Boolean bIsViewDirty(PCSession session, String sViewID, String sUserName, Date dLastViewModDate) throws SQLException {
+
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+
+		Boolean bResult = DBViewNode.bIsViewDirty(dbcon, sViewID, sUserName, dLastViewModDate);
+
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		return bResult;
+
 	}
 
 	/**
@@ -445,6 +487,26 @@ public class ViewService extends ClientService implements IViewService, java.io.
 	}
 
 	/**
+	 * Returns all the link IDs in the View with the given id.
+	 *
+	 * @param session com.compendium.core.datamodel.PCSession, the session object for the current database Model.
+	 * @param sViewID, the view id of the View whose links to return.
+	 * @return java.util.Vector, a vector of all the links in this view.
+	 * @exception java.sql.SQLException
+	 * @see com.compendium.core.datamodel.Link
+	 */
+	public Vector getLinkIDs(PCSession session, String sViewID) throws SQLException  {
+
+		DBConnection dbcon = getDatabaseManager().requestConnection(session.getModelName()) ;
+
+		Vector vtLink = DBViewLink.getLinkIDs(dbcon, sViewID);
+
+		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
+
+		return vtLink;
+	}
+
+	/**
 	 * Does the View with the given id contain itself?
 	 *
 	 * @param session the session object for the current database Model.
@@ -462,9 +524,9 @@ public class ViewService extends ClientService implements IViewService, java.io.
 
 		return viewContainsItself;
 	}
-	
+
 // NEW FORMATTING UPDATE METHODS
-	
+
 	/**
 	 * Set the font size for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -483,8 +545,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}	
-	
+	}
+
 	/**
 	 * Set the font face for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -503,8 +565,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}	
-	
+	}
+
 	/**
 	 * Set the font style for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -524,7 +586,7 @@ public class ViewService extends ClientService implements IViewService, java.io.
 
 		return successful;
 	}
-	
+
 	/**
 	 * Set the font style for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -543,8 +605,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}	
-	
+	}
+
 	/**
 	 * Set the node tags indicator for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -563,8 +625,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}	
-	
+	}
+
 	/**
 	 * Set the node text indicator for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -583,8 +645,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}		
-	
+	}
+
 	/**
 	 * Set the node transclusion indicator for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -603,8 +665,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}		
-	
+	}
+
 	/**
 	 * Set the node weight indicator for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -623,8 +685,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}	
-	
+	}
+
 	/**
 	 * Set showing small icons for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -643,8 +705,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}	
-	
+	}
+
 	/**
 	 * Set hiding icons for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -663,8 +725,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}		
-	
+	}
+
 	/**
 	 * Set the foreground colour for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -683,8 +745,8 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}	
-	
+	}
+
 	/**
 	 * Set the background colour for the given NodePosition objects
 	 * @param session the session object for the current database Model.
@@ -703,5 +765,5 @@ public class ViewService extends ClientService implements IViewService, java.io.
 		getDatabaseManager().releaseConnection(session.getModelName(),dbcon);
 
 		return successful;
-	}				
+	}
 }

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.stencils;
 
 import java.awt.*;
@@ -58,7 +57,7 @@ public class DraggableStencilIcon extends JLabel implements DragSourceListener, 
 
 	/** The path of the xml file tha will act as the template for the contents of the node (only if map).*/
 	private String 				sTemplate		 	= "";
-	
+
 	/** The node type to create (map or reference only).*/
 	private int 				nNodeType 		= 0;
 
@@ -132,8 +131,8 @@ public class DraggableStencilIcon extends JLabel implements DragSourceListener, 
 	 * @param vtTags any tags to be assigned to this node type.
 	 * @param oIcon the image to draw for this toolbar icon button.
 	 */
-  	public DraggableStencilIcon(String sImage, String sPaletteImage, String sBackgroundImage, 
-  					String sTemplate, String sLabel, String sTip, int nNodeType, 
+  	public DraggableStencilIcon(String sImage, String sPaletteImage, String sBackgroundImage,
+  					String sTemplate, String sLabel, String sTip, int nNodeType,
   					int nShortcut, Vector vtTags, ImageIcon oIcon) {
 
 		super(oIcon);
@@ -220,7 +219,7 @@ public class DraggableStencilIcon extends JLabel implements DragSourceListener, 
 	public String getTemplate() {
 		return sTemplate;
 	}
-	
+
 	/**
 	 * Return the name associated with this draggable stencil icon.
 	 * This is for the sort function to use. If there is a ToolTip use that,
@@ -328,7 +327,7 @@ public class DraggableStencilIcon extends JLabel implements DragSourceListener, 
 	 * Make a duplicate of this object but with a new id.
 	 */
 	public DraggableStencilIcon duplicate() {
-		
+
 		ImageIcon oIcon = null;
 		if (sPaletteImage.equals("")) {
 			oIcon = UIImages.thumbnailIcon(sImage);
@@ -389,7 +388,8 @@ public class DraggableStencilIcon extends JLabel implements DragSourceListener, 
 			boolean isLeftMouse = SwingUtilities.isLeftMouseButton(evt);
 
 		    if (isLeftMouse && !evt.isAltDown()) {
-				dragSource.startDrag(e, DragSource.DefaultCopyDrop, this, this);
+		    	this.requestFocus();
+		    	dragSource.startDrag(e, DragSource.DefaultCopyDrop, this, this);
 			}
 		}
 	}

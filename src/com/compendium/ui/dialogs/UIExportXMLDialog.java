@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.dialogs;
 
 import java.util.*;
@@ -37,6 +36,7 @@ import javax.swing.event.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
+import com.compendium.core.ICoreConstants;
 import com.compendium.core.datamodel.*;
 import com.compendium.core.datamodel.services.*;
 
@@ -77,11 +77,7 @@ public class UIExportXMLDialog extends UIDialog implements ActionListener, ItemL
 	/** Whether to only export to the current map depth.*/
 	private	JRadioButton		rbCurrentDepth 	= null;
 
-	/** Whether to export all node on the current map.*/
-	private JRadioButton		rbAllNodes 		= null;
-
-	/** Whether to export only the selected nodes on the current map.*/
-	private	JRadioButton		rbSelectedNodes = null;
+	private	JRadioButton		rbCurrentSession 	= null;
 
 	/** Whether to export to a zip file.*/
 	private JCheckBox       	cbToZip			= null;
@@ -125,54 +121,31 @@ public class UIExportXMLDialog extends UIDialog implements ActionListener, ItemL
 
 		int y=0;
 
-		rbAllNodes = new JRadioButton("Export all nodes on current map");
-		rbAllNodes.setSelected(true);
-		rbAllNodes.addActionListener(this);
-		gc.gridy = y;
-		gc.weightx=1;
-		y++;
-		gb.setConstraints(rbAllNodes, gc);
-		oMainPanel.add(rbAllNodes);
-
-		rbSelectedNodes = new JRadioButton("Export selected nodes only");
-		rbSelectedNodes.setSelected(false);
-		rbSelectedNodes.addActionListener(this);
-		gc.gridy = y;
-		gc.weightx=10;
-		y++;
-		gb.setConstraints(rbSelectedNodes, gc);
-		oMainPanel.add(rbSelectedNodes);
-
-		ButtonGroup group1 = new ButtonGroup();
-		group1.add(rbAllNodes);
-		group1.add(rbSelectedNodes);
-
 		JSeparator sep = new JSeparator();
 		gc.gridy = y;
 		gc.weightx=11;
 		y++;
 		gc.fill = GridBagConstraints.HORIZONTAL;
-		gb.setConstraints(sep, gc);
 		oMainPanel.add(sep);
 		gc.fill = GridBagConstraints.NONE;
+
+        rbAllDepths = new JRadioButton("Export map(s) to full depth");
+        rbAllDepths.setSelected(false);
+        rbAllDepths.addActionListener(this);
+        gc.gridy = y;
+        gc.weightx=1;
+        y++;
+        gb.setConstraints(rbAllDepths, gc);
+        oMainPanel.add(rbAllDepths);
 
 		rbCurrentDepth = new JRadioButton("Export current map depth only");
 		rbCurrentDepth.setSelected(true);
 		rbCurrentDepth.addActionListener(this);
 		gc.gridy = y;
-		gc.weightx=1;
+		gc.weightx=10;
 		y++;
 		gb.setConstraints(rbCurrentDepth, gc);
 		oMainPanel.add(rbCurrentDepth);
-
-		rbAllDepths = new JRadioButton("Export current map to full depth");
-		rbAllDepths.setSelected(false);
-		rbAllDepths.addActionListener(this);
-		gc.gridy = y;
-		gc.weightx=10;
-		y++;
-		gb.setConstraints(rbAllDepths, gc);
-		oMainPanel.add(rbAllDepths);
 
 		ButtonGroup rgGroup = new ButtonGroup();
 		rgGroup.add(rbAllDepths);
@@ -308,7 +281,17 @@ public class UIExportXMLDialog extends UIDialog implements ActionListener, ItemL
 	public void onExport() {
 
 		String fileName = "";
-		String directory = "";
+		//String directory = "";
+
+		View currentView = uiViewFrame.getView();
+		boolean hasReferenceNodes = false;
+
+		if (0 < currentView.getReferenceNodes().size()) {
+
+			hasReferenceNodes = true;
+
+		}
+
 		boolean toZip = cbToZip.isSelected();
 		if (toZip) {
 			UIFileFilter filter = new UIFileFilter(new String[] {"zip"}, "ZIP Files");
@@ -342,12 +325,11 @@ public class UIExportXMLDialog extends UIDialog implements ActionListener, ItemL
 						setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
 						setVisible(false);
-						boolean selectedOnly = rbSelectedNodes.isSelected();
 						boolean allDepths = rbAllDepths.isSelected();
 						boolean withStencilsAndLinkGroups = cbWithStencilsAndLinkGroups.isSelected();
 						boolean withMeetings = cbWithMeetings.isSelected();
-						
-						XMLExport export = new XMLExport(uiViewFrame, fileName, allDepths, selectedOnly, toZip, 
+
+						XMLExport export = new XMLExport(uiViewFrame, fileName, allDepths, true, toZip,
 								withStencilsAndLinkGroups, withMeetings, true);
 						export.start();
 
@@ -356,49 +338,118 @@ public class UIExportXMLDialog extends UIDialog implements ActionListener, ItemL
 				}
 			}
 		}
-		else {
-			UIFileFilter filter = new UIFileFilter(new String[] {"xml"}, "XML Files");
 
-			UIFileChooser fileDialog = new UIFileChooser();
-			fileDialog.setDialogTitle("Enter the file name to Export to...");
-			fileDialog.setFileFilter(filter);
-			fileDialog.setApproveButtonText("Save");
-			fileDialog.setRequiredExtension(".xml");
+		else if (hasReferenceNodes) {
 
-		    // FIX FOR MAC - NEEDS '/' ON END TO DENOTE A FOLDER
-		    File file = new File(exportDirectory+ProjectCompendium.sFS);
-		    if (file.exists()) {
-				fileDialog.setCurrentDirectory(file);
+			//int retval = JOptionPane.showConfirmDialog(ProjectCompendium.APP, "If you want to export the contents of your reference nodes as well,\n" +
+			//		" click Cancel. Then select Export to XML again, and check the \nbox next to Export to Zip archive with images + Referenced files.");
+			int retval = JOptionPane.showConfirmDialog(ProjectCompendium.APP,
+				"You have unchecked the \"Export to Zip Archive\" option.\n" +
+				"Export will create an XML file without including any referenced documents in your export.\n" +
+				"Are you sure you want to do this?",
+				"XML Export",
+				JOptionPane.YES_NO_OPTION
+				);
+
+			if (0 == retval) {
+
+				onXMLOnlyExport(fileName);
+
 			}
 
-			UIUtilities.centerComponent(fileDialog, ProjectCompendium.APP);
-			int retval = fileDialog.showSaveDialog(ProjectCompendium.APP);
-			if (retval == JFileChooser.APPROVE_OPTION) {
-	        	if ((fileDialog.getSelectedFile()) != null) {
+		}
 
-	            	fileName = fileDialog.getSelectedFile().getAbsolutePath();
-					File fileDir = fileDialog.getCurrentDirectory();
-					exportDirectory = fileDir.getPath();
+		else {
 
-					if (fileName != null) {
-						if ( !fileName.toLowerCase().endsWith(".xml") ) {
-							fileName = fileName+".xml";
-						}
-						this.requestFocus();
-						setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			onXMLOnlyExport(fileName);
 
-						setVisible(false);
-						boolean selectedOnly = rbSelectedNodes.isSelected();
-						boolean allDepths = rbAllDepths.isSelected();
-						boolean withStencilsAndLinkGroups = cbWithStencilsAndLinkGroups.isSelected();
-						boolean withMeetings = cbWithMeetings.isSelected();
-						XMLExport export = new XMLExport(uiViewFrame, fileName, allDepths, selectedOnly, toZip, withStencilsAndLinkGroups, withMeetings, true);
-						export.start();
+		}
+	}
 
-						dispose();
+	public void onXMLOnlyExport (String fileName) {
+
+		UIFileFilter filter = new UIFileFilter(new String[] {"xml"}, "XML Files");
+
+		UIFileChooser fileDialog = new UIFileChooser();
+		fileDialog.setDialogTitle("Enter the file name to Export to...");
+		fileDialog.setFileFilter(filter);
+		fileDialog.setApproveButtonText("Save");
+		fileDialog.setRequiredExtension(".xml");
+
+	    // FIX FOR MAC - NEEDS '/' ON END TO DENOTE A FOLDER
+	    File file = new File(exportDirectory+ProjectCompendium.sFS);
+	    if (file.exists()) {
+			fileDialog.setCurrentDirectory(file);
+		}
+
+		UIUtilities.centerComponent(fileDialog, ProjectCompendium.APP);
+		int retval = fileDialog.showSaveDialog(ProjectCompendium.APP);
+		if (retval == JFileChooser.APPROVE_OPTION) {
+        	if ((fileDialog.getSelectedFile()) != null) {
+
+            	fileName = fileDialog.getSelectedFile().getAbsolutePath();
+				File fileDir = fileDialog.getCurrentDirectory();
+				exportDirectory = fileDir.getPath();
+
+				if (fileName != null) {
+					if ( !fileName.toLowerCase().endsWith(".xml") ) {
+						fileName = fileName+".xml";
 					}
+					this.requestFocus();
+					setCursor(new Cursor(Cursor.WAIT_CURSOR));
+
+					setVisible(false);
+					boolean allDepths = rbAllDepths.isSelected();
+					boolean withStencilsAndLinkGroups = cbWithStencilsAndLinkGroups.isSelected();
+					boolean withMeetings = cbWithMeetings.isSelected();
+					XMLExport export = new XMLExport(uiViewFrame, fileName, allDepths, true, false, withStencilsAndLinkGroups, withMeetings, true);
+					export.start();
+
+					dispose();
 				}
 			}
 		}
+
 	}
+
+	/**
+	 * Inits the values of the export options in the XML export dialog.
+	 */
+	public void initDefaults() {
+		if(uiViewFrame == null) {
+			return;
+		}
+		rbAllDepths.setSelected(true);
+		cbToZip.setSelected(true);
+	}
+
+    /**
+     * This method check that a user has selected at least one map node.
+     *
+     * @return True if there is at least one selected map node.
+     */
+    public boolean hasSelectedMapNodes() {
+        Enumeration<?> enumeration;
+        if (uiViewFrame instanceof UIMapViewFrame) {
+            enumeration = ((UIMapViewFrame) uiViewFrame).getViewPane()
+                    .getSelectedNodes();
+        } else {
+            enumeration = ((UIListViewFrame) uiViewFrame).getUIList()
+                    .getSelectedNodes();
+        }
+        boolean result = false;
+        while (enumeration.hasMoreElements()) {
+            Object element = enumeration.nextElement();
+            if ((element instanceof UINode &&
+                        ((UINode) element).getType() == ICoreConstants.MAPVIEW) ||
+                    (element instanceof NodePosition &&
+                        ((NodePosition) element).getNode().getType() == ICoreConstants.MAPVIEW)) {
+                result = true;
+            } else {
+                result = false;
+                break;
+            }
+        }
+        return result;
+    }
 }

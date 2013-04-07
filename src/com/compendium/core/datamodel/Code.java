@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.util.*;
@@ -65,7 +64,7 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 
 	/** A static list of Code object already created in this session.*/
 	private static Vector 	codeSummaryList 		= new Vector();
-		
+
 	/**
 	 * Constructor, creates a new code with the given id, author, creation date, modification date,
 	 * identifying name, description, and behavior.
@@ -99,9 +98,9 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 				htNodes.put(node.getId(), node);
 		}
 	}*/
-	
+
 	/**
-	 * 
+	 *
 	 * @param sCodeID the id for this code.
 	 * @param author the author for this code.
 	 * @param creationDate the date this code was created.
@@ -110,7 +109,7 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 	 * @param description the description of this code.
 	 * @param behavior the behaviour of this code.
 	 * @return a new Code instance
-	 */	
+	 */
 	public static Code getCode(String sCodeID, String author, Date creationDate, Date modificationDate,
 			String name, String description, String behavior) {
 
@@ -133,7 +132,7 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 			code.setAuthorLocal(author);
 			code.setCreationDateLocal(creationDate);
 			code.setModificationDateLocal(modificationDate);
-			code.setNameLocal(name);			
+			code.setNameLocal(name);
 			code.setDescriptionLocal(description);
 			code.setBehaviorLocal(behavior);
 		}
@@ -141,7 +140,7 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 	}
 
 	/**
-	 * 
+	 *
 	 * @param sCodeID the id for this code.
 	 * @param author the author for this code.
 	 * @param creationDate the date this code was created.
@@ -151,7 +150,7 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 	 * @param behavior the behaviour of this code.
 	 * @param nodes the nodes this code is in.
 	 * @return a new Code instance
-	 */	
+	 */
 	/*public static Code getCode(String sCodeID, String author, Date creationDate, Date modificationDate,
 			String name, String description, String behavior, Vector vtNodes) {
 
@@ -174,10 +173,10 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 			code.setAuthorLocal(author);
 			code.setCreationDateLocal(creationDate);
 			code.setModificationDateLocal(modificationDate);
-			code.setNameLocal(name);			
+			code.setNameLocal(name);
 			code.setDescriptionLocal(description);
 			code.setBehaviorLocal(behavior);
-			
+
 			int count = vtNodes.size();
 			htNodes.clear();
 			for (int j=0; j<count; j++) {
@@ -185,7 +184,7 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 				if (node != null)
 					htNodes.put(node.getId(), node);
 			}
-			
+
 		}
 		return code;
 	}*/
@@ -196,7 +195,7 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 	public static void clearList() {
 		codeSummaryList.removeAllElements();
 	}
-	
+
 	/**
 	 * The initialize method is called by the Model before adding the object to the cache.
 	 *
@@ -435,4 +434,9 @@ public class Code extends IdObject implements ICode, java.io.Serializable{
 		}
 		return nodes;
 	}*/
+
+	public String toString()
+	{
+		return "Code is name, description, behavior: " + sName + ", " + sDescription + ", " + sBehavior;
+	}
 }

@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.datamodel;
 
 import java.util.*;
@@ -62,7 +61,7 @@ public interface INodeSummary extends IIdObject {
 	 * This is the unique identifier for this object as used in the Original Map.
 	 *
 	 * @param sOriginalID the original imported id of this object.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 * @exception java.sql.ModelSessionException
 	 */
@@ -78,7 +77,7 @@ public interface INodeSummary extends IIdObject {
 	 * Sets the node type, both locally and in the DATABASE.
 	 *
 	 * @param int type the node type.
-	 * @param sLastModAuthor the author name of the person who made this modification. 
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 * @exception java.sql.ModelSessionException
 	 */
@@ -104,7 +103,7 @@ public interface INodeSummary extends IIdObject {
 	 * 	Sets the creation date for this node, both locally and in the DATABASE.
 	 *
 	 * 	@param Date creation is the node creation date.
-	 * 	@param sLastModAuthor the author name of the person who made this modification. 
+	 * 	@param sLastModAuthor the author name of the person who made this modification.
 	 * 	@exception java.sql.SQLException
 	 * 	@exception java.sql.ModelSessionException
 	 */
@@ -114,7 +113,7 @@ public interface INodeSummary extends IIdObject {
 	 * Sets the author for this node, both locally and in the DATABASE.
 	 *
 	 * @param String sAuthor, the author of this node.
-	 * @param sLastModAuthor the author name of the person who made this modification.  
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 * @exception java.sql.ModelSessionException
 	 */
@@ -148,7 +147,7 @@ public interface INodeSummary extends IIdObject {
 	 * Sets the label of this node, both locally and in the DATABASE.
 	 *
 	 * @param String label, The label of this node .
-	 * @param sLastModAuthor the author name of the person who made this modification.   
+	 * @param sLastModAuthor the author name of the person who made this modification.
 	 * @exception java.sql.SQLException
 	 * @exception java.sql.ModelSessionException
 	 */
@@ -159,7 +158,7 @@ public interface INodeSummary extends IIdObject {
 	 * @param String, the label of this node.
 	 */
 	public String getLastModificationAuthor();
-	
+
 	/**
 	 *	Returns the first detail page of this node.
 	 *
@@ -173,7 +172,7 @@ public interface INodeSummary extends IIdObject {
 	 *
 	 *	@param detail, the first page of detail for this node.
 	 *	@param sAuthor the author of these detail pages.
-	 *  @param sLastModAuthor the author name of the person who made this modification.   
+	 *  @param sLastModAuthor the author name of the person who made this modification.
 	 *	@exception java.sql.SQLException
 	 *	@exception java.sql.ModelSessionException
 	 */
@@ -318,7 +317,7 @@ public interface INodeSummary extends IIdObject {
 	 *	@exception java.sql.ModelSessionException
 	 */
 	public void setSource(String source, String image, Dimension oImageSize, String sLastModAuthor) throws SQLException, ModelSessionException;
-	
+
 	/**
 	 *	Gets the source String representing the reference pointed to by this node
 	 *
@@ -334,7 +333,7 @@ public interface INodeSummary extends IIdObject {
 	 *	@exception java.sql.SQLException
 	 */
 	public String getImage();
-	
+
 	/**
 	 *	Sets the width and height for the image associated with this node.
 	 *
@@ -345,7 +344,7 @@ public interface INodeSummary extends IIdObject {
 	 *	@exception java.sql.ModelSessionException
 	 */
 	public void setImageSize(int nWidth, int nHeight, String sLastModAuthor) throws SQLException, ModelSessionException;
-	
+
 	/**
 	 *	Sets the dimension (width and height) for the image associated with this node locally and in the database.
 	 *
@@ -354,7 +353,7 @@ public interface INodeSummary extends IIdObject {
 	 *	@exception java.sql.SQLException
 	 *	@exception java.sql.ModelSessionException
 	 */
-	public void setImageSize(Dimension oSize, String sLastModAuthor) throws SQLException, ModelSessionException;	
+	public void setImageSize(Dimension oSize, String sLastModAuthor) throws SQLException, ModelSessionException;
 
 	/**
 	 *	Gets the image size for the image linked to by this node.

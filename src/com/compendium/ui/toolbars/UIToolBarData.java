@@ -22,8 +22,9 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui.toolbars;
+
+import static com.compendium.ProjectCompendium.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -49,16 +50,16 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 
 	/** Indicates whether the node format toolbar is switched on or not by default.*/
 	private final static boolean DEFAULT_STATE			= true;
-	
+
 	/** Indicates the default orientation for this toolbars ui object.*/
-	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;	
-		
+	private final static int DEFAULT_ORIENTATION		= SwingConstants.HORIZONTAL;
+
 	/** This indicates the type of the toolbar.*/
 	private	int 					nType			= -1;
-	
+
 	/** The parent frame for this class.*/
 	private ProjectCompendiumFrame	oParent			= null;
-	
+
 	/** The overall toolbar manager.*/
 	private IUIToolBarManager 		oManager		= null;
 
@@ -91,7 +92,7 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 
 	/** The button to start/stop timed refreshing of the cache.*/
 	private JButton				pbTimedRefresh		= null;
-	
+
 	/**
 	 * Create a new instance of UIToolBarData, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
@@ -104,14 +105,14 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 		this.oManager = oManager;
 		this.nType = nType;
 		createToolBar(DEFAULT_ORIENTATION);
-	}	
-	
+	}
+
 	/**
 	 * Create a new instance of UIToolBarData, with the given properties.
 	 * @param oManager the IUIToolBarManager that is managing this toolbar.
 	 * @param parent the parent frame for the application.
 	 * @param nType the unique identifier for this toolbar.
-	 * @param orientation the orientation of this toolbars ui object.      
+	 * @param orientation the orientation of this toolbars ui object.
 	 */
 	public UIToolBarData(IUIToolBarManager oManager, ProjectCompendiumFrame parent, int nType, int orientation) {
 
@@ -162,9 +163,7 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 		tbrToolBar.add(pbTimedRefresh);
 		CSH.setHelpIDString(pbTimedRefresh,"toolbars.data");
 
-		if (FormatProperties.refreshTimerRunning 
-				&& FormatProperties.nDatabaseType == ICoreConstants.MYSQL_DATABASE 
-					&& !oParent.oCurrentMySQLConnection.getServer().equals(ICoreConstants.sDEFAULT_DATABASE_ADDRESS)) {
+		if (APP_PROPERTIES.isRefreshTimerRunning()) {
 			if (oParent.oRefreshManager.startTimer()) {
 				pbRefresh.setEnabled(false);
 				pbTimedRefresh.setIcon(UIImages.get(GREEN_LIGHT_ICON));
@@ -179,7 +178,7 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 
 		return tbrToolBar;
 	}
-	
+
 	/**
 	 * Create a choicbox for cache refresh timing options and return the panel it is in.
 	 * @return JPanel, the panel holding the new choicebox for the cache refresh timing options.
@@ -191,9 +190,9 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 
 		cbRefreshTime = new JComboBox();
 		cbRefreshTime.setToolTipText("Set the duration between Data Refresh calls");
-		cbRefreshTime.setOpaque(true);
-		cbRefreshTime.setEditable(false);
-		cbRefreshTime.setEnabled(false);
+		cbRefreshTime.setOpaque(false);
+		cbRefreshTime.setEditable(true);
+		cbRefreshTime.setEnabled(true);
 		cbRefreshTime.setMaximumRowCount(13);
 		cbRefreshTime.setFont( new Font("Dialog", Font.PLAIN, 12 ));
 
@@ -213,7 +212,7 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 
 		cbRefreshTime.validate();
 
-		setRefreshChoiceBoxSelection(FormatProperties.refreshTime);
+		setRefreshChoiceBoxSelection(APP_PROPERTIES.getRefreshTime());
 
 		DefaultListCellRenderer timeRenderer = new DefaultListCellRenderer() {
 			public Component getListCellRendererComponent(
@@ -243,6 +242,8 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 
 		timeActionListener = new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
+				System.out.println("244 UIToolBarData.java entered timeActionListener actionPerformed");
+
  				int ind = cbRefreshTime.getSelectedIndex();
 
 				if (ind == 0) {
@@ -272,6 +273,8 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 				} else if (ind == 12) {
 					setRefreshTime(1800);
 				}
+
+				System.out.println("277 UIToolBarData.java exiting timeActionListener actionPerformed");
          	}
 		};
         cbRefreshTime.addActionListener(timeActionListener);
@@ -289,12 +292,10 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 		ProjectCompendium.APP.oRefreshManager.setRefreshTime(nSeconds);
 
 		if (!autoSelectRefresh) {
-			FormatProperties.refreshTime = nSeconds;
-			FormatProperties.setFormatProp("refreshTime", String.valueOf(nSeconds));
-			FormatProperties.saveFormatProps();
+			APP_PROPERTIES.setRefreshTime(nSeconds);
 		}
 	}
-	
+
 	/**
 	 * Set the appropriate selection on the Refresh choice box depending on the seconds passed.
 	 * @param nSeconds the number of section the refresh timer is set to.
@@ -364,7 +365,7 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 
 				if (value instanceof ExternalConnection) {
 					ExternalConnection connection = (ExternalConnection)value;
-					setText("MySQL: "+(String)connection.getProfile());
+					setText("Connected: "+(String)connection.getProfile());
 				}
 				else {
 					setText((String)value);
@@ -403,11 +404,11 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 						}
 
 						if (bRemoteServer) {
-							//pbTimedRefresh.setEnabled(true);
-							//pbRefresh.setEnabled(true);
-							//cbRefreshTime.setEnabled(true);
-							//timePanel.setEnabled(true);
-							setRefreshChoiceBoxSelection(FormatProperties.refreshTime);
+							pbTimedRefresh.setEnabled(true);
+							pbRefresh.setEnabled(true);
+							cbRefreshTime.setEnabled(true);
+							timePanel.setEnabled(true);
+							setRefreshChoiceBoxSelection(APP_PROPERTIES.getRefreshTime());
 						} else {
 							if (oParent.oRefreshManager.isTimerRunning()) {
 								pbTimedRefresh.setIcon(UIImages.get(RED_LIGHT_ICON));
@@ -416,14 +417,12 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 								pbRefresh.setEnabled(true);
 								oParent.oRefreshManager.stopTimer();
 
-								FormatProperties.refreshTimerRunning = true;
-								FormatProperties.setFormatProp("timerRunning", "true");
-								FormatProperties.saveFormatProps();
+								APP_PROPERTIES.setRefreshTimerRunning(true);
 							}
-							pbTimedRefresh.setEnabled(false);
-							pbRefresh.setEnabled(false);
-							cbRefreshTime.setEnabled(false);
-							timePanel.setEnabled(false);
+							//pbTimedRefresh.setEnabled(false);
+							//pbRefresh.setEnabled(false);
+							//cbRefreshTime.setEnabled(false);
+							//timePanel.setEnabled(false);
 						}
 
 						autoSelect = false;
@@ -451,12 +450,26 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 		else {
 			pbTimedRefresh.setIcon(UIImages.get(RED_LIGHT_ICON));
 		}
-		
+
 		if (tbrToolBar != null) {
 			SwingUtilities.updateComponentTreeUI(tbrToolBar);
 		}
 	}
-	
+
+	/**
+	 * Disable the Refresh button
+	 */
+	public void  disableRefresh() {
+		pbRefresh.setEnabled(false);
+	}
+
+	/**
+	 * Enable the Refresh button
+	 */
+	public void enableRefresh() {
+		pbRefresh.setEnabled(true);
+	}
+
 	/**
 	 * Update the data in the profiles choicebox.
 	 */
@@ -464,7 +477,8 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 		try {
 			Vector profiles = ProjectCompendium.APP.adminDerbyDatabase.getMySQLConnections();
 			profiles = CoreUtilities.sortList(profiles);
-			profiles.insertElementAt((Object) new String("Derby: Default"), 0);
+			profiles.insertElementAt((Object) new String("Remote: Default"), 0);
+			//profiles.add((Object) new String("Derby: Default"));
 			DefaultComboBoxModel comboModel = new DefaultComboBoxModel(profiles);
 			cbProfiles.setModel(comboModel);
 
@@ -479,14 +493,14 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 					"COMPENDIUM  MAY BE  RUNNING  ALREADY!\n\n" +
 					"If it is not, then there could be a process still running from an\n" +
 					"earlier instance of Compendium which did not terminate cleanly.\n" +
-					"Please terminate all previous Compendium processes and try again.\n";            					
+					"Please terminate all previous Compendium processes and try again.\n";
 
 			if (ProjectCompendium.isWindows) {
 				sMessage = sMessage+"\n\t(Ctrl+Alt+Delete -> Task Manager -> Processes Tab ->\n" +
 				"\tSelect javaw.exe process -> Press 'End Process')\n\n";
 			}
 
-			ProjectCompendium.APP.displayError(sMessage);			
+			ProjectCompendium.APP.displayError(sMessage);
 			System.exit(0);
 		}
 	}
@@ -539,7 +553,9 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 			oParent.onFileDatabaseAdmin();
 		}
 		else if (source.equals(pbRefresh)) {
-			oParent.reloadProjectData();
+			pbRefresh.setEnabled(false);		// Turn it off to be friendly.  On a network this may be
+			oParent.reloadProjectData();		// a very time-consuming operation.
+			pbRefresh.setEnabled(true);
 		}
 		else if (source.equals(pbTimedRefresh)) {
 			if (oParent.oRefreshManager.isTimerRunning()) {
@@ -547,14 +563,10 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 				pbTimedRefresh.setText("Start");
 				pbTimedRefresh.setToolTipText("Start Timed Data Refresh");
 				oParent.oRefreshManager.stopTimer();
-				// Need to resolve this conflict eventually.
-				((UIToolBarManager)oManager).setDrawToolBarEnabled(true);				
 				pbRefresh.setEnabled(true);
 			}
 			else {
 				if (oParent.oRefreshManager.startTimer()) {
-					// Need to resolve this conflict eventually.
-					((UIToolBarManager)oManager).setDrawToolBarEnabled(false);
 					pbRefresh.setEnabled(false);
 					pbTimedRefresh.setIcon(UIImages.get(GREEN_LIGHT_ICON));
 					pbTimedRefresh.setText("Stop");
@@ -562,17 +574,17 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 				}
 			}
 		}
-		
+
 		oParent.setDefaultCursor();
 	}
-	
+
 	/**
 	 * Updates the menu when a new database project is opened.
 	 */
 	public void onDatabaseOpen() {
 
-		if (oParent.oCurrentMySQLConnection != null) {
-			if (!(oParent.oCurrentMySQLConnection.getServer()).equalsIgnoreCase("localhost")) {
+		//if (oParent.oCurrentMySQLConnection != null) {
+			//if (!(oParent.oCurrentMySQLConnection.getServer()).equalsIgnoreCase("localhost")) {
 				if (pbTimedRefresh != null) {
 					pbTimedRefresh.setEnabled(true);
 				}
@@ -585,13 +597,17 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
 				if (timePanel != null) {
 					timePanel.setEnabled(true);
 				}
-			}
-		} else {
-			pbTimedRefresh.setEnabled(false);
-			pbRefresh.setEnabled(false);
-			cbRefreshTime.setEnabled(false);
-			timePanel.setEnabled(false);			
-		}
+
+				//if (FormatProperties.refreshTimerRunning) {
+					if (oParent.oRefreshManager.startTimer()) {
+						pbRefresh.setEnabled(false);
+						pbTimedRefresh.setIcon(UIImages.get(GREEN_LIGHT_ICON));
+						pbTimedRefresh.setText("Stop");
+						pbTimedRefresh.setToolTipText("Stop Timed Data Refresh");
+					}
+				//}
+			//}
+		//}
 	}
 
 	/**
@@ -618,33 +634,33 @@ public class UIToolBarData implements IUIToolBar, ActionListener, IUIConstants {
  	 * @param selected true to enable, false to disable.
 	 */
 	public void setNodeSelected(boolean selected) {}
-		
+
 	/**
  	 * Does Nothing
  	 * @param selected true to enable, false to disable.
 	 */
 	public void setNodeOrLinkSelected(boolean selected) {}
-	
+
 	public UIToolBar getToolBar() {
 		return tbrToolBar;
 	}
-	
+
 	/**
 	 * Enable/disable the toolbar.
 	 * @param enabled true to enable, false to disable.
 	 */
 	public void setEnabled(boolean enabled) {
 		tbrToolBar.setEnabled(enabled);
-	}	
-	
+	}
+
 	/**
 	 * Return true if this toolbar is active by default, or false if it must be switched on by the user.
 	 * @return true if the toolbar is active by default, else false.
 	 */
 	public boolean getDefaultActiveState() {
 		return DEFAULT_STATE;
-	}			
-	
+	}
+
 	/**
 	 * Return a unique integer identifier for this toolbar.
 	 * @return a unique integer identifier for this toolbar.

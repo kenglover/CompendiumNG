@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.core.db;
 
 import java.sql.Connection;
@@ -93,7 +92,7 @@ public class DBCodeGroup {
 		PreparedStatement pstmt = con.prepareStatement(INSERT_CODEGROUP_QUERY);
 
 		double created = new Long(dCreationDate.getTime()).doubleValue();
-		double modified = new Long(dModificationDate.getTime()).doubleValue();
+		double modified = new Long((new java.util.Date()).getTime()).doubleValue();
 
  		pstmt.setString(1, sCodeGroupID);
 		pstmt.setString(2, sAuthor);
@@ -132,7 +131,7 @@ public class DBCodeGroup {
 			return false;
 
 		PreparedStatement pstmt = con.prepareStatement(UPDATE_NAME_QUERY);
-		double modified = new Long(modificationDate.getTime()).doubleValue();
+		double modified = new Long((new java.util.Date()).getTime()).doubleValue();
 		pstmt.setString(1, sName) ;
 		pstmt.setDouble(2, modified);
  		pstmt.setString(3, sCodeGroupID);

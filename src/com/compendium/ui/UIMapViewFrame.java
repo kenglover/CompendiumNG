@@ -22,7 +22,6 @@
  *                                                                              *
  ********************************************************************************/
 
-
 package com.compendium.ui;
 
 import java.beans.*;
@@ -128,7 +127,10 @@ public class UIMapViewFrame extends UIViewFrame {
 
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
+
+		//reduced size by factor of 10 since size is too big - bz
 		panel.setPreferredSize(new Dimension(30000,30000));
+
 		panel.add(oViewPane, BorderLayout.CENTER);
 
 		scrollpane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -316,13 +318,15 @@ public class UIMapViewFrame extends UIViewFrame {
 	 * Update the given node in the aerial view.
 	 * @param node com.compendium.core.datamodel.NodeSummary, the node to update.
 	 */
+/*********************************************************************************************************
 	public void refreshNode(NodeSummary node) {
 		if (oAerialDialog != null)
 			oAerialDialog.refreshNode(node);
 	}
+*********************************************************************************************************/
 
 	/**
-	 * Rescales the aerial view.
+	 * Rescales the aerial view if required.
 	 *
 	 * @param oPoint, The Point object to needed to test if rescale required.
 	 */
@@ -330,7 +334,14 @@ public class UIMapViewFrame extends UIViewFrame {
 		if (oAerialDialog != null)
 			oAerialDialog.rescale(oPoint);
 	}
-
+	
+	/**
+	 * Forces a rescale of the Aerial view
+	 */
+	public void rescaleAerial() {
+		oAerialDialog.scaleToFit();
+	}
+	
 	/**
 	 * Adds a node to the aerial view.
 	 *
@@ -740,9 +751,6 @@ public class UIMapViewFrame extends UIViewFrame {
 		UIViewPane pane = getViewPane();
 		double scale = pane.getZoom();
 
-		System.out.println("scale = "+scale);
-		System.out.flush();
-		
 		if (scale == 1.00)
 			scale = 0.75;
 		else if (scale == 0.75)

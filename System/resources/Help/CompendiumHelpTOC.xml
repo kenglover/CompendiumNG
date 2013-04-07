@@ -35,6 +35,7 @@
 			<tocitem text="Creating Shortcuts" target="node.shortcuts"/>
 			<tocitem text="Creating Clones" target="node.clones"/>
 			<tocitem text="Selecting and Deselecting Nodes" target="node.edit_nodes"/>
+			<tocitem text="Node Label Preferences" target="node.preferences"/>
 			<tocitem text="Node Contents and Properties" target="node.node_details"/>
 			<tocitem text="Reference Nodes" target="node.refimage"/>
 			<tocitem text="Linking Nodes" target="node.links"/>
@@ -92,7 +93,7 @@
 		<!--tocitem text="Print Maps (graphically)" target="basics.print"/-->
 		<tocitem text="Keyboard Shortcuts">
 			<tocitem text="General Navigation, Activation and Selection" target="keys.java"/>
-			<tocitem text="General Compendium Keyboard Shortcuts" target="keys.general"/>							
+			<tocitem text="General Compendium Keyboard Shortcuts" target="keys.java"/>							
 			<tocitem text="When inside Map Views" target="keys.maps"/>
 			<tocitem text="When inside List Views" target="keys.lists"/>
 			<tocitem text="When on Nodes" target="keys.nodes"/>
